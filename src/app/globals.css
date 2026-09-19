@@ -5,6 +5,21 @@
 html,
 body {
   height: 100%;
+  /* Voorkomt dat een horizontale swipe (iOS Safari/PWA: edge-swipe terug/
+     verder, Chrome/Android: overscroll-navigatie) als browsernavigatie wordt
+     opgevat — "pan-y pinch-zoom" i.p.v. kaal "pan-y" houdt zowel verticaal
+     scrollen als pinch-zoomen (viewport staat dat toe, zie layout.tsx) intact.
+     Componenten met een eigen, bewuste horizontale sleepinteractie
+     (FamilyGameRoom's bord, SortableList's greep-icoon) zetten daar zelf al
+     een specifiekere `touch-action` op hun eigen element (Tailwinds
+     `touch-none`), die deze algemene regel overschrijft. */
+  touch-action: pan-y pinch-zoom;
+  overscroll-behavior-x: none;
+  /* Vangnet: geen enkel element hoort de pagina breder dan het scherm te
+     maken, maar mocht dat toch gebeuren dan voorkomt dit alsnog dat dat een
+     horizontale scrollruimte (en daarmee een edge-swipe-aangrijpingspunt)
+     oplevert. */
+  overflow-x: hidden;
 }
 
 body {
