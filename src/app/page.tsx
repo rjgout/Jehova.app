@@ -95,11 +95,13 @@ export default async function HomePage() {
         <div className="card !bg-gold-50 dark:!bg-slate-800 !border-gold-400/30 dark:!border-slate-700 max-w-xl text-left flex flex-col gap-2">
           <h2 className="font-extrabold text-lg text-brand-800 dark:text-brand-300">Waarom heet dit Jehova?</h2>
           <p className="text-sm text-slate-600 dark:text-slate-300">
-            &ldquo;Jehova&rdquo; is een naam voor God die ook in het Boek van Mormon voorkomt — een naam die verwijst
-            naar Jezus Christus, van vóór zijn geboorte op aarde. Het Boek van Mormon noemt zichzelf op de
-            titelpagina bedoeld om mensen ervan te overtuigen dat Jezus de Christus is. Daarom staat Hij, en deze
-            naam, hier centraal.
+            Jehova is een naam voor Jezus Christus vóór Zijn geboorte. Die naam komt ook voor in het Boek van Mormon.
           </p>
+          <p className="text-sm text-slate-600 dark:text-slate-300">
+            Het Boek van Mormon is &ldquo;een testament van Jezus Christus&rdquo;. Het is bedoeld om te getuigen dat
+            Jezus de Christus is.
+          </p>
+          <p className="text-sm text-slate-600 dark:text-slate-300">Daarom staat Zijn naam centraal in Jehova.app.</p>
         </div>
       )}
 
