@@ -11,6 +11,7 @@ import ChangelogPopup from "@/components/ChangelogPopup";
 import ThemeScript from "@/components/ThemeScript";
 import BottomNav from "@/components/BottomNav";
 import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
+import EdgeSwipeGuard from "@/components/EdgeSwipeGuard";
 import PodcastMiniPlayer from "@/components/PodcastMiniPlayer";
 import HeaderInstallHint from "@/components/HeaderInstallHint";
 import StickyHeader from "@/components/StickyHeader";
@@ -203,6 +204,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         {user && <InviteListener />}
         {user && <ChangelogPopup />}
         <ServiceWorkerRegister />
+        <EdgeSwipeGuard />
         </PodcastPlayerProvider>
       </body>
     </html>
