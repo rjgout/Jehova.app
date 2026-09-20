@@ -314,7 +314,7 @@ export default function ProfileClient() {
                 onClick={() => {
                   setAvatarError(null);
                   setAvatarInput("");
-                  setAvatarPickerOpen((open) => !open);
+                  setAvatarPickerOpen(true);
                 }}
                 className="h-14 w-14 rounded-full bg-black/15 flex items-center justify-center text-2xl font-extrabold text-gold-400 hover:opacity-80"
                 title="Avatar wijzigen"
@@ -328,62 +328,107 @@ export default function ProfileClient() {
               >
                 ✏️
               </span>
-
-              {avatarPickerOpen && (
-                <div className="absolute z-10 top-full left-0 mt-2 w-72 card !p-4 flex flex-col gap-3 text-slate-800 dark:text-slate-100 shadow-xl">
-                  <p className="text-sm font-bold">Kies een avatar-emoji</p>
-                  <div className="grid grid-cols-6 gap-1.5">
-                    {AVATAR_EMOJI_OPTIONS.map((emoji) => (
-                      <button
-                        key={emoji}
-                        type="button"
-                        className="h-9 w-9 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 text-xl flex items-center justify-center"
-                        disabled={savingAvatarEmoji}
-                        onClick={() => saveAvatarEmoji(emoji)}
-                      >
-                        {emoji}
-                      </button>
-                    ))}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <input
-                      className="input !w-auto flex-1 !py-1.5"
-                      placeholder="Eigen emoji"
-                      value={avatarInput}
-                      onChange={(e) => setAvatarInput(e.target.value)}
-                      maxLength={8}
-                    />
+            </div>
+            <div>
+              {!editingHandle ? (
+                <>
+                  <h1 className="text-xl font-extrabold flex items-center gap-1.5">
+                    {data.displayName}
                     <button
-                      className="btn-primary !px-3 !py-1.5 !text-xs"
-                      disabled={savingAvatarEmoji || !avatarInput}
-                      onClick={saveCustomAvatarEmoji}
+                      type="button"
+                      onClick={startEditingHandle}
+                      className="text-sm opacity-80 hover:opacity-100"
+                      title="Gebruikersnaam wijzigen"
+                      aria-label="Gebruikersnaam wijzigen"
                     >
-                      Opslaan
+                      ✏️
                     </button>
-                  </div>
-                  {avatarError && <p className="text-xs text-red-600 dark:text-red-400">{avatarError}</p>}
-                  <div className="flex items-center gap-3 border-t border-slate-100 dark:border-slate-700 pt-2">
-                    {data.avatarEmoji && (
-                      <button
-                        className="text-xs text-red-500 hover:underline"
-                        disabled={savingAvatarEmoji}
-                        onClick={() => saveAvatarEmoji(null)}
-                      >
-                        Verwijderen
-                      </button>
-                    )}
-                    <button className="text-xs text-slate-400 hover:underline ml-auto" onClick={() => setAvatarPickerOpen(false)}>
-                      Sluiten
+                  </h1>
+                  <p className="text-brand-100 text-sm">{formatTag(data.handle, data.discriminator)}</p>
+                </>
+              ) : (
+                <div className="flex flex-col gap-2">
+                  <label className="flex items-center gap-2 flex-wrap">
+                    <input
+                      className="input !w-auto !py-1 !text-sm"
+                      value={handleInput}
+                      onChange={(e) => setHandleInput(e.target.value)}
+                      maxLength={24}
+                      autoFocus
+                    />
+                    <span className="text-brand-100 text-sm">#{data.discriminator}</span>
+                  </label>
+                  {handleError && <p className="text-xs text-red-100">{handleError}</p>}
+                  <div className="flex gap-2">
+                    <button className="btn-primary !px-3 !py-1 !text-xs" disabled={savingHandle} onClick={saveHandle}>
+                      {savingHandle ? "Bezig..." : "Opslaan"}
+                    </button>
+                    <button className="btn-secondary !px-3 !py-1 !text-xs" onClick={() => setEditingHandle(false)}>
+                      Annuleren
                     </button>
                   </div>
                 </div>
               )}
             </div>
-            <div>
-              <h1 className="text-xl font-extrabold">{data.displayName}</h1>
-              <p className="text-brand-100 text-sm">{formatTag(data.handle, data.discriminator)}</p>
-            </div>
           </div>
+
+          {avatarPickerOpen && (
+            <div
+              className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40"
+              onClick={() => setAvatarPickerOpen(false)}
+            >
+              <div
+                className="card !p-4 w-full max-w-xs flex flex-col gap-3 text-slate-800 dark:text-slate-100 shadow-xl"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <p className="text-sm font-bold">Kies een avatar-emoji</p>
+                <div className="grid grid-cols-6 gap-1.5">
+                  {AVATAR_EMOJI_OPTIONS.map((emoji) => (
+                    <button
+                      key={emoji}
+                      type="button"
+                      className="h-9 w-9 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 text-xl flex items-center justify-center"
+                      disabled={savingAvatarEmoji}
+                      onClick={() => saveAvatarEmoji(emoji)}
+                    >
+                      {emoji}
+                    </button>
+                  ))}
+                </div>
+                <div className="flex items-center gap-2">
+                  <input
+                    className="input !w-auto flex-1 !py-1.5"
+                    placeholder="Eigen emoji"
+                    value={avatarInput}
+                    onChange={(e) => setAvatarInput(e.target.value)}
+                    maxLength={8}
+                  />
+                  <button
+                    className="btn-primary !px-3 !py-1.5 !text-xs shrink-0"
+                    disabled={savingAvatarEmoji || !avatarInput}
+                    onClick={saveCustomAvatarEmoji}
+                  >
+                    Opslaan
+                  </button>
+                </div>
+                {avatarError && <p className="text-xs text-red-600 dark:text-red-400">{avatarError}</p>}
+                <div className="flex items-center gap-3 border-t border-slate-100 dark:border-slate-700 pt-2">
+                  {data.avatarEmoji && (
+                    <button
+                      className="text-xs text-red-500 hover:underline"
+                      disabled={savingAvatarEmoji}
+                      onClick={() => saveAvatarEmoji(null)}
+                    >
+                      Verwijderen
+                    </button>
+                  )}
+                  <button className="text-xs text-slate-400 hover:underline ml-auto" onClick={() => setAvatarPickerOpen(false)}>
+                    Sluiten
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
           {data.tier && (
             <span className="text-sm font-bold bg-black/15 rounded-full px-3.5 py-1.5 text-gold-400 shrink-0">
               {TIER_ICONS[data.tier]} {TIER_LABELS[data.tier]}
@@ -479,41 +524,6 @@ export default function ProfileClient() {
           <ThemeToggle />
         </div>
 
-        {!editingHandle ? (
-          <div className="flex items-center gap-3 flex-wrap">
-            <span className="text-sm dark:text-slate-200">
-              Gebruikersnaam: <strong>{formatTag(data.handle, data.discriminator)}</strong>
-            </span>
-            <button className="btn-secondary !px-3 !py-1.5" onClick={startEditingHandle}>
-              Wijzigen
-            </button>
-          </div>
-        ) : (
-          <div className="flex flex-col gap-2">
-            <label className="flex items-center gap-2 flex-wrap">
-              <input
-                className="input !w-auto"
-                value={handleInput}
-                onChange={(e) => setHandleInput(e.target.value)}
-                maxLength={24}
-              />
-              <span className="text-slate-400 dark:text-slate-500">#{data.discriminator}</span>
-            </label>
-            <p className="text-xs text-slate-400 dark:text-slate-500">
-              Het nummer erachter kies je niet zelf — dat blijft door het systeem bepaald.
-            </p>
-            {handleError && <p className="text-sm text-red-600 dark:text-red-400">{handleError}</p>}
-            <div className="flex gap-2">
-              <button className="btn-primary !px-3 !py-1.5" disabled={savingHandle} onClick={saveHandle}>
-                {savingHandle ? "Bezig..." : "Opslaan"}
-              </button>
-              <button className="btn-secondary !px-3 !py-1.5" onClick={() => setEditingHandle(false)}>
-                Annuleren
-              </button>
-            </div>
-          </div>
-        )}
-
         <div className="flex gap-2 flex-wrap">
           <Link href="/change-password" className="btn-secondary self-start">
             Wachtwoord wijzigen
@@ -521,9 +531,6 @@ export default function ProfileClient() {
           <Link href="/onboarding" className="btn-secondary self-start">
             Rondleiding opnieuw bekijken
           </Link>
-          <button className="btn-secondary self-start" onClick={logout}>
-            Uitloggen
-          </button>
         </div>
       </section>
 
@@ -725,7 +732,7 @@ export default function ProfileClient() {
       </section>
 
       <section className="card flex flex-col gap-3">
-        <h2 className="font-extrabold text-lg dark:text-slate-100">Account</h2>
+        <h2 className="font-extrabold text-lg dark:text-slate-100">Account verwijderen</h2>
         {!confirmingDelete ? (
           <button className="btn-secondary self-start !text-red-500 !border-red-200" onClick={() => setConfirmingDelete(true)}>
             Account verwijderen
@@ -746,6 +753,12 @@ export default function ProfileClient() {
             </div>
           </div>
         )}
+      </section>
+
+      <section className="card">
+        <button className="btn-secondary self-start" onClick={logout}>
+          Uitloggen
+        </button>
       </section>
     </div>
   );
