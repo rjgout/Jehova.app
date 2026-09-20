@@ -146,7 +146,7 @@ export default function WordGameClient() {
             {Array.from({ length: game.wordLength }, (_, j) => (
               <div
                 key={j}
-                className="aspect-square rounded-lg border-2 border-slate-100 dark:border-slate-700"
+                className="aspect-square rounded-lg border-2 border-slate-200 dark:border-slate-700"
               />
             ))}
           </div>
