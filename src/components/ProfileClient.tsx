@@ -396,9 +396,13 @@ export default function ProfileClient() {
                   ))}
                 </div>
                 <div className="flex items-center gap-2">
+                  {/* Vaste, kleine breedte i.p.v. flex-1: er past toch maar één
+                      emoji in, en een brede invoer duwde de knop tot vlak
+                      tegen de afgeronde hoek van deze kaart (rounded-3xl) aan,
+                      waardoor die er optisch doorheen leek te steken. */}
                   <input
-                    className="input !w-auto flex-1 !py-1.5"
-                    placeholder="Eigen emoji"
+                    className="input !w-16 !py-1.5 text-center text-xl"
+                    placeholder="🙂"
                     value={avatarInput}
                     onChange={(e) => setAvatarInput(e.target.value)}
                     maxLength={8}
