@@ -119,9 +119,14 @@ export default function FriendsClient() {
         return { ...prev, statusByUserId: next };
       });
     }
+    function onStatusReset() {
+      setData((prev) => (prev ? { ...prev, statusByUserId: {} } : prev));
+    }
     socket.on("friend_status_update", onStatusUpdate);
+    socket.on("friend_status_reset", onStatusReset);
     return () => {
       socket.off("friend_status_update", onStatusUpdate);
+      socket.off("friend_status_reset", onStatusReset);
     };
   }, []);
 
