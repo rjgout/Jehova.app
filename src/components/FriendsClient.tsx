@@ -30,6 +30,7 @@ interface SearchResult {
   id: string;
   handle: string;
   discriminator: string;
+  friendshipStatus: "PENDING" | "ACCEPTED" | "DECLINED" | null;
 }
 
 // Puur decoratief: elke gebruiker krijgt een stabiele (niet-willekeurige,
@@ -221,10 +222,23 @@ export default function FriendsClient() {
                 </span>
                 <button
                   className="btn-secondary !px-3 !py-1.5"
-                  disabled={sentTo.has(r.id)}
+                  disabled={sentTo.has(r.id) || r.friendshipStatus === "PENDING" || r.friendshipStatus === "ACCEPTED"}
                   onClick={() => sendRequest(r)}
+                  aria-label={
+                    r.friendshipStatus === "ACCEPTED"
+                      ? "Al bevriend"
+                      : r.friendshipStatus === "PENDING"
+                        ? "Vriendschapsverzoek in behandeling"
+                        : undefined
+                  }
                 >
-                  {sentTo.has(r.id) ? "Verstuurd" : "Toevoegen"}
+                  {r.friendshipStatus === "ACCEPTED"
+                    ? "✅"
+                    : r.friendshipStatus === "PENDING"
+                      ? "⏳"
+                      : sentTo.has(r.id)
+                        ? "Verstuurd"
+                        : "Toevoegen"}
                 </button>
               </div>
             ))}
@@ -281,11 +295,8 @@ export default function FriendsClient() {
       )}
 
       <section className="flex flex-col gap-2">
-        <h2 className="font-extrabold text-slate-700 dark:text-slate-200 flex items-center gap-2">
+        <h2 className="font-extrabold text-slate-700 dark:text-slate-200">
           Jouw vrienden
-          <span className="inline-flex items-center justify-center min-w-[1.5rem] h-6 px-1.5 rounded-full bg-brand-50 dark:bg-slate-700 text-brand-700 dark:text-brand-300 text-xs font-extrabold">
-            {data.friends.length}
-          </span>
         </h2>
         {data.friends.length === 0 && <p className="text-slate-400 dark:text-slate-500">Nog geen vrienden — zoek iemand hierboven!</p>}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
