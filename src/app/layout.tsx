@@ -38,6 +38,9 @@ export async function generateMetadata(): Promise<Metadata> {
     description: APP_TAGLINE,
     manifest: "/manifest.webmanifest",
     metadataBase: new URL(appUrl),
+    alternates: {
+      canonical: "/",
+    },
     // Bepaalt de voorvertoning (titel/beschrijving/afbeelding) die apps als
     // WhatsApp, Telegram en Discord tonen bij het delen van een link — dit is
     // een los mechanisme van de browsericonen hieronder, maar gebruikt bewust
