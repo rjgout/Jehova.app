@@ -8,6 +8,7 @@ import { normalizeAnswer } from "@/lib/exerciseGen";
 import { useActivityStatus } from "@/lib/useActivity";
 import { announceXpChanged } from "@/lib/xpBroadcast";
 import ReadAloudPlayer from "@/components/ReadAloudPlayer";
+import { useReadAloudPlayer } from "@/lib/readAloudPlayerContext";
 
 export type ExerciseType = "FILL_BLANK" | "WORD_BANK" | "TRUE_FALSE" | "MULTIPLE_CHOICE" | "SEQUENCE" | "IMAGE_CHOICE";
 
@@ -226,6 +227,8 @@ function ReaderView({
   const [scale, setScale] = useState(1);
   const [verseState, setVerseState] = useState(verses);
   const [openNoteFor, setOpenNoteFor] = useState<string | null>(null);
+  const { source, currentIndex, isPlaying } = useReadAloudPlayer();
+  const readingVerse = source?.id === chapterId && isPlaying ? source.verses[currentIndex]?.number ?? null : null;
 
 
   useEffect(() => {
