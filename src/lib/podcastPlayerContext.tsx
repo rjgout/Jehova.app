@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
+import { useActivityStatus } from "@/lib/useActivity";
 
 export interface PodcastEpisodeInfo {
   id: string;
@@ -77,7 +78,7 @@ export function PodcastPlayerProvider({ children }: { children: React.ReactNode 
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
-  const [suppressedByOtherPlayer, setSuppressedByOtherPlayer] = useState(false);
+  const [suppressedByOtherPlayer, setSuppressedByOtherPlayer] = useState(false);\n\n  useActivityStatus(\n    "🎙️",\n    isPlaying && episode ? `Luistert naar aflevering ${episode.number} — ${episode.title}` : null,\n  );
 
   const loadedEpisodeIdRef = useRef<string | null>(null);
   const pendingSeekRef = useRef<number | null>(null);
