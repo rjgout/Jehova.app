@@ -39,17 +39,10 @@ export default function RegisterPage() {
           {createdTag}
         </p>
         <p className="text-sm text-slate-500 dark:text-slate-400">
-          Deel deze met vrienden zodat ze je kunnen vinden — je e-mailadres blijft privé, tenzij je dat later zelf
-          aanzet bij je profielinstellingen.
+          Bevestig eerst je e-mailadres. Daarna helpen we je stap voor stap op weg.
         </p>
-        <button
-          className="btn-primary"
-          onClick={() => {
-            router.push("/dashboard");
-            router.refresh();
-          }}
-        >
-          Aan de slag →
+        <button className="btn-primary" onClick={() => { router.push("/verify-email"); router.refresh(); }}>
+          E-mailadres bevestigen →
         </button>
       </div>
     );
@@ -60,44 +53,18 @@ export default function RegisterPage() {
       <h1 className="text-2xl font-extrabold mb-6 text-brand-800 dark:text-brand-300">Account maken</h1>
       <form onSubmit={onSubmit} className="flex flex-col gap-4">
         <div>
-          <input
-            className="input"
-            placeholder="Gebruikersnaam"
-            required
-            value={form.handle}
-            onChange={(e) => setForm({ ...form, handle: e.target.value })}
-          />
+          <input className="input" placeholder="Gebruikersnaam" required value={form.handle} onChange={(e) => setForm({ ...form, handle: e.target.value })} />
           <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
-            Je krijgt er automatisch een uniek nummer achter, bv. "{form.handle || "Voorbeeld"}#42" — zo kan iedereen
-            dezelfde gebruikersnaam kiezen en hoef je nooit je e-mailadres te delen om gevonden te worden.
+            Je krijgt er automatisch een uniek nummer achter, bv. "{form.handle || "Voorbeeld"}#42" — zo kan iedereen dezelfde gebruikersnaam kiezen en hoef je nooit je e-mailadres te delen om gevonden te worden.
           </p>
         </div>
-        <input
-          className="input"
-          placeholder="E-mailadres"
-          type="email"
-          required
-          value={form.email}
-          onChange={(e) => setForm({ ...form, email: e.target.value })}
-        />
-        <input
-          className="input"
-          placeholder="Wachtwoord (min. 8 tekens)"
-          type="password"
-          required
-          value={form.password}
-          onChange={(e) => setForm({ ...form, password: e.target.value })}
-        />
+        <input className="input" placeholder="E-mailadres" type="email" required value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
+        <input className="input" placeholder="Wachtwoord (min. 8 tekens)" type="password" required value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} />
         {error && <p className="text-red-600 dark:text-red-400 text-sm font-semibold">{error}</p>}
-        <button type="submit" disabled={loading} className="btn-primary mt-2">
-          {loading ? "Bezig..." : "Account maken"}
-        </button>
+        <button type="submit" disabled={loading} className="btn-primary mt-2">{loading ? "Bezig..." : "Account maken"}</button>
       </form>
       <p className="text-sm text-slate-500 dark:text-slate-400 mt-4">
-        Heb je al een account?{" "}
-        <Link href="/login" className="text-brand-600 font-bold">
-          Log in
-        </Link>
+        Heb je al een account?{" "}<Link href="/login" className="text-brand-600 font-bold">Log in</Link>
       </p>
     </div>
   );
