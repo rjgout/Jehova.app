@@ -22,7 +22,6 @@ model User {
   // exacte e-mailadres gebruikt worden om ze te vinden bij het toevoegen
   // van vrienden (zie /api/users/search).
   searchableByEmail  Boolean   @default(false)
-  displayName        String
   passwordHash       String
   // Verhoogd bij een wachtwoordreset/-wijziging zodat alle eerder uitgegeven sessietokens direct ongeldig worden.
   sessionVersion     Int       @default(0)
