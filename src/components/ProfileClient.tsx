@@ -315,7 +315,6 @@ export default function ProfileClient() {
     if (!("speechSynthesis" in window) || readAloudVoices.length === 0) return;
 
     const synth = window.speechSynthesis;
-    synth.cancel();
 
     const voice = readAloudVoices.find((item) => item.voiceURI === selectedReadAloudVoice) ?? readAloudVoices[0];
     const utterance = new SpeechSynthesisUtterance(
