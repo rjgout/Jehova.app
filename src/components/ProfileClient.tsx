@@ -69,6 +69,7 @@ export default function ProfileClient() {
   const [data, setData] = useState<ProfileData | null>(null);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [confirmingLogout, setConfirmingLogout] = useState(false);
   const [savingPrivacy, setSavingPrivacy] = useState(false);
   const [savingNotifications, setSavingNotifications] = useState(false);
   const [pushError, setPushError] = useState<string | null>(null);
@@ -527,9 +528,6 @@ export default function ProfileClient() {
         <h2 className="font-extrabold text-lg dark:text-slate-100">Account</h2>
 
         <div className="flex gap-2 flex-wrap">
-          <Link href="/change-password" className="btn-secondary self-start">
-            Wachtwoord wijzigen
-          </Link>
           <Link href="/onboarding" className="btn-secondary self-start">
             Rondleiding opnieuw bekijken
           </Link>
@@ -757,10 +755,30 @@ export default function ProfileClient() {
         )}
       </section>
 
-      <section className="card">
-        <button className="btn-secondary self-start" onClick={logout}>
-          Uitloggen
-        </button>
+      <section className="card flex flex-col gap-3">
+        <h2 className="font-extrabold text-lg dark:text-slate-100">Account</h2>
+        {!confirmingLogout ? (
+          <div className="flex gap-2 flex-wrap">
+            <Link href="/change-password" className="btn-secondary self-start">
+              Wachtwoord wijzigen
+            </Link>
+            <button className="btn-secondary self-start" onClick={() => setConfirmingLogout(true)}>
+              Uitloggen
+            </button>
+          </div>
+        ) : (
+          <div className="flex flex-col gap-3">
+            <p className="text-sm dark:text-slate-200">Weet je zeker dat je wilt uitloggen?</p>
+            <div className="flex gap-2 flex-wrap">
+              <button className="btn-primary self-start" onClick={logout}>
+                Ja, uitloggen
+              </button>
+              <button className="btn-secondary self-start" onClick={() => setConfirmingLogout(false)}>
+                Annuleren
+              </button>
+            </div>
+          </div>
+        )}
       </section>
     </div>
   );
