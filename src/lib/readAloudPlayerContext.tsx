@@ -173,6 +173,21 @@ export function ReadAloudPlayerProvider({ children }: { children: React.ReactNod
     setCurrentIndex(0);
   }, []);
 
+  useEffect(() => {
+    const stopForPodcast = () => {
+      if (!("speechSynthesis" in window)) return;
+      window.speechSynthesis.cancel();
+      utteranceIdRef.current += 1;
+      playingRef.current = false;
+      setIsPlaying(false);
+      sourceRef.current = null;
+      setSource(null);
+      setCurrentIndex(0);
+    };
+    window.addEventListener("jehovaapp:stop-read-aloud", stopForPodcast);
+    return () => window.removeEventListener("jehovaapp:stop-read-aloud", stopForPodcast);
+  }, []);
+
   const setSpeed = useCallback((nextSpeed: number) => {
     if (!SPEEDS.includes(nextSpeed)) return;
     speedRef.current = nextSpeed;
