@@ -32,6 +32,7 @@ interface VerseView {
 
 interface Props {
   chapterId: string;
+  chapterId: string;
   bookName: string;
   chapterNumber: number;
   nextChapterId: string | null;
@@ -154,7 +155,7 @@ export default function LessonFlow({ chapterId, bookName, chapterNumber, nextCha
     return (
       <div className="max-w-2xl mx-auto flex flex-col gap-4">
         <Breadcrumb items={[{ label: bookName, href: "/dashboard" }, { label: `Hoofdstuk ${chapterNumber}` }]} />
-        <ReaderView bookName={bookName} chapterNumber={chapterNumber} verses={verses} />
+        <ReaderView chapterId={chapterId} bookName={bookName} chapterNumber={chapterNumber} verses={verses} />
         <button className="btn-primary self-start" onClick={() => setPhase("exercises")}>
           Begin oefeningen →
         </button>
@@ -213,6 +214,7 @@ export default function LessonFlow({ chapterId, bookName, chapterNumber, nextCha
 }
 
 function ReaderView({
+  chapterId,
   bookName,
   chapterNumber,
   verses,
@@ -224,7 +226,7 @@ function ReaderView({
   const [scale, setScale] = useState(1);
   const [verseState, setVerseState] = useState(verses);
   const [openNoteFor, setOpenNoteFor] = useState<string | null>(null);
-  const [readingVerse, setReadingVerse] = useState<number | null>(null);
+
 
   useEffect(() => {
     try {
@@ -289,8 +291,9 @@ function ReaderView({
       </div>
 
       <ReadAloudPlayer
+        sourceId={chapterId}
+        title={`${bookName} ${chapterNumber}`}
         verses={verseState.map((v) => ({ number: v.number, text: v.text }))}
-        onVerseChange={setReadingVerse}
       />
 
       <div className="card flex flex-col gap-4" style={{ "--reader-font-scale": scale } as React.CSSProperties}>
