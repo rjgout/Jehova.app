@@ -16,6 +16,8 @@ import PodcastMiniPlayer from "@/components/PodcastMiniPlayer";
 import HeaderInstallHint from "@/components/HeaderInstallHint";
 import StickyHeader from "@/components/StickyHeader";
 import { PodcastPlayerProvider } from "@/lib/podcastPlayerContext";
+import { ReadAloudPlayerProvider } from "@/lib/readAloudPlayerContext";
+import ReadAloudMiniPlayer from "@/components/ReadAloudMiniPlayer";
 import { APP_TAGLINE, resolveAppName } from "@/lib/brand";
 
 // PWA: manifest + icons zijn wat een browser nodig heeft om "toevoegen aan
@@ -128,6 +130,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       </head>
       <body>
         <PodcastPlayerProvider>
+        <ReadAloudPlayerProvider>
         {/* Header + mini-player samen in één vaste wrapper (i.p.v. sticky —
             zie StickyHeader.tsx voor waarom) zodat ze bij het scrollen als
             één geheel bovenaan blijven staan, ongeacht de exacte hoogte van
@@ -199,6 +202,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           </div>
         </header>
         {user && <PodcastMiniPlayer />}
+        {user && <ReadAloudMiniPlayer />}
         </StickyHeader>
         <main className="mx-auto max-w-5xl px-4 pb-8 pb-[calc(6rem+env(safe-area-inset-bottom))] sm:pb-8 pt-[calc(var(--header-height,4.5rem)+2rem)]">
           {children}
@@ -208,6 +212,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         {user && <ChangelogPopup />}
         <ServiceWorkerRegister />
         <EdgeSwipeGuard />
+        </ReadAloudPlayerProvider>
         </PodcastPlayerProvider>
       </body>
     </html>
