@@ -18,6 +18,7 @@ import StickyHeader from "@/components/StickyHeader";
 import { PodcastPlayerProvider } from "@/lib/podcastPlayerContext";
 import { ReadAloudPlayerProvider } from "@/lib/readAloudPlayerContext";
 import ReadAloudMiniPlayer from "@/components/ReadAloudMiniPlayer";
+import ActivityTracker from "@/components/ActivityTracker";
 import { APP_TAGLINE, resolveAppName } from "@/lib/brand";
 
 // PWA: manifest + icons zijn wat een browser nodig heeft om "toevoegen aan
@@ -202,7 +203,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           </div>
         </header>
         {user && <PodcastMiniPlayer />}
-        {user && <ReadAloudMiniPlayer />}
+        {user && <ReadAloudMiniPlayer />}\n        {user && <ActivityTracker />}
         </StickyHeader>
         <main className="mx-auto max-w-5xl px-4 pb-8 pb-[calc(6rem+env(safe-area-inset-bottom))] sm:pb-8 pt-[calc(var(--header-height,4.5rem)+2rem)]">
           {children}
