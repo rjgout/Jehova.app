@@ -102,6 +102,25 @@ export function PodcastPlayerProvider({ children }: { children: React.ReactNode 
   // Bij het laden van de app: is er een niet-afgeluisterde aflevering?
   // Toon die dan meteen (gepauzeerd) in de mini-player, klaar om te hervatten.
   useEffect(() => {
+    const stopPodcast = () => {
+      const audio = audioRef.current;
+      if (!audio) return;
+      audio.pause();
+      setIsPlaying(false);
+    };
+    window.addEventListener("jehovaapp:stop-podcast", stopPodcast);
+    return () => window.removeEventListener("jehovaapp:stop-podcast", stopPodcast);
+  }, []);
+
+  useEffect(() => {
+    const stopReadAloud = () => window.dispatchEvent(new Event("jehovaapp:stop-read-aloud"));
+    // De podcast is de andere audiobron: zodra deze bewust wordt gestart,
+    // wordt een eventueel actieve voorleesstream direct gestopt.
+    window.addEventListener("jehovaapp:podcast-started", stopReadAloud);
+    return () => window.removeEventListener("jehovaapp:podcast-started", stopReadAloud);
+  }, []);
+
+  useEffect(() => {
     fetch("/api/podcast-playback")
       .then((r) => r.json())
       .then((data) => {
@@ -200,6 +219,9 @@ export function PodcastPlayerProvider({ children }: { children: React.ReactNode 
   const playEpisode = useCallback((newEpisode: PodcastEpisodeInfo) => {
     const audio = audioRef.current;
     if (!audio) return;
+
+    // Een nieuwe podcastactie neemt de audio-uitvoer over van de voorlezer.
+    window.dispatchEvent(new Event("jehovaapp:podcast-started"));
 
     // Een bewuste, nieuwe afspeelactie overschrijft een eerdere "wegklik" —
     // de mini-player is nu toch weer zichtbaar, dus de dismissal heeft

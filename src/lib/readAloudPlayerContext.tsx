@@ -115,6 +115,9 @@ export function ReadAloudPlayerProvider({ children }: { children: React.ReactNod
 
   const start = useCallback((newSource: ReadAloudSource, index = 0) => {
     if (!("speechSynthesis" in window) || newSource.verses.length === 0) return;
+    // Voorlezen en de podcast delen één audio-uitvoer: een nieuwe voorleesactie
+    // stopt de podcast direct, zodat nooit twee audiostreams tegelijk klinken.
+    window.dispatchEvent(new Event("jehovaapp:stop-podcast"));
     utteranceIdRef.current += 1;
     window.speechSynthesis.cancel();
     sourceRef.current = newSource;
@@ -168,6 +171,21 @@ export function ReadAloudPlayerProvider({ children }: { children: React.ReactNod
     sourceRef.current = null;
     setSource(null);
     setCurrentIndex(0);
+  }, []);
+
+  useEffect(() => {
+    const stopForPodcast = () => {
+      if (!("speechSynthesis" in window)) return;
+      window.speechSynthesis.cancel();
+      utteranceIdRef.current += 1;
+      playingRef.current = false;
+      setIsPlaying(false);
+      sourceRef.current = null;
+      setSource(null);
+      setCurrentIndex(0);
+    };
+    window.addEventListener("jehovaapp:stop-read-aloud", stopForPodcast);
+    return () => window.removeEventListener("jehovaapp:stop-read-aloud", stopForPodcast);
   }, []);
 
   const setSpeed = useCallback((nextSpeed: number) => {
