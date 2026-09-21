@@ -1,11 +1,9 @@
 import Link from "next/link";
-import packageJson from "../../package.json";
 
 export default function Footer() {
   return (
     <footer className="mt-16 border-t border-slate-100 dark:border-slate-800 text-sm text-slate-400 dark:text-slate-500">
       <div className="mx-auto max-w-5xl px-4 py-8 flex flex-col gap-3">
-        <p className="text-xs">v{packageJson.version} · beta · build {process.env.NEXT_PUBLIC_BUILD_SHA?.slice(0, 7) ?? "onbekend"}</p>
         <p>
           Deze website is een onafhankelijk initiatief en wordt niet gesponsord, ondersteund, goedgekeurd of
           onderhouden door De Kerk van Jezus Christus van de Heiligen der Laatste Dagen.
