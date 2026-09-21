@@ -1,7 +1,6 @@
 "use client";
 
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
-import { useActivityStatus } from "@/lib/useActivity";
 
 export interface PodcastEpisodeInfo {
   id: string;
