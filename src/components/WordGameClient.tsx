@@ -20,7 +20,6 @@ interface VerseMatch {
 
 interface LeaderboardEntry {
   rank: number;
-  displayName: string;
   handle: string;
   discriminator: string;
   finishedAt: string;
@@ -33,6 +32,8 @@ interface GameView {
   guesses: GuessView[];
   status: "IN_PROGRESS" | "WON" | "LOST";
   xpEarned: number;
+  leaderboardRank: number | null;
+  leaderboardXpBonus: number;
   word: string | null;
   verses: VerseMatch[];
   leaderboard: LeaderboardEntry[];
@@ -204,7 +205,16 @@ export default function WordGameClient() {
               Het woord was: <span className="font-extrabold uppercase text-brand-700 dark:text-brand-300">{game.word}</span>
             </p>
           )}
-          {game.xpEarned > 0 && <p className="text-gold-600 dark:text-gold-400 font-extrabold text-lg">+{game.xpEarned} XP</p>}
+          {game.xpEarned > 0 && (
+            <div className="flex flex-col items-center gap-1">
+              <p className="text-gold-600 dark:text-gold-400 font-extrabold text-lg">+{game.xpEarned} XP</p>
+              {game.leaderboardRank && game.leaderboardXpBonus > 0 && (
+                <p className="text-sm text-slate-500 dark:text-slate-400">
+                  🏆 #{game.leaderboardRank} van vandaag · +{game.leaderboardXpBonus} XP bonus
+                </p>
+              )}
+            </div>
+          )}
           <p className="text-sm text-slate-400 dark:text-slate-500">Kom morgen om 18:00 uur terug voor een nieuw woord!</p>
           <Link href="/live" className="btn-secondary mt-1">
             Terug
@@ -249,8 +259,7 @@ export default function WordGameClient() {
                   {entry.rank <= 3 ? ["🥇", "🥈", "🥉"][entry.rank - 1] : entry.rank}
                 </span>
                 <div className="min-w-0 flex-1">
-                  <p className="font-bold truncate dark:text-slate-100">{entry.displayName}</p>
-                  <p className="text-xs text-slate-400 dark:text-slate-500 truncate">
+                  <p className="font-bold truncate dark:text-slate-100">
                     {entry.handle}#{entry.discriminator}
                   </p>
                 </div>
