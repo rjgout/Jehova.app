@@ -115,6 +115,9 @@ export function ReadAloudPlayerProvider({ children }: { children: React.ReactNod
 
   const start = useCallback((newSource: ReadAloudSource, index = 0) => {
     if (!("speechSynthesis" in window) || newSource.verses.length === 0) return;
+    // Voorlezen en de podcast delen één audio-uitvoer: een nieuwe voorleesactie
+    // stopt de podcast direct, zodat nooit twee audiostreams tegelijk klinken.
+    window.dispatchEvent(new Event("jehovaapp:stop-podcast"));
     utteranceIdRef.current += 1;
     window.speechSynthesis.cancel();
     sourceRef.current = newSource;
