@@ -22,6 +22,7 @@ export default function ReadAloudPlayer({ verses, onVerseChange }: Props) {
   const currentIndexRef = useRef(0);
   const speedRef = useRef(1);
   const playingRef = useRef(false);
+  const utteranceIdRef = useRef(0);
 
   useEffect(() => {
     setSupported(typeof window !== "undefined" && "speechSynthesis" in window);
@@ -45,6 +46,7 @@ export default function ReadAloudPlayer({ verses, onVerseChange }: Props) {
 
       const synth = window.speechSynthesis;
       synth.cancel();
+      const utteranceId = ++utteranceIdRef.current;
 
       const utterance = new SpeechSynthesisUtterance(verses[index].text);
       utterance.lang = "nl-NL";
@@ -55,7 +57,7 @@ export default function ReadAloudPlayer({ verses, onVerseChange }: Props) {
       if (dutchVoice) utterance.voice = dutchVoice;
 
       utterance.onend = () => {
-        if (!playingRef.current) return;
+        if (!playingRef.current || utteranceId !== utteranceIdRef.current) return;
         const nextIndex = index + 1;
         if (nextIndex >= verses.length) {
           playingRef.current = false;
@@ -69,6 +71,7 @@ export default function ReadAloudPlayer({ verses, onVerseChange }: Props) {
       };
 
       utterance.onerror = () => {
+        if (utteranceId !== utteranceIdRef.current) return;
         playingRef.current = false;
         setIsPlaying(false);
       };
@@ -103,6 +106,7 @@ export default function ReadAloudPlayer({ verses, onVerseChange }: Props) {
   function stop() {
     if (!supported) return;
     playingRef.current = false;
+    utteranceIdRef.current += 1;
     window.speechSynthesis.cancel();
     setIsPlaying(false);
     setCurrentIndex(0);
