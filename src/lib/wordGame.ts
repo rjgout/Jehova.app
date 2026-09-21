@@ -103,6 +103,14 @@ export function xpForWin(guessesUsed: number): number {
   return 25 + 5 * (MAX_GUESSES - guessesUsed);
 }
 
+export interface WordGameLeaderboardEntry {
+  rank: number;
+  displayName: string;
+  handle: string;
+  discriminator: string;
+  finishedAt: string;
+}
+
 export interface WordGameView {
   dayKey: string;
   wordLength: number;
@@ -115,6 +123,37 @@ export interface WordGameView {
   // Idem: pas gevuld na afloop (winst of verlies maakt niet uit), zodat je
   // de verzen met het woord van vandaag kan naslaan.
   verses: VerseMatch[];
+  leaderboard: WordGameLeaderboardEntry[];
+}
+
+async function getTodayLeaderboard(dayKey: string): Promise<WordGameLeaderboardEntry[]> {
+  const games = await prisma.wordGame.findMany({
+    where: {
+      dayKey,
+      status: "WON",
+      finishedAt: { not: null },
+    },
+    orderBy: { finishedAt: "asc" },
+    take: 10,
+    select: {
+      finishedAt: true,
+      user: {
+        select: {
+          displayName: true,
+          handle: true,
+          discriminator: true,
+        },
+      },
+    },
+  });
+
+  return games.map((game, index) => ({
+    rank: index + 1,
+    displayName: game.user.displayName,
+    handle: game.user.handle,
+    discriminator: game.user.discriminator,
+    finishedAt: game.finishedAt!.toISOString(),
+  }));
 }
 
 async function buildView(game: {
@@ -129,6 +168,7 @@ async function buildView(game: {
     result: evaluateGuess(word, game.word),
   }));
   const finished = game.status !== "IN_PROGRESS";
+  const leaderboard = await getTodayLeaderboard(game.dayKey);
   return {
     dayKey: game.dayKey,
     wordLength: WORD_LENGTH,
@@ -138,6 +178,7 @@ async function buildView(game: {
     xpEarned: game.xpEarned,
     word: finished ? game.word : null,
     verses: finished ? await findVersesContainingWord(game.word) : [],
+    leaderboard,
   };
 }
 
