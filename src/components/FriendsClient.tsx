@@ -233,9 +233,9 @@ export default function FriendsClient() {
                   }
                 >
                   {r.friendshipStatus === "ACCEPTED"
-                    ? "✓"
+                    ? "✅"
                     : r.friendshipStatus === "PENDING"
-                      ? "⌛"
+                      ? "⏳"
                       : sentTo.has(r.id)
                         ? "Verstuurd"
                         : "Toevoegen"}
