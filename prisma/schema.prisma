@@ -1314,6 +1314,7 @@ model WordGame {
   guesses    String         @default("[]") // JSON: array van geraden woorden, in volgorde
   status     WordGameStatus @default(IN_PROGRESS)
   xpEarned   Int            @default(0)
+  leaderboardXpBonus Int    @default(0) // Eenmalige XP-bonus voor een top-10-positie.
   createdAt  DateTime       @default(now())
   finishedAt DateTime?
 
