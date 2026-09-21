@@ -13,7 +13,7 @@ interface Props {
   onVerseChange?: (verseNumber: number | null) => void;
 }
 
-const SPEEDS = [0.75, 1, 1.25, 1.5];
+const SPEEDS = [0.75, 1, 1.25, 1.5, 2];
 
 export default function ReadAloudPlayer({ verses, onVerseChange }: Props) {
   const [supported, setSupported] = useState(false);
@@ -37,6 +37,17 @@ export default function ReadAloudPlayer({ verses, onVerseChange }: Props) {
     return () => {
       window.speechSynthesis.removeEventListener?.("voiceschanged", handleVoicesChanged);
     };
+  }, []);
+
+  useEffect(() => {
+    const savedSpeed = window.localStorage.getItem("jehovaapp-read-aloud-speed");
+    if (savedSpeed) {
+      const parsedSpeed = Number(savedSpeed);
+      if (SPEEDS.includes(parsedSpeed)) {
+        speedRef.current = parsedSpeed;
+        setSpeed(parsedSpeed);
+      }
+    }
   }, []);
 
   useEffect(() => {
@@ -136,6 +147,7 @@ export default function ReadAloudPlayer({ verses, onVerseChange }: Props) {
   function changeSpeed(nextSpeed: number) {
     speedRef.current = nextSpeed;
     setSpeed(nextSpeed);
+    window.localStorage.setItem("jehovaapp-read-aloud-speed", String(nextSpeed));
     if (isPlaying) {
       const index = currentIndexRef.current;
       playingRef.current = true;
