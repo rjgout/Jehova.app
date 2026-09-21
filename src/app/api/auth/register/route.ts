@@ -62,11 +62,6 @@ export async function POST(req: NextRequest) {
           email,
           handle,
           discriminator,
-          // Geen apart "echte naam"-veld meer — de gebruikersnaam (handle)
-          // is overal de enige identiteit. displayName blijft als kolom
-          // bestaan (nog op praktisch elke plek gelezen) maar krijgt hier
-          // gewoon dezelfde waarde als handle.
-          displayName: handle,
           passwordHash,
           isAdmin: isFirstUser,
           activeCourseId: defaultCourse?.id,
