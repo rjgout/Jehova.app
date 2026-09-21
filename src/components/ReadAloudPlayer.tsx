@@ -25,7 +25,17 @@ export default function ReadAloudPlayer({ verses, onVerseChange }: Props) {
   const utteranceIdRef = useRef(0);
 
   useEffect(() => {
-    setSupported(typeof window !== "undefined" && "speechSynthesis" in window);
+    if (typeof window === "undefined" || !("speechSynthesis" in window)) return;
+
+    setSupported(true);
+    // Op iOS worden de beschikbare stemmen soms pas na het laden van de pagina gevuld.
+    window.speechSynthesis.getVoices();
+    const handleVoicesChanged = () => window.speechSynthesis.getVoices();
+    window.speechSynthesis.addEventListener?.("voiceschanged", handleVoicesChanged);
+
+    return () => {
+      window.speechSynthesis.removeEventListener?.("voiceschanged", handleVoicesChanged);
+    };
   }, []);
 
   useEffect(() => {
@@ -45,7 +55,6 @@ export default function ReadAloudPlayer({ verses, onVerseChange }: Props) {
       if (!supported || index < 0 || index >= verses.length) return;
 
       const synth = window.speechSynthesis;
-      synth.cancel();
       const utteranceId = ++utteranceIdRef.current;
 
       const utterance = new SpeechSynthesisUtterance(verses[index].text);
@@ -53,8 +62,18 @@ export default function ReadAloudPlayer({ verses, onVerseChange }: Props) {
       utterance.rate = speedRef.current;
 
       const voices = synth.getVoices();
-      const dutchVoice = voices.find((voice) => voice.lang.toLowerCase().startsWith("nl"));
-      if (dutchVoice) utterance.voice = dutchVoice;
+      const dutchVoice =
+        voices.find((voice) => voice.lang.toLowerCase() === "nl-nl") ??
+        voices.find((voice) => voice.lang.toLowerCase().startsWith("nl-")) ??
+        voices.find((voice) => voice.lang.toLowerCase().startsWith("nl")) ??
+        voices.find((voice) => voice.default) ??
+        voices[0];
+
+      // Safari op iOS kan stil eindigen wanneer er geen expliciete stem is ingesteld.
+      if (dutchVoice) {
+        utterance.voice = dutchVoice;
+        utterance.lang = dutchVoice.lang;
+      }
 
       utterance.onend = () => {
         if (!playingRef.current || utteranceId !== utteranceIdRef.current) return;
