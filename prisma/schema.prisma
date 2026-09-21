@@ -1315,6 +1315,7 @@ model WordGame {
   status     WordGameStatus @default(IN_PROGRESS)
   xpEarned   Int            @default(0)
   leaderboardXpBonus Int    @default(0) // Eenmalige XP-bonus voor een top-10-positie.
+  leaderboardRank   Int?
   createdAt  DateTime       @default(now())
   finishedAt DateTime?
 
