@@ -25,7 +25,7 @@ export default function ThemeToggle() {
       onClick={toggle}
       aria-label={isDark ? "Zet lichte modus aan" : "Zet donkere modus aan"}
       title={isDark ? "Lichte modus" : "Donkere modus"}
-      className="text-sm leading-none hover:scale-110 transition"
+      className="text-2xl leading-none hover:scale-110 transition"
     >
       {isDark ? "☀️" : "🌙"}
     </button>
