@@ -103,6 +103,23 @@ export function xpForWin(guessesUsed: number): number {
   return 25 + 5 * (MAX_GUESSES - guessesUsed);
 }
 
+const LEADERBOARD_XP_BONUSES: Record<number, number> = {
+  1: 50,
+  2: 40,
+  3: 35,
+  4: 30,
+  5: 25,
+  6: 20,
+  7: 15,
+  8: 10,
+  9: 10,
+  10: 10,
+};
+
+function leaderboardXpBonusForRank(rank: number): number {
+  return LEADERBOARD_XP_BONUSES[rank] ?? 0;
+}
+
 export interface WordGameLeaderboardEntry {
   rank: number;
   handle: string;
