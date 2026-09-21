@@ -14,6 +14,7 @@ interface PodcastPlayerContextValue {
   isPlaying: boolean;
   currentTime: number;
   duration: number;
+  isSuppressed: boolean;
   playEpisode: (episode: PodcastEpisodeInfo) => void;
   togglePlay: () => void;
   seek: (time: number) => void;
@@ -76,6 +77,7 @@ export function PodcastPlayerProvider({ children }: { children: React.ReactNode 
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
+  const [suppressedByOtherPlayer, setSuppressedByOtherPlayer] = useState(false);
 
   const loadedEpisodeIdRef = useRef<string | null>(null);
   const pendingSeekRef = useRef<number | null>(null);
@@ -107,6 +109,7 @@ export function PodcastPlayerProvider({ children }: { children: React.ReactNode 
       if (!audio) return;
       audio.pause();
       setIsPlaying(false);
+      setSuppressedByOtherPlayer(true);
     };
     window.addEventListener("jehovaapp:stop-podcast", stopPodcast);
     return () => window.removeEventListener("jehovaapp:stop-podcast", stopPodcast);
@@ -286,10 +289,11 @@ export function PodcastPlayerProvider({ children }: { children: React.ReactNode 
     setIsPlaying(false);
     setCurrentTime(0);
     setDuration(0);
+    setSuppressedByOtherPlayer(false);
   }, [episode, savePosition]);
 
   return (
-    <PodcastPlayerContext.Provider value={{ episode, isPlaying, currentTime, duration, playEpisode, togglePlay, seek, close }}>
+    <PodcastPlayerContext.Provider value={{ episode, isPlaying, currentTime, duration, isSuppressed: suppressedByOtherPlayer, playEpisode, togglePlay, seek, close }}>
       {children}
       {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
       <audio ref={audioRef} className="hidden" />
