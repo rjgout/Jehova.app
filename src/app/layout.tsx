@@ -203,7 +203,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           </div>
         </header>
         {user && <PodcastMiniPlayer />}
-        {user && <ReadAloudMiniPlayer />}\n        {user && <ActivityTracker />}
+        {user && <ReadAloudMiniPlayer />}
+        {user && <ActivityTracker />}
         </StickyHeader>
         <main className="mx-auto max-w-5xl px-4 pb-8 pb-[calc(6rem+env(safe-area-inset-bottom))] sm:pb-8 pt-[calc(var(--header-height,4.5rem)+2rem)]">
           {children}
