@@ -32,7 +32,7 @@ export async function GET() {
   // instellingen (zie computeFriendStatus in src/lib/presence.ts) — een
   // vriend die niets deelt komt hier gewoon niet in de map voor, in plaats
   // van met een "verborgen" waarde, zodat er ook via deze route niets lekt.
-  const statusByUserId = await getFriendStatusMap(friends.map((f) => f.id));
+  const statusByUserId = await getFriendStatusMap(friends.map((f) => f.id), user.shareOnlineStatus);
 
   return NextResponse.json({ friends, incoming, outgoing, statusByUserId });
 }
