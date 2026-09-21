@@ -33,7 +33,6 @@ interface VerseView {
 
 interface Props {
   chapterId: string;
-  chapterId: string;
   bookName: string;
   chapterNumber: number;
   nextChapterId: string | null;
@@ -220,6 +219,7 @@ function ReaderView({
   chapterNumber,
   verses,
 }: {
+  chapterId: string;
   bookName: string;
   chapterNumber: number;
   verses: VerseView[];
@@ -228,7 +228,7 @@ function ReaderView({
   const [verseState, setVerseState] = useState(verses);
   const [openNoteFor, setOpenNoteFor] = useState<string | null>(null);
   const { source, currentIndex, isPlaying } = useReadAloudPlayer();
-  const readingVerse = source?.id === chapterId && isPlaying ? source.verses[currentIndex]?.number ?? null : null;
+  const readingVerse = source && source.id === chapterId && isPlaying ? source.verses[currentIndex]?.number ?? null : null;
 
 
   useEffect(() => {

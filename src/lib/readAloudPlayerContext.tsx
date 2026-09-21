@@ -40,7 +40,8 @@ function getVoice(): SpeechSynthesisVoice | null {
   const voices = getDutchVoices();
   return getSelectedDutchVoice() ?? voices.find((voice) => voice.lang.toLowerCase() === "nl-nl")
     ?? voices.find((voice) => voice.lang.toLowerCase().startsWith("nl-"))
-    ?? voices.find((voice) => voice.lang.toLowerCase().startsWith("nl"));
+    ?? voices.find((voice) => voice.lang.toLowerCase().startsWith("nl"))
+    ?? null;
 }
 
 export function ReadAloudPlayerProvider({ children }: { children: React.ReactNode }) {
