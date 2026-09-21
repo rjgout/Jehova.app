@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
   const passwordHash = await hashPassword(parsed.data.newPassword);
   await prisma.user.update({
     where: { id: userId },
-    data: { passwordHash, mustChangePassword: false },
+    data: { passwordHash, mustChangePassword: false, sessionVersion: { increment: 1 } },
   });
 
   // Meteen inloggen na een geslaagde reset, dat scheelt een stap.
