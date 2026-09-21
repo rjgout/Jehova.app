@@ -311,3 +311,17 @@ geconfigureerd maar via `/adminbackend` in de app zelf.
 Vóór een taak als afgerond geldt: voer `npx tsc --noEmit` uit, test relevante
 functionaliteit waar mogelijk handmatig via de dev-server/API, en voer
 daarna een schone productiebuild uit met `rm -rf .next && npm run build`.
+
+
+## Versiebeheer
+
+Jehova.app bevindt zich momenteel in een intensieve beta-fase. Er zullen nog veel kleine bugfixes en verbeteringen plaatsvinden. Daarom vertegenwoordigt een versienummer een release en niet iedere individuele wijziging of deployment.
+
+- Gebruik `package.json` als enige bron van waarheid voor de applicatieversie.
+- De huidige beta-versie blijft op `0.x.0`-niveau; verhoog het versienummer alleen bewust voor een nieuwe release met relevante gebruikersgerichte wijzigingen.
+- Verhoog de versie niet automatisch bij iedere commit, bugfix of deployment.
+- Gebruik de Git commit SHA als technische build-identificatie. De combinatie van applicatieversie en korte SHA moet exact aangeven welke code gedeployed is.
+- Toon de versie in de profiel-/informatieomgeving als bijvoorbeeld `v0.1.0 · beta · build abc1234`.
+- Houd een `CHANGELOG.md` bij voor belangrijke gebruikersgerichte wijzigingen en releases. Registreer niet iedere kleine interne bugfix als aparte release.
+- Gebruik `1.0.0` pas voor de eerste stabiele release.
+- Houd het systeem eenvoudig zolang Jehova.app beta is; voeg geen complex release-management toe zonder concrete behoefte.
