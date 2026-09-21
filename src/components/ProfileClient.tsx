@@ -301,9 +301,12 @@ export default function ProfileClient() {
 
   return (
     <div className="max-w-2xl mx-auto flex flex-col gap-8">
-      <Link href="/feedback" className="btn-secondary self-start">
-        💬 Feedback geven
-      </Link>
+      <div className="flex items-center justify-between gap-4">
+        <Link href="/feedback" className="btn-secondary">
+          💬 Feedback geven
+        </Link>
+        <ThemeToggle />
+      </div>
 
       <div className="card bg-gradient-to-br from-brand-500 to-brand-700 dark:from-brand-600 dark:to-brand-900 text-white flex flex-col gap-5">
         <div className="flex items-center justify-between gap-3 flex-wrap">
@@ -522,11 +525,6 @@ export default function ProfileClient() {
 
       <section className="card flex flex-col gap-3">
         <h2 className="font-extrabold text-lg dark:text-slate-100">Account</h2>
-
-        <div className="flex items-center gap-3">
-          <span className="text-sm dark:text-slate-200">Weergave (licht/donker)</span>
-          <ThemeToggle />
-        </div>
 
         <div className="flex gap-2 flex-wrap">
           <Link href="/change-password" className="btn-secondary self-start">
