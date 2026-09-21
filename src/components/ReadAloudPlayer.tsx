@@ -68,11 +68,6 @@ export default function ReadAloudPlayer({ verses, onVerseChange }: Props) {
 
       const synth = window.speechSynthesis;
       const utteranceId = ++utteranceIdRef.current;
-
-      const utterance = new SpeechSynthesisUtterance(verses[index].text);
-      utterance.lang = "nl-NL";
-      utterance.rate = speedRef.current;
-
       const selectedVoice = getSelectedDutchVoice();
       const voices = getDutchVoices();
       const dutchVoice =
@@ -81,35 +76,47 @@ export default function ReadAloudPlayer({ verses, onVerseChange }: Props) {
         voices.find((voice) => voice.lang.toLowerCase().startsWith("nl-")) ??
         voices.find((voice) => voice.lang.toLowerCase().startsWith("nl"));
 
-      // Safari op iOS kan stil eindigen wanneer er geen expliciete stem is ingesteld.
-      if (dutchVoice) {
-        utterance.voice = dutchVoice;
-        utterance.lang = dutchVoice.lang;
-      }
+      // iOS/Safari is betrouwbaarder wanneer alle volgende verzen al tijdens
+      // dezelfde tik op de voorleesknop aan de wachtrij worden toegevoegd.
+      // Zo hoeft een volgend vers niet vanuit onend/requestAnimationFrame
+      // opnieuw gestart te worden zonder gebruikersactie.
+      for (let verseIndex = index; verseIndex < verses.length; verseIndex += 1) {
+        const utterance = new SpeechSynthesisUtterance(verses[verseIndex].text);
+        utterance.lang = "nl-NL";
+        utterance.rate = speedRef.current;
 
-      utterance.onend = () => {
-        if (!playingRef.current || utteranceId !== utteranceIdRef.current) return;
-        const nextIndex = index + 1;
-        if (nextIndex >= verses.length) {
+        // Safari op iOS kan stil eindigen wanneer er geen expliciete stem is ingesteld.
+        if (dutchVoice) {
+          utterance.voice = dutchVoice;
+          utterance.lang = dutchVoice.lang;
+        }
+
+        utterance.onstart = () => {
+          if (!playingRef.current || utteranceId !== utteranceIdRef.current) return;
+          currentIndexRef.current = verseIndex;
+          setCurrentIndex(verseIndex);
+        };
+
+        utterance.onend = () => {
+          if (!playingRef.current || utteranceId !== utteranceIdRef.current) return;
+          if (verseIndex >= verses.length - 1) {
+            playingRef.current = false;
+            setIsPlaying(false);
+            setCurrentIndex(0);
+          }
+        };
+
+        utterance.onerror = () => {
+          if (utteranceId !== utteranceIdRef.current) return;
           playingRef.current = false;
           setIsPlaying(false);
-          setCurrentIndex(0);
-          return;
-        }
-        currentIndexRef.current = nextIndex;
-        setCurrentIndex(nextIndex);
-        requestAnimationFrame(() => speakVerse(nextIndex));
-      };
+        };
 
-      utterance.onerror = () => {
-        if (utteranceId !== utteranceIdRef.current) return;
-        playingRef.current = false;
-        setIsPlaying(false);
-      };
+        synth.speak(utterance);
+      }
 
       currentIndexRef.current = index;
       setCurrentIndex(index);
-      synth.speak(utterance);
     },
     [supported, verses],
   );
@@ -150,6 +157,12 @@ export default function ReadAloudPlayer({ verses, onVerseChange }: Props) {
     window.localStorage.setItem("jehovaapp-read-aloud-speed", String(nextSpeed));
     if (isPlaying) {
       const index = currentIndexRef.current;
+      const synth = window.speechSynthesis;
+
+      // Deze wijziging komt uit een gebruikersactie. De bestaande wachtrij
+      // kan daarom veilig worden vervangen met de nieuwe snelheid.
+      utteranceIdRef.current += 1;
+      synth.cancel();
       playingRef.current = true;
       speakVerse(index);
     }
