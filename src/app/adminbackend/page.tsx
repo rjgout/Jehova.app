@@ -16,6 +16,7 @@ import AdminBrandingClient from "@/components/AdminBrandingClient";
 import AdminLeagueSettingsClient from "@/components/AdminLeagueSettingsClient";
 import AdminDeployClient from "@/components/AdminDeployClient";
 import { isDeployAgentConfigured } from "@/lib/deployAgent";
+import packageJson from "../../../package.json";
 
 export default async function AdminBackendPage() {
   const user = await getCurrentUser();
@@ -50,8 +51,16 @@ export default async function AdminBackendPage() {
   return (
     <div className="max-w-4xl mx-auto flex flex-col gap-8">
       <div>
-        <h1 className="text-2xl font-extrabold text-brand-800 dark:text-brand-300">Adminbeheer</h1>
-        <p className="text-slate-500 dark:text-slate-400 text-sm">Alleen zichtbaar voor accounts met adminrechten.</p>
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-extrabold text-brand-800 dark:text-brand-300">Adminbeheer</h1>
+            <p className="text-slate-500 dark:text-slate-400 text-sm">Alleen zichtbaar voor accounts met adminrechten.</p>
+          </div>
+          <div className="text-right text-xs text-slate-400 dark:text-slate-500 shrink-0">
+            <div>v{packageJson.version} · beta</div>
+            <div>build {process.env.NEXT_PUBLIC_BUILD_SHA?.slice(0, 7) ?? "onbekend"}</div>
+          </div>
+        </div>
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
