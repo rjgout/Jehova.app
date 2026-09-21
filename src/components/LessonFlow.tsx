@@ -7,6 +7,7 @@ import { ACHIEVEMENT_DISPLAY } from "@/lib/achievementDisplay";
 import { normalizeAnswer } from "@/lib/exerciseGen";
 import { useActivityStatus } from "@/lib/useActivity";
 import { announceXpChanged } from "@/lib/xpBroadcast";
+import ReadAloudPlayer from "@/components/ReadAloudPlayer";
 
 export type ExerciseType = "FILL_BLANK" | "WORD_BANK" | "TRUE_FALSE" | "MULTIPLE_CHOICE" | "SEQUENCE" | "IMAGE_CHOICE";
 
@@ -223,6 +224,7 @@ function ReaderView({
   const [scale, setScale] = useState(1);
   const [verseState, setVerseState] = useState(verses);
   const [openNoteFor, setOpenNoteFor] = useState<string | null>(null);
+  const [readingVerse, setReadingVerse] = useState<number | null>(null);
 
   useEffect(() => {
     try {
@@ -286,12 +288,21 @@ function ReaderView({
         </div>
       </div>
 
+      <ReadAloudPlayer
+        verses={verseState.map((v) => ({ number: v.number, text: v.text }))}
+        onVerseChange={setReadingVerse}
+      />
+
       <div className="card flex flex-col gap-4" style={{ "--reader-font-scale": scale } as React.CSSProperties}>
         {verseState.map((v) => (
           <div
             key={v.id}
             className={`reader-text flex flex-col gap-2 rounded-xl -mx-2 px-2 py-1 transition-colors ${
-              v.highlighted ? "bg-gold-400/20 dark:bg-gold-400/10" : ""
+              v.highlighted
+                ? "bg-gold-400/20 dark:bg-gold-400/10"
+                : readingVerse === v.number
+                  ? "bg-brand-100/70 dark:bg-brand-900/30 ring-2 ring-brand-300/50 dark:ring-brand-700/50"
+                  : ""
             }`}
           >
             <p>
