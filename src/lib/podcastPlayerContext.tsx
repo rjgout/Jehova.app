@@ -76,6 +76,7 @@ export function PodcastPlayerProvider({ children }: { children: React.ReactNode 
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
+  const [suppressedByOtherPlayer, setSuppressedByOtherPlayer] = useState(false);
 
   const loadedEpisodeIdRef = useRef<string | null>(null);
   const pendingSeekRef = useRef<number | null>(null);
@@ -107,6 +108,7 @@ export function PodcastPlayerProvider({ children }: { children: React.ReactNode 
       if (!audio) return;
       audio.pause();
       setIsPlaying(false);
+      setSuppressedByOtherPlayer(true);
     };
     window.addEventListener("jehovaapp:stop-podcast", stopPodcast);
     return () => window.removeEventListener("jehovaapp:stop-podcast", stopPodcast);
@@ -286,6 +288,7 @@ export function PodcastPlayerProvider({ children }: { children: React.ReactNode 
     setIsPlaying(false);
     setCurrentTime(0);
     setDuration(0);
+    setSuppressedByOtherPlayer(false);
   }, [episode, savePosition]);
 
   return (
