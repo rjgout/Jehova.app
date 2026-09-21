@@ -40,5 +40,25 @@ export async function GET(req: NextRequest) {
   }
 
   const results = matches.filter((m) => m.id !== user.id);
-  return NextResponse.json({ results });
+
+  const resultsWithStatus = await Promise.all(
+    results.map(async (match) => {
+      const friendship = await prisma.friendship.findFirst({
+        where: {
+          OR: [
+            { senderId: user.id, receiverId: match.id },
+            { senderId: match.id, receiverId: user.id },
+          ],
+        },
+        select: { status: true },
+      });
+
+      return {
+        ...match,
+        friendshipStatus: friendship?.status ?? null,
+      };
+    }),
+  );
+
+  return NextResponse.json({ results: resultsWithStatus });
 }
