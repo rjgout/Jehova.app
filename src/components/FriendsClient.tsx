@@ -46,6 +46,15 @@ function initialsFor(handle: string): string {
   return handle.slice(0, 2).toUpperCase();
 }
 
+function FriendTag({ handle, discriminator }: { handle: string; discriminator: string }) {
+  return (
+    <span className="truncate">
+      {handle}
+      <span className="text-slate-400 dark:text-slate-500 font-normal">#{discriminator}</span>
+    </span>
+  );
+}
+
 function Avatar({
   id,
   handle,
@@ -312,7 +321,7 @@ export default function FriendsClient() {
                   </span>
                   <div className="min-w-0">
                     <div className="font-bold flex items-center gap-1.5 dark:text-slate-100">
-                      <span className="truncate">{formatTag(f.handle, f.discriminator)}</span>
+                      <FriendTag handle={f.handle} discriminator={f.discriminator} />
                       {status?.online && (
                         <span className="text-[10px] font-bold uppercase text-green-600 dark:text-green-400 shrink-0">Online</span>
                       )}
