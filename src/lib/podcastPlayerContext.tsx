@@ -97,19 +97,6 @@ export function PodcastPlayerProvider({ children }: { children: React.ReactNode 
   }, []);
 
   useEffect(() => {
-    fetch("/api/podcast-playback")
-      .then((r) => r.json())
-      .then((data) => {
-        if (data.episode && data.episode.id !== getDismissedEpisodeId()) {
-          pendingSeekRef.current = data.positionSeconds ?? 0;
-          setCurrentTime(data.positionSeconds ?? 0);
-          setEpisode(data.episode);
-        }
-      })
-      .catch(() => {});
-  }, []);
-
-  useEffect(() => {
     const audio = audioRef.current;
     if (!audio || !episode || loadedEpisodeIdRef.current === episode.id) return;
     loadedEpisodeIdRef.current = episode.id;
