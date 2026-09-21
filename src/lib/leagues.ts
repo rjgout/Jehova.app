@@ -13,24 +13,24 @@ export const TIER_ORDER: LeagueTier[] = [
 ];
 
 export const TIER_LABELS: Record<LeagueTier, string> = {
-  BRONZE: "Bronzen divisie",
-  SILVER: "Zilveren divisie",
-  GOLD: "Gouden divisie",
-  PLATINUM: "Platina divisie",
-  DIAMOND: "Diamanten divisie",
-  MASTER: "Meesterdivisie",
-  GRANDMASTER: "Grootmeesterdivisie",
-  LEGEND: "Legendarische divisie",
+  BRONZE: "Zaad",
+  SILVER: "Licht",
+  GOLD: "Strijder",
+  PLATINUM: "Rots",
+  DIAMOND: "Erfgenaam",
+  MASTER: "Overvloed",
+  GRANDMASTER: "Zion",
+  LEGEND: "Eeuwigheid",
 };
 
 export const TIER_ICONS: Record<LeagueTier, string> = {
-  BRONZE: "🥉",
-  SILVER: "🥈",
-  GOLD: "🥇",
-  PLATINUM: "💠",
-  DIAMOND: "💎",
-  MASTER: "🎖️",
-  GRANDMASTER: "👑",
+  BRONZE: "🌱",
+  SILVER: "🔥",
+  GOLD: "🛡️",
+  PLATINUM: "🪨",
+  DIAMOND: "👑",
+  MASTER: "⭐",
+  GRANDMASTER: "🏛️",
   LEGEND: "✨",
 };
 
