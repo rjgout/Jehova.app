@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { getDutchVoices, getSelectedDutchVoice } from "@/lib/readAloud";
 
 interface ReadAloudVerse {
   number: number;
@@ -61,13 +62,13 @@ export default function ReadAloudPlayer({ verses, onVerseChange }: Props) {
       utterance.lang = "nl-NL";
       utterance.rate = speedRef.current;
 
-      const voices = synth.getVoices();
+      const selectedVoice = getSelectedDutchVoice();
+      const voices = getDutchVoices();
       const dutchVoice =
+        selectedVoice ??
         voices.find((voice) => voice.lang.toLowerCase() === "nl-nl") ??
         voices.find((voice) => voice.lang.toLowerCase().startsWith("nl-")) ??
-        voices.find((voice) => voice.lang.toLowerCase().startsWith("nl")) ??
-        voices.find((voice) => voice.default) ??
-        voices[0];
+        voices.find((voice) => voice.lang.toLowerCase().startsWith("nl"));
 
       // Safari op iOS kan stil eindigen wanneer er geen expliciete stem is ingesteld.
       if (dutchVoice) {

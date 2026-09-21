@@ -9,6 +9,7 @@ import { formatTag, firstGrapheme, isSingleEmoji } from "@/lib/handle";
 import { enableBrowserPush, disableBrowserPush, isPushSupported } from "@/lib/pushClient";
 import { getSocket } from "@/lib/socketClient";
 import ThemeToggle from "@/components/ThemeToggle";
+import { getDutchVoices, saveSelectedDutchVoice } from "@/lib/readAloud";
 
 interface AchievementView {
   slug: string;
@@ -83,7 +84,26 @@ export default function ProfileClient() {
   const [avatarInput, setAvatarInput] = useState("");
   const [savingAvatarEmoji, setSavingAvatarEmoji] = useState(false);
   const [avatarError, setAvatarError] = useState<string | null>(null);
+  const [readAloudVoices, setReadAloudVoices] = useState<SpeechSynthesisVoice[]>([]);
+  const [selectedReadAloudVoice, setSelectedReadAloudVoice] = useState("");
+  const [testingReadAloudVoice, setTestingReadAloudVoice] = useState(false);
   const router = useRouter();
+
+  useEffect(() => {
+    if (typeof window === "undefined" || !("speechSynthesis" in window)) return;
+
+    const loadVoices = () => {
+      setReadAloudVoices(getDutchVoices());
+      setSelectedReadAloudVoice(window.localStorage.getItem("jehovaapp-read-aloud-voice") ?? "");
+    };
+
+    loadVoices();
+    window.speechSynthesis.addEventListener?.("voiceschanged", loadVoices);
+
+    return () => {
+      window.speechSynthesis.removeEventListener?.("voiceschanged", loadVoices);
+    };
+  }, []);
 
   useEffect(() => {
     fetch("/api/profile")
@@ -276,6 +296,32 @@ export default function ProfileClient() {
       return;
     }
     saveAvatarEmoji(avatarInput.trim());
+  }
+
+  function changeReadAloudVoice(voiceUri: string) {
+    setSelectedReadAloudVoice(voiceUri);
+    saveSelectedDutchVoice(voiceUri || null);
+  }
+
+  function testReadAloudVoice() {
+    if (!("speechSynthesis" in window) || readAloudVoices.length === 0) return;
+
+    const synth = window.speechSynthesis;
+    synth.cancel();
+
+    const voice = readAloudVoices.find((item) => item.voiceURI === selectedReadAloudVoice) ?? readAloudVoices[0];
+    const utterance = new SpeechSynthesisUtterance(
+      "Dit is een voorbeeld van de stem die wordt gebruikt bij het voorlezen."
+    );
+    utterance.voice = voice;
+    utterance.lang = voice.lang;
+    utterance.rate = 1;
+    utterance.onstart = () => setTestingReadAloudVoice(true);
+    utterance.onend = () => setTestingReadAloudVoice(false);
+    utterance.onerror = () => setTestingReadAloudVoice(false);
+
+    setTestingReadAloudVoice(true);
+    synth.speak(utterance);
   }
 
   async function logout() {
@@ -532,6 +578,51 @@ export default function ProfileClient() {
             Rondleiding opnieuw bekijken
           </Link>
         </div>
+      </section>
+
+      <section className="card flex flex-col gap-3">
+        <h2 className="font-extrabold text-lg dark:text-slate-100">Voorlezen</h2>
+        <p className="text-sm text-slate-500 dark:text-slate-400">
+          Kies hier de Nederlandse stem die op dit apparaat wordt gebruikt voor het voorlezen van hoofdstukken.
+          De beschikbare stemmen komen van je apparaat.
+        </p>
+
+        {readAloudVoices.length > 0 ? (
+          <>
+            <label className="flex flex-col gap-1.5">
+              <span className="text-sm font-semibold dark:text-slate-200">Nederlandse stem</span>
+              <select
+                className="input"
+                value={selectedReadAloudVoice}
+                onChange={(e) => changeReadAloudVoice(e.target.value)}
+              >
+                <option value="">Automatisch</option>
+                {readAloudVoices.map((voice) => (
+                  <option key={voice.voiceURI} value={voice.voiceURI}>
+                    {voice.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <div className="flex items-center gap-3">
+              <button
+                className="btn-secondary !px-3 !py-1.5"
+                disabled={testingReadAloudVoice}
+                onClick={testReadAloudVoice}
+              >
+                {testingReadAloudVoice ? "Voorbeeld wordt afgespeeld..." : "🔊 Stem beluisteren"}
+              </button>
+              <span className="text-xs text-slate-400 dark:text-slate-500">
+                Je keuze wordt op dit apparaat bewaard.
+              </span>
+            </div>
+          </>
+        ) : (
+          <p className="text-sm text-slate-400 dark:text-slate-500">
+            Nog geen Nederlandse stemmen beschikbaar. Probeer de pagina opnieuw te laden.
+          </p>
+        )}
       </section>
 
       <section className="card flex flex-col gap-3">
