@@ -1319,6 +1319,7 @@ model WordGame {
   finishedAt DateTime?
 
   @@unique([userId, dayKey])
+  @@index([dayKey, status, finishedAt])
 }
 
 // Het woord zelf komt uit een deterministische functie van de dayKey (zie

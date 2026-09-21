@@ -18,6 +18,14 @@ interface VerseMatch {
   text: string;
 }
 
+interface LeaderboardEntry {
+  rank: number;
+  displayName: string;
+  handle: string;
+  discriminator: string;
+  finishedAt: string;
+}
+
 interface GameView {
   dayKey: string;
   wordLength: number;
@@ -27,6 +35,7 @@ interface GameView {
   xpEarned: number;
   word: string | null;
   verses: VerseMatch[];
+  leaderboard: LeaderboardEntry[];
 }
 
 const TILE_STYLES: Record<LetterState, string> = {
@@ -103,6 +112,14 @@ export default function WordGameClient() {
   const finished = game.status !== "IN_PROGRESS";
   const rows: GuessView[] = [...game.guesses];
   const emptyRows = game.maxGuesses - rows.length - (finished ? 0 : 1);
+
+  function formatFinishedAt(value: string): string {
+    return new Intl.DateTimeFormat("nl-NL", {
+      timeZone: "Europe/Amsterdam",
+      hour: "2-digit",
+      minute: "2-digit",
+    }).format(new Date(value));
+  }
 
   return (
     <div className="max-w-md mx-auto flex flex-col gap-6">
@@ -215,6 +232,40 @@ export default function WordGameClient() {
           </div>
         </div>
       )}
+
+      <div className="card flex flex-col gap-3">
+        <div>
+          <h2 className="font-extrabold dark:text-slate-100">🏆 Snelste spelers van vandaag</h2>
+          <p className="text-sm text-slate-400 dark:text-slate-500">
+            De eerste tien die het woord goed hebben geraden, op volgorde van aankomst.
+          </p>
+        </div>
+
+        {game.leaderboard.length > 0 ? (
+          <div className="flex flex-col divide-y divide-slate-100 dark:divide-slate-700">
+            {game.leaderboard.map((entry) => (
+              <div key={entry.rank} className="flex items-center gap-3 py-2 first:pt-0 last:pb-0">
+                <span className="w-7 text-center font-extrabold text-slate-500 dark:text-slate-400">
+                  {entry.rank <= 3 ? ["🥇", "🥈", "🥉"][entry.rank - 1] : entry.rank}
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="font-bold truncate dark:text-slate-100">{entry.displayName}</p>
+                  <p className="text-xs text-slate-400 dark:text-slate-500 truncate">
+                    {entry.handle}#{entry.discriminator}
+                  </p>
+                </div>
+                <time className="text-sm font-bold text-slate-500 dark:text-slate-400 shrink-0">
+                  {formatFinishedAt(entry.finishedAt)}
+                </time>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-sm text-slate-400 dark:text-slate-500">
+            Nog niemand heeft het woord van vandaag gehaald.
+          </p>
+        )}
+      </div>
     </div>
   );
 }
