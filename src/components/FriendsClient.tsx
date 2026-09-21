@@ -84,6 +84,7 @@ export default function FriendsClient() {
   const [message, setMessage] = useState<string | null>(null);
   const [sentTo, setSentTo] = useState<Set<string>>(new Set());
   const [giftedTo, setGiftedTo] = useState<string | null>(null);
+  const [pendingFreeze, setPendingFreeze] = useState<FriendUser | null>(null);
 
   async function load() {
     const res = await fetch("/api/friends");
@@ -345,7 +346,7 @@ export default function FriendsClient() {
                 </div>
                 <button
                   className="btn-ice w-full !py-2"
-                  onClick={() => giftFreeze(f.id)}
+                  onClick={() => setPendingFreeze(f)}
                   disabled={giftedTo === f.id}
                 >
                   {giftedTo === f.id ? "Verstuurd!" : "🧊 Geef freeze"}
@@ -355,6 +356,38 @@ export default function FriendsClient() {
           })}
         </div>
       </section>
+      {pendingFreeze && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="freeze-confirm-title"
+        >
+          <div className="card w-full max-w-sm !p-5 shadow-xl">
+            <h2 id="freeze-confirm-title" className="text-lg font-extrabold text-slate-800 dark:text-slate-100">
+              Freeze geven?
+            </h2>
+            <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
+              Weet je zeker dat je een streak freeze wilt geven aan{" "}
+              <span className="font-bold">{formatTag(pendingFreeze.handle, pendingFreeze.discriminator)}</span>?
+            </p>
+            <div className="mt-5 flex justify-end gap-2">
+              <button className="btn-secondary !px-3 !py-2" onClick={() => setPendingFreeze(null)}>
+                Annuleren
+              </button>
+              <button
+                className="btn-ice !px-3 !py-2"
+                onClick={async () => {
+                  await giftFreeze(pendingFreeze.id);
+                  setPendingFreeze(null);
+                }}
+              >
+                Ja, geef freeze
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
