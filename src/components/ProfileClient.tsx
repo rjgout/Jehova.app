@@ -87,6 +87,7 @@ export default function ProfileClient() {
   const [readAloudVoices, setReadAloudVoices] = useState<SpeechSynthesisVoice[]>([]);
   const [selectedReadAloudVoice, setSelectedReadAloudVoice] = useState("");
   const [testingReadAloudVoice, setTestingReadAloudVoice] = useState(false);
+  const [readAloudSpeed, setReadAloudSpeed] = useState(1);
   const router = useRouter();
 
   useEffect(() => {
@@ -98,6 +99,8 @@ export default function ProfileClient() {
     };
 
     loadVoices();
+    const savedSpeed = window.localStorage.getItem("jehovaapp-read-aloud-speed");
+    if (savedSpeed) setReadAloudSpeed(Number(savedSpeed));
     window.speechSynthesis.addEventListener?.("voiceschanged", loadVoices);
 
     return () => {
@@ -298,6 +301,11 @@ export default function ProfileClient() {
     saveAvatarEmoji(avatarInput.trim());
   }
 
+  function changeReadAloudSpeed(nextSpeed: number) {
+    setReadAloudSpeed(nextSpeed);
+    window.localStorage.setItem("jehovaapp-read-aloud-speed", String(nextSpeed));
+  }
+
   function changeReadAloudVoice(voiceUri: string) {
     setSelectedReadAloudVoice(voiceUri);
     saveSelectedDutchVoice(voiceUri || null);
@@ -315,7 +323,7 @@ export default function ProfileClient() {
     );
     utterance.voice = voice;
     utterance.lang = voice.lang;
-    utterance.rate = 1;
+    utterance.rate = readAloudSpeed;
     utterance.onstart = () => setTestingReadAloudVoice(true);
     utterance.onend = () => setTestingReadAloudVoice(false);
     utterance.onerror = () => setTestingReadAloudVoice(false);
@@ -605,7 +613,22 @@ export default function ProfileClient() {
               </select>
             </label>
 
-            <div className="flex items-center gap-3">
+            <div className="flex flex-col gap-2">
+              <label className="flex items-center gap-3">
+                <span className="text-sm font-semibold dark:text-slate-200">Voorleessnelheid</span>
+                <select
+                  className="input !w-auto"
+                  value={readAloudSpeed}
+                  onChange={(e) => changeReadAloudSpeed(Number(e.target.value))}
+                >
+                  {[0.75, 1, 1.25, 1.5, 2].map((value) => (
+                    <option key={value} value={value}>
+                      {value}×
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <div className="flex items-center gap-3">
               <button
                 className="btn-secondary !px-3 !py-1.5"
                 disabled={testingReadAloudVoice}
@@ -616,6 +639,7 @@ export default function ProfileClient() {
               <span className="text-xs text-slate-400 dark:text-slate-500">
                 Je keuze wordt op dit apparaat bewaard.
               </span>
+              </div>
             </div>
           </>
         ) : (
