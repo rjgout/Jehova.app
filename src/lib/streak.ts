@@ -93,10 +93,12 @@ async function applyDailyStreak(tx: Tx, userId: string): Promise<DailyStreakResu
       });
     } else {
       // Niet genoeg freezes om ALLE gemiste dagen te overbruggen: er blijft
-      // dan sowieso minstens één echte gemiste dag over, dus breekt de reeks
-      // — en worden er ook geen freezes "voor niets" verbruikt.
+      // dan sowieso minstens één echte gemiste dag over, dus breekt de reeks.
+      // De nieuwe studieactiviteit van vandaag begint bewust nog geen nieuwe
+      // reeks: de teller blijft 0. De volgende aaneengesloten studiedag maakt
+      // daar weer 1 van. Er worden ook geen freezes "voor niets" verbruikt.
       streakBroken = currentStreak > 0;
-      currentStreak = 1;
+      currentStreak = 0;
     }
   }
   const longestStreak = Math.max(user.longestStreak, currentStreak);
