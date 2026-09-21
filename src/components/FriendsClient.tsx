@@ -85,6 +85,7 @@ export default function FriendsClient() {
   const [sentTo, setSentTo] = useState<Set<string>>(new Set());
   const [giftedTo, setGiftedTo] = useState<string | null>(null);
   const [pendingFreeze, setPendingFreeze] = useState<FriendUser | null>(null);
+  const [confirmingFreeze, setConfirmingFreeze] = useState(false);
 
   async function load() {
     const res = await fetch("/api/friends");
@@ -377,12 +378,15 @@ export default function FriendsClient() {
               </button>
               <button
                 className="btn-ice !px-3 !py-2"
+                disabled={confirmingFreeze}
                 onClick={async () => {
+                  setConfirmingFreeze(true);
                   await giftFreeze(pendingFreeze.id);
+                  setConfirmingFreeze(false);
                   setPendingFreeze(null);
                 }}
               >
-                Ja, geef freeze
+                {confirmingFreeze ? "Versturen..." : "Ja, geef freeze"}
               </button>
             </div>
           </div>
