@@ -24,6 +24,8 @@ model User {
   searchableByEmail  Boolean   @default(false)
   displayName        String
   passwordHash       String
+  // Verhoogd bij een wachtwoordreset/-wijziging zodat alle eerder uitgegeven sessietokens direct ongeldig worden.
+  sessionVersion     Int       @default(0)
   // De allereerste ECHTE registratie op een verse installatie wordt
   // automatisch admin (zie /api/auth/register); daarna kan een admin dit
   // bij andere gebruikers aan/uit zetten via /adminbackend.

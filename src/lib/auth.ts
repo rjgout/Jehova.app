@@ -1,5 +1,6 @@
 import bcrypt from "bcryptjs";
 import { SignJWT, jwtVerify } from "jose";
+import { prisma } from "@/lib/db";
 
 export const SESSION_COOKIE = "bvm_session";
 const SESSION_MAX_AGE_SECONDS = 60 * 60 * 24 * 30; // 30 dagen
@@ -21,7 +22,13 @@ export async function verifyPassword(password: string, hash: string): Promise<bo
 }
 
 export async function createSessionToken(userId: string): Promise<string> {
-  return new SignJWT({ userId })
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { sessionVersion: true },
+  });
+  if (!user) throw new Error("Gebruiker niet gevonden.");
+
+  return new SignJWT({ userId, sessionVersion: user.sessionVersion })
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
     .setExpirationTime(`${SESSION_MAX_AGE_SECONDS}s`)
@@ -32,6 +39,14 @@ export async function verifySessionToken(token: string): Promise<{ userId: strin
   try {
     const { payload } = await jwtVerify(token, getSecretKey());
     if (typeof payload.userId !== "string") return null;
+    if (typeof payload.sessionVersion !== "number") return null;
+
+    const user = await prisma.user.findUnique({
+      where: { id: payload.userId },
+      select: { sessionVersion: true },
+    });
+    if (!user || user.sessionVersion !== payload.sessionVersion) return null;
+
     return { userId: payload.userId };
   } catch {
     return null;
