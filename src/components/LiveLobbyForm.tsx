@@ -25,6 +25,7 @@ interface GameSettings {
 interface Props {
   settings: GameSettings;
   isAdmin: boolean;
+  allowedGameKeys: string[];
 }
 
 interface GameEntry {
@@ -97,13 +98,13 @@ const GAMES: GameEntry[] = [
   },
 ];
 
-export default function LiveLobbyForm({ settings, isAdmin }: Props) {
+export default function LiveLobbyForm({ settings, isAdmin, allowedGameKeys }: Props) {
   const router = useRouter();
   const [chapters, setChapters] = useState<ChapterOption[]>([]);
   const [chapterId, setChapterId] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
-  const [games, setGames] = useState<GameEntry[]>(() => GAMES.filter((g) => settings[g.enabledKey] || isAdmin));
+  const [games, setGames] = useState<GameEntry[]>(() => GAMES.filter((g) => allowedGameKeys.includes(g.id) && (settings[g.enabledKey] || isAdmin)));
 
   useEffect(() => {
     fetch("/api/chapters")
@@ -115,10 +116,9 @@ export default function LiveLobbyForm({ settings, isAdmin }: Props) {
   }, []);
 
   useEffect(() => {
-    const visible = GAMES.filter((g) => settings[g.enabledKey] || isAdmin);
+    const visible = GAMES.filter((g) => allowedGameKeys.includes(g.id) && (settings[g.enabledKey] || isAdmin));
     fetchListOrder("games").then((order) => setGames(applyPersonalOrder(visible, order)));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [allowedGameKeys, isAdmin, settings]);
 
   function reorderGames(newGames: GameEntry[]) {
     setGames(newGames);
