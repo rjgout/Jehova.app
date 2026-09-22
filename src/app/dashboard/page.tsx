@@ -23,7 +23,7 @@ export default async function DashboardPage() {
     pendingFriendRequests,
   ] = await Promise.all([
     getTextOfTheDay(),
-    prisma.chapter.count({ where: { book: { name: "Boek van Mormon" } } }),
+    prisma.chapter.count(),
     prisma.friendship.findMany({
       where: { status: "ACCEPTED", OR: [{ senderId: user.id }, { receiverId: user.id }] },
       select: { senderId: true, receiverId: true, sender: { select: { id: true, handle: true, shareOnlineStatus: true, onlineSocketCount: true } }, receiver: { select: { id: true, handle: true, shareOnlineStatus: true, onlineSocketCount: true } } },
@@ -45,7 +45,7 @@ export default async function DashboardPage() {
 
   const total = bomChapters;
   const completed = await prisma.chapterProgress.count({
-    where: { userId: user.id, completed: true, chapter: { book: { name: "Boek van Mormon" } } },
+    where: { userId: user.id, completed: true },
   });
   const progressPercent = total > 0 ? Math.round((completed / total) * 100) : 0;
 

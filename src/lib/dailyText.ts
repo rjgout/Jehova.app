@@ -8,9 +8,16 @@ export interface DailyText {
   text: string;
 }
 
+/**
+ * Kies elke dag deterministisch één vers uit de beschikbare schrifttekst.
+ *
+ * De Book-tabel bevat de afzonderlijke boeken van het Boek van Mormon
+ * (bijvoorbeeld "1 Nephi", "Alma" en "Moroni"), niet één boek met de naam
+ * "Boek van Mormon". Daarom selecteren we alle boeken en niet op een
+ * specifieke naam.
+ */
 export async function getTextOfTheDay(date = new Date()): Promise<DailyText | null> {
   const books = await prisma.book.findMany({
-    where: { name: "Boek van Mormon" },
     orderBy: { order: "asc" },
     select: {
       name: true,
@@ -23,6 +30,7 @@ export async function getTextOfTheDay(date = new Date()): Promise<DailyText | nu
       },
     },
   });
+
   const verses = books.flatMap((book) =>
     book.chapters.flatMap((chapter) =>
       chapter.verses.map((verse) => ({
@@ -33,6 +41,7 @@ export async function getTextOfTheDay(date = new Date()): Promise<DailyText | nu
       }))
     )
   );
+
   if (verses.length === 0) return null;
 
   const amsterdam = amsterdamNow(date);
