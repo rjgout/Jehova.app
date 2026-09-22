@@ -46,6 +46,8 @@ interface Result {
   comboMultiplier: number;
   nextLessonId: string | null;
   alreadyCompleted: boolean;
+  nextXpEarned: number;
+  nextComboMultiplier: number;
 }
 
 type Phase = "read" | "exercises" | "summary";
@@ -168,13 +170,13 @@ export default function ReadingLessonFlow({
             <p className="text-gold-600 dark:text-gold-400 font-extrabold text-lg">
               +{result.xpEarned} XP
             </p>
-            {result.comboCount > 1 && (
+            {effectiveNextLessonId && (
               <div className="rounded-2xl bg-gold-50 dark:bg-slate-700 px-4 py-3 w-full">
                 <p className="font-extrabold text-gold-700 dark:text-gold-300">
-                  🔥 Combo ×{result.comboMultiplier}
+                  🔥 Ga je door?
                 </p>
                 <p className="text-sm text-gold-600 dark:text-gold-400">
-                  Ga meteen door voor nog meer XP.
+                  De volgende les levert <strong>+{result.nextXpEarned} XP</strong> op (×{result.nextComboMultiplier}).
                 </p>
               </div>
             )}
@@ -215,14 +217,15 @@ export default function ReadingLessonFlow({
           </div>
         )}
 
-        <div className="flex gap-3 mt-4">
-          {result.readingLessonCompleted && effectiveNextLessonId ? (
+        <div className="flex flex-wrap justify-center gap-3 mt-4">
+          {result.readingLessonCompleted && effectiveNextLessonId && (
             <Link href={`/reading-lesson/${effectiveNextLessonId}`} className="btn-primary">
               Volgende les → 🔥
             </Link>
-          ) : (
-            <Link href={`/courses`} className="btn-primary">
-              Terug naar cursussen
+          )}
+          {result.readingLessonCompleted && (
+            <Link href={`/courses`} className="btn-secondary">
+              Stoppen
             </Link>
           )}
           {!result.readingLessonCompleted && (
