@@ -8,7 +8,7 @@ import { applyPersonalOrder, fetchListOrder, saveListOrder } from "@/lib/listOrd
 interface CourseView {
   id: string;
   slug: string;
-  type: "FRONT_TO_BACK" | "FREE_CHOICE" | "BY_BOOK" | "PODCAST" | "KIDS" | "INTRO";
+  type: "FRONT_TO_BACK" | "FREE_CHOICE" | "BY_BOOK" | "PODCAST" | "KIDS" | "INTRO" | "READING_LESSONS";
   name: string;
   description: string | null;
   totalChapters: number;
@@ -29,6 +29,7 @@ interface CatalogCourseView {
 
 const TYPE_LABELS: Record<CourseView["type"], string> = {
   INTRO: "Introductie",
+  READING_LESSONS: "Kleine leeslessen",
   FRONT_TO_BACK: "Van voor naar achter",
   FREE_CHOICE: "Vrije keuze",
   BY_BOOK: "Per boek",
