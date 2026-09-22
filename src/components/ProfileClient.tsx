@@ -238,7 +238,7 @@ export default function ProfileClient() {
   }
 
   async function toggleCategory(
-    field: "notifyDailyReminder" | "notifySocial" | "notifyAchievements" | "notifyWordGame" | "changelogEnabled"
+    field: "notifyDailyReminder" | "notifyDailyText" | "notifySocial" | "notifyAchievements" | "notifyWordGame" | "changelogEnabled"
   ) {
     if (!data) return;
     const next = !data[field];
