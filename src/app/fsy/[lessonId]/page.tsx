@@ -23,7 +23,7 @@ export default async function FsyLessonPage({ params }: { params: Promise<{ less
     },
   });
 
-  if (!lesson || lesson.status !== "PUBLISHED" || !lesson.publishedContent) notFound();
+  if (!lesson || !lesson.publishedContent) notFound();
 
   return (
     <FsyLessonView
