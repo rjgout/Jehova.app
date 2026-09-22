@@ -24,13 +24,6 @@ interface ScrapedPage {
   images: FsyImage[];
 }
 
-interface DiscoveredLesson {
-  url: string;
-  month: number;
-  year: number;
-  slug: string;
-  order: number;
-}
 
 const MONTHS = Array.from({ length: 12 }, (_, index) => index + 1);
 
