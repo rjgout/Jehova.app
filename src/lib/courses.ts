@@ -115,6 +115,13 @@ async function syncReadingLessons(
  * functie.
  */
 export async function syncCourses(db: PrismaClient): Promise<void> {
+  const defaultCollection = await db.contentCollection.findFirst({
+    where: { enabled: true },
+    orderBy: { order: "asc" },
+    select: { id: true },
+  });
+  if (!defaultCollection) throw new Error("Geen contentcollectie beschikbaar.");
+
   const books = await db.book.findMany({
     orderBy: { order: "asc" },
     include: { chapters: { orderBy: { order: "asc" } } },
@@ -134,18 +141,20 @@ export async function syncCourses(db: PrismaClient): Promise<void> {
       name: "Ontdek het Boek van Mormon",
       description: "Een korte introductiecursus voor wie nog nooit het Boek van Mormon heeft gelezen.",
       order: -1,
+      contentCollectionId: defaultCollection.id,
     },
   });
 
   const freeChoice = await db.course.upsert({
     where: { slug: FREE_CHOICE_SLUG },
-    update: { name: "Vrije keuze", order: 0 },
+    update: { name: "Vrije keuze", order: 0, contentCollectionId: defaultCollection.id },
     create: {
       slug: FREE_CHOICE_SLUG,
       type: "FREE_CHOICE",
       name: "Vrije keuze",
       description: "Kies zelf welk hoofdstuk je wil doen, in elke volgorde.",
       order: 0,
+      contentCollectionId: defaultCollection.id,
     },
   });
   // Zelfde volledige hoofdstuklijst als "van voor naar achter" (alleen de
@@ -169,6 +178,7 @@ export async function syncCourses(db: PrismaClient): Promise<void> {
       name: "Lezen van voor naar achter",
       description: "Lees het hele Boek van Mormon in kleine, behapbare lessen van ongeveer 5 tot 10 verzen.",
       order: 2,
+      contentCollectionId: defaultCollection.id,
     },
     create: {
       slug: READING_LESSONS_SLUG,
@@ -176,19 +186,21 @@ export async function syncCourses(db: PrismaClient): Promise<void> {
       name: "Lezen van voor naar achter",
       description: "Lees het hele Boek van Mormon in kleine, behapbare lessen van ongeveer 5 tot 10 verzen.",
       order: 2,
+      contentCollectionId: defaultCollection.id,
     },
   });
   await syncReadingLessons(db, readingLessons.id, books);
 
   const frontToBack = await db.course.upsert({
     where: { slug: FRONT_TO_BACK_SLUG },
-    update: { name: "Van voor naar achter", order: 1 },
+    update: { name: "Van voor naar achter", order: 1, contentCollectionId: defaultCollection.id },
     create: {
       slug: FRONT_TO_BACK_SLUG,
       type: "FRONT_TO_BACK",
       name: "Van voor naar achter",
       description: "Eén vaste volgorde door alle boeken heen, hoofdstuk na hoofdstuk.",
       order: 1,
+      contentCollectionId: defaultCollection.id,
     },
   });
   await db.courseChapter.deleteMany({ where: { courseId: frontToBack.id } });
@@ -206,8 +218,8 @@ export async function syncCourses(db: PrismaClient): Promise<void> {
     const slug = `boek-${book.slug}`;
     const course = await db.course.upsert({
       where: { slug },
-      update: { name: book.name, bookId: book.id, order: 3 + i },
-      create: { slug, type: "BY_BOOK", name: book.name, bookId: book.id, order: 3 + i },
+      update: { name: book.name, bookId: book.id, order: 3 + i, contentCollectionId: book.contentCollectionId },
+      create: { slug, type: "BY_BOOK", name: book.name, bookId: book.id, order: 3 + i, contentCollectionId: book.contentCollectionId },
     });
     await db.courseChapter.deleteMany({ where: { courseId: course.id } });
     const rows = book.chapters.map((chapter, order) => ({ courseId: course.id, chapterId: chapter.id, order }));
@@ -221,13 +233,14 @@ export async function syncCourses(db: PrismaClient): Promise<void> {
   // allemaal bij.
   await db.course.upsert({
     where: { slug: PODCAST_SLUG },
-    update: { name: "Geloof je dat ook? podcast", order: 3 + books.length },
+    update: { name: "Geloof je dat ook? podcast", order: 3 + books.length, contentCollectionId: defaultCollection.id },
     create: {
       slug: PODCAST_SLUG,
       type: "PODCAST",
       name: "Geloof je dat ook? podcast",
       description: "Elke aflevering: vragen over de aflevering zelf, en de brug naar het Boek van Mormon.",
       order: 2 + books.length,
+      contentCollectionId: defaultCollection.id,
     },
   });
 
@@ -235,13 +248,14 @@ export async function syncCourses(db: PrismaClient): Promise<void> {
   // rijen (zie prisma/importKids.ts) horen er impliciet allemaal bij.
   await db.course.upsert({
     where: { slug: KIDS_SLUG },
-    update: { name: "Verhalen uit het Boek van Mormon (voor kinderen)", order: 4 + books.length },
+    update: { name: "Verhalen uit het Boek van Mormon (voor kinderen)", order: 4 + books.length, contentCollectionId: defaultCollection.id },
     create: {
       slug: KIDS_SLUG,
       type: "KIDS",
       name: "Verhalen uit het Boek van Mormon (voor kinderen)",
       description: "Korte, geïllustreerde verhalen met een plaatjesspel en simpele vraagjes — leuk voor de kleintjes.",
       order: 3 + books.length,
+      contentCollectionId: defaultCollection.id,
     },
   });
 }
