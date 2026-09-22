@@ -322,6 +322,7 @@ export async function syncFsyContent(
             title: page.title,
             content: JSON.stringify(page.blocks),
             images: JSON.stringify(page.images),
+            sourceUrl: url,
             sourceHash: hash,
             lastScrapedAt: new Date(),
             order,
