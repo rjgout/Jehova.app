@@ -109,7 +109,6 @@ export default function ScrabbleBoardClient({ gameId }: { gameId: string }) {
   const [message, setMessage] = useState<string | null>(null);
   const [hintIndices, setHintIndices] = useState<number[]>([]);
   const [hintSecondsLeft, setHintSecondsLeft] = useState(0);
-  const [showRules, setShowRules] = useState(false);
 
   // `resetLocalState` staat standaard aan (initieel laden, en na je eigen
   // zet/wissel/pas — dan IS de lokale selectie/plaatsing achterhaald). De
@@ -309,15 +308,6 @@ export default function ScrabbleBoardClient({ gameId }: { gameId: string }) {
               Zak: {game.bagCount} · Tegenstander: {game.opponentRackCount} letters
             </div>
           </div>
-          <button
-            type="button"
-            onClick={() => setShowRules(true)}
-            className="w-9 h-9 rounded-full border border-slate-300 dark:border-slate-600 text-slate-500 dark:text-slate-300 font-extrabold flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-800"
-            aria-label="Speluitleg openen"
-            title="Speluitleg"
-          >
-            i
-          </button>
         </div>
       </div>
 
@@ -473,75 +463,7 @@ export default function ScrabbleBoardClient({ gameId }: { gameId: string }) {
         </div>
       )}
 
-      {showRules && (
-        <div
-          className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4"
-          role="presentation"
-          onClick={() => setShowRules(false)}
-        >
-          <div
-            className="card max-w-lg w-full max-h-[85vh] overflow-y-auto relative"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="scrabble-rules-title"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <button
-              type="button"
-              onClick={() => setShowRules(false)}
-              className="absolute top-3 right-3 w-9 h-9 rounded-full text-slate-500 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 text-xl"
-              aria-label="Speluitleg sluiten"
-            >
-              ×
-            </button>
-
-            <h2 id="scrabble-rules-title" className="text-xl font-extrabold text-brand-800 dark:text-brand-300 pr-10">
-              Speluitleg
-            </h2>
-
-            <div className="mt-4 space-y-4 text-sm text-slate-700 dark:text-slate-200">
-              <section>
-                <h3 className="font-extrabold mb-1">Doel</h3>
-                <p>Maak geldige woorden en verzamel meer punten dan je tegenstander.</p>
-              </section>
-
-              <section>
-                <h3 className="font-extrabold mb-1">Je beurt</h3>
-                <ul className="list-disc pl-5 space-y-1">
-                  <li>Leg één woord op het bord. Nieuwe stenen moeten aansluiten op het bestaande woordveld.</li>
-                  <li>Je kunt ook letters wisselen, als er nog minstens 7 stenen in de zak zitten.</li>
-                  <li>Of je kunt passen.</li>
-                </ul>
-              </section>
-
-              <section>
-                <h3 className="font-extrabold mb-1">Punten</h3>
-                <ul className="list-disc pl-5 space-y-1">
-                  <li>Elke letter heeft een eigen puntenwaarde.</li>
-                  <li>2L en 3L verdubbelen of verdrievoudigen de letterwaarde.</li>
-                  <li>2W en 3W verdubbelen of verdrievoudigen de woordscore.</li>
-                  <li>Een bonusvak telt alleen mee wanneer er voor het eerst een steen op wordt gelegd.</li>
-                </ul>
-              </section>
-
-              <section>
-                <h3 className="font-extrabold mb-1">Wanneer is het spel afgelopen?</h3>
-                <ul className="list-disc pl-5 space-y-1">
-                  <li><strong>Zak leeg + een speler heeft geen stenen meer:</strong> de resterende letterpunten van de tegenstander worden bij de speler die uit is opgeteld en bij de tegenstander afgetrokken.</li>
-                  <li><strong>6 opeenvolgende beurten zonder woord:</strong> passen en letters wisselen tellen hierbij mee. De hoogste score wint.</li>
-                  <li><strong>Opgeven:</strong> de tegenstander wint direct.</li>
-                </ul>
-                <p className="mt-2 font-semibold">De zak hoeft dus niet alleen leeg te zijn; er moet bij de normale eindconditie ook een speler zijn die zijn rek leeg speelt.</p>
-              </section>
-
-              <section>
-                <h3 className="font-extrabold mb-1">Winnaar</h3>
-                <p>Wie na het beëindigen van het spel de hoogste eindscore heeft, wint. Bij een gelijke score is het gelijkspel.</p>
-              </section>
-            </div>
-          </div>
-        </div>
-      )}
+      
 
       {game.moves.length > 0 && (
         <section>

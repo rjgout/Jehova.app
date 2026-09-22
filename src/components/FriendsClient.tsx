@@ -20,7 +20,7 @@ interface FriendStatus {
 }
 
 interface FriendsData {
-  friends: FriendUser[];
+  friends: { friendshipId: string; user: FriendUser }[];
   incoming: { friendshipId: string; from: FriendUser }[];
   outgoing: { friendshipId: string; to: FriendUser }[];
   statusByUserId: Record<string, FriendStatus>;
@@ -165,6 +165,14 @@ export default function FriendsClient() {
     load();
   }
 
+  async function removeFriendship(friendshipId: string, label: string) {
+    if (!window.confirm(`${label} verwijderen?\\n\\nWeet je het zeker?`)) return;
+    const res = await fetch(`/api/friends/${friendshipId}`, { method: "DELETE" });
+    const body = await res.json().catch(() => ({}));
+    if (!res.ok) { setMessage(body.error ?? "Kon dit niet verwijderen."); return; }
+    load();
+  }
+
   async function giftFreeze(toUserId: string) {
     setMessage(null);
     const res = await fetch("/api/freezes/gift", {
@@ -300,10 +308,11 @@ export default function FriendsClient() {
           <h2 className="font-extrabold text-slate-700 dark:text-slate-200">Verstuurde verzoeken</h2>
           <div className="flex flex-col gap-2">
             {data.outgoing.map(({ friendshipId, to }) => (
-              <div key={friendshipId} className="card flex items-center gap-2 !py-3 text-slate-500 dark:text-slate-400">
+              <div key={friendshipId} className="card flex items-center gap-3 !py-3 text-slate-500 dark:text-slate-400">
                 <Avatar id={to.id} handle={to.handle} avatarEmoji={to.avatarEmoji} size="sm" />
                 <span aria-hidden>⏳</span>
-                Wachten op {formatTag(to.handle, to.discriminator)}
+                <span className="min-w-0 flex-1">Wachten op {formatTag(to.handle, to.discriminator)}</span>
+                <button className="btn-secondary !px-3 !py-1.5 !text-xs" onClick={() => removeFriendship(friendshipId, "Vriendschapsverzoek")}>Annuleren</button>
               </div>
             ))}
           </div>
@@ -316,7 +325,7 @@ export default function FriendsClient() {
         </h2>
         {data.friends.length === 0 && <p className="text-slate-400 dark:text-slate-500">Nog geen vrienden — zoek iemand hierboven!</p>}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {data.friends.map((f) => {
+          {data.friends.map(({ friendshipId, user: f }) => {
             const status = data.statusByUserId[f.id];
             return (
               <div key={f.id} className="card flex flex-col gap-3">
@@ -350,13 +359,14 @@ export default function FriendsClient() {
                     ⭐ {f.xpTotal} XP
                   </span>
                 </div>
-                <button
-                  className="btn-ice w-full !py-2"
-                  onClick={() => setPendingFreeze(f)}
-                  disabled={giftedTo === f.id}
-                >
-                  {giftedTo === f.id ? "Verstuurd!" : "🧊 Geef freeze"}
-                </button>
+                <div className="flex gap-2">
+                  <button className="btn-ice flex-1 !py-2" onClick={() => setPendingFreeze(f)} disabled={giftedTo === f.id}>
+                    {giftedTo === f.id ? "Verstuurd!" : "🧊 Geef freeze"}
+                  </button>
+                  <button className="btn-secondary !px-3 !py-2 !text-xs" onClick={() => removeFriendship(friendshipId, "Vriendschap")}>
+                    Ontvrienden
+                  </button>
+                </div>
               </div>
             );
           })}

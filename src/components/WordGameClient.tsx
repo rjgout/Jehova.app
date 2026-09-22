@@ -56,7 +56,6 @@ export default function WordGameClient() {
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [shake, setShake] = useState(false);
-  const [showRules, setShowRules] = useState(false);
 
   useEffect(() => {
     fetch("/api/word-game")
@@ -133,30 +132,9 @@ export default function WordGameClient() {
             18:00 uur komt er een nieuw woord.
           </p>
         </div>
-        <button
-          type="button"
-          onClick={() => setShowRules(true)}
-          className="w-9 h-9 shrink-0 rounded-full border border-slate-300 dark:border-slate-600 text-slate-500 dark:text-slate-300 font-extrabold flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-800"
-          aria-label="Speluitleg openen"
-          title="Speluitleg"
-        >
-          i
-        </button>
       </div>
 
-      {showRules && (
-        <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4" role="presentation" onClick={() => setShowRules(false)}>
-          <div className="card max-w-lg w-full max-h-[85vh] overflow-y-auto relative" role="dialog" aria-modal="true" aria-labelledby="word-game-rules-title" onClick={(event) => event.stopPropagation()}>
-            <button type="button" onClick={() => setShowRules(false)} className="absolute top-3 right-3 w-9 h-9 rounded-full text-slate-500 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 text-xl" aria-label="Speluitleg sluiten">×</button>
-            <h2 id="word-game-rules-title" className="text-xl font-extrabold text-brand-800 dark:text-brand-300 pr-10">Speluitleg</h2>
-            <div className="mt-4 space-y-4 text-sm text-slate-700 dark:text-slate-200">
-              <section><h3 className="font-extrabold mb-1">Doel</h3><p>Raad het dagelijkse woord uit het Boek van Mormon.</p></section>
-              <section><h3 className="font-extrabold mb-1">Zo speel je</h3><ul className="list-disc pl-5 space-y-1"><li>Je hebt {game.maxGuesses} pogingen om het woord van {game.wordLength} letters te raden.</li><li>Na elke poging zie je welke letters goed staan, wel in het woord zitten of niet voorkomen.</li><li>🟩 Groen betekent: juiste letter op de juiste plek.</li><li>🟨 Geel betekent: juiste letter, maar op de verkeerde plek.</li><li>⬜ Grijs betekent: deze letter komt niet in het woord voor.</li></ul></section>
-              <section><h3 className="font-extrabold mb-1">Wanneer is het klaar?</h3><p>Het spel eindigt zodra je het woord goed hebt geraden of al je pogingen hebt gebruikt. Elke dag om 18:00 uur komt er een nieuw woord.</p></section>
-            </div>
-          </div>
-        </div>
-      )}
+      
 
       <div className="flex flex-col gap-2">
         {rows.map((row, i) => (
