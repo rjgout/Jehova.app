@@ -197,6 +197,7 @@ model User {
   activeCourseId String?
   activeCourse   Course?              @relation("ActiveCourse", fields: [activeCourseId], references: [id], onDelete: SetNull)
   courseProgress UserCourseProgress[]
+  courseLessonProgress UserCourseLessonProgress[]
 
   podcastAttempts        PodcastExerciseAttempt[]
   podcastProgress        PodcastEpisodeProgress[]
@@ -325,6 +326,7 @@ model Chapter {
 // zelf een hoofdstuk"-modus over alle content heen, zonder vaste volgorde.
 enum CourseType {
   FRONT_TO_BACK
+  READING_LESSONS
   FREE_CHOICE
   BY_BOOK
   // Singleton (net als FREE_CHOICE): geen CourseChapter-rijen, alle
@@ -356,6 +358,7 @@ model Course {
   chapters       CourseChapter[]
   userProgress   UserCourseProgress[]
   activeForUsers User[]               @relation("ActiveCourse")
+  lessons        CourseLesson[]
 }
 
 model CourseChapter {
@@ -370,6 +373,59 @@ model CourseChapter {
   @@unique([courseId, order])
 }
 
+// Kleine leeslessen binnen een cursus. De grenzen worden één keer bepaald
+// op basis van het aantal verzen en blijven daarna vaststaan, zodat de route
+// door het boek voor alle gebruikers hetzelfde is.
+model CourseLesson {
+  id        String   @id @default(cuid())
+  courseId  String
+  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  chapterId String
+  chapter   Chapter  @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+  order     Int
+  startVerse Int
+  endVerse   Int
+
+  exercises CourseLessonExercise[]
+  progress  UserCourseLessonProgress[]
+
+  @@unique([courseId, order])
+  @@unique([courseId, chapterId, startVerse])
+  @@index([courseId, chapterId])
+}
+
+// Koppelt de vaste 2-3 vragen aan een leesles. De vragen komen uit de
+// bestaande, gecontroleerde oefenbank van de bijbehorende verzen.
+model CourseLessonExercise {
+  id        String       @id @default(cuid())
+  lessonId  String
+  lesson    CourseLesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  exerciseId String
+  exercise  Exercise     @relation(fields: [exerciseId], references: [id], onDelete: Cascade)
+  order     Int
+
+  @@unique([lessonId, exerciseId])
+  @@unique([lessonId, order])
+}
+
+// Voortgang per gebruiker en per kleine leesles. Anders dan ChapterProgress
+// is dit bewust gekoppeld aan deze cursus, zodat de gewone hoofdstuklessen
+// ongemoeid blijven.
+model UserCourseLessonProgress {
+  id          String      @id @default(cuid())
+  userId      String
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lessonId    String
+  lesson      CourseLesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  completed   Boolean     @default(false)
+  bestScore   Int         @default(0)
+  xpEarned    Int         @default(0)
+  completedAt DateTime?
+
+  @@unique([userId, lessonId])
+  @@index([userId, completedAt])
+}
+
 // Per gebruiker, per cursus: welk hoofdstuk als volgende aan de beurt is.
 // Blijft bestaan als je naar een andere cursus wisselt, zodat je nooit je
 // plek kwijtraakt (zie User.activeCourseId hierboven).
@@ -379,8 +435,12 @@ model UserCourseProgress {
   user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   courseId         String
   course           Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  currentChapterId String? // null = cursus uitgelezen (of nog niet gestart, bij FREE_CHOICE)
+  currentChapterId String? // Bestaande cursussen gebruiken dit als huidige hoofdstuk.
   currentChapter   Chapter? @relation(fields: [currentChapterId], references: [id], onDelete: SetNull)
+  currentLessonId  String? // De kleine leeslessen gebruiken dit als volgende les.
+  currentLesson    CourseLesson? @relation(fields: [currentLessonId], references: [id], onDelete: SetNull)
+  comboCount       Int      @default(0)
+  comboLastCompletedAt DateTime?
   lastActivityAt   DateTime @default(now())
   // Staat deze cursus in de persoonlijke cursussenlijst ("Cursussen")? Een
   // gebruiker kan een cursus verwijderen (dit op false zetten, zie
