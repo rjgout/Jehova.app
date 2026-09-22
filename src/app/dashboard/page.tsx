@@ -71,7 +71,7 @@ export default async function DashboardPage() {
       text: `${game.player1Id === user.id ? game.player2.handle : game.player1.handle} wacht op jouw beurt.`,
       href: "/scrabble",
     })),
-  ]);
+  ];
 
   return (
     <div className="max-w-2xl mx-auto flex flex-col gap-6">
