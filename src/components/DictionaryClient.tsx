@@ -216,6 +216,12 @@ export default function DictionaryClient() {
       </p>
 
       <div className="card !p-0 overflow-hidden">
+
+      <Link href="/tools" className="btn-secondary self-start">
+        ← Terug
+      </Link>
+
+
         <ul className="max-h-[60vh] overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800">
           {filtered.map((e) => (
             <li key={e.word}>
