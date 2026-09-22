@@ -14,7 +14,8 @@
     "db:migrate:deploy": "prisma migrate deploy",
     "db:seed": "tsx prisma/seed.ts",
     "db:import": "tsx prisma/import.ts",
-    "db:reset": "prisma migrate reset"
+    "db:reset": "prisma migrate reset",
+    "db:backfill-hints": "tsx prisma/backfillExerciseHints.ts"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
