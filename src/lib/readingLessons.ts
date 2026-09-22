@@ -14,6 +14,8 @@ export interface ReadingLessonResult extends StudyResult {
   comboMultiplier: number;
   nextLessonId: string | null;
   alreadyCompleted: boolean;
+  nextXpEarned: number;
+  nextComboMultiplier: number;
 }
 
 function comboMultiplier(comboCount: number): number {
@@ -86,6 +88,8 @@ export async function completeReadingLesson(
         comboMultiplier: 1,
         nextLessonId: progress.currentLessonId,
         alreadyCompleted: true,
+        nextXpEarned: 0,
+        nextComboMultiplier: 1,
       };
     }
 
@@ -194,6 +198,8 @@ export async function completeReadingLesson(
       comboMultiplier: passed ? comboMultiplier(nextComboCount) : comboMultiplier(progress.comboCount),
       nextLessonId,
       alreadyCompleted: false,
+      nextXpEarned: passed && nextLessonId ? Math.round(BASE_LESSON_XP * comboMultiplier(Math.min(nextComboCount + 1, 3))) : 0,
+      nextComboMultiplier: passed && nextLessonId ? comboMultiplier(Math.min(nextComboCount + 1, 3)) : 1,
     };
   });
 }
