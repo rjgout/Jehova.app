@@ -146,6 +146,7 @@ model User {
   // Voorkomen dat de in-process scheduler (zie src/lib/scheduler.ts) dezelfde
   // dag/week twee keer een herinnering/uitslag stuurt.
   lastDailyReminderSentDate    String?
+  lastDailyTextSentDate        String?
   lastWeeklyResultNotifiedWeek String?
   // Nieuw woord van de dag beschikbaar (zie src/lib/wordGame.ts) — apart
   // bijgehouden omdat dit op een vast Nederlands tijdstip (18:00) gaat,
