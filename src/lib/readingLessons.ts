@@ -6,7 +6,7 @@ import { checkAndAwardAchievements } from "@/lib/achievements";
 import { awardCompetitionXp } from "@/lib/competitionXp";
 
 const COMBO_TIMEOUT_MS = 15 * 60 * 1000;
-const COMBO_XP = [0, 10, 15, 20] as const;
+const SPLIT_CHAPTER_XP_BUDGET = 70;
 
 export interface ReadingLessonResult extends StudyResult {
   readingLessonCompleted: boolean;
@@ -14,16 +14,25 @@ export interface ReadingLessonResult extends StudyResult {
   comboMultiplier: number;
   nextLessonId: string | null;
   alreadyCompleted: boolean;
-}
-
-function comboXp(comboCount: number): number {
-  return comboCount >= 3 ? 20 : COMBO_XP[comboCount] ?? 10;
+  nextXpEarned: number;
+  nextComboMultiplier: number;
 }
 
 function comboMultiplier(comboCount: number): number {
   if (comboCount >= 3) return 2;
   if (comboCount === 2) return 1.5;
   return 1;
+}
+
+function comboWeight(comboCount: number): number {
+  return comboMultiplier(comboCount);
+}
+
+function splitLessonXp(lessonIndex: number, lessonCount: number): number {
+  const weights = Array.from({ length: lessonCount }, (_, index) => comboWeight(Math.min(index + 1, 3)));
+  const totalWeight = weights.reduce((sum, weight) => sum + weight, 0);
+  const baseXp = Math.floor(SPLIT_CHAPTER_XP_BUDGET / totalWeight);
+  return Math.round(baseXp * weights[lessonIndex]);
 }
 
 /**
@@ -90,6 +99,8 @@ export async function completeReadingLesson(
         comboMultiplier: 1,
         nextLessonId: progress.currentLessonId,
         alreadyCompleted: true,
+        nextXpEarned: 0,
+        nextComboMultiplier: 1,
       };
     }
 
@@ -98,6 +109,14 @@ export async function completeReadingLesson(
     if (progress.currentLessonId !== lessonId) {
       throw new Error("Deze les is nog vergrendeld");
     }
+
+    const chapterLessons = await tx.courseLesson.findMany({
+      where: { courseId: lesson.courseId, chapterId: lesson.chapterId },
+      orderBy: { order: "asc" },
+      select: { id: true },
+    });
+    const lessonIndex = Math.max(0, chapterLessons.findIndex((item) => item.id === lesson.id));
+    const lessonCount = Math.max(1, chapterLessons.length);
 
     const previousCompletedAt = progress.comboLastCompletedAt?.getTime() ?? 0;
     const isContinuation = previousCompletedAt > 0 && Date.now() - previousCompletedAt <= COMBO_TIMEOUT_MS;
@@ -110,7 +129,7 @@ export async function completeReadingLesson(
     let xpEarned = 0;
     let nextLessonId: string | null = progress.currentLessonId;
     if (passed) {
-      xpEarned = comboXp(nextComboCount);
+      xpEarned = Math.round(splitLessonXp(lessonIndex, lessonCount) * comboMultiplier(nextComboCount) / comboWeight(Math.min(lessonIndex + 1, 3)));
       const nextLesson = await tx.courseLesson.findFirst({
         where: { courseId: lesson.courseId, order: lesson.order + 1 },
         select: { id: true },
@@ -198,6 +217,8 @@ export async function completeReadingLesson(
       comboMultiplier: passed ? comboMultiplier(nextComboCount) : comboMultiplier(progress.comboCount),
       nextLessonId,
       alreadyCompleted: false,
+      nextXpEarned: passed && nextLessonId ? Math.round(splitLessonXp(lessonIndex + 1, lessonCount) * comboMultiplier(Math.min(nextComboCount + 1, 3)) / comboWeight(Math.min(lessonIndex + 2, 3))) : 0,
+      nextComboMultiplier: passed && nextLessonId ? comboMultiplier(Math.min(nextComboCount + 1, 3)) : 1,
     };
   });
 }

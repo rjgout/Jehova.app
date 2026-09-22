@@ -83,22 +83,9 @@ async function syncReadingLessons(
       const inRange = chapterExercises.filter(
         (exercise) => exercise.verseNumber !== null && exercise.verseNumber >= range.startVerse && exercise.verseNumber <= range.endVerse
       );
-      const selected: typeof inRange = [];
-      const usedVerses = new Set<number>();
-      for (const exercise of inRange) {
-        if (selected.length >= 3) break;
-        if (exercise.verseNumber !== null && !usedVerses.has(exercise.verseNumber)) {
-          selected.push(exercise);
-          usedVerses.add(exercise.verseNumber);
-        }
-      }
-      for (const exercise of inRange) {
-        if (selected.length >= 3) break;
-        if (!selected.some((selectedExercise) => selectedExercise.id === exercise.id)) selected.push(exercise);
-      }
-      if (selected.length > 0) {
+      if (inRange.length > 0) {
         await db.courseLessonExercise.createMany({
-          data: selected.map((exercise, index) => ({ lessonId: lesson.id, exerciseId: exercise.id, order: index })),
+          data: inRange.map((exercise, index) => ({ lessonId: lesson.id, exerciseId: exercise.id, order: index })),
         });
       }
     }
