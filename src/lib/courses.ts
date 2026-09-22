@@ -219,8 +219,8 @@ export async function syncCourses(db: PrismaClient): Promise<void> {
     const slug = `boek-${book.slug}`;
     const course = await db.course.upsert({
       where: { slug },
-      update: { name: book.name, bookId: book.id, order: 2 + i },
-      create: { slug, type: "BY_BOOK", name: book.name, bookId: book.id, order: 2 + i },
+      update: { name: book.name, bookId: book.id, order: 3 + i },
+      create: { slug, type: "BY_BOOK", name: book.name, bookId: book.id, order: 3 + i },
     });
     await db.courseChapter.deleteMany({ where: { courseId: course.id } });
     const rows = book.chapters.map((chapter, order) => ({ courseId: course.id, chapterId: chapter.id, order }));
@@ -234,7 +234,7 @@ export async function syncCourses(db: PrismaClient): Promise<void> {
   // allemaal bij.
   await db.course.upsert({
     where: { slug: PODCAST_SLUG },
-    update: { name: "Geloof je dat ook? podcast", order: 2 + books.length },
+    update: { name: "Geloof je dat ook? podcast", order: 3 + books.length },
     create: {
       slug: PODCAST_SLUG,
       type: "PODCAST",
@@ -248,7 +248,7 @@ export async function syncCourses(db: PrismaClient): Promise<void> {
   // rijen (zie prisma/importKids.ts) horen er impliciet allemaal bij.
   await db.course.upsert({
     where: { slug: KIDS_SLUG },
-    update: { name: "Verhalen uit het Boek van Mormon (voor kinderen)", order: 3 + books.length },
+    update: { name: "Verhalen uit het Boek van Mormon (voor kinderen)", order: 4 + books.length },
     create: {
       slug: KIDS_SLUG,
       type: "KIDS",
