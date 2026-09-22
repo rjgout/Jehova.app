@@ -1,6 +1,22 @@
 -- Kleine, vaste leeslessen voor de cursus "Lezen van voor naar achter".
 ALTER TYPE "CourseType" ADD VALUE 'READING_LESSONS';
 
+INSERT INTO "Course" ("id", "slug", "type", "name", "description", "order", "enabled")
+VALUES (
+  'reading-lessons-course',
+  'lezen-van-voor-naar-achter',
+  'READING_LESSONS',
+  'Lezen van voor naar achter',
+  'Lees het hele Boek van Mormon in kleine, behapbare lessen van ongeveer 5 tot 10 verzen.',
+  2,
+  true
+)
+ON CONFLICT ("slug") DO UPDATE SET
+  "type" = EXCLUDED."type",
+  "name" = EXCLUDED."name",
+  "description" = EXCLUDED."description",
+  "order" = EXCLUDED."order";
+
 ALTER TABLE "UserCourseProgress"
 ADD COLUMN "currentLessonId" TEXT,
 ADD COLUMN "comboCount" INTEGER NOT NULL DEFAULT 0,
