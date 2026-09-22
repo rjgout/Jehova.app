@@ -55,21 +55,28 @@ export default async function ReadingLessonPage({
     orderBy: { number: "asc" },
   });
   const verseIds = verses.map((verse) => verse.id);
-  const [bookmarks, highlights, notes, totalLessons] = await Promise.all([
+  const [bookmarks, highlights, notes, chapterLessonCount] = await Promise.all([
     prisma.bookmark.findMany({ where: { userId: user.id, verseId: { in: verseIds } } }),
     prisma.highlight.findMany({ where: { userId: user.id, verseId: { in: verseIds } } }),
     prisma.note.findMany({ where: { userId: user.id, verseId: { in: verseIds } } }),
-    prisma.courseLesson.count({ where: { courseId: lesson.courseId } }),
+    prisma.courseLesson.count({ where: { courseId: lesson.courseId, chapterId: lesson.chapterId } }),
   ]);
 
   const bookmarkedVerseIds = new Set(bookmarks.map((bookmark) => bookmark.verseId));
   const highlightedVerseIds = new Set(highlights.map((highlight) => highlight.verseId));
   const notesByVerseId = Object.fromEntries(notes.map((note) => [note.verseId, note.text]));
 
-  const nextLesson = await prisma.courseLesson.findFirst({
-    where: { courseId: lesson.courseId, order: lesson.order + 1 },
-    select: { id: true },
-  });
+  const [nextLesson, firstChapterLesson] = await Promise.all([
+    prisma.courseLesson.findFirst({
+      where: { courseId: lesson.courseId, order: lesson.order + 1 },
+      select: { id: true },
+    }),
+    prisma.courseLesson.findFirst({
+      where: { courseId: lesson.courseId, chapterId: lesson.chapterId },
+      orderBy: { order: "asc" },
+      select: { order: true },
+    }),
+  ]);
 
   const exercises = lesson.exercises.map(({ exercise }) => ({
     id: exercise.id,
@@ -87,8 +94,8 @@ export default async function ReadingLessonPage({
       chapterId={lesson.chapterId}
       bookName={lesson.chapter.book.name}
       chapterNumber={lesson.chapter.number}
-      lessonNumber={lesson.order + 1}
-      totalLessons={totalLessons}
+      lessonNumber={lesson.order - (firstChapterLesson?.order ?? lesson.order) + 1}
+      totalLessons={chapterLessonCount}
       startVerse={lesson.startVerse}
       endVerse={lesson.endVerse}
       nextLessonId={nextLesson?.id ?? null}
