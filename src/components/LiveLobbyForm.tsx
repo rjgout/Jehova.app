@@ -212,33 +212,36 @@ function GameCardBody({ game, enabled, handle }: { game: GameEntry; enabled: boo
 
   return (
     <div
-      className={`card flex flex-col gap-3 h-full ${!enabled ? "!border-2 !border-red-300 dark:!border-red-800" : ""}`}
+      className={`card flex items-start gap-3 ${!enabled ? "!border-2 !border-red-300 dark:!border-red-800" : ""}`}
     >
-      {!enabled && (
-        <span className="text-xs font-bold uppercase text-red-500 dark:text-red-400 bg-red-50 dark:bg-red-950 rounded-full px-2 py-0.5 self-start">
-          Uitgeschakeld voor gebruikers
-        </span>
-      )}
-      <div className="flex items-center gap-2 min-w-0">
+      <div className="pt-0.5 shrink-0">
         <DragHandle {...handle} />
-        <div className="text-2xl shrink-0" aria-hidden>
-          {game.icon}
-        </div>
-        <h2 className="font-extrabold dark:text-slate-100 leading-tight flex-1 min-w-0">{game.title}</h2>
-        <button
-          type="button"
-          onClick={() => setShowRules(true)}
-          className="w-8 h-8 shrink-0 rounded-full border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-300 font-extrabold flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-800"
-          aria-label={`Speluitleg voor ${game.title}`}
-          title="Speluitleg"
-        >
-          i
-        </button>
       </div>
-      <p className="text-sm text-slate-500 dark:text-slate-400 flex-1">{game.description}</p>
-      <Link href={game.href} className="btn-secondary self-start">
-        {game.linkLabel}
-      </Link>
+      <div className="min-w-0 flex-1 flex flex-col gap-3">
+        {!enabled && (
+          <span className="text-xs font-bold uppercase text-red-500 dark:text-red-400 bg-red-50 dark:bg-red-950 rounded-full px-2 py-0.5 self-start">
+            Uitgeschakeld voor gebruikers
+          </span>
+        )}
+        <div className="flex items-center gap-2 min-w-0">
+          <div className="text-2xl shrink-0" aria-hidden>
+            {game.icon}
+          </div>
+          <h2 className="font-extrabold dark:text-slate-100 leading-tight flex-1 min-w-0">{game.title}</h2>
+          <button
+            type="button"
+            onClick={() => setShowRules(true)}
+            className="w-8 h-8 shrink-0 rounded-full border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-300 font-extrabold flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-800"
+            aria-label={`Speluitleg voor ${game.title}`}
+            title="Speluitleg"
+          >
+            i
+          </button>
+        </div>
+        <p className="text-sm text-slate-500 dark:text-slate-400">{game.description}</p>
+        <Link href={game.href} className="btn-secondary self-start">
+          {game.linkLabel}
+        </Link>
       {showRules && (
         <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4" role="presentation" onClick={() => setShowRules(false)}>
           <div className="card max-w-lg w-full max-h-[85vh] overflow-y-auto relative" role="dialog" aria-modal="true" aria-labelledby={`game-rules-${game.id}`} onClick={(event) => event.stopPropagation()}>
