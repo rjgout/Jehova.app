@@ -190,14 +190,6 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                 >
                   Winkel
                 </Link>
-                {user.isAdmin && (
-                  <Link
-                    href="/adminbackend"
-                    className="hidden sm:inline whitespace-nowrap text-sm font-bold text-slate-600 dark:text-slate-300 hover:text-brand-600 dark:hover:text-brand-300"
-                  >
-                    Admin
-                  </Link>
-                )}
                 <NavUserBadges streak={user.currentStreak} xp={user.xpTotal} displayName={user.handle} />
               </nav>
             ) : null}

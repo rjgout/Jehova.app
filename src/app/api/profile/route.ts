@@ -61,6 +61,7 @@ export async function GET() {
 
   return NextResponse.json({
     displayName: user.handle,
+    isAdmin: user.isAdmin,
     handle: user.handle,
     discriminator: user.discriminator,
     avatarEmoji: user.avatarEmoji,
