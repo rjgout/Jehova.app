@@ -29,14 +29,22 @@ import type { SeedBook } from "./content";
 export async function importBooks(
   prisma: PrismaClient,
   books: SeedBook[],
-  log: (msg: string) => void = console.log
+  log: (msg: string) => void = console.log,
+  contentCollectionId?: string
 ) {
+  const collectionId = contentCollectionId ?? (await prisma.contentCollection.findFirst({
+    where: { enabled: true },
+    orderBy: { order: "asc" },
+    select: { id: true },
+  }))?.id;
+  if (!collectionId) throw new Error("Geen contentcollectie beschikbaar om boeken aan te koppelen.");
+
   for (let bookOrder = 0; bookOrder < books.length; bookOrder++) {
     const seedBook = books[bookOrder];
     const book = await prisma.book.upsert({
       where: { slug: seedBook.slug },
-      update: { name: seedBook.name, order: bookOrder },
-      create: { slug: seedBook.slug, name: seedBook.name, order: bookOrder },
+      update: { name: seedBook.name, order: bookOrder, contentCollectionId: collectionId },
+      create: { slug: seedBook.slug, name: seedBook.name, order: bookOrder, contentCollectionId: collectionId },
     });
 
     for (let chapterOrder = 0; chapterOrder < seedBook.chapters.length; chapterOrder++) {

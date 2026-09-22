@@ -90,6 +90,11 @@ model User {
   // blijft de standaardvolgorde gewoon ongewijzigd.
   bomKnowledgeLevel  IntroKnowledgeLevel?
 
+  // De actieve contentcollectie voor de contentswitcher. Null betekent dat de gebruiker
+  // nog geen expliciete keuze heeft gemaakt; de app gebruikt dan de standaardcollectie.
+  activeContentCollectionId String?
+  activeContentCollection   ContentCollection? @relation("ActiveContentCollection", fields: [activeContentCollectionId], references: [id], onDelete: SetNull)
+
   // Eigen emoji voor het avatar-rondje (zie ProfileClient.tsx — klik op het
   // rondje op je profielpagina om 'm te zetten), los van de gebruikersnaam:
   // een naam die met een emoji begint, wordt daar bewust NIET automatisch
@@ -299,6 +304,8 @@ model Book {
   order    Int
   chapters Chapter[]
   courses  Course[] // BY_BOOK-cursussen die dit boek dekken
+  contentCollectionId String
+  contentCollection   ContentCollection @relation(fields: [contentCollectionId], references: [id], onDelete: Cascade)
 }
 
 model Chapter {
@@ -323,6 +330,44 @@ model Chapter {
   challenges           Challenge[]
 
   @@unique([bookId, number])
+}
+
+// --- Contentcollecties ------------------------------------------------------
+// Een collectie is het hoogste contentniveau voor de contentswitcher (bv. het
+// Boek van Mormon, Leer en Verbonden of een later eigen lesboek). Book blijft
+// de bestaande onderliggende boek/hoofdstukstructuur; de collectie bepaalt
+// welke cursussen en spellen in de app-context beschikbaar zijn.
+model ContentCollection {
+  id        String   @id
+  slug      String   @unique
+  name      String
+  icon      String
+  order     Int      @default(0)
+  enabled   Boolean  @default(true)
+  books     Book[]
+  courses   Course[]
+  gameScopes GameContentScope[]
+  users     User[]   @relation("ActiveContentCollection")
+}
+
+// Koppelt een spel aan één of meer contentcollecties. gameKey is de stabiele
+// sleutel uit de spelcatalogus in LiveLobbyForm.tsx; daardoor hoeft de
+// spelcatalogus niet naar de database te verhuizen.
+model GameContentScope {
+  id                   String           @id @default(cuid())
+  gameKey              String
+  contentCollectionId  String
+  contentCollection    ContentCollection @relation(fields: [contentCollectionId], references: [id], onDelete: Cascade)
+
+  @@unique([gameKey, contentCollectionId])
+  @@index([contentCollectionId])
+}
+
+// Singleton: bepaalt alleen of de contentswitcher voor gewone gebruikers
+// zichtbaar is. De inhoud zelf komt uit ContentCollection.
+model ContentSwitcherSettings {
+  id      String  @id @default("singleton")
+  enabled Boolean @default(false)
 }
 
 // --- Cursussen: verschillende manieren om door de content te lopen --------
@@ -357,6 +402,8 @@ model Course {
   order       Int        @default(0)
   bookId      String? // alleen gezet voor BY_BOOK
   book        Book?      @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  contentCollectionId String
+  contentCollection   ContentCollection @relation(fields: [contentCollectionId], references: [id], onDelete: Cascade)
   // Door een admin uit te zetten via /adminbackend — verdwijnt dan uit ieders
   // cursussenoverzicht/toevoeg-catalogus (zie /api/courses en
   // /api/courses/catalog), maar bestaande voortgang blijft gewoon bestaan en

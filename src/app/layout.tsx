@@ -16,6 +16,8 @@ import NotificationBadgeClear from "@/components/NotificationBadgeClear";
 import EdgeSwipeGuard from "@/components/EdgeSwipeGuard";
 import PodcastMiniPlayer from "@/components/PodcastMiniPlayer";
 import HeaderInstallHint from "@/components/HeaderInstallHint";
+import ContentSwitcher from "@/components/ContentSwitcher";
+import { getContentContext } from "@/lib/contentCollections";
 import StickyHeader from "@/components/StickyHeader";
 import { PodcastPlayerProvider } from "@/lib/podcastPlayerContext";
 import { ReadAloudPlayerProvider } from "@/lib/readAloudPlayerContext";
@@ -124,6 +126,7 @@ async function detectAppUrlFromHeaders(): Promise<void> {
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   detectAppUrlFromHeaders().catch(() => {});
   const [user, { logoDataUrl, appName }] = await Promise.all([getCurrentUser(), getBranding()]);
+  const contentContext = user ? await getContentContext(user.id) : null;
   const displayName = resolveAppName(appName);
 
   return (
@@ -140,7 +143,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             de header — zie PodcastMiniPlayer.tsx. */}
         <StickyHeader>
         <header className="bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800">
-          <div className="mx-auto max-w-5xl px-4 py-3 flex items-center gap-4">
+          <div className="mx-auto max-w-5xl px-4 py-3 flex items-center gap-4 relative">
             <Link href={user ? "/dashboard" : "/"} className="flex items-center gap-2 font-extrabold text-brand-700 dark:text-brand-300 text-lg shrink-0">
               {logoDataUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
@@ -153,44 +156,47 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               )}
             </Link>
 
-            {/* Middenin de header (i.p.v. bij de andere navigatie) zodat de
-                installatiehint opvalt zonder een extra header-item te lijken —
-                zie HeaderInstallHint.tsx voor waarom deze na elke paginalading
-                weer kan terugkeren. */}
-            <div className="flex-1 flex justify-center">{user && <HeaderInstallHint />}</div>
+            {user && contentContext && (
+              <ContentSwitcher
+                enabled={contentContext.switcherEnabled}
+                active={contentContext.active}
+                collections={contentContext.collections}
+              />
+            )}
 
             {user ? (
               <nav className="flex items-center gap-4">
                 <Link
                   href="/courses"
-                  className="hidden sm:inline whitespace-nowrap text-sm font-bold text-slate-600 dark:text-slate-300 hover:text-brand-600 dark:hover:text-brand-300"
+                  className="hidden lg:inline whitespace-nowrap text-sm font-bold text-slate-600 dark:text-slate-300 hover:text-brand-600 dark:hover:text-brand-300"
                 >
                   Cursussen
                 </Link>
                 <Link
                   href="/friends"
-                  className="hidden sm:inline whitespace-nowrap text-sm font-bold text-slate-600 dark:text-slate-300 hover:text-brand-600 dark:hover:text-brand-300"
+                  className="hidden lg:inline whitespace-nowrap text-sm font-bold text-slate-600 dark:text-slate-300 hover:text-brand-600 dark:hover:text-brand-300"
                 >
                   Vrienden
                 </Link>
                 <Link
                   href="/competition"
-                  className="hidden sm:inline whitespace-nowrap text-sm font-bold text-slate-600 dark:text-slate-300 hover:text-brand-600 dark:hover:text-brand-300"
+                  className="hidden lg:inline whitespace-nowrap text-sm font-bold text-slate-600 dark:text-slate-300 hover:text-brand-600 dark:hover:text-brand-300"
                 >
                   Competitie
                 </Link>
                 <Link
                   href="/live"
-                  className="hidden sm:inline whitespace-nowrap text-sm font-bold text-slate-600 dark:text-slate-300 hover:text-brand-600 dark:hover:text-brand-300"
+                  className="hidden lg:inline whitespace-nowrap text-sm font-bold text-slate-600 dark:text-slate-300 hover:text-brand-600 dark:hover:text-brand-300"
                 >
                   Spelen
                 </Link>
                 <Link
                   href="/shop"
-                  className="hidden sm:inline whitespace-nowrap text-sm font-bold text-slate-600 dark:text-slate-300 hover:text-brand-600 dark:hover:text-brand-300"
+                  className="hidden lg:inline whitespace-nowrap text-sm font-bold text-slate-600 dark:text-slate-300 hover:text-brand-600 dark:hover:text-brand-300"
                 >
                   Winkel
                 </Link>
+                <div className="hidden lg:block"><HeaderInstallHint /></div>
                 <NavUserBadges streak={user.currentStreak} xp={user.xpTotal} displayName={user.handle} />
               </nav>
             ) : null}

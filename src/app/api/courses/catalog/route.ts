@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getCurrentUser } from "@/lib/session";
+import { getContentContext } from "@/lib/contentCollections";
 
 // Cursussen die nog NIET in de persoonlijke lijst staan — voor de "Voeg
 // nieuwe cursus toe"-catalogus op /courses (en /courses/per-boek, dat dit
@@ -10,9 +11,11 @@ export async function GET() {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: "Niet ingelogd" }, { status: 401 });
 
+  const contentContext = await getContentContext(user.id);
+
   const [courses, subscriptions] = await Promise.all([
     prisma.course.findMany({
-      where: { enabled: true },
+      where: { enabled: true, contentCollectionId: contentContext.active.id },
       orderBy: { order: "asc" },
       include: { _count: { select: { chapters: true } } },
     }),
