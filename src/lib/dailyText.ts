@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/db";
-import { dayKey } from "@/lib/dates";
+import { amsterdamNow } from "@/lib/dates";
 
 export interface DailyText {
   bookName: string;
@@ -35,7 +35,8 @@ export async function getTextOfTheDay(date = new Date()): Promise<DailyText | nu
   );
   if (verses.length === 0) return null;
 
-  const key = dayKey(date);
+  const amsterdam = amsterdamNow(date);
+  const key = `${amsterdam.year}-${String(amsterdam.month).padStart(2, "0")}-${String(amsterdam.day).padStart(2, "0")}`;
   const dayNumber = Math.floor(new Date(`${key}T00:00:00Z`).getTime() / 86400000);
   return verses[((dayNumber % verses.length) + verses.length) % verses.length];
 }
