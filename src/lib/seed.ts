@@ -44,6 +44,14 @@ const achievementDefs = [
   { slug: "intro-all-lessons", name: "Helemaal op weg", icon: "🎓", description: "Rondde alle introductielessen af." },
 ];
 
+/**
+ * De volledige seed-routine — herbruikbaar vanaf de CLI (`npm run db:seed`,
+ * zie prisma/seed.ts) én vanuit de adminbackend (zie `/api/admin/reseed`),
+ * die deze in-process aanroept met de gedeelde Prisma-client van de app in
+ * plaats van er zelf een nieuwe voor op te zetten. `log` is injecteerbaar
+ * zodat de adminbackend de voortgangsregels kan opvangen en teruggeven aan
+ * de admin, in plaats van dat ze alleen in de containerlogs verdwijnen.
+ */
 export async function runSeed(client: PrismaClient, log: (msg: string) => void = console.log): Promise<void> {
   log("Seeding boeken, hoofdstukken, verzen en oefeningen (demo-inhoud)...");
   await importBooks(client, seedBooks, log);
@@ -72,13 +80,15 @@ export async function runSeed(client: PrismaClient, log: (msg: string) => void =
     });
   }
 
-  // Demo-gebruikers alleen aanmaken als dat expliciet gevraagd wordt.
+  // Demo-gebruikers (met een publiek bekend wachtwoord!) alleen aanmaken als dat
+  // expliciet gevraagd wordt — dus NOOIT standaard op een productie-instantie.
   if (process.env.SEED_DEMO_USERS !== "true") {
     log("SEED_DEMO_USERS staat niet op 'true' — demo-gebruikers overgeslagen.");
     log("Seed klaar.");
     return;
   }
 
+  // --- Demo-gebruikers zodat vrienden/competitie/live game meteen te testen zijn ---
   const demoPassword = await bcrypt.hash("demo1234", 10);
   const demoUsers = [
     { email: "anna@example.com", handle: "anna", discriminator: "01", displayName: "Anna" },
