@@ -311,6 +311,7 @@ model Chapter {
   liveGames            LiveGame[]
   readingSessions      ReadingSession[]
   courseChapters       CourseChapter[]
+  courseLessons        CourseLesson[]
   courseProgressCursor UserCourseProgress[]
   challenges           Challenge[]
 
@@ -388,6 +389,7 @@ model CourseLesson {
 
   exercises CourseLessonExercise[]
   progress  UserCourseLessonProgress[]
+  currentForCourseProgress UserCourseProgress[] @relation("CurrentCourseLesson")
 
   @@unique([courseId, order])
   @@unique([courseId, chapterId, startVerse])
@@ -438,7 +440,7 @@ model UserCourseProgress {
   currentChapterId String? // Bestaande cursussen gebruiken dit als huidige hoofdstuk.
   currentChapter   Chapter? @relation(fields: [currentChapterId], references: [id], onDelete: SetNull)
   currentLessonId  String? // De kleine leeslessen gebruiken dit als volgende les.
-  currentLesson    CourseLesson? @relation(fields: [currentLessonId], references: [id], onDelete: SetNull)
+  currentLesson    CourseLesson? @relation("CurrentCourseLesson", fields: [currentLessonId], references: [id], onDelete: SetNull)
   comboCount       Int      @default(0)
   comboLastCompletedAt DateTime?
   lastActivityAt   DateTime @default(now())
@@ -906,6 +908,7 @@ model Exercise {
   options       QuestionOption[]
 
   attempts ExerciseAttempt[]
+  courseLessonLinks CourseLessonExercise[]
 }
 
 // Nog niet gebruikt door de huidige generatoren (FILL_BLANK/WORD_BANK/
