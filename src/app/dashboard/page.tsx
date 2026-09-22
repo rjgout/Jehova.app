@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/session";
@@ -21,11 +23,7 @@ export default async function DashboardPage() {
     pendingFriendRequests,
   ] = await Promise.all([
     getTextOfTheDay(),
-    prisma.chapter.findMany({
-      where: { book: { name: "Boek van Mormon" } },
-      orderBy: { order: "asc" },
-      select: { id: true, number: true, book: { select: { name: true } }, progress: { where: { userId: user.id }, select: { completed: true } } },
-    }),
+    prisma.chapter.count({ where: { book: { name: "Boek van Mormon" } } }),
     prisma.friendship.findMany({
       where: { status: "ACCEPTED", OR: [{ senderId: user.id }, { receiverId: user.id }] },
       select: { senderId: true, receiverId: true, sender: { select: { id: true, handle: true, shareOnlineStatus: true, onlineSocketCount: true } }, receiver: { select: { id: true, handle: true, shareOnlineStatus: true, onlineSocketCount: true } } },
@@ -45,8 +43,10 @@ export default async function DashboardPage() {
     prisma.friendship.count({ where: { receiverId: user.id, status: "PENDING" } }),
   ]);
 
-  const completed = bomChapters.filter((chapter) => chapter.progress[0]?.completed).length;
-  const total = bomChapters.length;
+  const total = bomChapters;
+  const completed = await prisma.chapterProgress.count({
+    where: { userId: user.id, completed: true, chapter: { book: { name: "Boek van Mormon" } } },
+  });
   const progressPercent = total > 0 ? Math.round((completed / total) * 100) : 0;
 
   const friends = friendships.map((friendship) => (friendship.senderId === user.id ? friendship.receiver : friendship.sender));
@@ -101,7 +101,7 @@ export default async function DashboardPage() {
       </section>
 
       <section className="card bg-gradient-to-br from-brand-500 to-brand-700 text-white flex flex-col gap-4">
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
           <Link href="/streak" className="rounded-2xl bg-black/10 p-3 text-center hover:bg-black/15">
             <div className="text-xl font-extrabold">🔥 {user.currentStreak}</div>
             <div className="text-xs font-bold text-brand-100">Reeks</div>
@@ -121,7 +121,6 @@ export default async function DashboardPage() {
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-center text-sm text-brand-100 border-t border-white/15 pt-4">
           <div><div className="font-extrabold text-white">{user.longestStreak}</div><div>Langste reeks</div></div>
-          <div><div className="font-extrabold text-white">{onlineFriends}</div><div>Vrienden online</div></div>
           <div><div className="font-extrabold text-white">{user.hintBalance}</div><div>Hints</div></div>
         </div>
       </section>
