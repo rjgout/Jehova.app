@@ -67,7 +67,7 @@ export default function ChapterGuessGameRoom({ code, myUserId }: { code: string;
   const [hint, setHint] = useState<HintResult | null>(null);
   const [hintLoading, setHintLoading] = useState(false);
   const [hintError, setHintError] = useState<string | null>(null);
-  const [forfeitedBy, setForfeitedBy] = useState<string | null>(null);
+  const [forfeitedBy, setForfeitedBy] = useState<string | null>(null);\n  const [showRules, setShowRules] = useState(false);
 
   const socket = getSocket();
 
@@ -210,6 +210,22 @@ export default function ChapterGuessGameRoom({ code, myUserId }: { code: string;
     const nonPlayerFriends = friends.filter((f) => !players.some((p) => p.userId === f.id));
     return (
       <div className="max-w-xl mx-auto flex flex-col gap-6">
+        <div className="flex justify-end">
+          <button type="button" onClick={() => setShowRules(true)} className="w-9 h-9 rounded-full border border-slate-300 dark:border-slate-600 text-slate-500 dark:text-slate-300 font-extrabold flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-800" aria-label="Speluitleg openen" title="Speluitleg">i</button>
+        </div>
+        {showRules && (
+          <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4" role="presentation" onClick={() => setShowRules(false)}>
+            <div className="card max-w-lg w-full max-h-[85vh] overflow-y-auto relative" role="dialog" aria-modal="true" aria-labelledby="chapter-multi-rules-title" onClick={(event) => event.stopPropagation()}>
+              <button type="button" onClick={() => setShowRules(false)} className="absolute top-3 right-3 w-9 h-9 rounded-full text-slate-500 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 text-xl" aria-label="Speluitleg sluiten">×</button>
+              <h2 id="chapter-multi-rules-title" className="text-xl font-extrabold text-brand-800 dark:text-brand-300 pr-10">Speluitleg</h2>
+              <div className="mt-4 space-y-4 text-sm text-slate-700 dark:text-slate-200">
+                <section><h3 className="font-extrabold mb-1">Doel</h3><p>Beantwoord zo veel mogelijk vragen goed en verzamel meer punten dan de andere spelers.</p></section>
+                <section><h3 className="font-extrabold mb-1">Zo speel je</h3><ul className="list-disc pl-5 space-y-1"><li>Lees de hoofdstukkop en kies het juiste hoofdstuk.</li><li>Het niveau bepaalt hoe je antwoordt: Beginner en Gevorderd werken met keuzes; Expert laat je zelf het boek en hoofdstuk kiezen.</li><li>Je kunt een hint gebruiken als je daar tegoed voor hebt.</li><li>Je krijgt punten voor goede antwoorden. Snel antwoorden is belangrijk omdat elke vraag een tijdslimiet heeft.</li></ul></section>
+                <section><h3 className="font-extrabold mb-1">Einde</h3><p>Na de laatste vraag wordt de eindstand getoond. Een speler kan tijdens het spel opgeven.</p></section>
+              </div>
+            </div>
+          </div>
+        )}
         {level && (
           <span className="self-center text-xs font-bold uppercase text-brand-600 dark:text-brand-300 bg-brand-50 dark:bg-slate-700 rounded-full px-3 py-1">
             🔎 Raad het hoofdstuk — {LEVEL_LABELS[level]}
@@ -272,9 +288,10 @@ export default function ChapterGuessGameRoom({ code, myUserId }: { code: string;
           <span>
             Vraag {question.index + 1} / {question.total}
           </span>
-          <span>
-            {answeredCount.answered}/{players.length || answeredCount.total} beantwoord
-          </span>
+          <div className="flex items-center gap-2">
+            <span>{answeredCount.answered}/{players.length || answeredCount.total} beantwoord</span>
+            <button type="button" onClick={() => setShowRules(true)} className="w-9 h-9 rounded-full border border-slate-300 dark:border-slate-600 text-slate-500 dark:text-slate-300 font-extrabold flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-800" aria-label="Speluitleg openen" title="Speluitleg">i</button>
+          </div>
         </div>
         <CountdownBar key={question.index} timeLimitMs={question.timeLimitMs} active={phase === "question"} />
 
