@@ -6,6 +6,7 @@ export const PODCAST_SLUG = "podcast";
 export const KIDS_SLUG = "kinderen";
 export const INTRO_SLUG = "ontdek-boek-van-mormon";
 export const READING_LESSONS_SLUG = "lezen-van-voor-naar-achter";
+export const FSY_SLUG = "voor-de-kracht-van-de-jeugd";
 
 
 /** Verdeelt een hoofdstuk in zo gelijk mogelijke stukken van maximaal 10 verzen.
@@ -258,6 +259,34 @@ export async function syncCourses(db: PrismaClient): Promise<void> {
       order: 3 + books.length,
       contentCollectionId: defaultCollection.id,
     },
+
+
+  // FSY heeft een eigen contentfamilie en geen CourseChapter-rijen. De
+  // cursus wordt alleen aangemaakt als de collectie aanwezig is, zodat een
+  // oudere installatie zonder FSY-migratie gewoon blijft werken.
+  const fsyCollection = await db.contentCollection.findUnique({
+    where: { id: "content_fsy" },
+    select: { id: true },
+  });
+  if (fsyCollection) {
+    await db.course.upsert({
+      where: { slug: FSY_SLUG },
+      update: {
+        name: "Voor de kracht van de jeugd",
+        description: "Het wekelijkse leerplan met tekst en afbeeldingen uit de officiële bron.",
+        order: 0,
+        contentCollectionId: fsyCollection.id,
+      },
+      create: {
+        slug: FSY_SLUG,
+        type: "FSY",
+        name: "Voor de kracht van de jeugd",
+        description: "Het wekelijkse leerplan met tekst en afbeeldingen uit de officiële bron.",
+        order: 0,
+        contentCollectionId: fsyCollection.id,
+      },
+    });
+  }
   });
 }
 
