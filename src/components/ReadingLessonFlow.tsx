@@ -165,27 +165,26 @@ export default function ReadingLessonFlow({
           {result.correctCount} / {result.total} goed
         </h2>
 
-        {result.readingLessonCompleted ? (
-          <>
-            <p className="text-gold-600 dark:text-gold-400 font-extrabold text-lg">
-              +{result.xpEarned} XP
-            </p>
-            {effectiveNextLessonId && (
-              <div className="rounded-2xl bg-gold-50 dark:bg-slate-700 px-4 py-3 w-full">
-                <p className="font-extrabold text-gold-700 dark:text-gold-300">
-                  🔥 Ga je door?
-                </p>
-                <p className="text-sm text-gold-600 dark:text-gold-400">
-                  De volgende les levert <strong>+{result.nextXpEarned} XP</strong> op (×{result.nextComboMultiplier}).
-                </p>
-              </div>
-            )}
-          </>
-        ) : (
-          <p className="text-sm text-slate-500 dark:text-slate-400">
-            Nog even oefenen. Haal 60% om deze les vrij te spelen.
+        <>
+          <p className="text-gold-600 dark:text-gold-400 font-extrabold text-lg">
+            +{result.xpEarned} XP
           </p>
-        )}
+          {result.scorePercent < 60 && (
+            <p className="text-sm text-slate-500 dark:text-slate-400">
+              Je score wordt bewaard, maar je kunt gewoon doorgaan naar de volgende les.
+            </p>
+          )}
+          {effectiveNextLessonId && (
+            <div className="rounded-2xl bg-gold-50 dark:bg-slate-700 px-4 py-3 w-full">
+              <p className="font-extrabold text-gold-700 dark:text-gold-300">
+                🔥 Ga je door?
+              </p>
+              <p className="text-sm text-gold-600 dark:text-gold-400">
+                De volgende les levert <strong>+{result.nextXpEarned} XP</strong> op (×{result.nextComboMultiplier}).
+              </p>
+            </div>
+          )}
+        </>
 
         <div className="flex gap-6 mt-2">
           {!result.alreadyStudiedToday && (
@@ -218,21 +217,16 @@ export default function ReadingLessonFlow({
         )}
 
         <div className="flex flex-wrap justify-center gap-3 mt-4">
-          {result.readingLessonCompleted && effectiveNextLessonId && (
+          effectiveNextLessonId && (
             <Link href={`/reading-lesson/${effectiveNextLessonId}`} className="btn-primary">
               Volgende les → 🔥
             </Link>
           )}
-          {result.readingLessonCompleted && (
+          (
             <Link href={`/courses`} className="btn-secondary">
               Stoppen
             </Link>
-          )}
-          {!result.readingLessonCompleted && (
-            <button className="btn-secondary" onClick={() => { setAnswers([]); setIndex(0); setResult(null); setPhase("read"); }}>
-              Opnieuw
-            </button>
-          )}
+          }
         </div>
       </div>
     );
