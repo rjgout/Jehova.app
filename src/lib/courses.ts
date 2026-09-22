@@ -259,7 +259,7 @@ export async function syncCourses(db: PrismaClient): Promise<void> {
       order: 3 + books.length,
       contentCollectionId: defaultCollection.id,
     },
-
+  });
 
   // FSY heeft een eigen contentfamilie en geen CourseChapter-rijen. De
   // cursus wordt alleen aangemaakt als de collectie aanwezig is, zodat een
@@ -287,7 +287,6 @@ export async function syncCourses(db: PrismaClient): Promise<void> {
       },
     });
   }
-  });
 }
 
 /**
