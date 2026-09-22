@@ -1,7 +1,8 @@
 import { prisma } from "@/lib/db";
 import { addDays, dayKey, weekStartKey, amsterdamNow, type AmsterdamTime } from "@/lib/dates";
 import { resolveWeeklyPlacement, getLeagueSettings, TIER_ORDER, TIER_LABELS } from "@/lib/leagues";
-import { notifyDailyReminder, notifyWeeklyResult, notifySeasonResult, notifyWordGame } from "@/lib/notify";
+import { notifyDailyReminder, notifyDailyText, notifyWeeklyResult, notifySeasonResult, notifyWordGame } from "@/lib/notify";
+import { getTextOfTheDay } from "@/lib/dailyText";
 import { wordGameDayKey } from "@/lib/wordGame";
 import { broadcastPresenceUpdate } from "@/lib/presence";
 import { getIO } from "@/server/gameServer";
@@ -39,6 +40,27 @@ function previousWeekStart(weekStart: string): string {
  * heeft aangezet. lastDailyReminderSentDate voorkomt dubbel versturen als de
  * tick door trage queries iets uitloopt.
  */
+async function runDailyTextTick(): Promise<void> {
+  const now = new Date();
+  const time = amsterdamHHMM(amsterdamNow(now));
+  const today = dayKey(now);
+
+  const candidates = await prisma.user.findMany({
+    where: {
+      dailyTextTime: time,
+      notifyDailyText: true,
+      OR: [{ emailNotificationsEnabled: true }, { pushNotificationsEnabled: true }],
+    },
+    select: { id: true },
+  });
+  const text = await getTextOfTheDay(now);
+  if (!text) return;
+
+  for (const user of candidates) {
+    await notifyDailyText(user.id, text).catch(() => {});
+  }
+}
+
 async function runDailyReminderTick(): Promise<void> {
   const now = new Date();
   const time = amsterdamHHMM(amsterdamNow(now));
