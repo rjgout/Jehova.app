@@ -15,6 +15,16 @@ INSERT INTO "FsySettings" ("id", "autoPublish", "lastCheckedAt", "lastError", "u
 VALUES ('singleton', false, NULL, NULL, CURRENT_TIMESTAMP)
 ON CONFLICT ("id") DO NOTHING;
 
+CREATE TABLE "FsySettings" (
+  "id" TEXT NOT NULL,
+  "autoPublish" BOOLEAN NOT NULL DEFAULT false,
+  "lastCheckedAt" TIMESTAMP(3),
+  "lastError" TEXT,
+  "updatedAt" TIMESTAMP(3) NOT NULL,
+
+  CONSTRAINT "FsySettings_pkey" PRIMARY KEY ("id")
+);
+
 CREATE TYPE "FsyLessonStatus" AS ENUM ('DRAFT', 'PUBLISHED');
 
 CREATE TABLE "FsyLesson" (
