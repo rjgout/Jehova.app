@@ -210,9 +210,6 @@ export default function ChapterGuessGameRoom({ code, myUserId }: { code: string;
     const nonPlayerFriends = friends.filter((f) => !players.some((p) => p.userId === f.id));
     return (
       <div className="max-w-xl mx-auto flex flex-col gap-6">
-        <div className="flex justify-end">
-        </div>
-        )}
         {level && (
           <span className="self-center text-xs font-bold uppercase text-brand-600 dark:text-brand-300 bg-brand-50 dark:bg-slate-700 rounded-full px-3 py-1">
             🔎 Raad het hoofdstuk — {LEVEL_LABELS[level]}
