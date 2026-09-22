@@ -37,6 +37,11 @@ export async function getTextOfTheDay(date = new Date()): Promise<DailyText | nu
 
   const amsterdam = amsterdamNow(date);
   const key = `${amsterdam.year}-${String(amsterdam.month).padStart(2, "0")}-${String(amsterdam.day).padStart(2, "0")}`;
-  const dayNumber = Math.floor(new Date(`${key}T00:00:00Z`).getTime() / 86400000);
-  return verses[((dayNumber % verses.length) + verses.length) % verses.length];
+  let hash = 2166136261;
+  for (const character of key) {
+    hash ^= character.charCodeAt(0);
+    hash = Math.imul(hash, 16777619);
+  }
+  const index = (hash >>> 0) % verses.length;
+  return verses[index];
 }
