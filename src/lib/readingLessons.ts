@@ -135,6 +135,22 @@ export async function completeReadingLesson(
       select: { id: true, chapterId: true },
     });
     const nextLessonId = nextLesson?.id ?? null;
+    let nextXpEarned = 0;
+    let nextComboMultiplier = 1;
+    if (nextLesson) {
+      const nextChapterLessons = await tx.courseLesson.findMany({
+        where: { courseId: lesson.courseId, chapterId: nextLesson.chapterId },
+        orderBy: { order: "asc" },
+        select: { id: true },
+      });
+      const nextLessonIndex = Math.max(0, nextChapterLessons.findIndex((item) => item.id === nextLesson.id));
+      const nextLessonCount = Math.max(1, nextChapterLessons.length);
+      const previewCombo = Math.min(nextComboCount + 1, 3);
+      nextComboMultiplier = comboMultiplier(previewCombo);
+      nextXpEarned = Math.round(
+        splitLessonXp(nextLessonIndex, nextLessonCount) * nextComboMultiplier / comboWeight(Math.min(nextLessonIndex + 1, 3))
+      );
+    }
 
     await tx.userCourseLessonProgress.upsert({
       where: { userId_lessonId: { userId, lessonId } },
@@ -210,8 +226,8 @@ export async function completeReadingLesson(
       comboMultiplier: comboMultiplier(nextComboCount),
       nextLessonId,
       alreadyCompleted: false,
-      nextXpEarned: 0,
-      nextComboMultiplier: 1,
+      nextXpEarned,
+      nextComboMultiplier,
     };
   });
 }
