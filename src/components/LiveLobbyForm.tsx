@@ -191,7 +191,7 @@ export default function LiveLobbyForm({ settings, isAdmin }: Props) {
         dndId="games-list"
         items={games}
         onReorder={reorderGames}
-        className="grid sm:grid-cols-2 gap-4"
+        className="grid sm:grid-cols-2 gap-4 items-stretch"
         renderItem={(game, handle) => {
           const enabled = settings[game.enabledKey];
           if (!enabled && !isAdmin) return null;
@@ -219,13 +219,22 @@ function GameCardBody({ game, enabled, handle }: { game: GameEntry; enabled: boo
           Uitgeschakeld voor gebruikers
         </span>
       )}
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 min-w-0">
         <DragHandle {...handle} />
-        <div className="text-2xl" aria-hidden>
+        <div className="text-2xl shrink-0" aria-hidden>
           {game.icon}
         </div>
+        <h2 className="font-extrabold dark:text-slate-100 leading-tight flex-1 min-w-0">{game.title}</h2>
+        <button
+          type="button"
+          onClick={() => setShowRules(true)}
+          className="w-8 h-8 shrink-0 rounded-full border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-300 font-extrabold flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-800"
+          aria-label={`Speluitleg voor ${game.title}`}
+          title="Speluitleg"
+        >
+          i
+        </button>
       </div>
-      <div className="flex items-center justify-between gap-2"><h2 className="font-extrabold dark:text-slate-100">{game.title}</h2><button type="button" onClick={() => setShowRules(true)} className="w-8 h-8 shrink-0 rounded-full border border-slate-300 dark:border-slate-600 text-slate-500 dark:text-slate-300 font-extrabold flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-800" aria-label={`Speluitleg voor ${game.title}`} title="Speluitleg">i</button></div>
       <p className="text-sm text-slate-500 dark:text-slate-400 flex-1">{game.description}</p>
       <Link href={game.href} className="btn-secondary self-start">
         {game.linkLabel}
