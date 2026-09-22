@@ -517,7 +517,7 @@ export default function ProfileClient() {
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 text-center text-sm text-brand-100 border-t border-white/15 pt-4">
           <Stat value={data.longestStreak.toString()} label="Langste reeks" small light />
           <Stat value={`${data.duelsWon}/${data.duelsPlayed}`} label="Duels gewonnen" small light />
-          <Stat value={earnedCount.toString()} label="Achievements" small light />
+          <Stat value={earnedCount.toString()} label="Prestaties" small light />
         </div>
       </div>
 
@@ -566,7 +566,7 @@ export default function ProfileClient() {
 
       <section>
         <div className="flex items-center justify-between mb-3">
-          <h2 className="font-extrabold text-lg dark:text-slate-100">Achievements</h2>
+          <h2 className="font-extrabold text-lg dark:text-slate-100">Prestaties</h2>
           <span className="text-sm font-bold text-slate-400 dark:text-slate-500">
             {earnedCount}/{data.achievements.length}
           </span>
