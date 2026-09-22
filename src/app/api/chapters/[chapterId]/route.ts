@@ -27,6 +27,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ cha
       type: e.type,
       verseRef: e.verseRef,
       prompt: e.prompt,
+      hint: e.hint,
       blanks: (JSON.parse(e.answers) as string[]).length,
       wordBank: e.wordBank ? (JSON.parse(e.wordBank) as string[]) : undefined,
     })),
