@@ -7,10 +7,11 @@ import { APP_NAME } from "@/lib/brand";
 // Elke gebeurtenis valt in één categorie, die de gebruiker in zijn profiel
 // apart aan/uit kan zetten (zie User.notify* in schema.prisma) — bovenop,
 // niet in plaats van, de kanaalschakelaars (email/pushNotificationsEnabled).
-type NotifyCategory = "dailyReminder" | "social" | "achievements" | "wordGame";
+type NotifyCategory = "dailyReminder" | "dailyText" | "social" | "achievements" | "wordGame";
 
-const CATEGORY_FIELD: Record<NotifyCategory, "notifyDailyReminder" | "notifySocial" | "notifyAchievements" | "notifyWordGame"> = {
+const CATEGORY_FIELD: Record<NotifyCategory, "notifyDailyReminder" | "notifyDailyText" | "notifySocial" | "notifyAchievements" | "notifyWordGame"> = {
   dailyReminder: "notifyDailyReminder",
+  dailyText: "notifyDailyText",
   social: "notifySocial",
   achievements: "notifyAchievements",
   wordGame: "notifyWordGame",
@@ -141,7 +142,7 @@ export async function notifyDailyText(userId: string, text: { bookName: string; 
   const reference = `${text.bookName} ${text.chapterNumber}:undefined`;
   await notifyUser({
     userId,
-    category: "dailyReminder",
+    category: "dailyText",
     subject: "Tekst van de dag",
     emailHtml: emailWrap(`📖 <strong>${reference}</strong><br />${text.content}`, url, "Bekijk je dashboard"),
     emailText: `📖 ${reference} — ${text.content} — ${url}`,
