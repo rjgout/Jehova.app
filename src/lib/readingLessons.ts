@@ -121,66 +121,59 @@ export async function completeReadingLesson(
     const previousCompletedAt = progress.comboLastCompletedAt?.getTime() ?? 0;
     const isContinuation = previousCompletedAt > 0 && Date.now() - previousCompletedAt <= COMBO_TIMEOUT_MS;
     const nextComboCount = isContinuation ? Math.min(progress.comboCount + 1, 3) : 1;
-    const passed = scorePercent >= 60;
+    const completed = true;
 
     const daily = await applyDailyStreak(tx, userId);
     const freezeCount = daily.freezeCountBeforeMilestone + daily.freezesEarned;
 
-    let xpEarned = 0;
-    let nextLessonId: string | null = progress.currentLessonId;
-    if (passed) {
-      xpEarned = Math.round(splitLessonXp(lessonIndex, lessonCount) * comboMultiplier(nextComboCount) / comboWeight(Math.min(lessonIndex + 1, 3)));
-      const nextLesson = await tx.courseLesson.findFirst({
-        where: { courseId: lesson.courseId, order: lesson.order + 1 },
-        select: { id: true },
-      });
-      nextLessonId = nextLesson?.id ?? null;
+    const xpEarned = Math.round(
+      splitLessonXp(lessonIndex, lessonCount) * comboMultiplier(nextComboCount) / comboWeight(Math.min(lessonIndex + 1, 3))
+    );
 
-      await tx.userCourseLessonProgress.upsert({
-        where: { userId_lessonId: { userId, lessonId } },
-        create: {
-          userId,
-          lessonId,
-          completed: true,
-          bestScore: scorePercent,
-          xpEarned,
-          completedAt: new Date(),
-        },
-        update: {
-          completed: true,
-          bestScore: Math.max(existing?.bestScore ?? 0, scorePercent),
-          xpEarned: { increment: xpEarned },
-          completedAt: new Date(),
-        },
-      });
+    const nextLesson = await tx.courseLesson.findFirst({
+      where: { courseId: lesson.courseId, order: lesson.order + 1 },
+      select: { id: true, chapterId: true },
+    });
+    const nextLessonId = nextLesson?.id ?? null;
 
-      await tx.userCourseProgress.update({
-        where: { userId_courseId: { userId, courseId: lesson.courseId } },
-        data: {
-          currentLessonId: nextLessonId,
-          currentChapterId: lesson.chapterId,
-          comboCount: nextComboCount,
-          comboLastCompletedAt: new Date(),
-          lastActivityAt: new Date(),
-        },
-      });
+    await tx.userCourseLessonProgress.upsert({
+      where: { userId_lessonId: { userId, lessonId } },
+      create: {
+        userId,
+        lessonId,
+        completed: true,
+        bestScore: scorePercent,
+        xpEarned,
+        completedAt: new Date(),
+      },
+      update: {
+        completed: true,
+        bestScore: Math.max(existing?.bestScore ?? 0, scorePercent),
+        xpEarned: { increment: xpEarned },
+        completedAt: new Date(),
+      },
+    });
 
-      await awardXp(tx, userId, xpEarned, "LESSON_COMPLETED", {
-        readingLessonId: lessonId,
-        scorePercent,
+    await tx.userCourseProgress.update({
+      where: { userId_courseId: { userId, courseId: lesson.courseId } },
+      data: {
+        currentLessonId: nextLessonId,
+        currentChapterId: lesson.chapterId,
         comboCount: nextComboCount,
-        xpCorrect,
-      });
-      await awardCompetitionXp(tx, userId, "LESSON", xpEarned, {
-        metadata: { readingLessonId: lessonId, scorePercent, comboCount: nextComboCount },
-      });
-    } else {
-      await tx.userCourseLessonProgress.upsert({
-        where: { userId_lessonId: { userId, lessonId } },
-        create: { userId, lessonId, completed: false, bestScore: scorePercent },
-        update: { bestScore: Math.max(existing?.bestScore ?? 0, scorePercent) },
-      });
-    }
+        comboLastCompletedAt: new Date(),
+        lastActivityAt: new Date(),
+      },
+    });
+
+    await awardXp(tx, userId, xpEarned, "LESSON_COMPLETED", {
+      readingLessonId: lessonId,
+      scorePercent,
+      comboCount: nextComboCount,
+      xpCorrect,
+    });
+    await awardCompetitionXp(tx, userId, "LESSON", xpEarned, {
+      metadata: { readingLessonId: lessonId, scorePercent, comboCount: nextComboCount },
+    });
 
     await tx.user.update({
       where: { id: userId },
@@ -202,7 +195,7 @@ export async function completeReadingLesson(
 
     return {
       xpEarned,
-      chapterCompleted: passed,
+      chapterCompleted: completed,
       scorePercent,
       currentStreak: daily.currentStreak,
       longestStreak: daily.longestStreak,
@@ -212,13 +205,13 @@ export async function completeReadingLesson(
       freezeCount,
       newAchievements,
       alreadyStudiedToday: daily.alreadyStudiedToday,
-      readingLessonCompleted: passed,
-      comboCount: passed ? nextComboCount : progress.comboCount,
-      comboMultiplier: passed ? comboMultiplier(nextComboCount) : comboMultiplier(progress.comboCount),
+      readingLessonCompleted: completed,
+      comboCount: nextComboCount,
+      comboMultiplier: comboMultiplier(nextComboCount),
       nextLessonId,
       alreadyCompleted: false,
-      nextXpEarned: passed && nextLessonId ? Math.round(splitLessonXp(lessonIndex + 1, lessonCount) * comboMultiplier(Math.min(nextComboCount + 1, 3)) / comboWeight(Math.min(lessonIndex + 2, 3))) : 0,
-      nextComboMultiplier: passed && nextLessonId ? comboMultiplier(Math.min(nextComboCount + 1, 3)) : 1,
+      nextXpEarned: 0,
+      nextComboMultiplier: 1,
     };
   });
 }
