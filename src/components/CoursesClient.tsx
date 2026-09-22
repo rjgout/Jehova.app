@@ -154,7 +154,7 @@ export default function CoursesClient() {
         dndId="courses-list"
         items={courses}
         onReorder={reorder}
-        className="flex flex-col gap-3"
+        className="flex flex-col gap-4"
         renderItem={(course, handle) => {
           const pct = course.totalChapters > 0 ? Math.round((course.completedCount / course.totalChapters) * 100) : 0;
           return (
@@ -163,32 +163,39 @@ export default function CoursesClient() {
                 course.isActive ? "!border-2 !border-brand-400 dark:!border-brand-500" : ""
               }`}
             >
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex items-start gap-2 min-w-0">
+              <div className="flex items-start gap-3">
+                <div className="pt-0.5">
                   <DragHandle {...handle} />
-                  <div className="min-w-0">
-                    <p className="text-xs font-extrabold uppercase tracking-wide text-slate-400 dark:text-slate-500">
-                      {TYPE_LABELS[course.type]}
-                    </p>
-                    <h2 className="font-extrabold text-lg dark:text-slate-100">{course.name}</h2>
-                    {course.description && (
-                      <p className="text-sm text-slate-500 dark:text-slate-400">{course.description}</p>
-                    )}
-                  </div>
                 </div>
-                <div className="flex flex-col items-end gap-1 shrink-0">
-                  {course.isActive && (
-                    <span className="text-xs font-extrabold uppercase text-brand-600 dark:text-brand-300 bg-brand-50 dark:bg-slate-700 rounded-full px-3 py-1">
-                      Actief
-                    </span>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="text-xs font-extrabold uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                        {TYPE_LABELS[course.type]}
+                      </p>
+                      <h2 className="font-extrabold text-lg leading-tight dark:text-slate-100">{course.name}</h2>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      {course.isActive && (
+                        <span className="text-xs font-extrabold uppercase text-brand-600 dark:text-brand-300 bg-brand-50 dark:bg-slate-700 rounded-full px-3 py-1">
+                          Actief
+                        </span>
+                      )}
+                      <button
+                        type="button"
+                        className="w-8 h-8 rounded-full border border-slate-200 dark:border-slate-700 text-slate-400 dark:text-slate-500 hover:text-red-500 hover:border-red-200 dark:hover:border-red-900 flex items-center justify-center text-lg leading-none transition-colors"
+                        disabled={removingId === course.id}
+                        onClick={() => remove(course.id)}
+                        aria-label={"Cursus " + course.name + " verwijderen"}
+                        title="Cursus verwijderen"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  </div>
+                  {course.description && (
+                    <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">{course.description}</p>
                   )}
-                  <button
-                    className="text-xs text-red-500 dark:text-red-400 hover:underline"
-                    disabled={removingId === course.id}
-                    onClick={() => remove(course.id)}
-                  >
-                    Verwijderen
-                  </button>
                 </div>
               </div>
 
@@ -208,7 +215,7 @@ export default function CoursesClient() {
                 </div>
               )}
 
-              <div className="flex gap-3">
+              <div className="flex gap-3 mt-auto pt-1">
                 {course.isActive ? (
                   <Link href={`/courses/${course.id}`} className="btn-primary self-start">
                     Ga verder →
