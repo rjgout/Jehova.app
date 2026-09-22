@@ -348,6 +348,7 @@ model ContentCollection {
   courses   Course[]
   gameScopes GameContentScope[]
   users     User[]   @relation("ActiveContentCollection")
+  fsyLessons FsyLesson[]
 }
 
 // Koppelt een spel aan één of meer contentcollecties. gameKey is de stabiele
@@ -368,6 +369,17 @@ model GameContentScope {
 model ContentSwitcherSettings {
   id      String  @id @default("singleton")
   enabled Boolean @default(false)
+}
+
+// Singleton voor de automatische FSY-broncontrole. Nieuwe inhoud komt eerst
+// als concept binnen; pas na controle wordt de gepubliceerde versie vervangen.
+// Met autoPublish kan dit later bewust worden omgezet naar directe publicatie.
+model FsySettings {
+  id            String   @id @default("singleton")
+  autoPublish   Boolean  @default(false)
+  lastCheckedAt DateTime?
+  lastError     String?
+  updatedAt     DateTime @updatedAt
 }
 
 // --- Cursussen: verschillende manieren om door de content te lopen --------
@@ -391,6 +403,9 @@ enum CourseType {
   // impliciet bij ("Ontdek het Boek van Mormon", de introductiecursus voor
   // wie nog geen voorkennis heeft).
   INTRO
+  // Singleton binnen de FSY-contentcollectie: de wekelijkse lessen staan
+  // in FsyLesson en hebben bewust geen Chapter/Verse-structuur.
+  FSY
 }
 
 model Course {
@@ -676,6 +691,44 @@ model KidsStoryProgress {
   completedAt DateTime?
 
   @@unique([userId, storyId])
+}
+
+// --- Voor de kracht van de jeugd -------------------------------------------
+//
+// Deze lessen komen uit de officiële maandelijkse FSY-lespagina's. Ze zijn
+// bewust geen Chapter/Verse en ook geen oefening: eerst tonen we alleen tekst
+// en afbeeldingen. De actuele gescrapete versie en de laatst gepubliceerde
+// versie staan apart zodat een bronwijziging niet automatisch zichtbaar wordt
+// wanneer autoPublish uitstaat.
+model FsyLesson {
+  id                  String          @id @default(cuid())
+  contentCollectionId String
+  contentCollection   ContentCollection @relation(fields: [contentCollectionId], references: [id], onDelete: Cascade)
+  year                Int
+  month               Int
+  category            String
+  slug                String
+  title               String
+  content             String          // JSON-array met tekst- en afbeeldingsblokken
+  images              String          // JSON-array met {url, alt}
+  sourceUrl           String
+  sourceHash          String
+  status              FsyLessonStatus @default(DRAFT)
+  publishedTitle      String?
+  publishedContent    String?
+  publishedImages     String?
+  publishedAt         DateTime?
+  lastScrapedAt       DateTime         @default(now())
+  order               Int              @default(0)
+
+  @@unique([contentCollectionId, sourceUrl])
+  @@unique([contentCollectionId, year, month, slug])
+  @@index([contentCollectionId, year, month, status, order])
+}
+
+enum FsyLessonStatus {
+  DRAFT
+  PUBLISHED
 }
 
 // --- Introductiecursus ("Ontdek het Boek van Mormon") ----------------------
