@@ -157,7 +157,7 @@ export default function LiveLobbyForm({ settings, isAdmin, allowedGameKeys }: Pr
         </p>
       </div>
 
-      {settings.liveExercisesEnabled && (
+      {settings.liveExercisesEnabled && allowedGameKeys.includes("live-exercises") && (
         <div className="card bg-gradient-to-br from-brand-500 to-brand-700 dark:from-brand-600 dark:to-brand-900 text-white flex flex-col gap-4">
           <div>
             <h2 className="font-extrabold text-lg">⚡ Live quiz starten</h2>
