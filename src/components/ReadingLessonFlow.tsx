@@ -217,16 +217,14 @@ export default function ReadingLessonFlow({
         )}
 
         <div className="flex flex-wrap justify-center gap-3 mt-4">
-          effectiveNextLessonId && (
+          {effectiveNextLessonId && (
             <Link href={`/reading-lesson/${effectiveNextLessonId}`} className="btn-primary">
               Volgende les → 🔥
             </Link>
           )}
-          (
-            <Link href={`/courses`} className="btn-secondary">
-              Stoppen
-            </Link>
-          }
+          <Link href="/courses" className="btn-secondary">
+            Stoppen
+          </Link>
         </div>
       </div>
     );
