@@ -294,7 +294,7 @@ export default function CoursesClient() {
         </div>
       )}
 
-      <Link href="/tools" className="btn-secondary self-center">
+      <Link href="/tools" className="btn-secondary w-full justify-center">
         🧰 Hulpmiddelen
       </Link>
     </div>
