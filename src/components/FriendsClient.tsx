@@ -166,7 +166,7 @@ export default function FriendsClient() {
   }
 
   async function removeFriendship(friendshipId: string, label: string) {
-    if (!window.confirm(`${label} verwijderen?\\n\\nWeet je het zeker?`)) return;
+    if (!window.confirm(`${label} verwijderen?\n\nWeet je het zeker?`)) return;
     const res = await fetch(`/api/friends/${friendshipId}`, { method: "DELETE" });
     const body = await res.json().catch(() => ({}));
     if (!res.ok) { setMessage(body.error ?? "Kon dit niet verwijderen."); return; }
