@@ -67,7 +67,7 @@ export default function ChapterGuessGameRoom({ code, myUserId }: { code: string;
   const [hint, setHint] = useState<HintResult | null>(null);
   const [hintLoading, setHintLoading] = useState(false);
   const [hintError, setHintError] = useState<string | null>(null);
-  const [forfeitedBy, setForfeitedBy] = useState<string | null>(null);
+  const [forfeitedBy, setForfeitedBy] = useState<string | null>(null);\n  const [showRules, setShowRules] = useState(false);
 
   const socket = getSocket();
 
@@ -210,7 +210,10 @@ export default function ChapterGuessGameRoom({ code, myUserId }: { code: string;
     const nonPlayerFriends = friends.filter((f) => !players.some((p) => p.userId === f.id));
     return (
       <div className="max-w-xl mx-auto flex flex-col gap-6">
-        {level && (
+        <div className="flex justify-end">
+          <button type="button" onClick={() => setShowRules(true)} className="w-9 h-9 rounded-full border border-slate-300 dark:border-slate-600 text-slate-500 dark:text-slate-300 font-extrabold flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-800" aria-label="Speluitleg openen" title="Speluitleg">i</button>
+        </div>
+        {showRules && (
           <span className="self-center text-xs font-bold uppercase text-brand-600 dark:text-brand-300 bg-brand-50 dark:bg-slate-700 rounded-full px-3 py-1">
             🔎 Raad het hoofdstuk — {LEVEL_LABELS[level]}
           </span>
