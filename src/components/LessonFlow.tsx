@@ -213,7 +213,7 @@ export default function LessonFlow({ chapterId, bookName, chapterNumber, nextCha
   return null;
 }
 
-function ReaderView({
+export function ReaderView({
   chapterId,
   bookName,
   chapterNumber,
