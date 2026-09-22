@@ -67,7 +67,8 @@ export default function ChapterGuessGameRoom({ code, myUserId }: { code: string;
   const [hint, setHint] = useState<HintResult | null>(null);
   const [hintLoading, setHintLoading] = useState(false);
   const [hintError, setHintError] = useState<string | null>(null);
-  const [forfeitedBy, setForfeitedBy] = useState<string | null>(null);\n  const [showRules, setShowRules] = useState(false);
+  const [forfeitedBy, setForfeitedBy] = useState<string | null>(null);
+  const [showRules, setShowRules] = useState(false);
 
   const socket = getSocket();
 
