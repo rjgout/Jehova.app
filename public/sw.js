@@ -22,7 +22,10 @@ self.addEventListener("push", (event) => {
     self.registration.showNotification(data.title, {
       body: data.body,
       data: { url: data.url },
-    })
+    }),
+    typeof data.badge === "number" && data.badge > 0
+      ? self.registration.setAppBadge(data.badge).catch(() => {})
+      : Promise.resolve()
   );
 });
 
