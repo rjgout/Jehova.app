@@ -7,6 +7,7 @@ import ChapterListCourseView from "@/components/ChapterListCourseView";
 import PodcastCourseView from "@/components/PodcastCourseView";
 import KidsCourseView from "@/components/KidsCourseView";
 import IntroCourseView from "@/components/IntroCourseView";
+import ReadingCourseView from "@/components/ReadingCourseView";
 
 export default async function CourseDetailPage({ params }: { params: Promise<{ courseId: string }> }) {
   const user = await getCurrentUser();
@@ -113,6 +114,86 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ c
           summary: lesson.summary,
           completed: lesson.progress[0]?.completed ?? false,
           bestScore: lesson.progress[0] ? lesson.progress[0].bestScore : null,
+        }))}
+      />
+    );
+  }
+
+  if (course.type === "READING_LESSONS") {
+    const lessons = await prisma.courseLesson.findMany({
+      where: { courseId: course.id },
+      orderBy: { order: "asc" },
+      include: {
+        chapter: { include: { book: true } },
+        progress: { where: { userId: user.id } },
+      },
+    });
+
+    let courseProgress = await prisma.userCourseProgress.findUnique({
+      where: { userId_courseId: { userId: user.id, courseId: course.id } },
+    });
+    if (!courseProgress) {
+      await advanceCourseProgress(prisma, user.id, course.id);
+      courseProgress = await prisma.userCourseProgress.findUnique({
+        where: { userId_courseId: { userId: user.id, courseId: course.id } },
+      });
+    }
+
+    const currentLesson = courseProgress?.currentLessonId
+      ? lessons.find((lesson) => lesson.id === courseProgress.currentLessonId) ?? null
+      : null;
+    const currentOrder = currentLesson?.order ?? null;
+
+    const chapterMap = new Map<string, {
+      id: string;
+      number: number;
+      bookName: string;
+      lessonCount: number;
+      completedLessons: number;
+      firstOrder: number;
+    }>();
+
+    for (const lesson of lessons) {
+      const existing = chapterMap.get(lesson.chapterId);
+      const completed = lesson.progress[0]?.completed ?? false;
+      if (existing) {
+        existing.lessonCount++;
+        if (completed) existing.completedLessons++;
+      } else {
+        chapterMap.set(lesson.chapterId, {
+          id: lesson.chapterId,
+          number: lesson.chapter.number,
+          bookName: lesson.chapter.book.name,
+          lessonCount: 1,
+          completedLessons: completed ? 1 : 0,
+          firstOrder: lesson.order,
+        });
+      }
+    }
+
+    return (
+      <ReadingCourseView
+        courseId={course.id}
+        courseName={course.name}
+        today={
+          currentLesson
+            ? {
+                id: currentLesson.id,
+                bookName: currentLesson.chapter.book.name,
+                chapterNumber: currentLesson.chapter.number,
+                lessonNumber: currentLesson.order + 1,
+                startVerse: currentLesson.startVerse,
+                endVerse: currentLesson.endVerse,
+              }
+            : null
+        }
+        chapters={Array.from(chapterMap.values()).map((chapter) => ({
+          id: chapter.id,
+          number: chapter.number,
+          bookName: chapter.bookName,
+          lessonCount: chapter.lessonCount,
+          completedLessons: chapter.completedLessons,
+          locked: currentOrder !== null ? chapter.firstOrder > currentOrder : false,
         }))}
       />
     );
