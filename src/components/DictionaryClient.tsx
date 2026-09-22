@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 
 interface DictionaryEntry {
   word: string;
@@ -275,6 +276,10 @@ export default function DictionaryClient() {
           </div>
         </div>
       )}
+
+      <Link href="/tools" className="btn-secondary self-start">
+        ← Terug
+      </Link>
     </div>
   );
 }
