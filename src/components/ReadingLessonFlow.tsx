@@ -35,7 +35,6 @@ interface Result {
   xpEarned: number;
   scorePercent: number;
   currentStreak: number;
-  freezeCount: number;
   freezesEarned: number;
   freezeUsed: boolean;
   streakBroken: boolean;
@@ -186,18 +185,12 @@ export default function ReadingLessonFlow({
           )}
         </>
 
-        <div className="flex gap-6 mt-2">
-          {!result.alreadyStudiedToday && (
-            <div>
-              <div className="text-xl font-extrabold text-orange-500">🔥 {result.currentStreak}</div>
-              <div className="text-xs text-slate-400 dark:text-slate-500 font-bold uppercase">Streak</div>
-            </div>
-          )}
-          <div>
-            <div className="text-xl font-extrabold text-ice-600">🧊 {result.freezeCount}</div>
-            <div className="text-xs text-slate-400 dark:text-slate-500 font-bold uppercase">Freezes</div>
+        {!result.alreadyStudiedToday && (
+          <div className="mt-2">
+            <div className="text-xl font-extrabold text-orange-500">🔥 {result.currentStreak}</div>
+            <div className="text-xs text-slate-400 dark:text-slate-500 font-bold uppercase">Streak</div>
           </div>
-        </div>
+        )}
 
         {result.newAchievements.length > 0 && (
           <div className="flex flex-col gap-2 w-full">
@@ -217,14 +210,14 @@ export default function ReadingLessonFlow({
         )}
 
         <div className="flex flex-wrap justify-center gap-3 mt-4">
+          <Link href="/courses" className="btn-secondary">
+            Stoppen
+          </Link>
           {effectiveNextLessonId && (
             <Link href={`/reading-lesson/${effectiveNextLessonId}`} className="btn-primary">
               Volgende les → 🔥
             </Link>
           )}
-          <Link href="/courses" className="btn-secondary">
-            Stoppen
-          </Link>
         </div>
       </div>
     );
