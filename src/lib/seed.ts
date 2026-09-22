@@ -63,6 +63,9 @@ export async function runSeed(client: PrismaClient, log: (msg: string) => void =
   log("Podcastfeed ophalen voor titels/omschrijvingen en nieuwe afleveringen...");
   await syncPodcastFeed(client, log);
 
+  log("FSY-content controleren op nieuwe lessen...");
+  await syncFsyContent(client, log);
+
   log("Seeding kindercursus (Verhalen uit het Boek van Mormon)...");
   await importKidsStories(client, kidsManifest as KidsStorySeed[], log);
 
