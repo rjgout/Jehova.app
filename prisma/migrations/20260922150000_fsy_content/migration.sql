@@ -11,16 +11,16 @@ ON CONFLICT ("id") DO UPDATE SET
   "icon" = EXCLUDED."icon",
   "order" = EXCLUDED."order";
 
-INSERT INTO "FsySettings" ("id", "autoPublish", "lastCheckedAt", "lastError", "updatedAt")
-VALUES ('singleton', false, NULL, NULL, CURRENT_TIMESTAMP)
-ON CONFLICT ("id") DO NOTHING;
-
 CREATE TABLE "FsySettings" (
   "id" TEXT NOT NULL,
   "autoPublish" BOOLEAN NOT NULL DEFAULT false,
   "lastCheckedAt" TIMESTAMP(3),
   "lastError" TEXT,
   "updatedAt" TIMESTAMP(3) NOT NULL,
+
+INSERT INTO "FsySettings" ("id", "autoPublish", "lastCheckedAt", "lastError", "updatedAt")
+VALUES ('singleton', false, NULL, NULL, CURRENT_TIMESTAMP)
+ON CONFLICT ("id") DO NOTHING;
 
   CONSTRAINT "FsySettings_pkey" PRIMARY KEY ("id")
 );
@@ -61,3 +61,5 @@ ALTER TABLE "FsyLesson"
   ADD CONSTRAINT "FsyLesson_contentCollectionId_fkey"
   FOREIGN KEY ("contentCollectionId") REFERENCES "ContentCollection"("id")
   ON DELETE CASCADE ON UPDATE CASCADE;
+
+ALTER TYPE "CourseType" ADD VALUE 'FSY';
