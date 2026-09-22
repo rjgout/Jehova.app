@@ -147,7 +147,12 @@ export default function ChapterGuessGameRoom({ code, myUserId }: { code: string;
   useEffect(() => {
     fetch("/api/friends")
       .then((r) => r.json())
-      .then((d) => setFriends(d.friends ?? []));
+      .then((d) => {
+        const friendList = (d.friends ?? [])
+          .map((entry: { user?: Friend }) => entry.user)
+          .filter((friend: Friend | undefined): friend is Friend => Boolean(friend));
+        setFriends(friendList);
+      });
     fetch("/api/chapters")
       .then((r) => r.json())
       .then(setChapters);
@@ -250,7 +255,10 @@ export default function ChapterGuessGameRoom({ code, myUserId }: { code: string;
             <button className="btn-primary self-center" onClick={startGame} disabled={players.length === 0}>
               Start spel →
             </button>
-            <button className="text-red-500 dark:text-red-400 text-sm font-semibold hover:underline" onClick={cancelGame}>
+            <button
+              className="btn-secondary !border-red-300 !text-red-600 dark:!border-red-800 dark:!text-red-400"
+              onClick={cancelGame}
+            >
               Spel beëindigen
             </button>
           </div>
