@@ -6,12 +6,20 @@ import { getTextOfTheDay } from "@/lib/dailyText";
 import { wordGameDayKey } from "@/lib/wordGame";
 import { broadcastPresenceUpdate } from "@/lib/presence";
 import { getIO } from "@/server/gameServer";
+import { syncPodcastFeed } from "@/lib/podcastFeed";
 
 const TICK_MS = 60_000;
 // Vast (niet instelbaar) moment voor de wekelijkse uitslag — dit is geen
 // per-gebruiker voorkeur zoals de dagelijkse herinnering, maar één
 // systeemmoment vlak na het einde van de vorige week.
 const WEEKLY_RESULT_TIME = "00:05";
+
+// De podcast verschijnt op zondag rond 12:45 Nederlandse tijd. We gebruiken
+// een venster van 12:45–13:15 zodat een korte herstart of vertraging van de
+// feed niet meteen betekent dat de wekelijkse sync wordt gemist.
+const PODCAST_SYNC_START = 12 * 60 + 45;
+const PODCAST_SYNC_END = 13 * 60 + 15;
+let lastPodcastSyncDate: string | null = null;
 
 // Beide ticks hieronder vergelijken tegen een door de gebruiker gekozen of
 // vast Nederlands tijdstip (bv. "20:00"), dus moeten tegen de Nederlandse
@@ -243,6 +251,23 @@ export async function runSeasonRolloverTick(): Promise<void> {
  * dagKey ipv HH:MM-vergelijking, want de wisseling zelf gebeurt al op een
  * vast tijdstip.
  */
+async function runPodcastFeedTick(): Promise<void> {
+  const now = new Date();
+  const amsterdam = amsterdamNow(now);
+  if (amsterdamDayOfWeek(amsterdam) !== 0) return;
+
+  const minutes = amsterdam.hour * 60 + amsterdam.minute;
+  if (minutes < PODCAST_SYNC_START || minutes > PODCAST_SYNC_END) return;
+
+  const today = dayKey(now);
+  if (lastPodcastSyncDate === today) return;
+
+  // Zet de datum pas na een geslaagde sync. Zo kan een tijdelijke feedstoring
+  // binnen hetzelfde venster bij de volgende tick automatisch opnieuw proberen.
+  await syncPodcastFeed(prisma, (msg) => console.log(msg));
+  lastPodcastSyncDate = today;
+}
+
 async function runWordGameNotificationTick(): Promise<void> {
   const now = new Date();
   const amsterdam = amsterdamNow(now);
@@ -297,6 +322,7 @@ export function startNotificationSchedulers(): void {
     runWeeklyResultTick().catch((e) => console.error("Wekelijkse uitslag mislukt:", e));
     runSeasonRolloverTick().catch((e) => console.error("Seizoensafsluiting mislukt:", e));
     runWordGameNotificationTick().catch((e) => console.error("Woord-van-de-dag-melding mislukt:", e));
+    runPodcastFeedTick().catch((e) => console.error("Podcastfeed-synchronisatie mislukt:", e));
     runIncognitoExpiryTick().catch((e) => console.error("Incognito-vervaltijd mislukt:", e));
   }, TICK_MS);
 }
