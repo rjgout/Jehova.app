@@ -17,6 +17,7 @@ export interface Exercise {
   type: ExerciseType;
   verseRef: string;
   prompt: string;
+  hint?: string;
   blanks: number;
   wordBank?: string[];
   options?: string[];
@@ -390,6 +391,69 @@ function formatCorrectAnswer(type: Exercise["type"], correctAnswer: string[]): s
   return correctAnswer.join(" ");
 }
 
+function HintControl({ exercise, checked }: { exercise: Exercise; checked: boolean }) {
+  const [hint, setHint] = useState<string | null>(null);
+  const [hintCredits, setHintCredits] = useState<number | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch("/api/hints")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data && typeof data.hintBalance === "number") setHintCredits(data.hintBalance);
+      })
+      .catch(() => {});
+  }, []);
+
+  async function showHint() {
+    if (loading || checked || hint) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/exercises/${exercise.id}/hint`, { method: "POST" });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(typeof data.error === "string" ? data.error : "De denkhint kon niet worden opgehaald.");
+        return;
+      }
+      setHint(typeof data.hint === "string" ? data.hint : null);
+      setHintCredits(typeof data.hintBalance === "number" ? data.hintBalance : hintCredits);
+    } catch {
+      setError("De denkhint kon niet worden opgehaald.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  if (hint) {
+    return (
+      <div className="rounded-2xl bg-gold-50 dark:bg-slate-700 px-4 py-3">
+        <p className="font-extrabold text-gold-700 dark:text-gold-300">💡 Denkhint</p>
+        <p className="text-sm text-gold-700/90 dark:text-gold-200 mt-1">{hint}</p>
+        {hintCredits !== null && (
+          <p className="text-xs text-gold-600 dark:text-gold-300 mt-2 font-bold">{hintCredits} denkhint{hintCredits === 1 ? "" : "s"} over</p>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col gap-2">
+      <button
+        type="button"
+        className="btn-secondary self-start"
+        disabled={loading || checked || hintCredits === 0}
+        onClick={showHint}
+      >
+        {loading ? "Denkhint ophalen…" : `💡 Denkhint${hintCredits === null ? "" : ` · ${hintCredits}`}`}
+      </button>
+      {error && <p className="text-sm text-red-500 dark:text-red-400">{error}</p>}
+    </div>
+  );
+}
+
+
 export function ExerciseCard({
   exercise,
   onDone,
@@ -481,6 +545,7 @@ export function ExerciseCard({
     return (
       <div className="card flex flex-col gap-5">
         <p className="text-xs font-bold uppercase text-slate-400 dark:text-slate-500">{exercise.verseRef}</p>
+        <HintControl exercise={exercise} checked={checked} />
         <p className="text-xl leading-relaxed dark:text-slate-100">{exercise.prompt}</p>
         <div className="flex gap-3">
           {(["true", "false"] as const).map((value) => {
@@ -542,6 +607,7 @@ export function ExerciseCard({
     return (
       <div className="card flex flex-col gap-5">
         <p className="text-xs font-bold uppercase text-slate-400 dark:text-slate-500">{exercise.verseRef}</p>
+        <HintControl exercise={exercise} checked={checked} />
         <p className="text-xl leading-relaxed dark:text-slate-100">
           {promptParts.map((part, i) => (
             <span key={i}>
@@ -597,6 +663,7 @@ export function ExerciseCard({
     return (
       <div className="card flex flex-col gap-5">
         <p className="text-xs font-bold uppercase text-slate-400 dark:text-slate-500">{exercise.verseRef}</p>
+        <HintControl exercise={exercise} checked={checked} />
         <p className="text-xl leading-relaxed dark:text-slate-100">{exercise.prompt}</p>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {options.map((opt) => {
@@ -641,6 +708,7 @@ export function ExerciseCard({
     return (
       <div className="card flex flex-col gap-5">
         <p className="text-xs font-bold uppercase text-slate-400 dark:text-slate-500">{exercise.verseRef}</p>
+        <HintControl exercise={exercise} checked={checked} />
         <p className="text-xl leading-relaxed dark:text-slate-100">{exercise.prompt}</p>
         <div className="grid grid-cols-2 gap-3">
           {options.map((opt) => {
