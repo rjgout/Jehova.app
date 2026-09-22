@@ -35,6 +35,7 @@ interface GameEntry {
   description: string;
   href: string;
   linkLabel: string;
+  rules: { title: string; bullets: string[] };
 }
 
 // Vaste catalogus — nu data-driven (i.p.v. losse hardcoded kaarten) zodat
@@ -49,6 +50,7 @@ const GAMES: GameEntry[] = [
       "Raad het 5-letterwoord uit het Boek van Mormon — elke dag om 18:00 uur een nieuw woord, één poging per dag, en het telt mee voor je streak.",
     href: "/word-game",
     linkLabel: "Woord van de dag openen",
+    rules: {"title":"Zo speel je","bullets":["Raad het dagelijkse woord uit het Boek van Mormon.","Je hebt 5 pogingen. Groen = juiste letter op de juiste plek, geel = juiste letter op de verkeerde plek en grijs = de letter komt niet voor.","Het spel eindigt als je het woord raadt of je pogingen op zijn."]},
   },
   {
     id: "scrabble",
@@ -59,6 +61,7 @@ const GAMES: GameEntry[] = [
       "Een woordlegspel met alleen woorden uit het Boek van Mormon — daag een vriend uit en speel om de beurt, ieder op je eigen tempo.",
     href: "/scrabble",
     linkLabel: "Woordspel openen",
+    rules: {"title":"Zo speel je","bullets":["Maak geldige woorden en verzamel meer punten dan je tegenstander.","Je kunt een woord leggen, letters wisselen of passen. 2L/3L en 2W/3W geven bonuspunten.","Het spel eindigt normaal als de zak leeg is én een speler geen stenen meer heeft, of na 6 opeenvolgende passen/wissels. Opgeven betekent verlies."]},
   },
   {
     id: "gezinsavond",
@@ -69,6 +72,7 @@ const GAMES: GameEntry[] = [
       "Een avontuurlijk bordspel over het Boek van Mormon voor het hele gezin — samen aan tafel op één apparaat, of ieder op je eigen telefoon. Ook leuk zonder veel voorkennis.",
     href: "/gezinsavond",
     linkLabel: "Gezinsavond openen",
+    rules: {"title":"Zo speel je","bullets":["Speel samen aan tafel en volg de opdrachten en vragen op het scherm.","Je kunt met één apparaat spelen of ieder je eigen apparaat gebruiken wanneer de spelmodus dat ondersteunt.","Het doel is samen het spel uit te spelen en zoveel mogelijk te leren over het Boek van Mormon."]},
   },
   {
     id: "chapter-guess",
@@ -79,6 +83,7 @@ const GAMES: GameEntry[] = [
       "Lees het eerste vers van een hoofdstuk en raad welk hoofdstuk het is — kies zelf je niveau, alleen of live met vrienden.",
     href: "/chapter-guess",
     linkLabel: "Raad het hoofdstuk openen",
+    rules: {"title":"Zo speel je","bullets":["Lees de aanwijzing en kies welk hoofdstuk erbij hoort.","Kies je niveau en speel alleen of met vrienden.","Hints kunnen helpen, maar kosten een hinttegoed. Je verdient XP wanneer je een potje succesvol afrondt."]},
   },
   {
     id: "challenges",
@@ -97,6 +102,7 @@ export default function LiveLobbyForm({ settings, isAdmin }: Props) {
   const [chapterId, setChapterId] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
+  const [showRules, setShowRules] = useState<string | null>(null);
   const [games, setGames] = useState<GameEntry[]>(() => GAMES.filter((g) => settings[g.enabledKey] || isAdmin));
 
   useEffect(() => {
@@ -217,11 +223,23 @@ function GameCardBody({ game, enabled, handle }: { game: GameEntry; enabled: boo
           {game.icon}
         </div>
       </div>
-      <h2 className="font-extrabold dark:text-slate-100">{game.title}</h2>
+      <div className="flex items-center justify-between gap-2"><h2 className="font-extrabold dark:text-slate-100">{game.title}</h2><button type="button" onClick={() => setShowRules(game.id)} className="w-8 h-8 shrink-0 rounded-full border border-slate-300 dark:border-slate-600 text-slate-500 dark:text-slate-300 font-extrabold flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-800" aria-label={`Speluitleg voor ${game.title}`} title="Speluitleg">i</button></div>
       <p className="text-sm text-slate-500 dark:text-slate-400 flex-1">{game.description}</p>
       <Link href={game.href} className="btn-secondary self-start">
         {game.linkLabel}
       </Link>
+      {showRules === game.id && (
+        <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4" role="presentation" onClick={() => setShowRules(null)}>
+          <div className="card max-w-lg w-full max-h-[85vh] overflow-y-auto relative" role="dialog" aria-modal="true" aria-labelledby={`game-rules-${game.id}`} onClick={(event) => event.stopPropagation()}>
+            <button type="button" onClick={() => setShowRules(null)} className="absolute top-3 right-3 w-9 h-9 rounded-full text-slate-500 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 text-xl" aria-label="Speluitleg sluiten">×</button>
+            <h3 id={`game-rules-${game.id}`} className="text-xl font-extrabold text-brand-800 dark:text-brand-300 pr-10">Speluitleg</h3>
+            <h4 className="mt-4 font-extrabold dark:text-slate-100">{game.rules.title}</h4>
+            <ul className="mt-2 list-disc pl-5 space-y-2 text-sm text-slate-700 dark:text-slate-200">
+              {game.rules.bullets.map((bullet) => <li key={bullet}>{bullet}</li>)}
+            </ul>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
