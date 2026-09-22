@@ -5,6 +5,7 @@ import { awardXp } from "@/lib/xp";
 import { checkAndAwardAchievements } from "@/lib/achievements";
 import { awardCompetitionXp } from "@/lib/competitionXp";
 import { XP_PER_CORRECT_LIGHT, applyRepeatDiscount } from "@/lib/xpRules";
+import { notifyFreezeReceived } from "@/lib/notify";
 
 const PASS_THRESHOLD = 60; // percentage nodig om een hoofdstuk als voltooid te tellen
 const STREAK_MILESTONE_FOR_FREEZE = 7; // elke 7-daagse streak levert een freeze op
@@ -659,5 +660,7 @@ export async function giftFreeze(fromUserId: string, toUserId: string) {
       data: { userId: toUserId, type: "GIFT_RECEIVED", amount: 1, relatedId: fromUserId },
     });
     await checkAndAwardAchievements(tx, fromUserId);
+    const senderName = sender.handle + "#" + sender.discriminator;
+    await notifyFreezeReceived(toUserId, senderName);
   });
 }
