@@ -8,7 +8,7 @@ import { applyPersonalOrder, fetchListOrder, saveListOrder } from "@/lib/listOrd
 interface CourseView {
   id: string;
   slug: string;
-  type: "FRONT_TO_BACK" | "FREE_CHOICE" | "BY_BOOK" | "PODCAST" | "KIDS" | "INTRO" | "READING_LESSONS";
+  type: "FRONT_TO_BACK" | "FREE_CHOICE" | "BY_BOOK" | "PODCAST" | "KIDS" | "INTRO" | "READING_LESSONS" | "FSY";
   name: string;
   description: string | null;
   totalChapters: number;
@@ -35,6 +35,7 @@ const TYPE_LABELS: Record<CourseView["type"], string> = {
   BY_BOOK: "Per boek",
   PODCAST: "Podcast",
   KIDS: "Voor kinderen",
+  FSY: "Voor de kracht van de jeugd",
 };
 
 export default function CoursesClient() {
