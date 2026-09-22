@@ -17,13 +17,12 @@ CREATE TABLE "FsySettings" (
   "lastCheckedAt" TIMESTAMP(3),
   "lastError" TEXT,
   "updatedAt" TIMESTAMP(3) NOT NULL,
+  CONSTRAINT "FsySettings_pkey" PRIMARY KEY ("id")
+);
 
 INSERT INTO "FsySettings" ("id", "autoPublish", "lastCheckedAt", "lastError", "updatedAt")
 VALUES ('singleton', false, NULL, NULL, CURRENT_TIMESTAMP)
 ON CONFLICT ("id") DO NOTHING;
-
-  CONSTRAINT "FsySettings_pkey" PRIMARY KEY ("id")
-);
 
 CREATE TYPE "FsyLessonStatus" AS ENUM ('DRAFT', 'PUBLISHED');
 
@@ -46,7 +45,6 @@ CREATE TABLE "FsyLesson" (
   "publishedAt" TIMESTAMP(3),
   "lastScrapedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
   "order" INTEGER NOT NULL DEFAULT 0,
-
   CONSTRAINT "FsyLesson_pkey" PRIMARY KEY ("id")
 );
 
