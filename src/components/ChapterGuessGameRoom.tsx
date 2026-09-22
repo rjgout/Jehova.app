@@ -212,7 +212,177 @@ export default function ChapterGuessGameRoom({ code, myUserId }: { code: string;
       <div className="max-w-xl mx-auto flex flex-col gap-6">
         <div className="flex justify-end">
         </div>
-        ;
+        )}
+        {level && (
+          <span className="self-center text-xs font-bold uppercase text-brand-600 dark:text-brand-300 bg-brand-50 dark:bg-slate-700 rounded-full px-3 py-1">
+            🔎 Raad het hoofdstuk — {LEVEL_LABELS[level]}
+          </span>
+        )}
+
+        <div className="card">
+          <h2 className="font-extrabold mb-3">Spelers ({players.length})</h2>
+          <ul className="flex flex-col gap-2">
+            {players.map((p) => (
+              <li key={p.userId} className="flex items-center gap-2">
+                <span>{p.userId === hostId ? "👑" : "🙋"}</span>
+                <span className="font-bold">{p.displayName}</span>
+                {p.userId === myUserId && <span className="text-brand-500 dark:text-brand-300 text-sm">(jij)</span>}
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        {nonPlayerFriends.length > 0 && (
+          <div className="card">
+            <h2 className="font-extrabold mb-3">Vrienden uitnodigen</h2>
+            <ul className="flex flex-col gap-2">
+              {nonPlayerFriends.map((f) => (
+                <li key={f.id} className="flex items-center justify-between">
+                  <span>{f.handle}</span>
+                  <button className="btn-secondary !px-3 !py-1.5" disabled={invited.has(f.id)} onClick={() => inviteFriend(f.id)}>
+                    {invited.has(f.id) ? "Uitgenodigd" : "Nodig uit"}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {myUserId === hostId ? (
+          <div className="flex flex-col items-center gap-2">
+            <button className="btn-primary self-center" onClick={startGame} disabled={players.length === 0}>
+              Start spel →
+            </button>
+            <button className="text-red-500 dark:text-red-400 text-sm font-semibold hover:underline" onClick={cancelGame}>
+              Spel beëindigen
+            </button>
+          </div>
+        ) : (
+          <p className="text-center text-slate-400 dark:text-slate-500">Wachten tot de host het spel start...</p>
+        )}
+      </div>
+    );
+  }
+
+  if ((phase === "question" || phase === "reveal") && question) {
+    const chaptersForBook = chapters.filter((c) => c.bookId === pickedBookId).sort((a, b) => a.number - b.number);
+    const uniqueBooks = [...new Map(chapters.map((c) => [c.bookId, c.bookName])).entries()];
+    const revealing = phase === "reveal";
+
+    return (
+      <div className="max-w-xl mx-auto flex flex-col gap-6">
+        <div className="flex items-center justify-between text-sm font-bold text-slate-400 dark:text-slate-500">
+          <span>
+            Vraag {question.index + 1} / {question.total}
+          </span>
+          <div className="flex items-center gap-2">
+            <span>{answeredCount.answered}/{players.length || answeredCount.total} beantwoord</span>
+          </div>
+        </div>
+        <CountdownBar key={question.index} timeLimitMs={question.timeLimitMs} active={phase === "question"} />
+
+        <div className="flex items-center justify-between">
+          <div className="flex gap-2">
+            {level !== "EXPERT" && (
+              <button className="btn-secondary !px-3 !py-1.5 !text-xs" disabled={hintLoading || hint !== null || submitted} onClick={requestHint}>
+                💡 Hint
+              </button>
+            )}
+            <button className="btn-secondary !px-3 !py-1.5 !text-xs !text-red-500" onClick={forfeit}>
+              🏳️ Opgeven
+            </button>
+          </div>
+        </div>
+        {hintError && <p className="text-red-600 dark:text-red-400 text-sm font-semibold">{hintError}</p>}
+
+        <div className="card flex flex-col gap-5">
+          <p className="text-xs font-bold uppercase text-slate-400 dark:text-slate-500">Lees deze hoofdstukkop — welk hoofdstuk is dit?</p>
+          <p className="text-xl leading-relaxed italic">&ldquo;{question.introText}&rdquo;</p>
+
+          {hint?.bookName && !revealing && (
+            <p className="text-sm bg-gold-50 dark:bg-slate-700 text-gold-600 dark:text-gold-400 rounded-xl px-3 py-2 font-bold">
+              💡 Hint: dit hoofdstuk staat in {hint.bookName}.
+            </p>
+          )}
+
+          {question.options ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {question.options.map((opt) => {
+                const eliminated = hint?.eliminatedChapterId === opt.id;
+                const isCorrectOption = revealing && correctChapterId === opt.id;
+                const isWrongPick = revealing && choice === opt.id && !isCorrectOption;
+                return (
+                  <button
+                    key={opt.id}
+                    disabled={submitted || revealing || eliminated}
+                    onClick={() => submitAnswer(opt.id)}
+                    className={`btn text-left border-2 ${
+                      isCorrectOption
+                        ? "bg-brand-500 text-white border-brand-500"
+                        : isWrongPick
+                          ? "bg-red-100 text-red-600 border-red-400"
+                          : eliminated
+                            ? "opacity-30 line-through border-slate-200 dark:border-slate-700"
+                            : "bg-white dark:bg-slate-800 dark:text-slate-100 border-slate-200 dark:border-slate-600 hover:border-brand-300"
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="flex flex-col gap-3">
+              <select
+                className="input"
+                value={pickedBookId}
+                disabled={submitted || revealing}
+                onChange={(e) => {
+                  setPickedBookId(e.target.value);
+                  setPickedNumber("");
+                }}
+              >
+                <option value="">Kies een boek...</option>
+                {uniqueBooks.map(([id, name]) => (
+                  <option key={id} value={id}>
+                    {name}
+                  </option>
+                ))}
+              </select>
+              <select
+                className="input"
+                value={pickedNumber}
+                disabled={submitted || revealing || !pickedBookId}
+                onChange={(e) => setPickedNumber(e.target.value ? Number(e.target.value) : "")}
+              >
+                <option value="">Kies een hoofdstuk...</option>
+                {chaptersForBook.map((c) => (
+                  <option key={c.id} value={c.number}>
+                    Hoofdstuk {c.number}
+                  </option>
+                ))}
+              </select>
+              {!submitted && !revealing && (
+                <button className="btn-primary self-start" disabled={!pickedBookId || pickedNumber === ""} onClick={confirmAdvanced}>
+                  Bevestig keuze
+                </button>
+              )}
+            </div>
+          )}
+
+          {submitted && phase === "question" && (
+            <p className="text-slate-400 dark:text-slate-500 text-sm self-end">Antwoord verstuurd, wachten op anderen...</p>
+          )}
+          {revealing && correctChapterLabel && (
+            <p className="bg-brand-50 dark:bg-slate-700 text-brand-700 dark:text-brand-300 rounded-xl px-3 py-2 font-bold">
+              Juiste antwoord: {correctChapterLabel}
+            </p>
+          )}
+        </div>
+
+        {revealing && <Scoreboard players={players} myUserId={myUserId} />}
+      </div>
+    );
   }
 
   if (phase === "finished") {
