@@ -164,10 +164,10 @@ export default function CoursesClient() {
               }`}
             >
               <div className="flex items-start gap-3">
-                <div className="pt-0.5">
+                <div className="pt-0.5 shrink-0">
                   <DragHandle {...handle} />
                 </div>
-                <div className="min-w-0 flex-1">
+                <div className="min-w-0 flex-1 flex flex-col">
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
                       <p className="text-xs font-extrabold uppercase tracking-wide text-slate-400 dark:text-slate-500">
@@ -193,42 +193,40 @@ export default function CoursesClient() {
                       </button>
                     </div>
                   </div>
+
                   {course.description && (
                     <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">{course.description}</p>
                   )}
-                </div>
-              </div>
 
-              {course.totalChapters > 0 && (
-                <div className="flex flex-col gap-1">
-                  <div className="h-2 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
-                    <div className="h-full bg-gold-400" style={{ width: `${pct}%` }} />
-                  </div>
-                  <p className="text-xs text-slate-400 dark:text-slate-500">
-                    {course.completedCount} / {course.totalChapters} hoofdstukken voltooid
-                    {course.currentChapter &&
-                      ` — volgende: ${course.currentChapter.bookName} ${course.currentChapter.number}`}
-                  </p>
-                  {course.xpAvailable > 0 && (
-                    <p className="text-xs font-bold text-gold-600 dark:text-gold-400">⭐ {course.xpAvailable} XP te verdienen</p>
+                  {course.totalChapters > 0 && (
+                    <div className="flex flex-col gap-1 mt-3">
+                      <div className="h-2 rounded-full bg-slate-200 dark:bg-slate-600 overflow-hidden">
+                        <div className="h-full bg-gold-400" style={{ width: `${pct}%` }} />
+                      </div>
+                      <p className="text-xs text-slate-400 dark:text-slate-500">
+                        {course.completedCount} / {course.totalChapters} hoofdstukken voltooid
+                        {course.currentChapter &&
+                          ` — volgende: ${course.currentChapter.bookName} ${course.currentChapter.number}`}
+                      </p>
+                    </div>
                   )}
-                </div>
-              )}
 
-              <div className="flex gap-3 mt-auto pt-1">
-                {course.isActive ? (
-                  <Link href={`/courses/${course.id}`} className="btn-primary self-start">
-                    Ga verder →
-                  </Link>
-                ) : (
-                  <button
-                    className="btn-secondary self-start"
-                    disabled={activatingId === course.id}
-                    onClick={() => activate(course.id)}
-                  >
-                    {activatingId === course.id ? "Bezig..." : "Kies deze cursus"}
-                  </button>
-                )}
+                  <div className="flex gap-3 mt-3">
+                    {course.isActive ? (
+                      <Link href={`/courses/${course.id}`} className="btn-primary self-start">
+                        Ga verder →
+                      </Link>
+                    ) : (
+                      <button
+                        className="btn-secondary self-start"
+                        disabled={activatingId === course.id}
+                        onClick={() => activate(course.id)}
+                      >
+                        {activatingId === course.id ? "Bezig..." : "Kies deze cursus"}
+                      </button>
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
           );
