@@ -62,6 +62,8 @@ ALTER TABLE "FsyLesson"
   FOREIGN KEY ("contentCollectionId") REFERENCES "ContentCollection"("id")
   ON DELETE CASCADE ON UPDATE CASCADE;
 
+ALTER TYPE "CourseType" ADD VALUE 'FSY';
+
 -- De cursus wordt meteen aangemaakt zodat de FSY-collectie na het inschakelen
 -- van de Content Switcher direct een cursus kan tonen. De gebruiker moet hem
 -- nog wel zelf toevoegen aan zijn persoonlijke cursuslijst.
