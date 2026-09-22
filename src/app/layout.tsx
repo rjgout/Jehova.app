@@ -1,3 +1,4 @@
+import FreezeGiftPopup from "@/components/FreezeGiftPopup";
 import type { Metadata, Viewport } from "next";
 import Link from "next/link";
 import { headers } from "next/headers";
@@ -212,6 +213,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         {user && <BottomNav />}
         {user && <InviteListener />}
         {user && <ChangelogPopup />}
+      {user && <FreezeGiftPopup />}
         <ServiceWorkerRegister />
         <EdgeSwipeGuard />
         </ReadAloudPlayerProvider>
