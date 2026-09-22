@@ -107,7 +107,14 @@ export default function ProfileClient() {
     if (savedSpeed) setReadAloudSpeed(Number(savedSpeed));
     window.speechSynthesis.addEventListener?.("voiceschanged", loadVoices);
 
-    return () => {
+    return (
+    <div className="flex flex-col gap-4">
+      {data?.isAdmin && (
+        <Link href="/adminbackend" className="btn btn-primary w-full justify-center">
+          ⚙️ Naar adminbeheer
+        </Link>
+      )}
+) => {
       window.speechSynthesis.removeEventListener?.("voiceschanged", loadVoices);
     };
   }, []);
