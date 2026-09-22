@@ -58,7 +58,7 @@ async function runDailyTextTick(): Promise<void> {
   if (!text) return;
 
   for (const user of candidates) {
-    await notifyDailyText(user.id, text).catch(() => {});
+    await notifyDailyText(user.id, { ...text, content: text.text }).catch(() => {});
     await prisma.user.update({ where: { id: user.id }, data: { lastDailyTextSentDate: today } }).catch(() => {});
   }
 }
