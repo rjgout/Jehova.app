@@ -108,14 +108,7 @@ export default function ProfileClient() {
     if (savedSpeed) setReadAloudSpeed(Number(savedSpeed));
     window.speechSynthesis.addEventListener?.("voiceschanged", loadVoices);
 
-    return (
-    <div className="flex flex-col gap-4">
-      {data?.isAdmin && (
-        <Link href="/adminbackend" className="btn btn-primary w-full justify-center">
-          ⚙️ Naar adminbeheer
-        </Link>
-      )}
-) => {
+    return () => {
       window.speechSynthesis.removeEventListener?.("voiceschanged", loadVoices);
     };
   }, []);
@@ -367,12 +360,11 @@ export default function ProfileClient() {
 
   return (
     <div className="max-w-2xl mx-auto flex flex-col gap-8">
-      {data.isAdmin && (
-        <Link href="/adminbackend" className="btn-primary w-full justify-center">
+      {data?.isAdmin && (
+        <Link href="/adminbackend" className="btn btn-primary w-full justify-center">
           ⚙️ Naar adminbeheer
         </Link>
       )}
-
       <div className="flex items-center justify-between gap-4 pr-4">
         <Link href="/feedback" className="btn-secondary">
           💬 Feedback geven
