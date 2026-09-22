@@ -50,6 +50,7 @@ async function runDailyTextTick(): Promise<void> {
       dailyTextTime: time,
       notifyDailyText: true,
       OR: [{ emailNotificationsEnabled: true }, { pushNotificationsEnabled: true }],
+      AND: [{ OR: [{ lastDailyTextSentDate: null }, { lastDailyTextSentDate: { not: today } }] }],
     },
     select: { id: true },
   });
@@ -58,6 +59,7 @@ async function runDailyTextTick(): Promise<void> {
 
   for (const user of candidates) {
     await notifyDailyText(user.id, text).catch(() => {});
+    await prisma.user.update({ where: { id: user.id }, data: { lastDailyTextSentDate: today } }).catch(() => {});
   }
 }
 
