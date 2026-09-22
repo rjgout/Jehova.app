@@ -6,7 +6,7 @@ import { checkAndAwardAchievements } from "@/lib/achievements";
 import { awardCompetitionXp } from "@/lib/competitionXp";
 
 const COMBO_TIMEOUT_MS = 15 * 60 * 1000;
-const COMBO_XP = [0, 10, 15, 20] as const;
+const BASE_LESSON_XP = 10;
 
 export interface ReadingLessonResult extends StudyResult {
   readingLessonCompleted: boolean;
@@ -14,10 +14,6 @@ export interface ReadingLessonResult extends StudyResult {
   comboMultiplier: number;
   nextLessonId: string | null;
   alreadyCompleted: boolean;
-}
-
-function comboXp(comboCount: number): number {
-  return comboCount >= 3 ? 20 : COMBO_XP[comboCount] ?? 10;
 }
 
 function comboMultiplier(comboCount: number): number {
@@ -110,7 +106,7 @@ export async function completeReadingLesson(
     let xpEarned = 0;
     let nextLessonId: string | null = progress.currentLessonId;
     if (passed) {
-      xpEarned = comboXp(nextComboCount);
+      xpEarned = Math.round(BASE_LESSON_XP * comboMultiplier(nextComboCount));
       const nextLesson = await tx.courseLesson.findFirst({
         where: { courseId: lesson.courseId, order: lesson.order + 1 },
         select: { id: true },
