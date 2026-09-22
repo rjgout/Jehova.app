@@ -907,6 +907,7 @@ model Exercise {
   sourceVerse   Verse?           @relation(fields: [sourceVerseId], references: [id], onDelete: SetNull)
   prompt        String // tekst met "____" op de plek van het weggelaten woord, of de stelling bij TRUE_FALSE
   answers       String // JSON-array van geaccepteerde antwoorden (of ["true"]/["false"])
+  hint          String? // Zelfgeschreven/gegenereerde denkhint die het antwoord niet rechtstreeks verklapt
   wordBank      String? // JSON-array van keuzewoorden voor WORD_BANK type
   options       QuestionOption[]
 
