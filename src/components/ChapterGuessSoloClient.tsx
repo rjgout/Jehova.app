@@ -80,7 +80,8 @@ export default function ChapterGuessSoloClient({ gameId }: { gameId: string }) {
   const [hintLoading, setHintLoading] = useState(false);
   const [confirmingGiveUp, setConfirmingGiveUp] = useState(false);
   const [givingUp, setGivingUp] = useState(false);
-  const [gaveUpSummary, setGaveUpSummary] = useState<{ correctCount: number; total: number } | null>(null);\n  const [showRules, setShowRules] = useState(false);
+  const [gaveUpSummary, setGaveUpSummary] = useState<{ correctCount: number; total: number } | null>(null);
+  const [showRules, setShowRules] = useState(false);
 
   useEffect(() => {
     fetch(`/api/chapter-guess/${gameId}`)
