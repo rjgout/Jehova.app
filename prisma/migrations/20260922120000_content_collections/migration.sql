@@ -49,6 +49,7 @@ INSERT INTO "GameContentScope" ("id", "gameKey", "contentCollectionId") VALUES
   ('game_scope_scrabble_bom', 'scrabble', 'content_bom'),
   ('game_scope_gezinsavond_bom', 'gezinsavond', 'content_bom'),
   ('game_scope_chapter_guess_bom', 'chapter-guess', 'content_bom'),
-  ('game_scope_challenges_bom', 'challenges', 'content_bom');
+  ('game_scope_challenges_bom', 'challenges', 'content_bom'),
+  ('game_scope_live_exercises_bom', 'live-exercises', 'content_bom');
 
 INSERT INTO "ContentSwitcherSettings" ("id", "enabled") VALUES ('singleton', false);
