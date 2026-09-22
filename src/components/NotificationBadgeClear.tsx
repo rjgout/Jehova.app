@@ -12,12 +12,13 @@ export default function NotificationBadgeClear() {
 
     async function clearBadge() {
       try {
-        await fetch("/api/notifications/badge", { method: "POST" });
+        const response = await fetch("/api/notifications/badge", { method: "POST" });
+        if (!response.ok || !active) return;
       } catch {
-        // Een tijdelijke netwerkfout mag de pagina niet blokkeren.
+        // Een tijdelijke netwerkfout mag de serverbadge niet verloren laten gaan.
+        return;
       }
 
-      if (!active) return;
       if ("clearAppBadge" in navigator) {
         await navigator.clearAppBadge().catch(() => {});
       }
