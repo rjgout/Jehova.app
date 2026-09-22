@@ -168,35 +168,35 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               <nav className="flex items-center gap-4">
                 <Link
                   href="/courses"
-                  className="hidden sm:inline whitespace-nowrap text-sm font-bold text-slate-600 dark:text-slate-300 hover:text-brand-600 dark:hover:text-brand-300"
+                  className="hidden lg:inline whitespace-nowrap text-sm font-bold text-slate-600 dark:text-slate-300 hover:text-brand-600 dark:hover:text-brand-300"
                 >
                   Cursussen
                 </Link>
                 <Link
                   href="/friends"
-                  className="hidden sm:inline whitespace-nowrap text-sm font-bold text-slate-600 dark:text-slate-300 hover:text-brand-600 dark:hover:text-brand-300"
+                  className="hidden lg:inline whitespace-nowrap text-sm font-bold text-slate-600 dark:text-slate-300 hover:text-brand-600 dark:hover:text-brand-300"
                 >
                   Vrienden
                 </Link>
                 <Link
                   href="/competition"
-                  className="hidden sm:inline whitespace-nowrap text-sm font-bold text-slate-600 dark:text-slate-300 hover:text-brand-600 dark:hover:text-brand-300"
+                  className="hidden lg:inline whitespace-nowrap text-sm font-bold text-slate-600 dark:text-slate-300 hover:text-brand-600 dark:hover:text-brand-300"
                 >
                   Competitie
                 </Link>
                 <Link
                   href="/live"
-                  className="hidden sm:inline whitespace-nowrap text-sm font-bold text-slate-600 dark:text-slate-300 hover:text-brand-600 dark:hover:text-brand-300"
+                  className="hidden lg:inline whitespace-nowrap text-sm font-bold text-slate-600 dark:text-slate-300 hover:text-brand-600 dark:hover:text-brand-300"
                 >
                   Spelen
                 </Link>
                 <Link
                   href="/shop"
-                  className="hidden sm:inline whitespace-nowrap text-sm font-bold text-slate-600 dark:text-slate-300 hover:text-brand-600 dark:hover:text-brand-300"
+                  className="hidden lg:inline whitespace-nowrap text-sm font-bold text-slate-600 dark:text-slate-300 hover:text-brand-600 dark:hover:text-brand-300"
                 >
                   Winkel
                 </Link>
-                <div className="hidden md:block"><HeaderInstallHint /></div>
+                <div className="hidden lg:block"><HeaderInstallHint /></div>
                 <NavUserBadges streak={user.currentStreak} xp={user.xpTotal} displayName={user.handle} />
               </nav>
             ) : null}
