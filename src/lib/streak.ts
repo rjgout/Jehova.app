@@ -50,7 +50,7 @@ interface DailyStreakResult {
  * user.update en de eventuele EARNED-freezetransactie aan de aanroeper (die
  * kan er zelf nog een hoofdstuk-mijlpaal freeze bovenop doen).
  */
-async function applyDailyStreak(tx: Tx, userId: string): Promise<DailyStreakResult> {
+export async function applyDailyStreak(tx: Tx, userId: string): Promise<DailyStreakResult> {
   const user = await tx.user.findUniqueOrThrow({ where: { id: userId } });
   const today = dayKey();
   const alreadyStudiedToday = user.lastStudyDate === today;
