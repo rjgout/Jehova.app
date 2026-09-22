@@ -69,7 +69,7 @@ export default async function DashboardPage() {
       key: `scrabble-${game.id}`,
       icon: "🔤",
       text: `${game.player1Id === user.id ? game.player2.handle : game.player1.handle} wacht op jouw beurt.`,
-      href: "/scrabble",
+      href: `/scrabble/${game.id}`,
     })),
   ];
 
