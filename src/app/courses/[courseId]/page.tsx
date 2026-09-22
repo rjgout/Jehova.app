@@ -158,6 +158,9 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ c
       ? lessons.find((lesson) => lesson.id === courseProgress.currentLessonId) ?? null
       : null;
     const currentOrder = currentLesson?.order ?? null;
+    const currentChapterFirstLessonOrder = currentLesson
+      ? lessons.find((lesson) => lesson.chapterId === currentLesson.chapterId)?.order ?? currentLesson.order
+      : 0;
 
     const chapterMap = new Map<string, {
       id: string;
@@ -196,7 +199,7 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ c
                 id: currentLesson.id,
                 bookName: currentLesson.chapter.book.name,
                 chapterNumber: currentLesson.chapter.number,
-                lessonNumber: currentLesson.order + 1,
+                lessonNumber: currentLesson.order - currentChapterFirstLessonOrder + 1,
                 startVerse: currentLesson.startVerse,
                 endVerse: currentLesson.endVerse,
               }
