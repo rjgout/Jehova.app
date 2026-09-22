@@ -292,6 +292,7 @@ export function startNotificationSchedulers(): void {
   if (started) return;
   started = true;
   setInterval(() => {
+    runDailyTextTick().catch((e) => console.error("Tekst van de dag mislukt:", e));
     runDailyReminderTick().catch((e) => console.error("Dagelijkse herinnering mislukt:", e));
     runWeeklyResultTick().catch((e) => console.error("Wekelijkse uitslag mislukt:", e));
     runSeasonRolloverTick().catch((e) => console.error("Seizoensafsluiting mislukt:", e));
