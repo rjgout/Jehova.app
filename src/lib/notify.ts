@@ -136,6 +136,21 @@ export async function notifySeasonResult(
   });
 }
 
+export async function notifyDailyText(userId: string, text: { bookName: string; chapterNumber: number; verseNumber: number; content: string }): Promise<void> {
+  const url = `${await getAppUrl()}/dashboard`;
+  const reference = `${text.bookName} ${text.chapterNumber}:undefined`;
+  await notifyUser({
+    userId,
+    category: "dailyReminder",
+    subject: "Tekst van de dag",
+    emailHtml: emailWrap(`📖 <strong>${reference}</strong><br />${text.content}`, url, "Bekijk je dashboard"),
+    emailText: `📖 ${reference} — ${text.content} — ${url}`,
+    pushTitle: "Tekst van de dag 📖",
+    pushBody: `${reference} — ${text.content}`,
+    url: "/dashboard",
+  });
+}
+
 export async function notifyDailyReminder(userId: string): Promise<void> {
   const url = `${await getAppUrl()}/dashboard`;
   await notifyUser({
