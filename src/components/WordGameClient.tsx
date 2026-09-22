@@ -55,7 +55,8 @@ export default function WordGameClient() {
   const [guess, setGuess] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
-  const [shake, setShake] = useState(false);\n  const [showRules, setShowRules] = useState(false);
+  const [shake, setShake] = useState(false);
+  const [showRules, setShowRules] = useState(false);
 
   useEffect(() => {
     fetch("/api/word-game")
