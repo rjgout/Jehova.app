@@ -41,6 +41,18 @@ export default async function ReadingChapterPage({
     });
   }
 
+  if (courseProgress?.currentLessonId === null && lessons.length > 0) {
+    const completedCount = await prisma.userCourseLessonProgress.count({
+      where: { userId: user.id, lesson: { courseId }, completed: true },
+    });
+    if (completedCount === 0) {
+      await advanceCourseProgress(prisma, user.id, courseId);
+      courseProgress = await prisma.userCourseProgress.findUnique({
+        where: { userId_courseId: { userId: user.id, courseId } },
+      });
+    }
+  }
+
   const globalCurrentLessonOrder = courseProgress?.currentLessonId
     ? (await prisma.courseLesson.findUnique({
         where: { id: courseProgress.currentLessonId },
