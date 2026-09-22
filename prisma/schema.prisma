@@ -128,6 +128,10 @@ model User {
   // ander getal te zien, dus vervangen door dit ene gedeelde tegoed.
   hintBalance   Int     @default(0)
 
+  // Teller voor de badge van de webapp: één stap per verstuurde pushnotificatie,
+  // teruggezet zodra de gebruiker de app weer opent.
+  notificationBadgeCount Int @default(0)
+
   // Notificaties: allebei standaard UIT (zelfde privacy-by-default-principe
   // als searchableByEmail hierboven) — een gebruiker moet er zelf voor
   // kiezen. Pushnotificaties vereisen daarnaast browsertoestemming (zie
