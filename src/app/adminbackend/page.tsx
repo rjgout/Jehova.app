@@ -15,6 +15,7 @@ import AdminCoursesClient from "@/components/AdminCoursesClient";
 import AdminBrandingClient from "@/components/AdminBrandingClient";
 import AdminLeagueSettingsClient from "@/components/AdminLeagueSettingsClient";
 import AdminDeployClient from "@/components/AdminDeployClient";
+import AdminContentSwitcherClient from "@/components/AdminContentSwitcherClient";
 import { isDeployAgentConfigured } from "@/lib/deployAgent";
 import packageJson from "../../../package.json";
 
@@ -89,6 +90,8 @@ export default async function AdminBackendPage() {
       <AdminLeagueSettingsClient initial={{ ...leagueSettings, activityRules: JSON.stringify(leagueSettings.activityRules, null, 2) }} />
 
       <AdminBrandingClient />
+
+      <AdminContentSwitcherClient />
 
       <FeedbackAdminClient />
 
