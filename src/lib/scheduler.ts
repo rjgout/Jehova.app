@@ -1,7 +1,8 @@
 import { prisma } from "@/lib/db";
 import { addDays, dayKey, weekStartKey, amsterdamNow, type AmsterdamTime } from "@/lib/dates";
 import { resolveWeeklyPlacement, getLeagueSettings, TIER_ORDER, TIER_LABELS } from "@/lib/leagues";
-import { notifyDailyReminder, notifyWeeklyResult, notifySeasonResult, notifyWordGame } from "@/lib/notify";
+import { notifyDailyReminder, notifyDailyText, notifyWeeklyResult, notifySeasonResult, notifyWordGame } from "@/lib/notify";
+import { getTextOfTheDay } from "@/lib/dailyText";
 import { wordGameDayKey } from "@/lib/wordGame";
 import { broadcastPresenceUpdate } from "@/lib/presence";
 import { getIO } from "@/server/gameServer";
@@ -39,6 +40,29 @@ function previousWeekStart(weekStart: string): string {
  * heeft aangezet. lastDailyReminderSentDate voorkomt dubbel versturen als de
  * tick door trage queries iets uitloopt.
  */
+async function runDailyTextTick(): Promise<void> {
+  const now = new Date();
+  const time = amsterdamHHMM(amsterdamNow(now));
+  const today = dayKey(now);
+
+  const candidates = await prisma.user.findMany({
+    where: {
+      dailyTextTime: time,
+      notifyDailyText: true,
+      OR: [{ emailNotificationsEnabled: true }, { pushNotificationsEnabled: true }],
+      AND: [{ OR: [{ lastDailyTextSentDate: null }, { lastDailyTextSentDate: { not: today } }] }],
+    },
+    select: { id: true },
+  });
+  const text = await getTextOfTheDay(now);
+  if (!text) return;
+
+  for (const user of candidates) {
+    await notifyDailyText(user.id, { ...text, content: text.text }).catch(() => {});
+    await prisma.user.update({ where: { id: user.id }, data: { lastDailyTextSentDate: today } }).catch(() => {});
+  }
+}
+
 async function runDailyReminderTick(): Promise<void> {
   const now = new Date();
   const time = amsterdamHHMM(amsterdamNow(now));
@@ -268,6 +292,7 @@ export function startNotificationSchedulers(): void {
   if (started) return;
   started = true;
   setInterval(() => {
+    runDailyTextTick().catch((e) => console.error("Tekst van de dag mislukt:", e));
     runDailyReminderTick().catch((e) => console.error("Dagelijkse herinnering mislukt:", e));
     runWeeklyResultTick().catch((e) => console.error("Wekelijkse uitslag mislukt:", e));
     runSeasonRolloverTick().catch((e) => console.error("Seizoensafsluiting mislukt:", e));

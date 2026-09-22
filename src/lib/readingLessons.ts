@@ -170,6 +170,21 @@ export async function completeReadingLesson(
       },
     });
 
+    const chapterLessonProgress = await tx.userCourseLessonProgress.findMany({
+      where: { userId, lessonId: { in: chapterLessons.map((item) => item.id) } },
+      select: { completed: true, bestScore: true },
+    });
+    if (chapterLessonProgress.length === chapterLessons.length && chapterLessonProgress.every((item) => item.completed)) {
+      const bestScore = Math.round(
+        chapterLessonProgress.reduce((sum, item) => sum + item.bestScore, 0) / Math.max(1, chapterLessonProgress.length)
+      );
+      await tx.chapterProgress.upsert({
+        where: { userId_chapterId: { userId, chapterId: lesson.chapterId } },
+        create: { userId, chapterId: lesson.chapterId, completed: true, bestScore, completedAt: new Date() },
+        update: { completed: true, bestScore: Math.max(bestScore, 0), completedAt: new Date() },
+      });
+    }
+
     await tx.userCourseProgress.update({
       where: { userId_courseId: { userId, courseId: lesson.courseId } },
       data: {

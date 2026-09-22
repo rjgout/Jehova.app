@@ -7,10 +7,11 @@ import { APP_NAME } from "@/lib/brand";
 // Elke gebeurtenis valt in één categorie, die de gebruiker in zijn profiel
 // apart aan/uit kan zetten (zie User.notify* in schema.prisma) — bovenop,
 // niet in plaats van, de kanaalschakelaars (email/pushNotificationsEnabled).
-type NotifyCategory = "dailyReminder" | "social" | "achievements" | "wordGame";
+type NotifyCategory = "dailyReminder" | "dailyText" | "social" | "achievements" | "wordGame";
 
-const CATEGORY_FIELD: Record<NotifyCategory, "notifyDailyReminder" | "notifySocial" | "notifyAchievements" | "notifyWordGame"> = {
+const CATEGORY_FIELD: Record<NotifyCategory, "notifyDailyReminder" | "notifyDailyText" | "notifySocial" | "notifyAchievements" | "notifyWordGame"> = {
   dailyReminder: "notifyDailyReminder",
+  dailyText: "notifyDailyText",
   social: "notifySocial",
   achievements: "notifyAchievements",
   wordGame: "notifyWordGame",
@@ -44,6 +45,7 @@ async function notifyUser(input: NotifyInput): Promise<void> {
       emailNotificationsEnabled: true,
       pushNotificationsEnabled: true,
       notifyDailyReminder: true,
+      notifyDailyText: true,
       notifySocial: true,
       notifyAchievements: true,
       notifyWordGame: true,
@@ -133,6 +135,21 @@ export async function notifySeasonResult(
     pushTitle: `Seizoen ${seasonIndex} afgesloten`,
     pushBody: text,
     url: "/profile",
+  });
+}
+
+export async function notifyDailyText(userId: string, text: { bookName: string; chapterNumber: number; verseNumber: number; content: string }): Promise<void> {
+  const url = `${await getAppUrl()}/dashboard`;
+  const reference = `${text.bookName} ${text.chapterNumber}:undefined`;
+  await notifyUser({
+    userId,
+    category: "dailyText",
+    subject: "Tekst van de dag",
+    emailHtml: emailWrap(`📖 <strong>${reference}</strong><br />${text.content}`, url, "Bekijk je dashboard"),
+    emailText: `📖 ${reference} — ${text.content} — ${url}`,
+    pushTitle: "Tekst van de dag 📖",
+    pushBody: `${reference} — ${text.content}`,
+    url: "/dashboard",
   });
 }
 

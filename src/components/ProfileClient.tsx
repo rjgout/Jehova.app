@@ -32,6 +32,8 @@ interface ProfileData {
   emailNotificationsEnabled: boolean;
   pushNotificationsEnabled: boolean;
   dailyReminderTime: string;
+  dailyTextTime: string;
+  notifyDailyText: boolean;
   notifyDailyReminder: boolean;
   notifySocial: boolean;
   notifyAchievements: boolean;
@@ -236,7 +238,7 @@ export default function ProfileClient() {
   }
 
   async function toggleCategory(
-    field: "notifyDailyReminder" | "notifySocial" | "notifyAchievements" | "notifyWordGame" | "changelogEnabled"
+    field: "notifyDailyReminder" | "notifyDailyText" | "notifySocial" | "notifyAchievements" | "notifyWordGame" | "changelogEnabled"
   ) {
     if (!data) return;
     const next = !data[field];
@@ -731,6 +733,30 @@ export default function ProfileClient() {
             {pushTestMessage && <p className="text-xs text-slate-500 dark:text-slate-400">{pushTestMessage}</p>}
           </div>
         )}
+
+        <div className="border-t border-slate-100 dark:border-slate-700 pt-3 mt-1 flex flex-col gap-3">
+          <p className="text-sm font-semibold dark:text-slate-200">Tekst van de dag</p>
+          <label className="flex items-start gap-3 cursor-pointer">
+            <input
+              type="checkbox"
+              className="mt-1 h-5 w-5 accent-brand-500"
+              checked={data.notifyDailyText}
+              onChange={() => toggleCategory("notifyDailyText")}
+              disabled={savingNotifications}
+            />
+            <span className="text-sm dark:text-slate-200">Stuur mij elke dag de tekst van de dag</span>
+          </label>
+          <label className="flex items-center gap-3">
+            <span className="text-sm dark:text-slate-200">Stuur rond</span>
+            <input
+              type="time"
+              className="input !w-auto"
+              value={data.dailyTextTime}
+              onChange={(e) => saveAccountPatch({ dailyTextTime: e.target.value }).then(() => setData((current) => current ? { ...current, dailyTextTime: e.target.value } : current))}
+            />
+          </label>
+          <p className="text-xs text-slate-400 dark:text-slate-500">De tekst van de dag staat vanaf 00:00 uur al op je dashboard.</p>
+        </div>
 
         <label className="flex items-center gap-3">
           <span className="text-sm dark:text-slate-200">Dagelijkse herinnering rond</span>

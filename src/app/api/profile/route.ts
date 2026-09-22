@@ -74,6 +74,8 @@ export async function GET() {
     emailNotificationsEnabled: user.emailNotificationsEnabled,
     pushNotificationsEnabled: user.pushNotificationsEnabled,
     dailyReminderTime: user.dailyReminderTime,
+    dailyTextTime: user.dailyTextTime,
+    notifyDailyText: user.notifyDailyText,
     notifyDailyReminder: user.notifyDailyReminder,
     notifySocial: user.notifySocial,
     notifyAchievements: user.notifyAchievements,
