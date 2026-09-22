@@ -123,6 +123,7 @@ export async function syncCourses(db: PrismaClient): Promise<void> {
   if (!defaultCollection) throw new Error("Geen contentcollectie beschikbaar.");
 
   const books = await db.book.findMany({
+    where: { contentCollectionId: defaultCollection.id },
     orderBy: { order: "asc" },
     include: { chapters: { orderBy: { order: "asc" } } },
   });
