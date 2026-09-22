@@ -31,6 +31,12 @@ export default async function PersonsToolPage() {
       <Link href="/tools" className="btn-secondary self-start">
         ← Terug
       </Link>
+
+
+
+      <Link href="/tools" className="btn-secondary self-start">
+        ← Terug
+      </Link>
     </div>
   );
 }
