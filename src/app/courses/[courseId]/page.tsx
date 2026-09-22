@@ -152,6 +152,16 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ c
       courseProgress = await prisma.userCourseProgress.findUnique({
         where: { userId_courseId: { userId: user.id, courseId: course.id } },
       });
+    } else if (courseProgress.currentLessonId === null && lessons.length > 0) {
+      const completedCount = await prisma.userCourseLessonProgress.count({
+        where: { userId: user.id, lesson: { courseId: course.id }, completed: true },
+      });
+      if (completedCount === 0) {
+        await advanceCourseProgress(prisma, user.id, course.id);
+        courseProgress = await prisma.userCourseProgress.findUnique({
+          where: { userId_courseId: { userId: user.id, courseId: course.id } },
+        });
+      }
     }
 
     const currentLesson = courseProgress?.currentLessonId
