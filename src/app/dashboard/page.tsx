@@ -32,7 +32,7 @@ export default async function DashboardPage() {
       where: { receiverId: user.id, status: "PENDING" },
       orderBy: { createdAt: "desc" },
       take: 5,
-      select: { id: true, sender: { select: { handle: true } }, chapter: { select: { number: true, book: { select: { name: true } } } } },
+      select: { id: true, sender: { select: { handle: true } }, chapterId: true, chapter: { select: { number: true, book: { select: { name: true } } } } },
     }),
     prisma.scrabbleGame.findMany({
       where: { status: "ACTIVE", turnUserId: user.id },
@@ -63,13 +63,13 @@ export default async function DashboardPage() {
       key: `challenge-${challenge.id}`,
       icon: "⚔️",
       text: `${challenge.sender.handle} daagt je uit op ${challenge.chapter.book.name} ${challenge.chapter.number}.`,
-      href: "/challenges",
+      href: `/lesson/${challenge.chapterId}?challengeId=${challenge.id}`,
     })),
     ...scrabbleTurns.map((game) => ({
       key: `scrabble-${game.id}`,
       icon: "🔤",
       text: `${game.player1Id === user.id ? game.player2.handle : game.player1.handle} wacht op jouw beurt.`,
-      href: "/scrabble",
+      href: `/scrabble/${game.id}`,
     })),
   ];
 
@@ -97,31 +97,6 @@ export default async function DashboardPage() {
         <div className="flex items-center justify-between gap-3 text-sm">
           <span className="text-slate-500 dark:text-slate-400">{progressPercent}% gelezen</span>
           <Link href="/courses" className="font-bold text-brand-600 dark:text-brand-300 hover:underline">Bekijk cursussen →</Link>
-        </div>
-      </section>
-
-      <section className="card bg-gradient-to-br from-brand-500 to-brand-700 text-white flex flex-col gap-4">
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-          <Link href="/streak" className="rounded-2xl bg-black/10 p-3 text-center hover:bg-black/15">
-            <div className="text-xl font-extrabold">🔥 {user.currentStreak}</div>
-            <div className="text-xs font-bold text-brand-100">Reeks</div>
-          </Link>
-          <Link href="/xp" className="rounded-2xl bg-black/10 p-3 text-center hover:bg-black/15">
-            <div className="text-xl font-extrabold">⭐ {user.xpTotal}</div>
-            <div className="text-xs font-bold text-brand-100">XP</div>
-          </Link>
-          <div className="rounded-2xl bg-black/10 p-3 text-center">
-            <div className="text-xl font-extrabold">🧊 {user.freezeCount}</div>
-            <div className="text-xs font-bold text-brand-100">Freezes</div>
-          </div>
-          <div className="rounded-2xl bg-black/10 p-3 text-center">
-            <div className="text-xl font-extrabold">📖 {completed}</div>
-            <div className="text-xs font-bold text-brand-100">Hoofdstukken</div>
-          </div>
-        </div>
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-center text-sm text-brand-100 border-t border-white/15 pt-4">
-          <div><div className="font-extrabold text-white">{user.longestStreak}</div><div>Langste reeks</div></div>
-          <div><div className="font-extrabold text-white">{user.hintBalance}</div><div>Hints</div></div>
         </div>
       </section>
 
