@@ -16,6 +16,7 @@ import AdminBrandingClient from "@/components/AdminBrandingClient";
 import AdminLeagueSettingsClient from "@/components/AdminLeagueSettingsClient";
 import AdminDeployClient from "@/components/AdminDeployClient";
 import AdminContentSwitcherClient from "@/components/AdminContentSwitcherClient";
+import AdminFsyClient from "@/components/AdminFsyClient";
 import { isDeployAgentConfigured } from "@/lib/deployAgent";
 import packageJson from "../../../package.json";
 
@@ -92,6 +93,8 @@ export default async function AdminBackendPage() {
       <AdminBrandingClient />
 
       <AdminContentSwitcherClient />
+
+      <AdminFsyClient />
 
       <FeedbackAdminClient />
 
