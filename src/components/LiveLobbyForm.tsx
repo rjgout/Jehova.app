@@ -93,6 +93,7 @@ const GAMES: GameEntry[] = [
     description: "Daag een vriend uit op een hoofdstuk: jullie spelen allebei wanneer het uitkomt, en zien daarna wie beter scoorde.",
     href: "/challenges",
     linkLabel: "Uitdagingen openen",
+    rules: {"title":"Zo speel je","bullets":["Kies een hoofdstuk en daag een vriend uit.","Jullie spelen allebei wanneer het uitkomt en beantwoorden dezelfde oefenvragen.","Na afloop kun je de scores vergelijken."]},
   },
 ];
 
