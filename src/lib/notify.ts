@@ -68,6 +68,21 @@ function emailWrap(bodyHtml: string, ctaUrl: string, ctaLabel: string): string {
   return `<p>${bodyHtml}</p><p><a href="${ctaUrl}">${ctaLabel} →</a></p><p style="color:#94a3b8;font-size:12px">${APP_NAME} — je kan e-mailnotificaties uitzetten in je profiel.</p>`;
 }
 
+export async function notifyFreezeReceived(userId: string, senderDisplayName: string): Promise<void> {
+  const url = `${await getAppUrl()}/friends`;
+  const text = `${senderDisplayName} heeft je een streak freeze gegeven! 🧊`;
+  await notifyUser({
+    userId,
+    category: "social",
+    subject: "Je hebt een streak freeze gekregen! 🧊",
+    emailHtml: emailWrap(text, url, "Bekijk je vrienden"),
+    emailText: `${text} Bekijk je vrienden: ${url}`,
+    pushTitle: "Je hebt een streak freeze gekregen! 🧊",
+    pushBody: `${senderDisplayName} heeft je een streak freeze gegeven.`,
+    url: "/friends",
+  });
+}
+
 export async function notifyFriendRequest(receiverUserId: string, senderDisplayName: string): Promise<void> {
   const url = `${await getAppUrl()}/friends`;
   await notifyUser({

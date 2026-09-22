@@ -1036,6 +1036,7 @@ model FreezeTransaction {
   related   User?        @relation("FreezeRelated", fields: [relatedId], references: [id], onDelete: SetNull)
   reason    String?
   createdAt DateTime     @default(now())
+  seenAt    DateTime?
 }
 
 // Eén rij per dag die meetelt voor de reeks-kalender (zie /streak): STUDIED
