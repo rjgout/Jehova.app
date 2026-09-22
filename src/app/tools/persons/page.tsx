@@ -20,16 +20,17 @@ export default async function PersonsToolPage() {
   return (
     <div className="max-w-4xl mx-auto flex flex-col gap-6">
       <div>
-        <Link href="/tools" className="text-sm font-bold text-brand-600 dark:text-brand-300 hover:underline">
-          ← Hulpmiddelen
-        </Link>
-        <h1 className="text-2xl font-extrabold text-brand-800 dark:text-brand-300 mt-1">👤 Personages</h1>
+        <h1 className="text-2xl font-extrabold text-brand-800 dark:text-brand-300">👤 Personages</h1>
         <p className="text-slate-500 dark:text-slate-400 text-sm">
           Alle {persons.length} personen uit het Boek van Mormon. Zoeken op naam of beschrijving.
         </p>
       </div>
 
       <PersonsSearch persons={persons} />
+
+      <Link href="/tools" className="btn-secondary self-start">
+        ← Terug
+      </Link>
     </div>
   );
 }
