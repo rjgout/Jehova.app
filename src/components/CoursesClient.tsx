@@ -159,69 +159,74 @@ export default function CoursesClient() {
           const pct = course.totalChapters > 0 ? Math.round((course.completedCount / course.totalChapters) * 100) : 0;
           return (
             <div
-              className={`card flex flex-col gap-3 ${
+              className={`card grid grid-cols-[auto_minmax(0,1fr)_auto] gap-x-3 gap-y-3 ${
                 course.isActive ? "!border-2 !border-brand-400 dark:!border-brand-500" : ""
               }`}
             >
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex items-start gap-2 min-w-0">
-                  <DragHandle {...handle} />
-                  <div className="min-w-0">
-                    <p className="text-xs font-extrabold uppercase tracking-wide text-slate-400 dark:text-slate-500">
-                      {TYPE_LABELS[course.type]}
+              <div className="row-span-full self-stretch flex items-start pt-1">
+                <DragHandle {...handle} />
+              </div>
+
+              <div className="min-w-0 flex flex-col gap-3">
+                <div className="min-w-0">
+                  <p className="text-xs font-extrabold uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                    {TYPE_LABELS[course.type]}
+                  </p>
+                  <h2 className="font-extrabold text-lg dark:text-slate-100">{course.name}</h2>
+                  {course.description && (
+                    <p className="text-sm text-slate-500 dark:text-slate-400">{course.description}</p>
+                  )}
+                </div>
+
+                {course.totalChapters > 0 && (
+                  <div className="flex flex-col gap-1">
+                    <div className="h-2 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+                      <div className="h-full bg-gold-400" style={{ width: `${pct}%` }} />
+                    </div>
+                    <p className="text-xs text-slate-400 dark:text-slate-500">
+                      {course.completedCount} / {course.totalChapters} hoofdstukken voltooid
+                      {course.currentChapter &&
+                        ` — volgende: ${course.currentChapter.bookName} ${course.currentChapter.number}`}
                     </p>
-                    <h2 className="font-extrabold text-lg dark:text-slate-100">{course.name}</h2>
-                    {course.description && (
-                      <p className="text-sm text-slate-500 dark:text-slate-400">{course.description}</p>
+                    {course.xpAvailable > 0 && (
+                      <p className="text-xs font-bold text-gold-600 dark:text-gold-400">⭐ {course.xpAvailable} XP te verdienen</p>
                     )}
                   </div>
-                </div>
-                <div className="flex flex-col items-end gap-1 shrink-0">
-                  {course.isActive && (
-                    <span className="text-xs font-extrabold uppercase text-brand-600 dark:text-brand-300 bg-brand-50 dark:bg-slate-700 rounded-full px-3 py-1">
-                      Actief
-                    </span>
+                )}
+
+                <div className="flex gap-3">
+                  {course.isActive ? (
+                    <Link href={`/courses/${course.id}`} className="btn-primary">
+                      Ga verder →
+                    </Link>
+                  ) : (
+                    <button
+                      className="btn-secondary"
+                      disabled={activatingId === course.id}
+                      onClick={() => activate(course.id)}
+                    >
+                      {activatingId === course.id ? "Bezig..." : "Kies deze cursus"}
+                    </button>
                   )}
-                  <button
-                    className="text-xs text-red-500 dark:text-red-400 hover:underline"
-                    disabled={removingId === course.id}
-                    onClick={() => remove(course.id)}
-                  >
-                    Verwijderen
-                  </button>
                 </div>
               </div>
 
-              {course.totalChapters > 0 && (
-                <div className="flex flex-col gap-1">
-                  <div className="h-2 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
-                    <div className="h-full bg-gold-400" style={{ width: `${pct}%` }} />
-                  </div>
-                  <p className="text-xs text-slate-400 dark:text-slate-500">
-                    {course.completedCount} / {course.totalChapters} hoofdstukken voltooid
-                    {course.currentChapter &&
-                      ` — volgende: ${course.currentChapter.bookName} ${course.currentChapter.number}`}
-                  </p>
-                  {course.xpAvailable > 0 && (
-                    <p className="text-xs font-bold text-gold-600 dark:text-gold-400">⭐ {course.xpAvailable} XP te verdienen</p>
-                  )}
-                </div>
-              )}
-
-              <div className="flex gap-3">
-                {course.isActive ? (
-                  <Link href={`/courses/${course.id}`} className="btn-primary self-start">
-                    Ga verder →
-                  </Link>
-                ) : (
-                  <button
-                    className="btn-secondary self-start"
-                    disabled={activatingId === course.id}
-                    onClick={() => activate(course.id)}
-                  >
-                    {activatingId === course.id ? "Bezig..." : "Kies deze cursus"}
-                  </button>
+              <div className="flex flex-col items-end gap-2 shrink-0">
+                {course.isActive && (
+                  <span className="text-xs font-extrabold uppercase text-brand-600 dark:text-brand-300 bg-brand-50 dark:bg-slate-700 rounded-full px-3 py-1">
+                    Actief
+                  </span>
                 )}
+                <button
+                  type="button"
+                  className="w-9 h-9 rounded-full flex items-center justify-center text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 hover:bg-red-50 hover:text-red-500 dark:hover:bg-slate-700 dark:hover:text-red-400 transition-colors disabled:opacity-50"
+                  disabled={removingId === course.id}
+                  onClick={() => remove(course.id)}
+                  aria-label={`Cursus ${course.name} verwijderen`}
+                  title="Cursus verwijderen"
+                >
+                  <span aria-hidden="true" className="text-xl leading-none">×</span>
+                </button>
               </div>
             </div>
           );
