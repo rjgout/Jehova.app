@@ -12,6 +12,7 @@ import ChangelogPopup from "@/components/ChangelogPopup";
 import ThemeScript from "@/components/ThemeScript";
 import BottomNav from "@/components/BottomNav";
 import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
+import NotificationBadgeClear from "@/components/NotificationBadgeClear";
 import EdgeSwipeGuard from "@/components/EdgeSwipeGuard";
 import PodcastMiniPlayer from "@/components/PodcastMiniPlayer";
 import HeaderInstallHint from "@/components/HeaderInstallHint";
@@ -206,6 +207,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         {user && <InviteListener />}
         {user && <ChangelogPopup />}
       {user && <FreezeGiftPopup />}
+        {user && <NotificationBadgeClear />}
         <ServiceWorkerRegister />
         <EdgeSwipeGuard />
         </ReadAloudPlayerProvider>
