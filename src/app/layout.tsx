@@ -158,14 +158,14 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 
             {user && contentContext && (
               <ContentSwitcher
-                enabled={contentContext.switcherEnabled}
+                enabled={contentContext.switcherEnabled || user.isAdmin}
                 active={contentContext.active}
                 collections={contentContext.collections}
               />
             )}
 
             {user ? (
-              <nav className="flex items-center gap-4">
+              <nav className="ml-auto flex items-center gap-4">
                 <Link
                   href="/courses"
                   className="hidden lg:inline whitespace-nowrap text-sm font-bold text-slate-600 dark:text-slate-300 hover:text-brand-600 dark:hover:text-brand-300"
