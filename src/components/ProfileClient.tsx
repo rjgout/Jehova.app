@@ -70,6 +70,8 @@ export default function ProfileClient() {
   const [data, setData] = useState<ProfileData | null>(null);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [resettingReadingProgress, setResettingReadingProgress] = useState(false);
+  const [resetReadingMessage, setResetReadingMessage] = useState<string | null>(null);
   const [confirmingLogout, setConfirmingLogout] = useState(false);
   const [savingPrivacy, setSavingPrivacy] = useState(false);
   const [savingNotifications, setSavingNotifications] = useState(false);
@@ -575,6 +577,40 @@ export default function ProfileClient() {
             </div>
           ))}
         </div>
+      </section>
+
+      <section className="card flex flex-col gap-3">
+        <h2 className="font-extrabold text-lg dark:text-slate-100">Leesvoortgang</h2>
+        <p className="text-sm text-slate-500 dark:text-slate-400">
+          Opnieuw beginnen met het lezen van het Boek van Mormon? Hiermee wis je je voortgang van de leesroutes en de kleine leeslessen.
+          Je XP, achievements en andere statistieken blijven behouden.
+        </p>
+        {!resetReadingMessage ? (
+          <button
+            className="btn-secondary self-start !border-red-300 !text-red-600 dark:!border-red-700 dark:!text-red-400"
+            disabled={resettingReadingProgress}
+            onClick={async () => {
+              if (
+                !window.confirm(
+                  "Weet je zeker dat je de volledige leesvoortgang van het Boek van Mormon wilt resetten? Je XP blijft behouden."
+                )
+              ) {
+                return;
+              }
+              setResettingReadingProgress(true);
+              const res = await fetch("/api/progress/reset-reading", { method: "POST" });
+              setResettingReadingProgress(false);
+              if (res.ok) {
+                setResetReadingMessage("Je leesvoortgang is gereset. Je kunt weer helemaal opnieuw beginnen.");
+                router.refresh();
+              }
+            }}
+          >
+            {resettingReadingProgress ? "Bezig..." : "Leesvoortgang resetten"}
+          </button>
+        ) : (
+          <p className="text-sm font-bold text-brand-600 dark:text-brand-300">{resetReadingMessage}</p>
+        )}
       </section>
 
       <section className="card flex flex-col gap-3">

@@ -8,11 +8,12 @@ import { applyPersonalOrder, fetchListOrder, saveListOrder } from "@/lib/listOrd
 interface CourseView {
   id: string;
   slug: string;
-  type: "FRONT_TO_BACK" | "FREE_CHOICE" | "BY_BOOK" | "PODCAST" | "KIDS" | "INTRO";
+  type: "FRONT_TO_BACK" | "FREE_CHOICE" | "BY_BOOK" | "PODCAST" | "KIDS" | "INTRO" | "READING_LESSONS";
   name: string;
   description: string | null;
   totalChapters: number;
   completedCount: number;
+  xpAvailable: number;
   isActive: boolean;
   currentChapter: { id: string; bookName: string; number: number } | null;
 }
@@ -28,6 +29,7 @@ interface CatalogCourseView {
 
 const TYPE_LABELS: Record<CourseView["type"], string> = {
   INTRO: "Introductie",
+  READING_LESSONS: "Kleine leeslessen",
   FRONT_TO_BACK: "Van voor naar achter",
   FREE_CHOICE: "Vrije keuze",
   BY_BOOK: "Per boek",
@@ -190,7 +192,7 @@ export default function CoursesClient() {
                 </div>
               </div>
 
-              {course.type !== "FREE_CHOICE" && course.totalChapters > 0 && (
+              {course.totalChapters > 0 && (
                 <div className="flex flex-col gap-1">
                   <div className="h-2 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
                     <div className="h-full bg-gold-400" style={{ width: `${pct}%` }} />
@@ -200,6 +202,9 @@ export default function CoursesClient() {
                     {course.currentChapter &&
                       ` — volgende: ${course.currentChapter.bookName} ${course.currentChapter.number}`}
                   </p>
+                  {course.xpAvailable > 0 && (
+                    <p className="text-xs font-bold text-gold-600 dark:text-gold-400">⭐ {course.xpAvailable} XP te verdienen</p>
+                  )}
                 </div>
               )}
 
