@@ -37,7 +37,10 @@ export default function ChapterListCourseView({ courseName, currentChapterId, ch
     chapters.find((c) => !c.completed) ||
     chapters[chapters.length - 1];
   const estimatedMinutes = todayChapter ? Math.max(1, Math.round(todayChapter.wordCount / WORDS_PER_MINUTE)) : 0;
-  const xpAvailable = (todayChapter?.exerciseCount ?? 0) * 10;
+  const xpAvailable = Math.min(todayChapter?.exerciseCount ?? 0, 7) * 10 + 20;
+  const currentIndex = todayChapter ? chapters.findIndex((chapter) => chapter.id === todayChapter.id) : -1;
+  const progressPosition = currentIndex >= 0 ? currentIndex + 1 : chapters.length;
+  const progressPercent = chapters.length > 0 ? Math.round((progressPosition / chapters.length) * 100) : 0;
 
   // Groepeer per boek, in de volgorde waarin ze in `chapters` voorkomen —
   // bij per-boek-cursussen is dat er sowieso maar één.
@@ -88,6 +91,18 @@ export default function ChapterListCourseView({ courseName, currentChapterId, ch
     <div className="flex flex-col gap-10">
       <div className="flex flex-col gap-4">
         <h1 className="text-2xl font-extrabold text-brand-800 dark:text-brand-300">{courseName}</h1>
+
+        {chapters.length > 0 && (
+          <div className="card flex flex-col gap-2">
+            <div className="flex items-center justify-between text-xs font-bold text-slate-500 dark:text-slate-400">
+              <span>Voortgang</span>
+              <span>{progressPosition} / {chapters.length} hoofdstukken · {progressPercent}%</span>
+            </div>
+            <div className="h-2 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+              <div className="h-full bg-brand-500 transition-all" style={{ width: progressPercent + "%" }} />
+            </div>
+          </div>
+        )}
 
         {todayChapter && !allDone ? (
           <div className="card bg-gradient-to-br from-brand-500 to-brand-600 text-white flex flex-col gap-3">
