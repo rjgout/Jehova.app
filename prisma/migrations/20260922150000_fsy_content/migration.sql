@@ -61,25 +61,3 @@ ALTER TABLE "FsyLesson"
   ADD CONSTRAINT "FsyLesson_contentCollectionId_fkey"
   FOREIGN KEY ("contentCollectionId") REFERENCES "ContentCollection"("id")
   ON DELETE CASCADE ON UPDATE CASCADE;
-
-ALTER TYPE "CourseType" ADD VALUE 'FSY';
-
--- De cursus wordt meteen aangemaakt zodat de FSY-collectie na het inschakelen
--- van de Content Switcher direct een cursus kan tonen. De gebruiker moet hem
--- nog wel zelf toevoegen aan zijn persoonlijke cursuslijst.
-INSERT INTO "Course" ("id", "slug", "type", "name", "description", "order", "contentCollectionId", "enabled")
-VALUES (
-  'course_fsy',
-  'voor-de-kracht-van-de-jeugd',
-  'FSY',
-  'Voor de kracht van de jeugd',
-  'Het wekelijkse leerplan met tekst en afbeeldingen uit de officiële bron.',
-  0,
-  'content_fsy',
-  true
-)
-ON CONFLICT ("id") DO UPDATE SET
-  "name" = EXCLUDED."name",
-  "description" = EXCLUDED."description",
-  "contentCollectionId" = EXCLUDED."contentCollectionId",
-  "enabled" = EXCLUDED."enabled";
