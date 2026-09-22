@@ -81,3 +81,13 @@ export async function getDefaultContentCollectionId(): Promise<string | null> {
   });
   return collection?.id ?? null;
 }
+
+
+export async function updateContentSwitcherSettings(enabled: boolean): Promise<{ enabled: boolean }> {
+  const row = await prisma.contentSwitcherSettings.upsert({
+    where: { id: "singleton" },
+    create: { id: "singleton", enabled },
+    update: { enabled },
+  });
+  return { enabled: row.enabled };
+}
