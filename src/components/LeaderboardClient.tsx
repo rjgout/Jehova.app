@@ -76,7 +76,7 @@ export default function LeaderboardClient() {
           <span className="text-5xl" aria-hidden>
             {TIER_ICONS[leagueData.myTier]}
           </span>
-          <h1 className="text-2xl font-extrabold">{TIER_LABELS[leagueData.myTier]}</h1>
+          <h1 className="text-2xl font-extrabold">\{TIER_LABELS[leagueData.myTier]}</h1>
           <p className="text-brand-100 text-sm">Deze week</p>
         </div>
       ) : (
@@ -140,22 +140,33 @@ export default function LeaderboardClient() {
           {leagueData.entries.map((e) => (
             <div
               key={e.userId}
-              className={`flex items-center justify-between py-3 px-2 rounded-xl ${
+              className={`flex items-center gap-3 py-3 px-2 rounded-xl min-w-0 ${
                 e.isMe ? "bg-brand-50 dark:bg-slate-700 font-extrabold" : ""
               }`}
             >
-              <div className="flex items-center gap-3">
-                <span className="w-8 text-center text-lg">{MEDALS[e.rank - 1] ?? e.rank}</span>
+              <div className="flex items-center gap-2 min-w-0 flex-1">
+                <span className="w-8 shrink-0 text-center text-lg">{MEDALS[e.rank - 1] ?? e.rank}</span>
                 {e.zone && (
-                  <span title={e.zone === "PROMOTION" ? "Promotiezone" : e.zone === "RELEGATION" ? "Degradatiezone" : "Veilige zone"}>
+                  <span
+                    className="shrink-0"
+                    title={
+                      e.zone === "PROMOTION"
+                        ? "Promotiezone"
+                        : e.zone === "RELEGATION"
+                          ? "Degradatiezone"
+                          : "Veilige zone"
+                    }
+                  >
                     {ZONE_DOT[e.zone]}
                   </span>
                 )}
-                <span className="dark:text-slate-100">
+                <span className="min-w-0 truncate dark:text-slate-100" title={e.handle}>
                   {e.handle} {e.isMe && <span className="text-brand-500 dark:text-brand-300">(jij)</span>}
                 </span>
               </div>
-              <span className="text-gold-600 dark:text-gold-400 font-extrabold">{e.xp} XP</span>
+              <span className="shrink-0 whitespace-nowrap text-gold-600 dark:text-gold-400 font-extrabold">
+                {e.xp} XP
+              </span>
             </div>
           ))}
         </div>
@@ -181,15 +192,21 @@ export default function LeaderboardClient() {
 
 function NationalRow({ e }: { e: NationalEntry }) {
   return (
-    <div className={`flex items-center justify-between py-3 px-2 rounded-xl ${e.isMe ? "font-extrabold" : ""}`}>
-      <div className="flex items-center gap-3">
-        <span className="w-8 text-center text-lg">{MEDALS[e.rank - 1] ?? `#${e.rank}`}</span>
-        <span className="dark:text-slate-100">
+    <div className={`flex items-center gap-3 py-3 px-2 rounded-xl min-w-0 ${
+      e.isMe ? "font-extrabold" : ""
+    }`}>
+      <div className="flex items-center gap-2 min-w-0 flex-1">
+        <span className="w-8 shrink-0 text-center text-lg">{MEDALS[e.rank - 1] ?? `#${e.rank}`}</span>
+        <span className="min-w-0 truncate dark:text-slate-100" title={e.handle}>
           {e.handle} {e.isMe && <span className="text-brand-500 dark:text-brand-300">(jij)</span>}
         </span>
-        {e.tier && <span title={TIER_LABELS[e.tier]}>{TIER_ICONS[e.tier]}</span>}
+        {e.tier && (
+          <span className="shrink-0" title={TIER_LABELS[e.tier]}>
+            {TIER_ICONS[e.tier]}
+          </span>
+        )}
       </div>
-      <div className="flex items-center gap-3 text-sm">
+      <div className="flex shrink-0 items-center gap-2 text-sm whitespace-nowrap">
         <span className="text-orange-500 font-bold">🔥 {e.currentStreak}</span>
         <span className="text-gold-600 dark:text-gold-400 font-extrabold">⭐ {e.xpTotal}</span>
       </div>
