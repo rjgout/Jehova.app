@@ -94,7 +94,7 @@ export default function AdminFsyClient() {
   }
 
   const drafts = data.lessons.filter((lesson) => lesson.status === "DRAFT");
-  const published = data.lessons.filter((lesson) => lesson.status === "PUBLISHED");
+  const published = data.lessons.filter((lesson) => lesson.publishedAt !== null);
 
   return (
     <section className="card flex flex-col gap-4">
