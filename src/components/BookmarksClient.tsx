@@ -46,6 +46,10 @@ export default function BookmarksClient() {
           </Link>
         ))}
       </div>
+
+      <Link href="/tools" className="btn-secondary self-start">
+        ← Terug
+      </Link>
     </div>
   );
 }
