@@ -117,8 +117,14 @@ export default function ReadingLessonFlow({
           chapterNumber={chapterNumber}
           verses={verses}
         />
-        <button className="btn-primary self-start" onClick={() => setPhase("exercises")}>
-          Naar de vragen →
+        <button
+          className="btn-primary self-start"
+          onClick={() => {
+            if (exercises.length === 0) finish([]);
+            else setPhase("exercises");
+          }}
+        >
+          {exercises.length === 0 ? "Les afronden →" : "Naar de vragen →"}
         </button>
       </div>
     );
