@@ -90,7 +90,7 @@ export default function ContentSwitcher({
                   className={[
                     "w-full flex items-center gap-3 rounded-xl px-4 py-3 text-left transition",
                     selected
-                      ? "bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-200"
+                      ? "bg-brand-50 text-brand-800 dark:!bg-brand-900 dark:!text-brand-100"
                       : "text-slate-700 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-800",
                     index === 0 ? "font-extrabold" : "font-semibold",
                   ].join(" ")}
