@@ -6,6 +6,7 @@ import { getTextOfTheDay } from "@/lib/dailyText";
 import { wordGameDayKey } from "@/lib/wordGame";
 import { broadcastPresenceUpdate } from "@/lib/presence";
 import { getIO } from "@/server/gameServer";
+import { runFsyWeeklyCheckIfDue } from "@/lib/fsyContent";
 
 const TICK_MS = 60_000;
 // Vast (niet instelbaar) moment voor de wekelijkse uitslag — dit is geen
@@ -298,5 +299,6 @@ export function startNotificationSchedulers(): void {
     runSeasonRolloverTick().catch((e) => console.error("Seizoensafsluiting mislukt:", e));
     runWordGameNotificationTick().catch((e) => console.error("Woord-van-de-dag-melding mislukt:", e));
     runIncognitoExpiryTick().catch((e) => console.error("Incognito-vervaltijd mislukt:", e));
+    runFsyWeeklyCheckIfDue(prisma).catch((e) => console.error("FSY-weekcontrole mislukt:", e));
   }, TICK_MS);
 }

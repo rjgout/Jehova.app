@@ -7,6 +7,7 @@ import ChapterListCourseView from "@/components/ChapterListCourseView";
 import PodcastCourseView from "@/components/PodcastCourseView";
 import KidsCourseView from "@/components/KidsCourseView";
 import IntroCourseView from "@/components/IntroCourseView";
+import FsyCourseView from "@/components/FsyCourseView";
 import ReadingCourseView from "@/components/ReadingCourseView";
 
 export default async function CourseDetailPage({ params }: { params: Promise<{ courseId: string }> }) {
@@ -115,6 +116,30 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ c
           completed: lesson.progress[0]?.completed ?? false,
           bestScore: lesson.progress[0] ? lesson.progress[0].bestScore : null,
         }))}
+      />
+    );
+  }
+
+  if (course.type === "FSY") {
+    const lessons = await prisma.fsyLesson.findMany({
+      where: { contentCollectionId: course.contentCollectionId, publishedContent: { not: null } },
+      orderBy: [{ year: "asc" }, { month: "asc" }, { order: "asc" }],
+    });
+
+    return (
+      <FsyCourseView
+        courseName={course.name}
+        lessons={lessons.map((lesson) => {
+          const images = JSON.parse(lesson.publishedImages ?? "[]") as { url: string; alt: string }[];
+          return {
+            id: lesson.id,
+            year: lesson.year,
+            month: lesson.month,
+            category: lesson.category,
+            title: lesson.publishedTitle ?? lesson.title,
+            image: images[0]?.url ?? null,
+          };
+        })}
       />
     );
   }
