@@ -59,7 +59,22 @@ async function notifyUser(input: NotifyInput): Promise<void> {
     jobs.push(sendMail({ to: user.email, subject: input.subject, html: input.emailHtml, text: input.emailText }));
   }
   if (user.pushNotificationsEnabled) {
-    jobs.push(sendPushToUser(input.userId, { title: input.pushTitle, body: input.pushBody, url: input.url }));
+    // De badge telt één keer per in-app notificatie, niet één keer per
+    // kanaal. Alleen gebruikers die push hebben ingeschakeld krijgen een
+    // badge, zodat er geen onzichtbare teller ontstaat als alle kanalen uitstaan.
+    const updated = await prisma.user.update({
+      where: { id: input.userId },
+      data: { notificationBadgeCount: { increment: 1 } },
+      select: { notificationBadgeCount: true },
+    });
+    jobs.push(
+      sendPushToUser(input.userId, {
+        title: input.pushTitle,
+        body: input.pushBody,
+        url: input.url,
+        badge: updated.notificationBadgeCount,
+      })
+    );
   }
   await Promise.allSettled(jobs);
 }
