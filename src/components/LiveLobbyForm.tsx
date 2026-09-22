@@ -103,7 +103,6 @@ export default function LiveLobbyForm({ settings, isAdmin }: Props) {
   const [chapterId, setChapterId] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
-  const [showRules, setShowRules] = useState<string | null>(null);
   const [games, setGames] = useState<GameEntry[]>(() => GAMES.filter((g) => settings[g.enabledKey] || isAdmin));
 
   useEffect(() => {
@@ -209,6 +208,8 @@ export default function LiveLobbyForm({ settings, isAdmin }: Props) {
 // render-functie krijgt de sleepgreep via het "handle"-argument van
 // SortableList (zie renderItem hierboven) doorgegeven.
 function GameCardBody({ game, enabled, handle }: { game: GameEntry; enabled: boolean; handle: DragHandleProps }) {
+  const [showRules, setShowRules] = useState(false);
+
   return (
     <div
       className={`card flex flex-col gap-3 h-full ${!enabled ? "!border-2 !border-red-300 dark:!border-red-800" : ""}`}
@@ -224,12 +225,12 @@ function GameCardBody({ game, enabled, handle }: { game: GameEntry; enabled: boo
           {game.icon}
         </div>
       </div>
-      <div className="flex items-center justify-between gap-2"><h2 className="font-extrabold dark:text-slate-100">{game.title}</h2><button type="button" onClick={() => setShowRules(game.id)} className="w-8 h-8 shrink-0 rounded-full border border-slate-300 dark:border-slate-600 text-slate-500 dark:text-slate-300 font-extrabold flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-800" aria-label={`Speluitleg voor ${game.title}`} title="Speluitleg">i</button></div>
+      <div className="flex items-center justify-between gap-2"><h2 className="font-extrabold dark:text-slate-100">{game.title}</h2><button type="button" onClick={() => setShowRules(true)} className="w-8 h-8 shrink-0 rounded-full border border-slate-300 dark:border-slate-600 text-slate-500 dark:text-slate-300 font-extrabold flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-800" aria-label={`Speluitleg voor ${game.title}`} title="Speluitleg">i</button></div>
       <p className="text-sm text-slate-500 dark:text-slate-400 flex-1">{game.description}</p>
       <Link href={game.href} className="btn-secondary self-start">
         {game.linkLabel}
       </Link>
-      {showRules === game.id && (
+      {showRules && (
         <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4" role="presentation" onClick={() => setShowRules(null)}>
           <div className="card max-w-lg w-full max-h-[85vh] overflow-y-auto relative" role="dialog" aria-modal="true" aria-labelledby={`game-rules-${game.id}`} onClick={(event) => event.stopPropagation()}>
             <button type="button" onClick={() => setShowRules(null)} className="absolute top-3 right-3 w-9 h-9 rounded-full text-slate-500 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 text-xl" aria-label="Speluitleg sluiten">×</button>
