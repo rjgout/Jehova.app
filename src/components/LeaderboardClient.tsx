@@ -76,7 +76,7 @@ export default function LeaderboardClient() {
           <span className="text-5xl" aria-hidden>
             {TIER_ICONS[leagueData.myTier]}
           </span>
-          <h1 className="text-2xl font-extrabold">\{TIER_LABELS[leagueData.myTier]}</h1>
+          <h1 className="text-2xl font-extrabold">{TIER_LABELS[leagueData.myTier]}</h1>
           <p className="text-brand-100 text-sm">Deze week</p>
         </div>
       ) : (
