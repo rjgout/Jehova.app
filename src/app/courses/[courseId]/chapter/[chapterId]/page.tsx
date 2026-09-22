@@ -47,6 +47,7 @@ export default async function ReadingChapterPage({
         select: { order: true },
       }))?.order ?? null
     : null;
+  const firstLesson = lessons[0];
 
   return (
     <ReadingChapterView
@@ -55,7 +56,7 @@ export default async function ReadingChapterPage({
       chapterNumber={chapter.number}
       lessons={lessons.map((lesson) => ({
         id: lesson.id,
-        number: lesson.order - (await chapterLessonOffset(prisma, courseId, chapterId)) + 1,
+        number: firstLesson ? lesson.order - firstLesson.order + 1 : 1,
         startVerse: lesson.startVerse,
         endVerse: lesson.endVerse,
         verseCount: lesson.endVerse - lesson.startVerse + 1,
