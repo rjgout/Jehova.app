@@ -6,6 +6,7 @@ import { getTextOfTheDay } from "@/lib/dailyText";
 import { wordGameDayKey } from "@/lib/wordGame";
 import { broadcastPresenceUpdate } from "@/lib/presence";
 import { getIO } from "@/server/gameServer";
+import { runFsyWeeklyCheckIfDue } from "@/lib/fsyContent";
 
 const TICK_MS = 60_000;
 // Vast (niet instelbaar) moment voor de wekelijkse uitslag — dit is geen
