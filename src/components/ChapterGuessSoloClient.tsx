@@ -80,7 +80,7 @@ export default function ChapterGuessSoloClient({ gameId }: { gameId: string }) {
   const [hintLoading, setHintLoading] = useState(false);
   const [confirmingGiveUp, setConfirmingGiveUp] = useState(false);
   const [givingUp, setGivingUp] = useState(false);
-  const [gaveUpSummary, setGaveUpSummary] = useState<{ correctCount: number; total: number } | null>(null);
+  const [gaveUpSummary, setGaveUpSummary] = useState<{ correctCount: number; total: number } | null>(null);\n  const [showRules, setShowRules] = useState(false);
 
   useEffect(() => {
     fetch(`/api/chapter-guess/${gameId}`)
@@ -237,6 +237,7 @@ export default function ChapterGuessSoloClient({ gameId }: { gameId: string }) {
           Vraag {question.index + 1} / {question.total}
         </span>
         <div className="flex items-center gap-2">
+          <button type="button" onClick={() => setShowRules(true)} className="w-9 h-9 rounded-full border border-slate-300 dark:border-slate-600 text-slate-500 dark:text-slate-300 font-extrabold flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-800" aria-label="Speluitleg openen" title="Speluitleg">i</button>
           {game.level !== "EXPERT" && (
             <button className="btn-secondary !px-3 !py-1.5 !text-xs" disabled={hintLoading || hint !== null || answered} onClick={useHint}>
               💡 Hint ({game.hintCredits})
@@ -251,6 +252,20 @@ export default function ChapterGuessSoloClient({ gameId }: { gameId: string }) {
           </button>
         </div>
       </div>
+
+      {showRules && (
+        <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4" role="presentation" onClick={() => setShowRules(false)}>
+          <div className="card max-w-lg w-full max-h-[85vh] overflow-y-auto relative" role="dialog" aria-modal="true" aria-labelledby="chapter-solo-rules-title" onClick={(event) => event.stopPropagation()}>
+            <button type="button" onClick={() => setShowRules(false)} className="absolute top-3 right-3 w-9 h-9 rounded-full text-slate-500 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 text-xl" aria-label="Speluitleg sluiten">×</button>
+            <h2 id="chapter-solo-rules-title" className="text-xl font-extrabold text-brand-800 dark:text-brand-300 pr-10">Speluitleg</h2>
+            <div className="mt-4 space-y-4 text-sm text-slate-700 dark:text-slate-200">
+              <section><h3 className="font-extrabold mb-1">Doel</h3><p>Lees de hoofdstukkop en ontdek uit welk hoofdstuk van het Boek van Mormon die komt.</p></section>
+              <section><h3 className="font-extrabold mb-1">Zo speel je</h3><ul className="list-disc pl-5 space-y-1"><li>Beantwoord {game.questionCount} vragen.</li><li>Bij Beginner en Gevorderd krijg je meerkeuze-opties. Bij Expert kies je zelf het boek en hoofdstuk.</li><li>Je kunt een hint gebruiken als je daar tegoed voor hebt. Een hint kan het juiste boek verklappen of een optie uitsluiten.</li><li>Je krijgt punten/XP voor je resultaten en kunt een reeks opbouwen.</li></ul></section>
+              <section><h3 className="font-extrabold mb-1">Einde</h3><p>Na de laatste vraag zie je je score en verdiensten. Je kunt tussentijds opgeven, maar krijgt dan geen XP voor dat potje.</p></section>
+            </div>
+          </div>
+        </div>
+      )}
 
       {confirmingGiveUp && (
         <div className="card !py-3 flex flex-col sm:flex-row items-center justify-between gap-3 !border-2 !border-red-200 dark:!border-red-900">
