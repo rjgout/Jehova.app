@@ -37,7 +37,7 @@ export default function ChapterListCourseView({ courseName, currentChapterId, ch
     chapters.find((c) => !c.completed) ||
     chapters[chapters.length - 1];
   const estimatedMinutes = todayChapter ? Math.max(1, Math.round(todayChapter.wordCount / WORDS_PER_MINUTE)) : 0;
-  const xpAvailable = Math.min(todayChapter?.exerciseCount ?? 0, 7) * 10 + 20;
+  const xpAvailable = Math.min(todayChapter?.exerciseCount ?? 0, 7) * 10 + (todayChapter?.exerciseCount ? 20 : 0);
   const currentIndex = todayChapter ? chapters.findIndex((chapter) => chapter.id === todayChapter.id) : -1;
   const progressPosition = currentIndex >= 0 ? currentIndex + 1 : chapters.length;
   const progressPercent = chapters.length > 0 ? Math.round((progressPosition / chapters.length) * 100) : 0;
