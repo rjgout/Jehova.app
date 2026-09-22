@@ -134,7 +134,7 @@ export async function syncCourses(db: PrismaClient): Promise<void> {
   // impliciet allemaal bij.
   await db.course.upsert({
     where: { slug: INTRO_SLUG },
-    update: { name: "Ontdek het Boek van Mormon", order: -1 },
+    update: { name: "Ontdek het Boek van Mormon", order: -1, contentCollectionId: defaultCollection.id },
     create: {
       slug: INTRO_SLUG,
       type: "INTRO",
