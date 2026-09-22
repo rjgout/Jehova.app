@@ -32,8 +32,7 @@ function splitLessonXp(lessonIndex: number, lessonCount: number): number {
   const weights = Array.from({ length: lessonCount }, (_, index) => comboWeight(Math.min(index + 1, 3)));
   const totalWeight = weights.reduce((sum, weight) => sum + weight, 0);
   const baseXp = Math.floor(SPLIT_CHAPTER_XP_BUDGET / totalWeight);
-  const remainder = SPLIT_CHAPTER_XP_BUDGET - baseXp * totalWeight;
-  return Math.round(baseXp * weights[lessonIndex] + (lessonIndex === lessonCount - 1 ? remainder : 0));
+  return Math.round(baseXp * weights[lessonIndex]);
 }
 
 /**
