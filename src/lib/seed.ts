@@ -5,6 +5,7 @@ import { importBooks } from "../../prisma/importContent";
 import { podcastEpisodes } from "../../prisma/podcastContent";
 import { importPodcastEpisodes } from "../../prisma/importPodcast";
 import { syncPodcastFeed } from "./podcastFeed";
+import { syncFsyContent } from "./fsyContent";
 import { importKidsStories, type KidsStorySeed } from "../../prisma/importKids";
 import kidsManifest from "../../prisma/kidsManifest.json";
 import { importIntroLessons, importIntroPersons } from "../../prisma/importIntro";
