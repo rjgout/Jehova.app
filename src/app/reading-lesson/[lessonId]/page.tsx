@@ -78,15 +78,18 @@ export default async function ReadingLessonPage({
     }),
   ]);
 
-  const exercises = lesson.exercises.map(({ exercise }) => ({
-    id: exercise.id,
-    type: exercise.type as "FILL_BLANK" | "WORD_BANK" | "TRUE_FALSE" | "MULTIPLE_CHOICE" | "SEQUENCE",
-    verseRef: exercise.verseRef,
-    prompt: exercise.prompt,
-    blanks: (JSON.parse(exercise.answers) as string[]).length,
-    wordBank: exercise.wordBank ? (JSON.parse(exercise.wordBank) as string[]) : undefined,
-    options: exercise.options.length > 0 ? exercise.options.map((option) => option.label) : undefined,
-  }));
+  const exercises = lesson.exercises
+    .map(({ exercise }) => ({
+      id: exercise.id,
+      type: exercise.type as "FILL_BLANK" | "WORD_BANK" | "TRUE_FALSE" | "MULTIPLE_CHOICE" | "SEQUENCE",
+      verseRef: exercise.verseRef,
+      prompt: exercise.prompt,
+      blanks: (JSON.parse(exercise.answers) as string[]).length,
+      wordBank: exercise.wordBank ? (JSON.parse(exercise.wordBank) as string[]) : undefined,
+      options: exercise.options.length > 0 ? exercise.options.map((option) => option.label) : undefined,
+    }))
+    .sort(() => Math.random() - 0.5)
+    .slice(0, 3);
 
   return (
     <ReadingLessonFlow
