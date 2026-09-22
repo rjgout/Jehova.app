@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/session";
 import { prisma } from "@/lib/db";
 import { isEmailConfigured } from "@/lib/email";
-import { advanceCourseProgress } from "@/lib/courses";
+import { advanceCourseProgress, syncCourses } from "@/lib/courses";
 import ChapterListCourseView from "@/components/ChapterListCourseView";
 import PodcastCourseView from "@/components/PodcastCourseView";
 import KidsCourseView from "@/components/KidsCourseView";
@@ -120,7 +120,7 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ c
   }
 
   if (course.type === "READING_LESSONS") {
-    const lessons = await prisma.courseLesson.findMany({
+    let lessons = await prisma.courseLesson.findMany({
       where: { courseId: course.id },
       orderBy: { order: "asc" },
       include: {
@@ -128,6 +128,21 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ c
         progress: { where: { userId: user.id } },
       },
     });
+
+    // Bestaande installaties krijgen de nieuwe cursus al via de migratie.
+    // De vaste lesindeling wordt één keer opgebouwd zodra de cursus voor het
+    // eerst wordt geopend; daarna blijven de grenzen en voortgang bewaard.
+    if (lessons.length === 0 && (await prisma.chapter.count()) > 0) {
+      await syncCourses(prisma);
+      lessons = await prisma.courseLesson.findMany({
+        where: { courseId: course.id },
+        orderBy: { order: "asc" },
+        include: {
+          chapter: { include: { book: true } },
+          progress: { where: { userId: user.id } },
+        },
+      });
+    }
 
     let courseProgress = await prisma.userCourseProgress.findUnique({
       where: { userId_courseId: { userId: user.id, courseId: course.id } },
