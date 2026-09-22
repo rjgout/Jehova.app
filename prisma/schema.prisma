@@ -93,7 +93,7 @@ model User {
   // De actieve contentcollectie voor de contentswitcher. Null betekent dat de gebruiker
   // nog geen expliciete keuze heeft gemaakt; de app gebruikt dan de standaardcollectie.
   activeContentCollectionId String?
-  activeContentCollection   ContentCollection? @relation(fields: [activeContentCollectionId], references: [id], onDelete: SetNull)
+  activeContentCollection   ContentCollection? @relation("ActiveContentCollection", fields: [activeContentCollectionId], references: [id], onDelete: SetNull)
 
   // Eigen emoji voor het avatar-rondje (zie ProfileClient.tsx — klik op het
   // rondje op je profielpagina om 'm te zetten), los van de gebruikersnaam:
