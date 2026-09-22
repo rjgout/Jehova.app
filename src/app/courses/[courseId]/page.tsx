@@ -122,7 +122,7 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ c
 
   if (course.type === "FSY") {
     const lessons = await prisma.fsyLesson.findMany({
-      where: { contentCollectionId: course.contentCollectionId, status: "PUBLISHED" },
+      where: { contentCollectionId: course.contentCollectionId, publishedContent: { not: null } },
       orderBy: [{ year: "asc" }, { month: "asc" }, { order: "asc" }],
     });
 
