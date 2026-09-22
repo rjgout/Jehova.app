@@ -45,6 +45,7 @@ async function notifyUser(input: NotifyInput): Promise<void> {
       emailNotificationsEnabled: true,
       pushNotificationsEnabled: true,
       notifyDailyReminder: true,
+      notifyDailyText: true,
       notifySocial: true,
       notifyAchievements: true,
       notifyWordGame: true,
