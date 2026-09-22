@@ -754,6 +754,7 @@ export function ExerciseCard({
   return (
     <div className="card flex flex-col gap-5">
       <p className="text-xs font-bold uppercase text-slate-400 dark:text-slate-500">{exercise.verseRef}</p>
+      <HintControl exercise={exercise} checked={checked} />
       <p className="text-xl leading-relaxed dark:text-slate-100">{exercise.prompt}</p>
 
       <div className="flex flex-wrap gap-2 min-h-[3rem] p-3 rounded-2xl bg-slate-50 dark:bg-slate-900 border-2 border-dashed border-slate-200 dark:border-slate-700">
