@@ -18,15 +18,22 @@ self.addEventListener("push", (event) => {
     // negeer onverwachte payload-vorm, val terug op de defaults hierboven
   }
 
+  // De Badging API hangt in een service worker aan self.navigator, niet aan
+  // self.registration. Een synchrone fout hier zou event.waitUntil overslaan,
+  // en iOS trekt een push-abonnement in als een push geen melding toont.
+  const setBadge = async () => {
+    if (typeof data.badge !== "number" || data.badge <= 0) return;
+    if (!("setAppBadge" in self.navigator)) return;
+    await self.navigator.setAppBadge(data.badge).catch(() => {});
+  };
+
   event.waitUntil(
     Promise.all([
       self.registration.showNotification(data.title, {
         body: data.body,
         data: { url: data.url },
       }),
-      typeof data.badge === "number" && data.badge > 0
-        ? self.registration.setAppBadge(data.badge).catch(() => {})
-        : Promise.resolve(),
+      setBadge(),
     ])
   );
 });

@@ -170,7 +170,7 @@ export async function notifySeasonResult(
 
 export async function notifyDailyText(userId: string, text: { bookName: string; chapterNumber: number; verseNumber: number; content: string }): Promise<void> {
   const url = `${await getAppUrl()}/dashboard`;
-  const reference = `${text.bookName} ${text.chapterNumber}:undefined`;
+  const reference = `${text.bookName} ${text.chapterNumber}:${text.verseNumber}`;
   await notifyUser({
     userId,
     category: "dailyText",
