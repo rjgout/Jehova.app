@@ -199,7 +199,8 @@ export default function FamilyGameRoom({ code, myUserId }: { code: string; myUse
   useEffect(() => {
     fetch("/api/friends")
       .then((r) => r.json())
-      .then((d) => setFriends(d.friends ?? []));
+      // /api/friends geeft per vriend { friendshipId, user } terug.
+      .then((d) => setFriends((d.friends ?? []).map((entry: { user: Friend }) => entry.user)));
   }, []);
 
   // --- Pan/zoom (muis-wiel, slepen, pinch — zie de eerder gedeelde

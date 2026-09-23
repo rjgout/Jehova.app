@@ -106,7 +106,8 @@ export default function GameRoom({ code, myUserId }: { code: string; myUserId: s
   useEffect(() => {
     fetch("/api/friends")
       .then((r) => r.json())
-      .then((d) => setFriends(d.friends ?? []));
+      // /api/friends geeft per vriend { friendshipId, user } terug.
+      .then((d) => setFriends((d.friends ?? []).map((entry: { user: Friend }) => entry.user)));
   }, []);
 
   function startGame() {
