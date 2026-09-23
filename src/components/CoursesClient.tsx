@@ -133,7 +133,7 @@ export default function CoursesClient() {
   const otherCatalogCourses = (catalog ?? []).filter((c) => c.type !== "BY_BOOK");
 
   return (
-    <div className="max-w-2xl mx-auto flex flex-col gap-6">
+    <div className="max-w-5xl mx-auto flex flex-col gap-6">
       <div>
         <h1 className="text-2xl font-extrabold text-brand-800 dark:text-brand-300">Cursussen</h1>
         <p className="text-slate-500 dark:text-slate-400 text-sm">
