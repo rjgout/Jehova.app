@@ -239,6 +239,16 @@ verwerken". Fundamenteel anders dan de rest van de API:
   alleen visueel — het verschil tussen wit en een lichte tint (bv. gold-50)
   is op een screenshot makkelijk te missen.
 
+## Accountbeveiliging en 2FA
+
+- TOTP is de ingebouwde tweestapsverificatie. Voor gewone gebruikers is dit **optioneel**; voor accounts met isAdmin=true is TOTP **verplicht zodra de beheerder het heeft ingesteld**.
+- Een bestaande beheerder mag zonder TOTP inloggen om de eerste configuratie te kunnen uitvoeren. Na het instellen kan een beheerder 2FA niet meer zelf uitschakelen.
+- **Vergrendel de laatste beheerder nooit tijdens de uitrol van 2FA.** De eerste admin moet altijd een setup-pad kunnen bereiken voordat TOTP voor dat account wordt afgedwongen.
+- TOTP-secrets worden versleuteld opgeslagen met een sleutel die uit SESSION_SECRET wordt afgeleid. Sla TOTP-secrets nooit als leesbare tekst op en log ze nooit.
+- Herstelcodes worden alleen als hashes opgeslagen en worden na gebruik ongeldig gemaakt. Toon nieuwe herstelcodes alleen één keer tijdens het instellen.
+- Gebruik voor TOTP de standaard 30-secondenperiode en een kleine kloktolerantie. Wijzig dit niet zonder een concrete beveiligingsreden.
+- Bij wijzigingen aan de authenticatieflow moet zowel de normale login als de 2FA-login met een authenticator-code én een herstelcode worden gecontroleerd.
+
 ## Paginabreedte en layout
 
 - **max-w-5xl (1024px) is de standaard maximale breedte voor desktop-pagina-inhoud.** De globale <main> in src/app/layout.tsx gebruikt deze breedte; nieuwe overzichts-, lijst- en dashboardpagina's horen daarom standaard de beschikbare 5xl-breedte te benutten.
