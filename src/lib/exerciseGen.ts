@@ -57,7 +57,7 @@ export function shuffleForDisplay<T>(items: T[]): T[] {
   return shuffled;
 }
 
-// Bekende namen (demo-parafrases + kindercursus); gebruikt om een vals
+// Bekende namen (Boek van Mormon + kindercursus); gebruikt om een vals
 // statement te maken voor TRUE_FALSE-oefeningen (naam vervangen door een
 // andere naam uit deze lijst).
 const KNOWN_NAMES = [

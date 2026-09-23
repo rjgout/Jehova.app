@@ -160,9 +160,9 @@ Bij iedere wijziging aan de database moeten **schema, migratie en gebruikende co
 
 - Sessie = httpOnly JWT-cookie (`bvm_session`, `jose`, 30 dagen), wachtwoorden
   gehasht met `bcryptjs`. Geen aparte rollen-tabel: alleen `User.isAdmin`.
-- **De allereerste ECHTE registratie op een verse installatie wordt
-  automatisch admin** (geen setup-stap nodig); demo-accounts uit
-  `SEED_DEMO_USERS`/`prisma/seed.ts` tellen daar bewust niet voor mee.
+- **De allereerste registratie op een verse installatie wordt automatisch
+  admin** (geen setup-stap nodig). Er bestaan geen demo-accounts meer: de
+  seed maakt nooit gebruikers aan.
 - Elke API-route/server-actie die auth nodig heeft begint met
   `getCurrentUser()` (uit `src/lib/session.ts`) → 401 bij `null` → bij
   admin-routes daarna ook `isAdmin` → 403. Er is geen `middleware.ts`; elke
@@ -289,9 +289,11 @@ verwerken". Fundamenteel anders dan de rest van de API:
 
 ## Content & auteursrecht (relevant bij wijzigingen aan content/seeds)
 
-- `prisma/content.ts` bevat **geen** letterlijke Boek van Mormon-tekst — dat
-  is auteursrechtelijk beschermd. Alleen zelfgeschreven parafrases als demo.
-  Echte content laden kan via `npm run db:import` (eigen, apart geregelde bron).
+- De verzen in `prisma/bomContent.json` (geladen via `prisma/content.ts`) zijn
+  de officiële Nederlandse tekst, met toestemming gebruikt. Deel die niet als
+  losstaand bestand/export met een instantie die die toestemming niet apart
+  heeft. Een andere bron laden kan via `npm run db:import`. Er is geen
+  demo-inhoud meer.
 - De kindercursus-tekst/illustraties ("Verhalen uit het Boek van Mormon")
   worden met toestemming gebruikt — deel dit dus niet als losstaand
   bestand/export met een instantie die die toestemming niet apart heeft.
@@ -352,7 +354,7 @@ npm run dev                 # tsx server.ts, vereist een lokale/bereikbare Postg
 
 Belangrijke env vars (zie `.env.example`): `DATABASE_URL`, `REDIS_URL`,
 `SESSION_SECRET`, `ALLOW_INSECURE_COOKIES` (alleen voor http-LAN-testen),
-`SEED_DEMO_USERS`, `APP_URL` (optioneel, anders auto-detectie uit het
+`APP_URL` (optioneel, anders auto-detectie uit het
 verzoek), `PODCAST_FEED_URL` (optioneel). SMTP wordt niet via env
 geconfigureerd maar via `/adminbackend` in de app zelf.
 

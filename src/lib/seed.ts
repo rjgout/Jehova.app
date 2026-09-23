@@ -1,5 +1,4 @@
 import { PrismaClient } from "@prisma/client";
-import bcrypt from "bcryptjs";
 import { seedBooks } from "../../prisma/content";
 import { importBooks } from "../../prisma/importContent";
 import { podcastEpisodes } from "../../prisma/podcastContent";
@@ -56,7 +55,7 @@ const achievementDefs = [
  * de admin, in plaats van dat ze alleen in de containerlogs verdwijnen.
  */
 export async function runSeed(client: PrismaClient, log: (msg: string) => void = console.log): Promise<void> {
-  log("Seeding boeken, hoofdstukken, verzen en oefeningen (demo-inhoud)...");
+  log("Seeding boeken, hoofdstukken, verzen en oefeningen...");
   await importBooks(client, seedBooks, log);
 
   log("Seeding podcastafleveringen...");
@@ -89,44 +88,5 @@ export async function runSeed(client: PrismaClient, log: (msg: string) => void =
     });
   }
 
-  // Demo-gebruikers (met een publiek bekend wachtwoord!) alleen aanmaken als dat
-  // expliciet gevraagd wordt — dus NOOIT standaard op een productie-instantie.
-  if (process.env.SEED_DEMO_USERS !== "true") {
-    log("SEED_DEMO_USERS staat niet op 'true' — demo-gebruikers overgeslagen.");
-    log("Seed klaar.");
-    return;
-  }
-
-  // --- Demo-gebruikers zodat vrienden/competitie/live game meteen te testen zijn ---
-  const demoPassword = await bcrypt.hash("demo1234", 10);
-  const demoUsers = [
-    { email: "anna@example.com", handle: "anna", discriminator: "01", displayName: "Anna" },
-    { email: "bram@example.com", handle: "bram", discriminator: "01", displayName: "Bram" },
-    { email: "carla@example.com", handle: "carla", discriminator: "01", displayName: "Carla" },
-  ];
-
-  const createdUsers = [];
-  for (const u of demoUsers) {
-    const user = await client.user.upsert({
-      where: { email: u.email },
-      update: { isDemoSeed: true },
-      create: { ...u, passwordHash: demoPassword, isDemoSeed: true },
-    });
-    createdUsers.push(user);
-  }
-
-  const [anna, bram, carla] = createdUsers;
-  await client.friendship.upsert({
-    where: { senderId_receiverId: { senderId: anna.id, receiverId: bram.id } },
-    update: { status: "ACCEPTED" },
-    create: { senderId: anna.id, receiverId: bram.id, status: "ACCEPTED" },
-  });
-  await client.friendship.upsert({
-    where: { senderId_receiverId: { senderId: carla.id, receiverId: anna.id } },
-    update: { status: "PENDING" },
-    create: { senderId: carla.id, receiverId: anna.id, status: "PENDING" },
-  });
-
-  log("Demo-gebruikers: anna#01/bram#01/carla#01 (wachtwoord: demo1234)");
   log("Seed klaar.");
 }

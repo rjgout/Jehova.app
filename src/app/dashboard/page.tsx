@@ -11,7 +11,7 @@ export default async function DashboardPage() {
   const user = await getCurrentUser();
   if (!user) redirect("/login");
   if (user.mustChangePassword) redirect("/change-password");
-  if (!user.emailVerifiedAt && !user.isDemoSeed && (await isEmailConfigured())) redirect("/verify-email");
+  if (!user.emailVerifiedAt && (await isEmailConfigured())) redirect("/verify-email");
   if (!user.onboardingSeenAt) redirect("/onboarding");
 
   const [

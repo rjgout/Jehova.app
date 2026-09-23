@@ -2,8 +2,8 @@
 // dat ook?" — gebaseerd op een door de eigenaar aangeleverd transcript.
 // De vragen zijn eigen samenvattingen/parafrases van wat er besproken wordt,
 // geen letterlijke overname van het transcript. De BOM_CONNECTION-vragen
-// verwijzen naar de al bestaande zelf geschreven Alma 5-parafrase in
-// prisma/content.ts (zie de auteursrechtnotitie daar).
+// verbinden het gesprek met een concreet hoofdstuk uit het Boek van Mormon
+// (zie "Podcastafleveringen verwerken" in CLAUDE.md).
 
 export interface PodcastComprehensionMultipleChoice {
   type: "MULTIPLE_CHOICE";

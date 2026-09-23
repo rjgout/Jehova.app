@@ -104,8 +104,8 @@ draai daarin:
 npm run db:seed
 ```
 
-Dit laadt de demo-parafrases (zie de auteursrechtnotitie in de hoofd-README).
-Heb je een eigen (toegestaan) bronbestand, kopieer dat dan eerst naar de
+Dit laadt alle content (zie de auteursrechtnotitie in de hoofd-README).
+Wil je een andere (toegestane) bron gebruiken, kopieer die dan eerst naar de
 container (**Containers → jehova-app → Volumes**, of `docker cp` via SSH) en
 draai vervolgens `npm run db:import -- /pad/naar/bestand.json`.
 

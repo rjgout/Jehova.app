@@ -10,7 +10,7 @@ export default async function KidsStoryPage({ params }: { params: Promise<{ stor
   const user = await getCurrentUser();
   if (!user) redirect("/login");
   if (user.mustChangePassword) redirect("/change-password");
-  if (!user.emailVerifiedAt && !user.isDemoSeed && (await isEmailConfigured())) {
+  if (!user.emailVerifiedAt && (await isEmailConfigured())) {
     redirect("/verify-email");
   }
 

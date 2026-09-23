@@ -52,9 +52,7 @@ const headingByChapter = new Map<string, string>(
 );
 
 // Handmatig geschreven begrijpend-lezen-oefeningen bij een paar hoofdstukken
-// (zie ComprehensionExercise hierboven) — blijven thematisch kloppen op de
-// echte tekst, ook al zijn ze oorspronkelijk bij de parafrase-demo-inhoud
-// geschreven, dus die geven we hier mee aan de betreffende hoofdstukken.
+// (zie ComprehensionExercise hierboven).
 const comprehensionByChapter: Record<string, ComprehensionExercise[]> = {
   "1-nephi:1": [
     {

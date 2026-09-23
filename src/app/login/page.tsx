@@ -113,9 +113,6 @@ export default function LoginPage() {
           Maak er een aan
         </Link>
       </p>
-      <p className="text-xs text-slate-400 dark:text-slate-500 mt-2">
-        Demo-account: gebruikersnaam "anna#01", wachtwoord "demo1234".
-      </p>
     </div>
   );
 }

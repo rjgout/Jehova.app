@@ -58,9 +58,9 @@ van een specifieke cloud-hostingprovider.
 - **Privacy**: alleen functioneel noodzakelijke cookies (geen tracking, dus
   geen cookiebanner nodig), een privacy- en cookiebeleid, en zelf je account
   + alle gegevens kunnen verwijderen.
-- **Adminbeheer** (`/adminbackend`): de allereerste ECHTE registratie op een
-  verse installatie wordt automatisch admin (geen aparte setup-stap nodig,
-  en demo-accounts uit `db:seed` tellen hier niet voor mee); die admin ziet
+- **Adminbeheer** (`/adminbackend`): de allereerste registratie op een
+  verse installatie wordt automatisch admin (geen aparte setup-stap nodig);
+  die admin ziet
   een overzicht met statistieken (gebruikers/boeken/hoofdstukken/oefeningen),
   kan andere gebruikers admin maken, kan zelf een wachtwoordreset voor een
   gebruiker initiëren (toont eenmalig een tijdelijk wachtwoord om zelf door
@@ -107,12 +107,12 @@ voor hoe je de database veiligstelt.
 ## Auteursrecht van de brontekst
 
 De tekst van het Boek van Mormon is auteursrechtelijk beschermd door De Kerk
-van Jezus Christus van de Heiligen der Laatste Dagen. `prisma/content.ts`
-bevat daarom alleen een handvol **zelf geschreven parafrases** als
-demo-inhoud — geen letterlijke overname van de officiële vertaling.
+van Jezus Christus van de Heiligen der Laatste Dagen. De verzen in
+`prisma/bomContent.json` zijn de officiële Nederlandse tekst en worden met
+toestemming gebruikt; `npm run db:seed` laadt ze. Deel dit bestand niet los
+met een instantie die die toestemming niet zelf heeft geregeld.
 
-Zodra je toestemming hebt geregeld om de officiële tekst te gebruiken, kan
-je je eigen content laden via:
+Een andere (toegestane) bron laden kan via:
 
 ```bash
 docker exec jehova-app npm run db:import -- /pad/naar/bestand.json

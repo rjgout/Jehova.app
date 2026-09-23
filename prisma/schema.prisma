@@ -34,11 +34,6 @@ model User {
   // automatisch admin (zie /api/auth/register); daarna kan een admin dit
   // bij andere gebruikers aan/uit zetten via /adminbackend.
   isAdmin            Boolean   @default(false)
-  // Zet prisma/seed.ts op demo-accounts (anna/bram/carla). Telt bewust niet
-  // mee voor "eerste registratie is admin" — anders wordt op het aanbevolen
-  // installatiepad (eerst db:seed, dan pas je eigen account aanmaken) per
-  // ongeluk een demo-account admin in plaats van je eigen account.
-  isDemoSeed         Boolean   @default(false)
   // Gezet door een admin-wachtwoordreset (/adminbackend); dwingt de
   // gebruiker om na inloggen eerst zelf een nieuw wachtwoord te kiezen
   // voordat de rest van de app bereikbaar is (zie dashboard/page.tsx).

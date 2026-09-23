@@ -39,12 +39,10 @@ export async function POST(req: NextRequest) {
 
   const passwordHash = await hashPassword(password);
 
-  // De allereerste ECHTE registratie op een verse installatie wordt
-  // automatisch admin, zodat er zonder handmatige databasetoegang altijd
-  // een beheerder is voor /adminbackend. Demo-accounts (prisma/seed.ts)
-  // tellen bewust niet mee — anders wordt op het aanbevolen installatiepad
-  // (eerst db:seed, dan je eigen account) per ongeluk een demo-account admin.
-  const isFirstUser = (await prisma.user.count({ where: { isDemoSeed: false } })) === 0;
+  // De allereerste registratie op een verse installatie wordt automatisch
+  // admin, zodat er zonder handmatige databasetoegang altijd een beheerder
+  // is voor /adminbackend.
+  const isFirstUser = (await prisma.user.count()) === 0;
 
   // Standaard-cursus voor nieuwe accounts: "van voor naar achter". Bestaat
   // die nog niet (content nog niet geïmporteerd), dan blijft dit gewoon leeg
