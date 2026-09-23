@@ -634,12 +634,22 @@ export function initGameServer(httpServer: HttpServer) {
     );
   }
 
+  // Inloggen gebeurt in een middleware, niet in de connection-handler: de
+  // client krijgt pas "connect" als deze klaar is. Met een await vóór de
+  // socket.on(...)-registraties gingen berichten die een client direct bij
+  // (her)verbinden stuurt (bv. opnieuw aanmelden bij een spel) verloren.
+  ioInstance.use((socket, next) => {
+    authenticateSocket(socket)
+      .then((user) => {
+        if (!user) return next(new Error("Niet ingelogd"));
+        socket.data.user = user;
+        next();
+      })
+      .catch(() => next(new Error("Niet ingelogd")));
+  });
+
   ioInstance.on("connection", async (socket) => {
-    const user = await authenticateSocket(socket);
-    if (!user) {
-      socket.disconnect();
-      return;
-    }
+    const user = socket.data.user as NonNullable<Awaited<ReturnType<typeof authenticateSocket>>>;
     socket.data.userId = user.id;
     socket.data.displayName = user.handle;
     socket.join(`user:${user.id}`);
@@ -647,11 +657,15 @@ export function initGameServer(httpServer: HttpServer) {
 
     // Aanwezigheid voor het adminoverzicht (/adminbackend): zie de opmerking
     // bij User.onlineSocketCount in schema.prisma voor waarom dit in de
-    // database staat i.p.v. in-memory.
-    await prisma.user
+    // database staat i.p.v. in-memory. Bewust niet afwachten, om dezelfde
+    // reden als hierboven: de handlers hieronder moeten meteen klaarstaan. De
+    // disconnect-handler wacht wel op deze ophoging, zodat een heel snelle
+    // disconnect nooit vóór de ophoging telt.
+    const presenceCounted = prisma.user
       .update({ where: { id: user.id }, data: { onlineSocketCount: { increment: 1 }, lastSeenAt: new Date() } })
+      .then(() => {})
       .catch(() => {});
-    broadcastPresenceUpdate(ioInstance, user.id).catch(() => {});
+    presenceCounted.then(() => broadcastPresenceUpdate(ioInstance!, user.id)).catch(() => {});
 
     // Vrienden-activiteit (zie src/lib/presence.ts): de client stuurt zelf al
     // een herkenbaar label mee (bv. "Leest Alma 32"), nooit een technisch ID
@@ -1052,14 +1066,16 @@ export function initGameServer(httpServer: HttpServer) {
     });
 
     socket.on("disconnect", () => {
-      prisma.user
-        .update({
-          where: { id: user.id },
-          // Nooit onder 0: bij een servercrash met nog "open" tellingen (zie
-          // de reset bij het opstarten in initGameServer hieronder) zou een
-          // losse late disconnect anders negatief kunnen tellen.
-          data: { onlineSocketCount: { decrement: 1 }, lastSeenAt: new Date() },
-        })
+      presenceCounted
+        .then(() =>
+          prisma.user.update({
+            where: { id: user.id },
+            // Nooit onder 0: bij een servercrash met nog "open" tellingen (zie
+            // de reset bij het opstarten in initGameServer hieronder) zou een
+            // losse late disconnect anders negatief kunnen tellen.
+            data: { onlineSocketCount: { decrement: 1 }, lastSeenAt: new Date() },
+          })
+        )
         .then(async (updated) => {
           let socketCount = updated.onlineSocketCount;
           if (socketCount < 0) {

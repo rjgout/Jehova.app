@@ -2,7 +2,8 @@ import type { AlleskennerItemKind } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { alleskennerItems } from "../../../prisma/alleskennerContent";
 import { importAlleskennerItems } from "../../../prisma/importAlleskenner";
-import type { AlleskennerDataFor } from "@/lib/alleskenner/content";
+import kidsManifest from "../../../prisma/kidsManifest.json";
+import { parsePassage, type AlleskennerDataFor } from "@/lib/alleskenner/content";
 
 /**
  * Zorgt dat nieuwe onderdelen uit alleskennerContent.ts in de database staan,
@@ -71,14 +72,48 @@ export async function markSeen(itemIds: string[], userIds: string[]): Promise<vo
 
 /** Tekst van een vers op basis van een verwijzing als "Mosiah 2:17". */
 export async function verseTextByRef(ref: string): Promise<string | null> {
-  const match = /^(.+) (\d+):(\d+)$/.exec(ref);
-  if (!match) return null;
-  const verse = await prisma.verse.findFirst({
+  const verses = await passageVerses(ref);
+  return verses[0]?.text ?? null;
+}
+
+/** Verzen van een passage als "Alma 17:25-27", op volgorde. */
+export async function passageVerses(passage: string): Promise<{ number: number; text: string }[]> {
+  const range = parsePassage(passage);
+  if (!range) return [];
+  return prisma.verse.findMany({
     where: {
-      number: Number(match[3]),
-      chapter: { number: Number(match[2]), book: { name: match[1] } },
+      number: { gte: range.from, lte: range.to },
+      chapter: { number: range.chapter, book: { name: range.book } },
     },
-    select: { text: true },
+    select: { number: true, text: true },
+    orderBy: { number: "asc" },
   });
-  return verse?.text ?? null;
+}
+
+/**
+ * Namen van alle boeken uit dezelfde collectie als `bookName` — de tikopties
+ * bij een citatengalerij (het antwoord is altijd het boek van het vers).
+ */
+export async function siblingBookNames(bookName: string): Promise<string[]> {
+  const book = await prisma.book.findFirst({ where: { name: bookName }, select: { contentCollectionId: true } });
+  if (!book) return [];
+  const books = await prisma.book.findMany({
+    where: { contentCollectionId: book.contentCollectionId },
+    select: { name: true },
+    orderBy: { order: "asc" },
+  });
+  return books.map((b) => b.name);
+}
+
+// Titels en illustraties van de kinderverhalen komen uit het manifest (altijd
+// aanwezig), niet uit de database: een installatie zonder geïmporteerde
+// kindercursus heeft de afbeeldingen in public/ toch al.
+const kidsStories = kidsManifest as { number: number; title: string; images: string[] }[];
+
+export function kidsStory(number: number): { title: string; images: string[] } | null {
+  return kidsStories.find((s) => s.number === number) ?? null;
+}
+
+export function kidsStoryTitles(): string[] {
+  return kidsStories.map((s) => s.title);
 }

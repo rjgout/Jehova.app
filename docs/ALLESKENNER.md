@@ -111,12 +111,18 @@ de minste seconden; na een pas of als je klaar bent, mag de volgende aanvullen.
   Let op de eager-importketen van `server.ts` (zie `CLAUDE.md`).
 - De server stuurt iedereen een **eigen weergave**: spelers krijgen nooit de
   antwoorden, de quizmaster wel.
+- Alles wat aan de beurt is en seconden heeft, is een **deelnemer**: een losse
+  speler of een team. Bij teams handelt alleen de teamleider; stille keuzes
+  van teamleden worden pas bij de onthulling beoordeeld (1 persoonlijk punt
+  per goed antwoord), zodat ze het antwoord niet kunnen doorfluisteren.
+- Rondes zonder inhoud in de database (bv. nog geen galerijen) vallen bij de
+  start automatisch weg.
 
 ## Bouwstatus
 
 1. [x] Ontwerp vastgelegd (dit document)
 2. [x] Contentmodel, controle, eerste inhoud
 3. [x] Speelbare kern: lobby, quizmaster/tikvariant, 3-6-9, Puzzel, Finale
-4. [ ] Teams, Open Deur, Galerij, Collectief Geheugen
+4. [x] Teams, Open Deur, Galerij, Collectief Geheugen, kort/volledig spel
 5. [ ] Seizoensmodus en seizoensfinale
 6. [ ] Editor voor bestaande inhoud in `/adminbackend`

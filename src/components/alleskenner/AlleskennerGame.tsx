@@ -1,15 +1,19 @@
 "use client";
 
-import { useEffect, useRef, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
 import { getSocket } from "@/lib/socketClient";
 import { getDutchVoices, getSelectedDutchVoice } from "@/lib/readAloud";
-import type { AkStateView } from "@/lib/alleskenner/types";
+import { AK_ROUND_TITLES, type AkGridCell, type AkStateView } from "@/lib/alleskenner/types";
 
 const GROUP_STYLES = [
   "bg-sky-200 dark:bg-sky-800 text-sky-950 dark:text-white",
   "bg-amber-200 dark:bg-amber-700 text-amber-950 dark:text-white",
   "bg-emerald-200 dark:bg-emerald-800 text-emerald-950 dark:text-white",
 ];
+
+// Teamkleuren, in dezelfde volgorde als AK_TEAM_NAMES (blauw, oranje, groen, paars, rood).
+export const TEAM_DOTS = ["bg-sky-500", "bg-orange-500", "bg-emerald-500", "bg-purple-500", "bg-red-500"];
+const TEAM_BORDERS = ["border-sky-400", "border-orange-400", "border-emerald-400", "border-purple-400", "border-red-400"];
 
 function useNow(active: boolean) {
   const [now, setNow] = useState(() => Date.now());
@@ -33,78 +37,123 @@ function speak(text: string) {
   window.speechSynthesis.speak(utterance);
 }
 
+/**
+ * Wat deze kijker nu mag. `canAct`: zijn tik telt als antwoord van de
+ * deelnemer die aan de beurt is (zonder quizmaster). `canSilent`: bij teams
+ * stil meekiezen voor persoonlijke punten. De server controleert dit opnieuw.
+ */
+interface Abilities {
+  myTurn: boolean;
+  inActiveTeam: boolean;
+  isQuizmaster: boolean;
+  tapMode: boolean;
+  canAct: boolean;
+  canSilent: boolean;
+}
+
+function abilities(state: AkStateView): Abilities {
+  const isPlayer = state.me.role === "player";
+  const myTurn = isPlayer && state.activeId !== null && state.me.contestantId === state.activeId && state.me.actsForContestant;
+  const inActiveTeam = state.teamMode && state.me.contestantId === state.activeId && !state.me.actsForContestant;
+  const tapMode = state.quizmasterId === null;
+  return {
+    myTurn,
+    inActiveTeam,
+    isQuizmaster: state.quizmasterId === state.me.userId,
+    tapMode,
+    canAct: myTurn && tapMode,
+    canSilent: state.teamMode && isPlayer && !myTurn && state.activeId !== null,
+  };
+}
+
 export default function AlleskennerGame({ state, receivedAt }: { state: AkStateView; receivedAt: number }) {
   const socket = getSocket();
   const ticking = state.clockRunning || state.turnDeadline !== null;
   const now = useNow(ticking);
   const elapsed = ticking ? Math.max(0, (now - receivedAt) / 1000) : 0;
-  const isActive = state.activeId === state.me.userId;
-  const isQuizmaster = state.quizmasterId === state.me.userId;
-  const tapMode = state.quizmasterId === null;
-  const activeName = state.players.find((p) => p.userId === state.activeId)?.name ?? null;
+  const can = abilities(state);
+  const active = state.contestants.find((c) => c.id === state.activeId) ?? null;
   const deadlineLeft =
     state.turnDeadline !== null ? Math.max(0, Math.ceil((state.turnDeadline - state.serverNow) / 1000 - elapsed)) : null;
 
-  const displaySeconds = (userId: string, seconds: number) =>
-    state.clockRunning && state.activeId === userId ? Math.max(0, seconds - elapsed) : seconds;
+  const displaySeconds = (id: string, seconds: number) =>
+    state.clockRunning && state.activeId === id ? Math.max(0, seconds - elapsed) : seconds;
 
-  const scoreboardPlayers =
+  const scoreboard =
     state.phase === "FINALE" && state.finalists
-      ? state.players.filter((p) => state.finalists!.includes(p.userId))
-      : state.players;
+      ? state.contestants.filter((c) => state.finalists!.includes(c.id))
+      : state.contestants;
+
+  const choosingDoor = state.phase === "OPEN_DEUR" && state.openDeur?.choosing;
+  const showPass = state.activeId !== null && !choosingDoor && (can.myTurn || can.isQuizmaster);
+  const passLabel =
+    state.phase === "GALLERY"
+      ? "Overslaan"
+      : can.isQuizmaster && !can.myTurn
+        ? `Beurt van ${active?.name ?? ""} beëindigen (pas)`
+        : "PAS";
 
   return (
     <>
       <Header state={state} deadlineLeft={deadlineLeft} />
 
-      <div className={`grid gap-2 ${scoreboardPlayers.length <= 2 ? "grid-cols-2" : "grid-cols-2 sm:grid-cols-3"}`}>
-        {scoreboardPlayers.map((p) => {
-          const active = p.userId === state.activeId;
-          const seconds = displaySeconds(p.userId, p.seconds);
+      <div className={`grid gap-2 ${scoreboard.length <= 2 ? "grid-cols-2" : "grid-cols-2 sm:grid-cols-3"}`}>
+        {scoreboard.map((c) => {
+          const isActive = c.id === state.activeId;
+          const isMine = c.id === state.me.contestantId;
+          const seconds = displaySeconds(c.id, c.seconds);
           return (
             <div
-              key={p.userId}
+              key={c.id}
               className={`rounded-2xl px-3 py-2.5 flex flex-col items-center transition ${
-                active
+                isActive
                   ? "bg-gradient-to-br from-brand-500 to-brand-700 text-white shadow-lg animate-invite-glow"
-                  : "bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 shadow-sm"
+                  : `bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 shadow-sm ${
+                      state.teamMode ? `border-2 ${TEAM_BORDERS[c.color % TEAM_BORDERS.length]}` : ""
+                    }`
               }`}
             >
-              <span className="text-xs font-bold truncate max-w-full">
-                {p.name}
-                {p.userId === state.me.userId && " (jij)"}
+              <span className="text-xs font-bold truncate max-w-full flex items-center gap-1">
+                {state.teamMode && <span className={`h-2 w-2 shrink-0 rounded-full ${TEAM_DOTS[c.color % TEAM_DOTS.length]}`} aria-hidden />}
+                <span className="truncate">{c.name}</span>
+                {isMine && !state.teamMode && <span className="shrink-0">(jij)</span>}
               </span>
-              <span className={`text-3xl font-extrabold tabular-nums ${active && state.clockRunning ? "text-gold-400" : ""}`}>
+              <span className={`text-3xl font-extrabold tabular-nums ${isActive && state.clockRunning ? "text-gold-400" : ""}`}>
                 {Math.ceil(seconds)}
               </span>
-              <span className={`text-[10px] font-bold uppercase tracking-wider ${active ? "text-brand-100" : "text-slate-400"}`}>
-                {active ? (state.clockRunning ? "⏱ klok loopt" : "aan de beurt") : "seconden"}
+              <span className={`text-[10px] font-bold uppercase tracking-wider ${isActive ? "text-brand-100" : "text-slate-400"}`}>
+                {isActive ? (state.clockRunning ? "⏱ klok loopt" : "aan de beurt") : isMine && state.teamMode ? "jouw team" : "seconden"}
               </span>
+              {state.teamMode && (
+                <span className={`text-[10px] truncate max-w-full ${isActive ? "text-brand-100" : "text-slate-400"}`}>
+                  ★ {c.members.find((m) => m.userId === c.leaderId)?.name}
+                </span>
+              )}
             </div>
           );
         })}
       </div>
 
+      {state.personal && state.personal.mine !== null && (
+        <p className="text-center text-xs font-bold text-slate-500 dark:text-slate-400">
+          Jouw persoonlijke punten: <span className="text-brand-700 dark:text-brand-300">{state.personal.mine}</span>
+        </p>
+      )}
+
       {state.intermission ? (
-        <div className="card !bg-gradient-to-br from-brand-700 to-brand-900 !border-0 text-white text-center flex flex-col gap-2 py-10 animate-pop">
-          <h2 className="text-3xl font-extrabold">{state.intermission.title}</h2>
-          <p className="text-brand-100">{state.intermission.subtitle}</p>
-        </div>
+        <Intermission state={state} />
       ) : (
         <>
-          <TurnBanner state={state} isActive={isActive} isQuizmaster={isQuizmaster} activeName={activeName} tapMode={tapMode} />
-          {state.phase === "R369" && state.r369 && (
-            <Round369 state={state} isActive={isActive} isQuizmaster={isQuizmaster} tapMode={tapMode} />
-          )}
-          {state.phase === "PUZZLE" && state.puzzle && (
-            <RoundPuzzle state={state} isActive={isActive} isQuizmaster={isQuizmaster} tapMode={tapMode} />
-          )}
-          {state.phase === "FINALE" && state.finale && (
-            <RoundFinale state={state} isActive={isActive} isQuizmaster={isQuizmaster} tapMode={tapMode} />
-          )}
-          {(isActive || isQuizmaster) && state.activeId && (
+          <TurnBanner state={state} can={can} activeName={active?.name ?? null} leaderName={leaderName(state)} />
+          {state.phase === "R369" && state.r369 && <Round369 state={state} can={can} />}
+          {state.phase === "OPEN_DEUR" && state.openDeur && <RoundOpenDeur state={state} can={can} />}
+          {state.phase === "PUZZLE" && state.puzzle && <RoundPuzzle state={state} can={can} />}
+          {state.phase === "GALLERY" && state.gallery && <RoundGallery state={state} can={can} />}
+          {state.phase === "MEMORY" && state.memory && <RoundMemory state={state} can={can} deadlineLeft={deadlineLeft} />}
+          {state.phase === "FINALE" && state.finale && <RoundFinale state={state} can={can} />}
+          {showPass && (
             <button className="btn-secondary self-center !px-8" onClick={() => socket.emit("ak:pass")}>
-              {isQuizmaster && !isActive ? `Beurt van ${activeName} beëindigen (pas)` : "PAS"}
+              {passLabel}
             </button>
           )}
         </>
@@ -124,37 +173,37 @@ export default function AlleskennerGame({ state, receivedAt }: { state: AkStateV
   );
 }
 
+function leaderName(state: AkStateView): string | null {
+  const active = state.contestants.find((c) => c.id === state.activeId);
+  return active?.members.find((m) => m.userId === active.leaderId)?.name ?? null;
+}
+
 function Header({ state, deadlineLeft }: { state: AkStateView; deadlineLeft: number | null }) {
-  let title = "";
   let detail = "";
-  if (state.phase === "R369" && state.r369) {
-    title = "3-6-9";
-    detail = `Vraag ${state.r369.number} van ${state.r369.total}`;
-  } else if (state.phase === "PUZZLE" && state.puzzle) {
-    title = "Puzzel";
-    detail = `Puzzel ${state.puzzle.number} van ${state.puzzle.total}`;
-  } else if (state.phase === "FINALE" && state.finale) {
-    title = "Finale";
-    detail = `Onderwerp ${state.finale.number} van ${state.finale.total}`;
-  } else if (state.phase === "PUZZLE") {
-    title = "Puzzel";
-  } else if (state.phase === "FINALE") {
-    title = "Finale";
-  } else {
-    title = "3-6-9";
-  }
+  if (state.r369) detail = `Vraag ${state.r369.number} van ${state.r369.total}`;
+  else if (state.openDeur) detail = `Onderwerp ${state.openDeur.number} van ${state.openDeur.total}`;
+  else if (state.puzzle) detail = `Puzzel ${state.puzzle.number} van ${state.puzzle.total}`;
+  else if (state.gallery) detail = `Galerij ${state.gallery.number} van ${state.gallery.total}`;
+  else if (state.memory) detail = `Fragment ${state.memory.number} van ${state.memory.total}`;
+  else if (state.finale) detail = `Onderwerp ${state.finale.number} van ${state.finale.total}`;
+  // Tijdens het lezen bij Collectief Geheugen staat de teller al bij de tekst zelf.
+  const showDeadline = deadlineLeft !== null && !(state.phase === "MEMORY" && state.memory?.reading);
   return (
     <div className="flex items-center justify-between gap-3">
       <div>
-        <p className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">De Alleskenner</p>
+        <p className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+          De Alleskenner{state.phase !== "FINALE" && ` · ronde ${state.round.number} van ${state.round.total}`}
+        </p>
         <h1 className="text-xl font-extrabold text-brand-800 dark:text-brand-300">
-          {title} <span className="text-sm font-bold text-slate-400 dark:text-slate-500">{detail}</span>
+          {AK_ROUND_TITLES[state.phase]} <span className="text-sm font-bold text-slate-400 dark:text-slate-500">{detail}</span>
         </h1>
       </div>
-      {deadlineLeft !== null && (
+      {showDeadline && (
         <span
           className={`rounded-full px-3 py-1 text-sm font-extrabold tabular-nums ${
-            deadlineLeft <= 5 ? "bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-300" : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300"
+            (deadlineLeft ?? 0) <= 5
+              ? "bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-300"
+              : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300"
           }`}
           title="Bedenktijd"
         >
@@ -165,28 +214,57 @@ function Header({ state, deadlineLeft }: { state: AkStateView; deadlineLeft: num
   );
 }
 
+function Intermission({ state }: { state: AkStateView }) {
+  const intermission = state.intermission!;
+  const ranked = [...state.contestants].sort((a, b) => b.seconds - a.seconds);
+  return (
+    <div className="card !bg-gradient-to-br from-brand-700 to-brand-900 !border-0 text-white text-center flex flex-col gap-3 py-10 animate-pop">
+      <h2 className="text-3xl font-extrabold">{intermission.title}</h2>
+      {intermission.standings && (
+        <ol className="flex flex-col gap-1 self-center min-w-[12rem]">
+          {ranked.map((c, i) => (
+            <li key={c.id} className="flex items-center justify-between gap-4 font-bold">
+              <span>
+                {i + 1}. {c.name}
+              </span>
+              <span className="tabular-nums text-gold-400">{Math.round(c.seconds)}</span>
+            </li>
+          ))}
+        </ol>
+      )}
+      {intermission.title !== "Tussenstand" && <p className="text-brand-100">{intermission.subtitle}</p>}
+    </div>
+  );
+}
+
 function TurnBanner({
   state,
-  isActive,
-  isQuizmaster,
+  can,
   activeName,
-  tapMode,
+  leaderName,
 }: {
   state: AkStateView;
-  isActive: boolean;
-  isQuizmaster: boolean;
+  can: Abilities;
   activeName: string | null;
-  tapMode: boolean;
+  leaderName: string | null;
 }) {
   if (!state.activeId) return null;
   let text: string;
-  if (isActive) text = tapMode ? "🟢 Jij bent aan de beurt" : "🟢 Jij bent aan de beurt — zeg je antwoord hardop";
-  else if (isQuizmaster) text = `🎙️ ${activeName} is aan de beurt — keur het antwoord goed of fout`;
-  else text = `${activeName} is aan de beurt`;
+  if (can.myTurn) {
+    text = state.teamMode ? "🟢 Jouw team is aan de beurt — jij antwoordt" : "🟢 Jij bent aan de beurt";
+    if (!can.tapMode) text += " — zeg het hardop";
+  } else if (can.inActiveTeam) {
+    text = `🟢 Jouw team is aan de beurt — ${leaderName} antwoordt. Kies stil je eigen antwoord.`;
+  } else if (can.isQuizmaster) {
+    text = `🎙️ ${activeName} is aan de beurt — keur het antwoord goed of fout`;
+  } else {
+    text = `${activeName} is aan de beurt`;
+    if (can.canSilent) text += " — kies stil mee voor je persoonlijke punten";
+  }
   return (
     <p
       className={`text-center font-extrabold ${
-        isActive ? "text-green-600 dark:text-green-400 text-lg" : "text-slate-500 dark:text-slate-400"
+        can.myTurn || can.inActiveTeam ? "text-green-600 dark:text-green-400 text-lg" : "text-slate-500 dark:text-slate-400"
       }`}
     >
       {text}
@@ -194,23 +272,174 @@ function TurnBanner({
   );
 }
 
-function Round369({
-  state,
-  isActive,
-  isQuizmaster,
-  tapMode,
+// --- Gedeelde onderdelen -------------------------------------------------------
+
+function QuizmasterBox({ title, children }: { title: string; children: ReactNode }) {
+  return (
+    <div className="rounded-2xl border-2 border-dashed border-gold-400 bg-gold-50 dark:bg-slate-900/50 p-3 flex flex-col gap-2">
+      <p className="text-sm font-bold text-gold-700 dark:text-gold-400">{title}</p>
+      {children}
+    </div>
+  );
+}
+
+function OptionButtons({
+  options,
+  enabled,
+  myPick,
+  answer,
+  onPick,
 }: {
-  state: AkStateView;
-  isActive: boolean;
-  isQuizmaster: boolean;
-  tapMode: boolean;
+  options: string[];
+  enabled: boolean;
+  myPick: string | null;
+  answer: string | null;
+  onPick: (option: string) => void;
 }) {
+  return (
+    <div className="grid gap-2 sm:grid-cols-2">
+      {options.map((option) => {
+        const isAnswer = answer !== null && option === answer;
+        const picked = myPick === option;
+        return (
+          <button
+            key={option}
+            disabled={!enabled}
+            onClick={() => onPick(option)}
+            className={`rounded-2xl border-2 px-4 py-3 text-left font-bold transition ${
+              isAnswer
+                ? "border-green-500 bg-green-50 dark:bg-green-900/40 text-green-800 dark:text-green-200"
+                : picked
+                  ? "border-gold-500 bg-gold-50 dark:bg-slate-700 dark:text-slate-100"
+                  : "border-slate-200 dark:border-slate-600 dark:text-slate-100 enabled:hover:border-brand-400 enabled:active:scale-[0.98]"
+            } disabled:cursor-default`}
+          >
+            {option}
+            {picked && <span className="ml-2 text-xs font-extrabold text-gold-700 dark:text-gold-400">jouw keuze</span>}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+function GridCells({ cells, can, hint }: { cells: AkGridCell[]; can: Abilities; hint: string }) {
+  const socket = getSocket();
+  return (
+    <>
+      {(can.canAct || can.canSilent) && (
+        <p className="text-xs text-slate-500 dark:text-slate-400">
+          {can.canAct
+            ? hint
+            : "Tik stil de antwoorden aan die jij goed denkt; die tellen bij de onthulling voor je persoonlijke punten."}
+        </p>
+      )}
+      <div className="grid grid-cols-2 gap-2">
+        {cells.map((cell) => {
+          const enabled = cell.state === "open" && (can.canAct || can.canSilent);
+          return (
+            <button
+              key={cell.text}
+              disabled={!enabled}
+              onClick={() => socket.emit("ak:tap_grid", { text: cell.text })}
+              className={`rounded-xl border-2 px-3 py-2.5 text-left text-sm font-bold transition ${
+                cell.state === "found"
+                  ? "border-green-500 bg-green-50 dark:bg-green-900/40 text-green-800 dark:text-green-200"
+                  : cell.state === "wrong"
+                    ? "border-red-400 bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300 line-through"
+                    : cell.mine
+                      ? "border-gold-500 bg-gold-50 dark:bg-slate-700 dark:text-slate-100"
+                      : "border-slate-200 dark:border-slate-600 dark:text-slate-100 enabled:hover:border-brand-400 enabled:active:scale-[0.98]"
+              } disabled:cursor-default`}
+            >
+              {cell.text}
+            </button>
+          );
+        })}
+      </div>
+    </>
+  );
+}
+
+function AnswerProgress({ found, total }: { found: number; total: number }) {
+  return (
+    <div className="flex items-center gap-2">
+      {Array.from({ length: total }).map((_, i) => (
+        <span key={i} className={`h-3 flex-1 rounded-full ${i < found ? "bg-green-500" : "bg-slate-200 dark:bg-slate-700"}`} />
+      ))}
+      <span className="text-sm font-extrabold tabular-nums dark:text-slate-100">
+        {found}/{total}
+      </span>
+    </div>
+  );
+}
+
+function FoundList({ found }: { found: string[] }) {
+  if (found.length === 0) return null;
+  return (
+    <ul className="flex flex-col gap-1">
+      {found.map((text) => (
+        <li key={text} className="text-sm font-bold text-green-700 dark:text-green-400">
+          ✓ {text}
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+function RevealedList({ all, found }: { all: string[]; found: string[] }) {
+  return (
+    <div className="rounded-2xl bg-slate-50 dark:bg-slate-900/50 p-3">
+      <p className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-1">Alle antwoorden</p>
+      <ul className="flex flex-col gap-1">
+        {all.map((text) => (
+          <li
+            key={text}
+            className={`text-sm font-bold ${found.includes(text) ? "text-green-700 dark:text-green-400" : "text-slate-600 dark:text-slate-300"}`}
+          >
+            {found.includes(text) ? "✓" : "•"} {text}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+function QuizmasterAnswers({ state }: { state: AkStateView }) {
+  const socket = getSocket();
+  const answers = state.quizmaster?.answers;
+  if (!answers) return null;
+  return (
+    <QuizmasterBox title="Tik een antwoord aan zodra het genoemd is:">
+      {answers.map((answer, index) => (
+        <button
+          key={answer.text}
+          disabled={answer.found || !state.activeId}
+          onClick={() => socket.emit("ak:qm_answer", { index })}
+          className="rounded-xl bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-600 px-3 py-2 text-left disabled:opacity-60"
+        >
+          <span className="font-extrabold dark:text-slate-100">
+            {answer.found ? "✓ " : ""}
+            {answer.text}
+          </span>
+          {answer.accept.length > 0 && (
+            <span className="block text-xs text-slate-500 dark:text-slate-400">Ook goed: {answer.accept.join(", ")}</span>
+          )}
+        </button>
+      ))}
+    </QuizmasterBox>
+  );
+}
+
+// --- Rondes --------------------------------------------------------------------
+
+function Round369({ state, can }: { state: AkStateView; can: Abilities }) {
   const socket = getSocket();
   const q = state.r369!;
   // De luistervraag wordt maar op één apparaat voorgelezen (quizmaster, of
-  // zonder quizmaster degene die aan de beurt is): anders praat iedere
-  // telefoon in de kamer door elkaar heen.
-  const speaker = tapMode ? isActive : isQuizmaster;
+  // zonder quizmaster degene die namens de beurt antwoordt): anders praat
+  // iedere telefoon in de kamer door elkaar heen.
+  const speaker = can.tapMode ? can.myTurn : can.isQuizmaster;
   const spokenFor = useRef<string | null>(null);
   useEffect(() => {
     if (!q.listenText || !speaker || q.reveal) return;
@@ -243,26 +472,13 @@ function Round369({
       <h2 className="text-xl font-extrabold dark:text-slate-100">{q.prompt}</h2>
 
       {q.options && (
-        <div className="grid gap-2 sm:grid-cols-2">
-          {q.options.map((option) => {
-            const revealed = q.reveal !== null;
-            const isAnswer = revealed && option === q.reveal!.answer;
-            return (
-              <button
-                key={option}
-                disabled={!isActive || revealed}
-                onClick={() => socket.emit("ak:tap_369", { option })}
-                className={`rounded-2xl border-2 px-4 py-3 text-left font-bold transition ${
-                  isAnswer
-                    ? "border-green-500 bg-green-50 dark:bg-green-900/40 text-green-800 dark:text-green-200"
-                    : "border-slate-200 dark:border-slate-600 dark:text-slate-100 enabled:hover:border-brand-400 enabled:active:scale-[0.98]"
-                } disabled:cursor-default`}
-              >
-                {option}
-              </button>
-            );
-          })}
-        </div>
+        <OptionButtons
+          options={q.options}
+          enabled={(can.canAct || can.canSilent) && q.reveal === null}
+          myPick={q.myPick}
+          answer={q.reveal?.answer ?? null}
+          onPick={(option) => socket.emit("ak:tap_369", { option })}
+        />
       )}
 
       {q.reveal && (
@@ -271,11 +487,8 @@ function Round369({
         </p>
       )}
 
-      {isQuizmaster && state.quizmaster?.answer369 && !q.reveal && (
-        <div className="rounded-2xl border-2 border-dashed border-gold-400 bg-gold-50 dark:bg-slate-900/50 p-3 flex flex-col gap-3">
-          <p className="text-sm dark:text-slate-200">
-            <span className="font-bold text-gold-700 dark:text-gold-400">Antwoord:</span> {state.quizmaster.answer369}
-          </p>
+      {can.isQuizmaster && state.quizmaster?.answer369 && !q.reveal && (
+        <QuizmasterBox title={`Antwoord: ${state.quizmaster.answer369}`}>
           <div className="grid grid-cols-2 gap-2">
             <button className="btn-primary !bg-green-600" onClick={() => socket.emit("ak:qm_369", { correct: true })}>
               ✓ Goed
@@ -284,26 +497,72 @@ function Round369({
               ✗ Fout
             </button>
           </div>
-        </div>
+        </QuizmasterBox>
       )}
     </div>
   );
 }
 
-function RoundPuzzle({
-  state,
-  isActive,
-  isQuizmaster,
-  tapMode,
-}: {
-  state: AkStateView;
-  isActive: boolean;
-  isQuizmaster: boolean;
-  tapMode: boolean;
-}) {
+function RoundOpenDeur({ state, can }: { state: AkStateView; can: Abilities }) {
+  const socket = getSocket();
+  const round = state.openDeur!;
+  const chooser = state.contestants.find((c) => c.id === state.activeId)?.name;
+
+  if (round.choosing) {
+    const mayChoose = can.myTurn || can.isQuizmaster;
+    return (
+      <div className="card flex flex-col gap-4">
+        <h2 className="text-xl font-extrabold dark:text-slate-100">
+          {can.myTurn ? "Kies een onderwerp" : `${chooser} kiest een onderwerp`}
+        </h2>
+        <div className="grid gap-3 sm:grid-cols-3">
+          {round.doors.map((door) => (
+            <button
+              key={door.index}
+              disabled={!mayChoose || door.taken}
+              onClick={() => socket.emit("ak:choose_door", { index: door.index })}
+              className={`rounded-2xl px-4 py-6 text-center font-extrabold transition ${
+                door.taken
+                  ? "bg-slate-100 dark:bg-slate-800 text-slate-400 line-through"
+                  : "bg-gradient-to-b from-gold-400 to-gold-600 text-brand-900 shadow-md enabled:hover:scale-[1.02] enabled:active:scale-[0.98]"
+              } disabled:cursor-default`}
+            >
+              <span className="block text-2xl mb-1" aria-hidden>
+                🚪
+              </span>
+              {door.subject}
+            </button>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (!round.subject) return null;
+  return (
+    <div className="card flex flex-col gap-4">
+      <h2 className="text-2xl font-extrabold text-brand-800 dark:text-brand-300">Wat weet je van {round.subject}?</h2>
+      <AnswerProgress found={round.found.length} total={round.answerCount} />
+      {!round.revealed && <FoundList found={round.found} />}
+      {round.revealed && <RevealedList all={round.revealed} found={round.found} />}
+      {round.grid && (
+        <GridCells
+          cells={round.grid}
+          can={can}
+          hint="Tik de antwoorden aan die hierbij horen. Elk goed antwoord +20 seconden; een fout antwoord beëindigt je beurt."
+        />
+      )}
+      {can.isQuizmaster && !round.revealed && <QuizmasterAnswers state={state} />}
+    </div>
+  );
+}
+
+function RoundPuzzle({ state, can }: { state: AkStateView; can: Abilities }) {
   const socket = getSocket();
   const puzzle = state.puzzle!;
   const [answer, setAnswer] = useState("");
+  const silentLeft = puzzle.myGuesses ? 3 - puzzle.myGuesses.length : 0;
+  const canType = can.canAct || (can.canSilent && silentLeft > 0);
 
   function submit(event: FormEvent) {
     event.preventDefault();
@@ -322,9 +581,7 @@ function RoundPuzzle({
           <div
             key={clue.text}
             className={`rounded-xl px-2 py-3 min-h-[4.5rem] flex items-center justify-center text-center text-xs sm:text-sm font-bold transition ${
-              clue.group !== null
-                ? GROUP_STYLES[clue.group]
-                : "bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-100"
+              clue.group !== null ? GROUP_STYLES[clue.group] : "bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-100"
             }`}
           >
             {clue.text}
@@ -342,26 +599,30 @@ function RoundPuzzle({
         </div>
       )}
 
-      {tapMode && isActive && (
+      {canType && !puzzle.revealed && (
         <form onSubmit={submit} className="flex gap-2">
           <input
             className="input flex-1"
-            placeholder="Typ het verbindende woord"
+            placeholder={can.canAct ? "Typ het verbindende woord" : `Stil gokken (nog ${silentLeft})`}
             value={answer}
             onChange={(e) => setAnswer(e.target.value)}
-            autoFocus
+            autoFocus={can.canAct}
             autoComplete="off"
             autoCapitalize="off"
           />
           <button className="btn-primary" type="submit">
-            Controleer
+            {can.canAct ? "Controleer" : "Gok"}
           </button>
         </form>
       )}
+      {puzzle.myGuesses && puzzle.myGuesses.length > 0 && (
+        <p className="text-xs text-slate-500 dark:text-slate-400">
+          Jouw stille gokken: <span className="font-bold">{puzzle.myGuesses.join(", ")}</span> — beoordeeld bij de onthulling.
+        </p>
+      )}
 
-      {isQuizmaster && state.quizmaster?.puzzleGroups && !puzzle.revealed && (
-        <div className="rounded-2xl border-2 border-dashed border-gold-400 bg-gold-50 dark:bg-slate-900/50 p-3 flex flex-col gap-2">
-          <p className="text-sm font-bold text-gold-700 dark:text-gold-400">Tik een groep aan zodra die genoemd is:</p>
+      {can.isQuizmaster && state.quizmaster?.puzzleGroups && !puzzle.revealed && (
+        <QuizmasterBox title="Tik een groep aan zodra die genoemd is:">
           {state.quizmaster.puzzleGroups.map((group, index) => (
             <button
               key={group.answer}
@@ -369,115 +630,177 @@ function RoundPuzzle({
               onClick={() => socket.emit("ak:qm_puzzle", { group: index })}
               className={`rounded-xl px-3 py-2 text-left disabled:opacity-60 ${GROUP_STYLES[index]}`}
             >
-              <span className="font-extrabold">{group.found ? "✓ " : ""}{group.answer}</span>
+              <span className="font-extrabold">
+                {group.found ? "✓ " : ""}
+                {group.answer}
+              </span>
               {group.accept.length > 0 && <span className="text-xs"> (ook goed: {group.accept.join(", ")})</span>}
               <span className="block text-xs opacity-80">{group.clues.join(" · ")}</span>
             </button>
           ))}
-        </div>
+        </QuizmasterBox>
       )}
     </div>
   );
 }
 
-function RoundFinale({
-  state,
-  isActive,
-  isQuizmaster,
-  tapMode,
-}: {
-  state: AkStateView;
-  isActive: boolean;
-  isQuizmaster: boolean;
-  tapMode: boolean;
-}) {
+function RoundGallery({ state, can }: { state: AkStateView; can: Abilities }) {
   const socket = getSocket();
-  const finale = state.finale!;
+  const gallery = state.gallery!;
+  const question = gallery.variant === "QUOTES" ? "Uit welk boek komt dit vers?" : "Bij welk verhaal hoort deze illustratie?";
+
+  if (gallery.revealed) {
+    return (
+      <div className="card flex flex-col gap-3">
+        <h2 className="text-lg font-extrabold dark:text-slate-100">Alle antwoorden</h2>
+        <div className={`grid gap-2 ${gallery.variant === "IMAGES" ? "grid-cols-2 sm:grid-cols-4" : ""}`}>
+          {gallery.revealed.map((entry, i) => (
+            <div
+              key={i}
+              className={`rounded-xl border-2 p-2 text-sm ${entry.found ? "border-green-500" : "border-slate-200 dark:border-slate-600"}`}
+            >
+              {entry.image && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={entry.image} alt="" className="w-full aspect-[4/3] object-cover rounded-lg mb-1" />
+              )}
+              {entry.text && <p className="text-xs italic text-slate-500 dark:text-slate-400 line-clamp-2">“{entry.text}”</p>}
+              <p className={`font-extrabold ${entry.found ? "text-green-700 dark:text-green-400" : "dark:text-slate-100"}`}>
+                {entry.found ? "✓ " : ""}
+                {entry.answer}
+              </p>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="card flex flex-col gap-4">
-      <h2 className="text-2xl font-extrabold text-brand-800 dark:text-brand-300">Wat weet je van {finale.subject}?</h2>
-      <div className="flex items-center gap-2">
-        {Array.from({ length: finale.answerCount }).map((_, i) => (
+      <div className="flex gap-1.5">
+        {gallery.results.map((r, i) => (
           <span
             key={i}
-            className={`h-3 flex-1 rounded-full ${i < finale.found.length ? "bg-green-500" : "bg-slate-200 dark:bg-slate-700"}`}
+            className={`h-2.5 flex-1 rounded-full ${
+              r.found ? "bg-green-500" : i === gallery.itemIndex ? "bg-brand-500" : "bg-slate-200 dark:bg-slate-700"
+            }`}
           />
         ))}
-        <span className="text-sm font-extrabold tabular-nums dark:text-slate-100">
-          {finale.found.length}/{finale.answerCount}
-        </span>
       </div>
+      <h2 className="text-lg font-extrabold dark:text-slate-100">{question}</h2>
+      {gallery.item?.text && (
+        <blockquote className="rounded-2xl bg-brand-50 dark:bg-slate-700 px-4 py-4 text-base sm:text-lg font-semibold italic text-brand-900 dark:text-brand-100">
+          “{gallery.item.text}”
+        </blockquote>
+      )}
+      {gallery.item?.image && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={gallery.item.image} alt="Illustratie" className="w-full max-h-[50vh] object-contain rounded-2xl bg-white" />
+      )}
+      {gallery.options && (
+        <OptionButtons
+          options={gallery.options}
+          enabled={can.canAct || can.canSilent}
+          myPick={gallery.myPick}
+          answer={null}
+          onPick={(option) => socket.emit("ak:tap_gallery", { option })}
+        />
+      )}
+      {can.isQuizmaster && state.quizmaster?.galleryAnswer && (
+        <QuizmasterBox title={`Antwoord: ${state.quizmaster.galleryAnswer}`}>
+          <div className="grid grid-cols-2 gap-2">
+            <button className="btn-primary !bg-green-600" onClick={() => socket.emit("ak:qm_gallery", { correct: true })}>
+              ✓ Goed
+            </button>
+            <button className="btn-primary !bg-red-500" onClick={() => socket.emit("ak:qm_gallery", { correct: false })}>
+              ✗ Fout / volgende
+            </button>
+          </div>
+        </QuizmasterBox>
+      )}
+    </div>
+  );
+}
 
-      {finale.found.length > 0 && !finale.revealed && (
+function RoundMemory({ state, can, deadlineLeft }: { state: AkStateView; can: Abilities; deadlineLeft: number | null }) {
+  const memory = state.memory!;
+  const owner = state.contestants.find((c) => c.id === state.activeId);
+
+  if (memory.reading) {
+    return (
+      <div className="card flex flex-col gap-3">
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="text-lg font-extrabold dark:text-slate-100">
+            {memory.title} <span className="text-sm font-bold text-slate-400">{memory.passage}</span>
+          </h2>
+          {deadlineLeft !== null && (
+            <span className="shrink-0 rounded-full bg-brand-600 text-white px-3 py-1 text-sm font-extrabold tabular-nums">
+              📖 {deadlineLeft}
+            </span>
+          )}
+        </div>
+        <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Lees goed — straks is de tekst weg</p>
+        <div className="flex flex-col gap-2 text-[15px] leading-relaxed dark:text-slate-100">
+          {memory.verses?.map((v) => (
+            <p key={v.number}>
+              <sup className="font-bold text-brand-600 dark:text-brand-300 mr-1">{v.number}</sup>
+              {v.text}
+            </p>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="card flex flex-col gap-4">
+      <h2 className="text-2xl font-extrabold text-brand-800 dark:text-brand-300">
+        Wat weet je nog van {memory.title}? <span className="text-sm font-bold text-slate-400">{memory.passage}</span>
+      </h2>
+      {!memory.revealed && memory.found.length < memory.answerCount && (
+        <span className="self-start rounded-full bg-gold-50 dark:bg-slate-700 px-3 py-1 text-xs font-extrabold text-gold-700 dark:text-gold-400">
+          Volgend goed antwoord: +{memory.nextValue} seconden{owner ? ` voor ${owner.name}` : ""}
+        </span>
+      )}
+      <AnswerProgress found={memory.found.length} total={memory.answerCount} />
+      {memory.found.length > 0 && !memory.revealed && (
         <ul className="flex flex-col gap-1">
-          {finale.found.map((text) => (
-            <li key={text} className="text-sm font-bold text-green-700 dark:text-green-400">
-              ✓ {text}
+          {memory.found.map((f) => (
+            <li key={f.text} className="text-sm font-bold text-green-700 dark:text-green-400">
+              ✓ {f.text} <span className="text-xs text-slate-400">+{f.value}</span>
             </li>
           ))}
         </ul>
       )}
-
-      {finale.revealed && (
-        <div className="rounded-2xl bg-slate-50 dark:bg-slate-900/50 p-3">
-          <p className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-1">Alle antwoorden</p>
-          <ul className="flex flex-col gap-1">
-            {finale.revealed.map((text) => (
-              <li key={text} className={`text-sm font-bold ${finale.found.includes(text) ? "text-green-700 dark:text-green-400" : "text-slate-600 dark:text-slate-300"}`}>
-                {finale.found.includes(text) ? "✓" : "•"} {text}
-              </li>
-            ))}
-          </ul>
-        </div>
+      {memory.revealed && <RevealedList all={memory.revealed} found={memory.found.map((f) => f.text)} />}
+      {memory.grid && (
+        <GridCells
+          cells={memory.grid}
+          can={can}
+          hint="Tik aan wat in de passage stond. Elk volgend goed antwoord is meer waard; een fout antwoord beëindigt je beurt."
+        />
       )}
+      {can.isQuizmaster && !memory.revealed && <QuizmasterAnswers state={state} />}
+    </div>
+  );
+}
 
-      {tapMode && finale.grid && !finale.revealed && (
-        <>
-          {isActive && (
-            <p className="text-xs text-slate-500 dark:text-slate-400">
-              Tik de antwoorden aan die bij {finale.subject} horen. Tik je een fout antwoord aan, dan is je beurt voorbij.
-            </p>
-          )}
-          <div className="grid grid-cols-2 gap-2">
-            {finale.grid.map((cell) => (
-              <button
-                key={cell.text}
-                disabled={!isActive || cell.state !== "open"}
-                onClick={() => socket.emit("ak:tap_finale", { text: cell.text })}
-                className={`rounded-xl border-2 px-3 py-2.5 text-left text-sm font-bold transition ${
-                  cell.state === "found"
-                    ? "border-green-500 bg-green-50 dark:bg-green-900/40 text-green-800 dark:text-green-200"
-                    : cell.state === "wrong"
-                      ? "border-red-400 bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300 line-through"
-                      : "border-slate-200 dark:border-slate-600 dark:text-slate-100 enabled:hover:border-brand-400 enabled:active:scale-[0.98]"
-                } disabled:cursor-default`}
-              >
-                {cell.text}
-              </button>
-            ))}
-          </div>
-        </>
+function RoundFinale({ state, can }: { state: AkStateView; can: Abilities }) {
+  const finale = state.finale!;
+  return (
+    <div className="card flex flex-col gap-4">
+      <h2 className="text-2xl font-extrabold text-brand-800 dark:text-brand-300">Wat weet je van {finale.subject}?</h2>
+      <AnswerProgress found={finale.found.length} total={finale.answerCount} />
+      {!finale.revealed && <FoundList found={finale.found} />}
+      {finale.revealed && <RevealedList all={finale.revealed} found={finale.found} />}
+      {finale.grid && (
+        <GridCells
+          cells={finale.grid}
+          can={can}
+          hint={`Tik de antwoorden aan die bij ${finale.subject} horen. Tik je een fout antwoord aan, dan is je beurt voorbij.`}
+        />
       )}
-
-      {isQuizmaster && state.quizmaster?.finaleAnswers && !finale.revealed && (
-        <div className="rounded-2xl border-2 border-dashed border-gold-400 bg-gold-50 dark:bg-slate-900/50 p-3 flex flex-col gap-2">
-          <p className="text-sm font-bold text-gold-700 dark:text-gold-400">Tik een antwoord aan zodra het genoemd is:</p>
-          {state.quizmaster.finaleAnswers.map((answer, index) => (
-            <button
-              key={answer.text}
-              disabled={answer.found || !state.activeId}
-              onClick={() => socket.emit("ak:qm_finale", { index })}
-              className="rounded-xl bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-600 px-3 py-2 text-left disabled:opacity-60"
-            >
-              <span className="font-extrabold dark:text-slate-100">{answer.found ? "✓ " : ""}{answer.text}</span>
-              {answer.accept.length > 0 && (
-                <span className="block text-xs text-slate-500 dark:text-slate-400">Ook goed: {answer.accept.join(", ")}</span>
-              )}
-            </button>
-          ))}
-        </div>
-      )}
+      {can.isQuizmaster && !finale.revealed && <QuizmasterAnswers state={state} />}
     </div>
   );
 }
@@ -487,20 +810,27 @@ function Feedback({ state }: { state: AkStateView }) {
   // Alleen nieuwe meldingen tonen (niet de laatste van vóór het openen van
   // dit scherm); vergeleken op de servertijd van de melding zelf, zodat een
   // afwijkende klok van dit toestel niet uitmaakt.
+  // De verbergtimer staat in een ref en niet in de cleanup van het effect:
+  // elke statusupdate (elke seconde) levert een nieuw feedback-object op, en
+  // die cleanup zou de timer dan telkens wissen, waardoor de melding bleef staan.
   const lastShownAt = useRef<number | null>(state.feedback?.at ?? null);
+  const hideTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
     if (!state.feedback || state.feedback.at === lastShownAt.current) return;
     lastShownAt.current = state.feedback.at;
     setVisible(state.feedback);
-    const timer = setTimeout(() => setVisible(null), 2500);
-    return () => clearTimeout(timer);
+    if (hideTimer.current) clearTimeout(hideTimer.current);
+    hideTimer.current = setTimeout(() => setVisible(null), 2500);
   }, [state.feedback]);
+  useEffect(() => () => {
+    if (hideTimer.current) clearTimeout(hideTimer.current);
+  }, []);
   if (!visible) return null;
-  const who = state.players.find((p) => p.userId === visible.userId)?.name;
-  const mine = visible.userId === state.me.userId;
+  const who = state.contestants.find((c) => c.id === visible.contestantId)?.name;
+  const mine = visible.contestantId !== null && visible.contestantId === state.me.contestantId;
   return (
     <div
-      className={`fixed left-1/2 -translate-x-1/2 top-[calc(var(--header-height,4.5rem)+0.75rem)] z-40 max-w-[90vw] text-center rounded-full px-5 py-2.5 font-extrabold shadow-lg animate-pop pointer-events-none ${
+      className={`fixed left-1/2 -translate-x-1/2 top-[calc(var(--header-height,4.5rem)+0.75rem)] z-40 w-max max-w-[90vw] text-center rounded-2xl px-5 py-2.5 font-extrabold shadow-lg animate-pop pointer-events-none ${
         visible.kind === "good" ? "bg-green-600 text-white" : visible.kind === "bad" ? "bg-red-500 text-white" : "bg-slate-800 text-white"
       }`}
     >
