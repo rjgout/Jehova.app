@@ -640,15 +640,17 @@ export async function giftFreeze(fromUserId: string, toUserId: string) {
   if (fromUserId === toUserId) {
     throw new Error("Je kan geen freeze aan jezelf geven.");
   }
-  return prisma.$transaction(async (tx) => {
+  const sender = await prisma.$transaction(async (tx) => {
     const sender = await tx.user.findUniqueOrThrow({ where: { id: fromUserId } });
-    if (sender.freezeCount < 1) {
-      throw new Error("Je hebt geen streak freeze om weg te geven.");
-    }
-    await tx.user.update({
-      where: { id: fromUserId },
+    // Atomair afboeken: twee gelijktijdige cadeaus mogen samen nooit meer
+    // freezes weggeven dan de gever heeft.
+    const debited = await tx.user.updateMany({
+      where: { id: fromUserId, freezeCount: { gte: 1 } },
       data: { freezeCount: { decrement: 1 } },
     });
+    if (debited.count === 0) {
+      throw new Error("Je hebt geen streak freeze om weg te geven.");
+    }
     await tx.user.update({
       where: { id: toUserId },
       data: { freezeCount: { increment: 1 } },
@@ -660,7 +662,11 @@ export async function giftFreeze(fromUserId: string, toUserId: string) {
       data: { userId: toUserId, type: "GIFT_RECEIVED", amount: 1, relatedId: fromUserId },
     });
     await checkAndAwardAchievements(tx, fromUserId);
-    const senderName = sender.handle + "#" + sender.discriminator;
-    await notifyFreezeReceived(toUserId, senderName);
+    return sender;
   });
+
+  // Pas na de commit versturen: mail/push binnen de transactie kan de
+  // transactie laten verlopen (standaard 5 s), waarna het cadeau wordt
+  // teruggedraaid terwijl de ontvanger de melding al heeft.
+  await notifyFreezeReceived(toUserId, `${sender.handle}#${sender.discriminator}`).catch(() => {});
 }
