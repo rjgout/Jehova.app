@@ -23,10 +23,6 @@ export default function ReadingChapterView({ courseId, bookName, chapterNumber, 
 
   return (
     <div className="max-w-2xl mx-auto flex flex-col gap-6">
-      <Link href={`/courses/${courseId}`} className="text-sm font-bold text-slate-400 dark:text-slate-500 hover:text-brand-500">
-        ← Terug naar cursus
-      </Link>
-
       <div>
         <p className="text-xs font-bold uppercase tracking-wide text-slate-400 dark:text-slate-500">
           {completedCount}/{lessons.length} lessen voltooid

@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import Link from "next/link";
 
 const STATUS_LABELS: Record<string, string> = {
   NEW: "Nieuw",
@@ -106,10 +105,7 @@ export default function FeedbackClient() {
   return (
     <div className="max-w-2xl mx-auto flex flex-col gap-8">
       <div>
-        <Link href="/profile" className="text-sm text-brand-600 dark:text-brand-300 font-bold underline underline-offset-2">
-          ← Terug naar profiel
-        </Link>
-        <h1 className="text-2xl font-extrabold text-brand-800 dark:text-brand-300 mt-2">Feedback</h1>
+        <h1 className="text-2xl font-extrabold text-brand-800 dark:text-brand-300">Feedback</h1>
         <p className="text-slate-500 dark:text-slate-400 text-sm">
           Werkt iets niet, of heb je een idee? Laat het weten — een screenshot helpt enorm.
         </p>

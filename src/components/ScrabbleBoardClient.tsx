@@ -313,10 +313,7 @@ export default function ScrabbleBoardClient({ gameId }: { gameId: string }) {
     <div className="max-w-3xl mx-auto flex flex-col gap-4">
       <div className="flex items-center justify-between flex-wrap gap-2">
         <div>
-          <Link href="/scrabble" className="text-sm text-brand-600 dark:text-brand-300 font-bold underline underline-offset-2">
-            ← Terug naar woordspellen
-          </Link>
-          <h1 className="text-xl font-extrabold text-brand-800 dark:text-brand-300 mt-1">
+          <h1 className="text-xl font-extrabold text-brand-800 dark:text-brand-300">
             Tegen {game.opponent.displayName}
           </h1>
         </div>

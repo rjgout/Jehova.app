@@ -1,4 +1,3 @@
-import Link from "next/link";
 import FsyContentBlocks from "@/components/FsyContentBlocks";
 import type { FsyContentBlock } from "@/lib/fsyContent";
 
@@ -25,10 +24,6 @@ const CATEGORY_LABELS: Record<string, string> = {
 export default function FsyLessonView({ title, month, year, category, blocks, sourceUrl }: Props) {
   return (
     <div className="max-w-3xl mx-auto flex flex-col gap-6">
-      <Link href="/courses" className="text-sm font-bold text-brand-600 dark:text-brand-300 hover:underline">
-        ← Terug naar cursussen
-      </Link>
-
       <div>
         <p className="text-xs font-extrabold uppercase tracking-wide text-slate-400 dark:text-slate-500">
           {CATEGORY_LABELS[category] ?? "Les"} · {month}/{year}
