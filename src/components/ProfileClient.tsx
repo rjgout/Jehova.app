@@ -82,6 +82,7 @@ export default function ProfileClient() {
   const [pushError, setPushError] = useState<string | null>(null);
   const [testingPush, setTestingPush] = useState(false);
   const [pushTestMessage, setPushTestMessage] = useState<string | null>(null);
+  const [pushCountdown, setPushCountdown] = useState<number | null>(null);
   const [editingHandle, setEditingHandle] = useState(false);
   const [handleInput, setHandleInput] = useState("");
   const [savingHandle, setSavingHandle] = useState(false);
@@ -225,12 +226,29 @@ export default function ProfileClient() {
     setPushTestMessage(null);
     const res = await fetch("/api/push/test", { method: "POST" });
     const body = await res.json().catch(() => ({}));
-    setTestingPush(false);
-    setPushTestMessage(
-      res.ok
-        ? "Testmelding verstuurd — komt 'm niet aan? Wacht een minuutje en check of je telefoon niet in een stille/focus-modus staat."
-        : (body.error ?? "Kon geen testmelding versturen.")
-    );
+    if (!res.ok) {
+      setTestingPush(false);
+      setPushTestMessage(body.error ?? "Kon geen testmelding versturen.");
+      return;
+    }
+
+    // Aftellen tot de server de melding verstuurt; sluit de app in de
+    // tussentijd om ook de badge op het app-icoon te kunnen zien.
+    let remaining: number = body.delaySeconds ?? 5;
+    setPushCountdown(remaining);
+    const timer = setInterval(() => {
+      remaining -= 1;
+      if (remaining > 0) {
+        setPushCountdown(remaining);
+        return;
+      }
+      clearInterval(timer);
+      setPushCountdown(null);
+      setTestingPush(false);
+      setPushTestMessage(
+        "Testmelding verstuurd. Geen melding of badge? Controleer of de app op je beginscherm staat, badges aanstaan in de meldingsinstellingen van je telefoon, en je niet in een focusmodus zit."
+      );
+    }, 1000);
   }
 
   async function changeReminderTime(time: string) {
@@ -735,8 +753,13 @@ export default function ProfileClient() {
         {data.pushNotificationsEnabled && (
           <div className="flex flex-col gap-1 items-start">
             <button className="btn-secondary !px-3 !py-1.5" disabled={testingPush} onClick={sendTestPush}>
-              {testingPush ? "Bezig..." : "Stuur testmelding"}
+              {pushCountdown !== null ? `Melding over ${pushCountdown}…` : testingPush ? "Bezig..." : "Stuur testmelding"}
             </button>
+            {pushCountdown !== null && (
+              <p className="text-xs font-semibold text-brand-600 dark:text-brand-300">
+                Sluit nu de app om ook de badge op het app-icoon te zien.
+              </p>
+            )}
             {pushTestMessage && <p className="text-xs text-slate-500 dark:text-slate-400">{pushTestMessage}</p>}
           </div>
         )}
