@@ -25,7 +25,7 @@ const PHASE_LABELS: Record<DeployStatus["phase"], string> = {
   failed_critical: "Mislukt — ingrijpen nodig",
 };
 
-export default function AdminDeployClient({ configured }: { configured: boolean }) {
+export default function AdminDeployClient({ configured, onlineUserCount }: { configured: boolean; onlineUserCount: number }) {
   const [status, setStatus] = useState<DeployStatus | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [actionBusy, setActionBusy] = useState(false);
@@ -91,10 +91,8 @@ export default function AdminDeployClient({ configured }: { configured: boolean 
   async function callAction(path: string, body?: unknown) {
     setActionBusy(true);
     setError(null);
-    // Alleen deze twee acties vervangen de container zelf — de
-    // onderhoudsmodus-knop schakelt alleen een vlag bij de proxy om, zonder
-    // jehova-app te herstarten.
-    const startsOutage = path === "/api/admin/deploy/start" || path === "/api/admin/deploy/rollback";
+    // Alleen een echte deploy vervangt de app-container zelf.
+    const startsOutage = path === "/api/admin/deploy/start";
     if (startsOutage) deployInFlightRef.current = true;
     try {
       const res = await fetch(path, {
@@ -152,34 +150,29 @@ export default function AdminDeployClient({ configured }: { configured: boolean 
               aria-hidden
             />
             <span className="font-bold text-sm dark:text-slate-100">{PHASE_LABELS[status.phase]}</span>
-            <span className="text-xs text-slate-400 dark:text-slate-500">
-              {status.maintenanceOn ? "· onderhoudsmodus staat AAN" : "· site staat live"}
-            </span>
           </div>
           <p className="text-sm text-slate-500 dark:text-slate-400">{status.message}</p>
         </div>
       )}
 
-      <div className="flex gap-2 flex-wrap">
+      <div className="flex items-center justify-between gap-4 flex-wrap">
+        <div className="flex items-center gap-2">
+          <span
+            className={"inline-block w-3 h-3 rounded-full " + (onlineUserCount === 0 ? "bg-green-500" : onlineUserCount === 1 ? "bg-yellow-400" : "bg-orange-500")}
+            aria-hidden
+          />
+          <span className="font-bold text-sm dark:text-slate-100">
+            {onlineUserCount === 0
+              ? "Niemand online"
+              : onlineUserCount === 1
+                ? "1 gebruiker online"
+                : onlineUserCount + " gebruikers online"}
+          </span>
+        </div>
         <button className="btn-secondary !px-3 !py-1.5 !text-sm" disabled={isBusy} onClick={() => callAction("/api/admin/deploy/start")}>
           🚀 Nu deployen
         </button>
-        <button
-          className="btn-secondary !px-3 !py-1.5 !text-sm"
-          disabled={isBusy}
-          onClick={() => callAction("/api/admin/deploy/maintenance", { on: !status?.maintenanceOn })}
-        >
-          {status?.maintenanceOn ? "Onderhoudsmodus uit" : "Onderhoudsmodus aan"}
-        </button>
-        <button
-          className="btn-secondary !px-3 !py-1.5 !text-sm"
-          disabled={isBusy || !status?.hasRollbackTarget}
-          onClick={() => callAction("/api/admin/deploy/rollback")}
-        >
-          ⏪ Rollback naar vorige versie
-        </button>
       </div>
-
       {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
 
       {status && status.logs.length > 0 && (
