@@ -1,4 +1,4 @@
-import { redirect } from "next/navigation";
+import { redirect } from "@/next/navigation";
 import { getCurrentUser } from "@/lib/session";
 import { prisma } from "@/lib/db";
 import { formatElapsedDutch } from "@/lib/dates";
@@ -25,7 +25,7 @@ export default async function AdminBackendPage() {
   if (!user) redirect("/login");
   if (!user.isAdmin) redirect("/dashboard");
 
-  const [users, userCount, bookCount, chapterCount, exerciseCount, emailSettings, leagueSettings] = await Promise.all([
+  const [users, userCount, bookCount, chapterCount, exerciseCount, emailSettings, leagueSettings, onlineUserCount] = await Promise.all([
     prisma.user.findMany({
       orderBy: { createdAt: "asc" },
       select: {
@@ -48,6 +48,12 @@ export default async function AdminBackendPage() {
     prisma.exercise.count(),
     getEmailSettingsView(),
     getLeagueSettings(prisma),
+    prisma.user.count({
+      where: {
+        isAdmin: false,
+        onlineSocketCount: { gt: 0 },
+      },
+    }),
   ]);
 
   return (
@@ -72,7 +78,7 @@ export default async function AdminBackendPage() {
         <StatCard label="Oefeningen" value={exerciseCount} />
       </div>
 
-      <AdminDeployClient configured={isDeployAgentConfigured()} />
+      <AdminDeployClient configured={isDeployAgentConfigured()} onlineUserCount={onlineUserCount} />
 
       <ReseedClient />
 
