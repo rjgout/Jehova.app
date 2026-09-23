@@ -167,7 +167,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             {user ? (
               <nav className="ml-auto flex items-center gap-4">
                 <div className="hidden lg:block"><HeaderInstallHint /></div>
-                <NavUserBadges streak={user.currentStreak} xp={user.xpTotal} displayName={user.handle} />
+                <NavUserBadges streak={user.currentStreak} xp={user.xpTotal} />
               </nav>
             ) : null}
           </div>
