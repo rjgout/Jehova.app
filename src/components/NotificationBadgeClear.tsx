@@ -31,9 +31,17 @@ export default function NotificationBadgeClear() {
     };
     document.addEventListener("visibilitychange", handleVisibility);
 
+    // Een push terwijl de app al open is: de service worker zet dan geen
+    // badge maar seint hier, zodat ook de teller op de server weer nul is.
+    const handleMessage = (event: MessageEvent) => {
+      if (event.data?.type === "jehova:badge-seen") clearBadge();
+    };
+    navigator.serviceWorker?.addEventListener("message", handleMessage);
+
     return () => {
       active = false;
       document.removeEventListener("visibilitychange", handleVisibility);
+      navigator.serviceWorker?.removeEventListener("message", handleMessage);
     };
   }, []);
 
