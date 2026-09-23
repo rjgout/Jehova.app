@@ -497,7 +497,8 @@ export default function ProfileClient() {
                   <button className="text-xs text-slate-400 hover:underline ml-auto" onClick={() => setAvatarPickerOpen(false)}>
                     Sluiten
                   </button>
-                </div>              </div>
+                </div>
+              </div>
             </div>
           )}
           {data.tier && (
@@ -621,6 +622,15 @@ export default function ProfileClient() {
         )}
       </section>
 
+      <section className="card flex flex-col gap-3">
+        <h2 className="font-extrabold text-lg dark:text-slate-100">Account</h2>
+
+        <div className="flex gap-2 flex-wrap">
+          <Link href="/onboarding" className="btn-secondary self-start">
+            Rondleiding opnieuw bekijken
+          </Link>
+        </div>
+      </section>
 
       <section className="card flex flex-col gap-3">
         <h2 className="font-extrabold text-lg dark:text-slate-100">Voorlezen</h2>
@@ -905,11 +915,6 @@ export default function ProfileClient() {
       </section>
 
       <section className="card flex flex-col gap-3">
-        <h2 className="font-extrabold text-lg dark:text-slate-100">Tweestapsverificatie</h2>
-        <TwoFactorSettings isAdmin={data.isAdmin} />
-      </section>
-
-      <section className="card flex flex-col gap-3">
         <h2 className="font-extrabold text-lg dark:text-slate-100">Account verwijderen</h2>
         {!confirmingDelete ? (
           <button className="btn-secondary self-start !text-red-500 !border-red-200" onClick={() => setConfirmingDelete(true)}>
@@ -957,6 +962,10 @@ export default function ProfileClient() {
             </div>
           </div>
         )}
+        <div className="border-t border-slate-100 dark:border-slate-700 pt-4 mt-1">
+          <h3 className="font-extrabold text-base dark:text-slate-100 mb-2">Tweestapsverificatie</h3>
+          <TwoFactorSettings isAdmin={data.isAdmin} />
+        </div>
       </section>
     </div>
   );
@@ -992,3 +1001,85 @@ function ChangelogSection({ enabled, saving, onToggle }: { enabled: boolean; sav
         <span className="text-slate-400 transition-transform group-open:rotate-180" aria-hidden>
           ▾
         </span>
+      </summary>
+
+      <label className="flex items-start gap-3 cursor-pointer">
+        <input type="checkbox" className="mt-1 h-5 w-5 accent-brand-500" checked={enabled} onChange={onToggle} disabled={saving} />
+        <span className="text-sm dark:text-slate-200">
+          Toon een melding bij het inloggen zodra er iets nieuws is.
+          <br />
+          <span className="text-slate-400 dark:text-slate-500">
+            Ook uitgeschakeld kun je de changelog hieronder altijd terugvinden.
+          </span>
+        </span>
+      </label>
+
+      <div className="border-t border-slate-100 dark:border-slate-700 pt-3 flex flex-col gap-3">
+        {!entries ? (
+          <p className="text-slate-400 dark:text-slate-500 text-sm">Laden...</p>
+        ) : entries.length === 0 ? (
+          <p className="text-slate-400 dark:text-slate-500 text-sm">Nog geen changelog-items.</p>
+        ) : (
+          entries.map((entry) => (
+            <div key={entry.id}>
+              <p className="font-bold text-sm dark:text-slate-100">{entry.title}</p>
+              <p className="text-xs text-slate-400 dark:text-slate-500 mb-1">
+                {new Date(entry.createdAt).toLocaleDateString("nl-NL")}
+              </p>
+              <p className="text-sm whitespace-pre-wrap dark:text-slate-200">{entry.body}</p>
+            </div>
+          ))
+        )}
+      </div>
+    </details>
+  );
+}
+
+function Stat({
+  value,
+  label,
+  small,
+  href,
+  light,
+}: {
+  value: string;
+  label: string;
+  small?: boolean;
+  href?: string;
+  light?: boolean;
+}) {
+  const content = (
+    <>
+      <div className={`${small ? "font-extrabold" : "text-xl font-extrabold"} ${light ? "text-white" : "dark:text-slate-100"}`}>
+        {value}
+      </div>
+      <div className={`text-xs font-bold uppercase ${light ? "text-brand-100" : "text-slate-400 dark:text-slate-500"}`}>
+        {label}
+      </div>
+    </>
+  );
+  if (href) {
+    return (
+      <Link href={href} className="block hover:opacity-75">
+        {content}
+      </Link>
+    );
+  }
+  return <div>{content}</div>;
+}
+
+// Pil-vormige variant voor de statsrij in de gradient-hero — zelfde
+// waarde/label-inhoud als Stat, maar met een eigen donkere achtergrond zodat
+// de tegels zichtbaar blijven op de blauwe hero i.p.v. enkel platte tekst.
+function HeroStat({ value, label, href }: { value: string; label: string; href?: string }) {
+  const content = (
+    <div className="rounded-2xl bg-black/15 py-2.5 flex flex-col items-center gap-0.5 hover:bg-black/25 transition-colors">
+      <div className="font-extrabold text-white">{value}</div>
+      <div className="text-[10px] text-brand-100 font-bold uppercase">{label}</div>
+    </div>
+  );
+  if (href) {
+    return <Link href={href}>{content}</Link>;
+  }
+  return content;
+}
