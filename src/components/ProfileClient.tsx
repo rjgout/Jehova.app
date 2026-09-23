@@ -541,7 +541,7 @@ export default function ProfileClient() {
         </div>
       </div>
 
-      <CollapsibleCard title="Competitie" className="!bg-gold-50 dark:!bg-slate-800 !border-gold-400/30 dark:!border-slate-700">
+      <CollapsibleCard title="Competitie" defaultOpen className="!bg-gold-50 dark:!bg-slate-800 !border-gold-400/30 dark:!border-slate-700">
         <div className="grid grid-cols-2 gap-3">
           <div className="rounded-2xl bg-white/70 dark:bg-slate-700/70 !py-3 flex flex-col items-center gap-0.5">
             <Link href="/competition" className="block text-center hover:opacity-75">
