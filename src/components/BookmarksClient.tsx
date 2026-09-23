@@ -27,10 +27,6 @@ export default function BookmarksClient() {
 
       {!items && <p className="text-slate-400">Laden...</p>}
 
-      <Link href="/tools" className="btn-secondary self-start">
-        ← Terug
-      </Link>
-
 
       {items && items.length === 0 && (
         <p className="text-slate-400">
@@ -53,9 +49,7 @@ export default function BookmarksClient() {
         ))}
       </div>
 
-      <Link href="/tools" className="btn-secondary self-start">
-        ← Terug
-      </Link>
+
     </div>
   );
 }

@@ -14,6 +14,7 @@ import BottomNav from "@/components/BottomNav";
 import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
 import NotificationBadgeClear from "@/components/NotificationBadgeClear";
 import EdgeSwipeGuard from "@/components/EdgeSwipeGuard";
+import SubpageBackBar from "@/components/SubpageBackBar";
 import PodcastMiniPlayer from "@/components/PodcastMiniPlayer";
 import HeaderInstallHint from "@/components/HeaderInstallHint";
 import ContentSwitcher from "@/components/ContentSwitcher";
@@ -174,6 +175,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         </header>
         {user && <PodcastMiniPlayer />}
         {user && <ReadAloudMiniPlayer />}
+        {user && <SubpageBackBar />}
         {user && <ActivityTracker />}
         </StickyHeader>
         <main className="mx-auto max-w-5xl px-4 pb-[calc(6rem+env(safe-area-inset-bottom))] pt-[calc(var(--header-height,4.5rem)+2rem)]">

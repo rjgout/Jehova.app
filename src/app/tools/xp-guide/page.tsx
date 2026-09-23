@@ -1,5 +1,4 @@
 import { redirect } from "next/navigation";
-import Link from "next/link";
 import { getCurrentUser } from "@/lib/session";
 import {
   XP_PER_CORRECT_STANDARD,
@@ -70,9 +69,6 @@ export default async function XpGuidePage() {
 
   return (
     <div className="max-w-2xl mx-auto flex flex-col gap-6">
-      <Link href="/tools" className="btn-secondary self-start">
-        ← Terug
-      </Link>
 
       <div>
         <h1 className="text-2xl font-extrabold text-brand-800 dark:text-brand-300">⭐ Wat levert XP op?</h1>
@@ -102,9 +98,7 @@ export default async function XpGuidePage() {
         </p>
       </div>
 
-      <Link href="/tools" className="btn-secondary self-start">
-        ← Terug
-      </Link>
+
     </div>
   );
 }
