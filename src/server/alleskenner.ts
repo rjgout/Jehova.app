@@ -129,6 +129,7 @@ interface SeasonInfo {
   lineup: string[];
   names: Record<string, string>;
   memberIds: string[];
+  managerIds: string[]; // host en vervangende host van het seizoen (mogen altijd binnen)
   safeId: string | null; // Alleskenner van de avond (hoogste stand na de rondes)
   afterRounds: { userId: string; seconds: number }[];
 }
@@ -1342,7 +1343,11 @@ async function loadRoom(code: string): Promise<Room | string> {
   const host = await prisma.user.findUnique({ where: { id: game.hostId }, select: { handle: true } });
   const evening = await prisma.alleskennerEvening.findUnique({
     where: { gameId: game.id },
-    include: { season: { select: { members: { select: { userId: true, user: { select: { handle: true } } } } } } },
+    include: {
+      season: {
+        select: { hostId: true, deputyHostId: true, members: { select: { userId: true, user: { select: { handle: true } } } } },
+      },
+    },
   });
   const season: SeasonInfo | null = evening
     ? {
@@ -1353,6 +1358,7 @@ async function loadRoom(code: string): Promise<Room | string> {
         lineup: JSON.parse(evening.lineup) as string[],
         names: Object.fromEntries(evening.season.members.map((m) => [m.userId, m.user.handle])),
         memberIds: evening.season.members.map((m) => m.userId),
+        managerIds: [evening.season.hostId, evening.season.deputyHostId].filter((id): id is string => id !== null),
         safeId: null,
         afterRounds: [],
       }
@@ -1433,6 +1439,7 @@ async function joinRoom(socket: Socket, user: { id: string; handle: string }, co
   }
 
   if (!room.participants.has(user.id)) {
+    if (!(await mayJoin(room, user.id))) return "Je bent niet uitgenodigd voor dit spel. Vraag de host om je uit te nodigen.";
     room.participants.set(user.id, {
       userId: user.id,
       name: user.handle,
@@ -1453,6 +1460,22 @@ async function joinRoom(socket: Socket, user: { id: string; handle: string }, co
   room.sockets.set(user.id, sockets);
   socket.data.akCode = upper;
   return room;
+}
+
+/**
+ * Er is geen spelcode om in te vullen: binnenkomen kan alleen wie de host
+ * heeft uitgenodigd (dus een vriend), of bij een seizoensavond een lid (of de
+ * host/vervangende host) van het seizoen. Wie al eerder in dit spel zat, mag
+ * terug, ook na een herstart van de server.
+ */
+async function mayJoin(room: Room, userId: string): Promise<boolean> {
+  if (userId === room.hostId) return true;
+  if (room.season && (room.season.memberIds.includes(userId) || room.season.managerIds.includes(userId))) return true;
+  const [invite, player] = await Promise.all([
+    prisma.liveGameInvite.findUnique({ where: { gameId_userId: { gameId: room.gameId, userId } }, select: { id: true } }),
+    prisma.liveGamePlayer.findUnique({ where: { gameId_userId: { gameId: room.gameId, userId } }, select: { id: true } }),
+  ]);
+  return invite !== null || player !== null;
 }
 
 /** Aangeroepen vanuit cancel_game in gameServer.ts: de lobby is verwijderd. */
