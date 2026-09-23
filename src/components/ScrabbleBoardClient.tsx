@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 
 const BOARD_SIZE = 15;
@@ -96,7 +96,11 @@ interface GameState {
   won: boolean | null;
   tied: boolean | null;
   moves: MoveView[];
+  myTileKeys: string[];
+  recentTileKeys: string[];
 }
+
+const FLASH_DURATION_MS = 2800;
 
 export default function ScrabbleBoardClient({ gameId }: { gameId: string }) {
   const [game, setGame] = useState<GameState | null>(null);
@@ -109,6 +113,11 @@ export default function ScrabbleBoardClient({ gameId }: { gameId: string }) {
   const [message, setMessage] = useState<string | null>(null);
   const [hintIndices, setHintIndices] = useState<number[]>([]);
   const [hintSecondsLeft, setHintSecondsLeft] = useState(0);
+  // Laatst gelegde tegels lichten op bij binnenkomst, en opnieuw zodra er
+  // (via de polling hieronder) een nieuwe zet binnenkomt.
+  const [flashKeys, setFlashKeys] = useState<Set<string>>(new Set());
+  const lastRecentSignature = useRef<string | null>(null);
+  const flashTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // `resetLocalState` staat standaard aan (initieel laden, en na je eigen
   // zet/wissel/pas — dan IS de lokale selectie/plaatsing achterhaald). De
@@ -122,7 +131,15 @@ export default function ScrabbleBoardClient({ gameId }: { gameId: string }) {
       setLoadError(body.error ?? "Kon het spel niet laden.");
       return;
     }
-    setGame(await res.json());
+    const data: GameState = await res.json();
+    setGame(data);
+    const signature = (data.recentTileKeys ?? []).join("|");
+    if (signature && signature !== lastRecentSignature.current) {
+      lastRecentSignature.current = signature;
+      setFlashKeys(new Set(data.recentTileKeys));
+      if (flashTimer.current) clearTimeout(flashTimer.current);
+      flashTimer.current = setTimeout(() => setFlashKeys(new Set()), FLASH_DURATION_MS);
+    }
     if (resetLocalState) {
       setPending([]);
       setSelectedRackIndex(null);
@@ -152,7 +169,10 @@ export default function ScrabbleBoardClient({ gameId }: { gameId: string }) {
     // handmatig verversen zien verschijnen. Laat je eigen, nog niet
     // ingediende plaatsing/selectie met rust (zie hierboven).
     const interval = setInterval(() => load(false), 8000);
-    return () => clearInterval(interval);
+    return () => {
+      clearInterval(interval);
+      if (flashTimer.current) clearTimeout(flashTimer.current);
+    };
   }, [load]);
 
   if (loadError) {
@@ -169,6 +189,7 @@ export default function ScrabbleBoardClient({ gameId }: { gameId: string }) {
 
   const usedRackIndices = new Set(pending.map((p) => p.rackIndex));
   const pendingByCell = new Map(pending.map((p) => [`${p.row},${p.col}`, p]));
+  const myTiles = new Set(game.myTileKeys ?? []);
 
   function pickRackTile(index: number) {
     if (usedRackIndices.has(index) || exchangeMode) return;
@@ -335,6 +356,8 @@ export default function ScrabbleBoardClient({ gameId }: { gameId: string }) {
               const squareType = LAYOUT[row][col];
               const isCenter = row === CENTER && col === CENTER;
               const tile = cell ?? (pend ? { letter: pend.letter, isBlank: pend.isBlank } : null);
+              const isMine = myTiles.has(key);
+              const flashing = !pend && flashKeys.has(key);
 
               return (
                 <button
@@ -346,10 +369,12 @@ export default function ScrabbleBoardClient({ gameId }: { gameId: string }) {
                   className={`aspect-square flex items-center justify-center relative text-[0.65rem] font-bold ${
                     tile
                       ? pend
-                        ? "bg-amber-200 dark:bg-amber-700 text-amber-900 dark:text-amber-50 ring-2 ring-amber-500"
-                        : "bg-amber-100 dark:bg-amber-800 text-amber-900 dark:text-amber-50"
+                        ? "bg-sky-200 dark:bg-sky-600 text-sky-950 dark:text-white ring-2 ring-sky-500"
+                        : isMine
+                          ? "bg-sky-300 dark:bg-sky-700 text-sky-950 dark:text-white"
+                          : "bg-amber-100 dark:bg-amber-800 text-amber-900 dark:text-amber-50"
                       : SQUARE_CLASS[squareType]
-                  }`}
+                  } ${flashing ? "animate-tile-flash z-10 rounded-sm" : ""}`}
                 >
                   {tile ? (
                     <>
@@ -370,6 +395,17 @@ export default function ScrabbleBoardClient({ gameId }: { gameId: string }) {
             })
           )}
         </div>
+      </div>
+
+      <div className="flex items-center justify-center gap-4 text-xs text-slate-500 dark:text-slate-400">
+        <span className="flex items-center gap-1.5">
+          <span className="h-3.5 w-3.5 rounded-sm bg-sky-300 dark:bg-sky-700 ring-1 ring-sky-400 dark:ring-sky-500" aria-hidden />
+          Jouw letters
+        </span>
+        <span className="flex items-center gap-1.5">
+          <span className="h-3.5 w-3.5 rounded-sm bg-amber-100 dark:bg-amber-800 ring-1 ring-amber-300 dark:ring-amber-600" aria-hidden />
+          {game.opponent.displayName}
+        </span>
       </div>
 
       {message && <p className="text-center text-sm font-semibold text-brand-600 dark:text-brand-300">{message}</p>}

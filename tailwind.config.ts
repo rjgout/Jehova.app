@@ -56,6 +56,11 @@ const config: Config = {
           "0%, 100%": { boxShadow: "0 0 0 0 rgba(46, 134, 245, 0.55), 0 0 12px 0 rgba(246, 185, 59, 0.35)" },
           "50%": { boxShadow: "0 0 0 6px rgba(46, 134, 245, 0), 0 0 22px 4px rgba(246, 185, 59, 0.55)" },
         },
+        // Laatst gelegde tegels in het woordspel even laten oplichten.
+        "tile-flash": {
+          "0%, 100%": { transform: "scale(1)", boxShadow: "0 0 0 0 rgba(246, 185, 59, 0)" },
+          "40%": { transform: "scale(1.12)", boxShadow: "0 0 0 3px rgba(246, 185, 59, 0.95), 0 0 14px 4px rgba(246, 185, 59, 0.7)" },
+        },
         // Melding die van boven het scherm in schuift, zoals een systeemmelding.
         "slide-down": {
           "0%": { transform: "translateY(-120%)", opacity: "0" },
@@ -72,6 +77,7 @@ const config: Config = {
         shake: "shake 0.3s ease-in-out",
         indeterminate: "indeterminate 1.3s ease-in-out infinite",
         "invite-glow": "invite-glow 1.8s ease-in-out infinite",
+        "tile-flash": "tile-flash 0.9s ease-in-out 3",
         "slide-down": "slide-down 0.35s cubic-bezier(0.2, 0.9, 0.3, 1.2)",
       },
     },

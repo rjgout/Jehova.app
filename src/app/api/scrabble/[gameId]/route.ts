@@ -25,10 +25,30 @@ export async function GET(_req: Request, { params }: { params: Promise<{ gameId:
   const opponentRack: string[] = JSON.parse(isPlayer1 ? game.player2Rack : game.player1Rack);
   const bag: string[] = JSON.parse(game.bag);
 
+  // Wie welke tegel legde en welke het laatst zijn gelegd, afgeleid uit de
+  // zetgeschiedenis (het bord zelf bewaart alleen letters). "Laatst gelegd" =
+  // alles wat de tegenstander legde sinds jouw laatste zet; heb jij als
+  // laatste gelegd, dan jouw laatste woord. Het bord laat die tegels bij
+  // binnenkomst even oplichten.
+  const tilesOf = (tilesPlaced: string | null) =>
+    tilesPlaced ? (JSON.parse(tilesPlaced) as { row: number; col: number }[]).map((t) => `${t.row},${t.col}`) : [];
+  const myTileKeys = game.moves.filter((m) => m.userId === user.id).flatMap((m) => tilesOf(m.tilesPlaced));
+  let lastOwnMoveIndex = -1;
+  game.moves.forEach((m, index) => {
+    if (m.userId === user.id) lastOwnMoveIndex = index;
+  });
+  let recentTileKeys = game.moves.slice(lastOwnMoveIndex + 1).flatMap((m) => tilesOf(m.tilesPlaced));
+  if (recentTileKeys.length === 0) {
+    const lastPlace = [...game.moves].reverse().find((m) => m.type === "PLACE");
+    recentTileKeys = lastPlace ? tilesOf(lastPlace.tilesPlaced) : [];
+  }
+
   return NextResponse.json({
     id: game.id,
     status: game.status,
     board: JSON.parse(game.board),
+    myTileKeys,
+    recentTileKeys,
     myRack,
     // De letters van de tegenstander blijven bewust geheim — alleen het
     // aantal, zodat je wél kunt zien hoeveel die nog moet spelen.
