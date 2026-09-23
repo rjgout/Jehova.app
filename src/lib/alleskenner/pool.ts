@@ -1,6 +1,7 @@
 import type { AlleskennerItemKind } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { alleskennerItems } from "../../../prisma/alleskennerContent";
+import { generatedAlleskennerItems } from "../../../prisma/alleskennerGenerated";
 import { importAlleskennerItems } from "../../../prisma/importAlleskenner";
 import kidsManifest from "../../../prisma/kidsManifest.json";
 import { parsePassage, type AlleskennerDataFor } from "@/lib/alleskenner/content";
@@ -11,9 +12,10 @@ import { parsePassage, type AlleskennerDataFor } from "@/lib/alleskenner/content
  * telling is goedkoop; alleen bij een verschil wordt er echt geïmporteerd.
  */
 export async function ensureAlleskennerContent(): Promise<void> {
-  const inDatabase = await prisma.alleskennerItem.count({ where: { id: { in: alleskennerItems.map((i) => i.id) } } });
-  if (inDatabase < alleskennerItems.length) {
-    await importAlleskennerItems(prisma, alleskennerItems, () => {});
+  const all = [...alleskennerItems, ...generatedAlleskennerItems()];
+  const inDatabase = await prisma.alleskennerItem.count({ where: { id: { in: all.map((i) => i.id) } } });
+  if (inDatabase < all.length) {
+    await importAlleskennerItems(prisma, all, () => {});
   }
 }
 
@@ -22,11 +24,37 @@ export interface PickedItem<K extends AlleskennerItemKind> {
   data: AlleskennerDataFor<K>;
 }
 
+/** Soort generator ("gen-persoon", "gen-galerij-citaat"), of "hand" voor handgeschreven. */
+function family(id: string): string {
+  if (!id.startsWith("gen-")) return "hand";
+  return id.split("-").slice(0, id.startsWith("gen-galerij-") ? 3 : 2).join("-");
+}
+
+/**
+ * Nog niet geziene onderdelen in speelvolgorde: eerst alle handgeschreven
+ * (willekeurig), daarna om en om per generator, zodat een spel niet uit
+ * vijftien vragen van hetzelfde soort bestaat.
+ */
+function interleave<T extends { id: string }>(items: T[]): T[] {
+  const hand = items.filter((i) => family(i.id) === "hand");
+  const groups = new Map<string, T[]>();
+  for (const item of items) {
+    const key = family(item.id);
+    if (key !== "hand") groups.set(key, [...(groups.get(key) ?? []), item]);
+  }
+  const lists = [...groups.values()];
+  const mixed: T[] = [];
+  for (let round = 0; mixed.length < items.length - hand.length; round++) {
+    for (const list of lists) if (list[round]) mixed.push(list[round]);
+  }
+  return [...hand, ...mixed];
+}
+
 /**
  * Kiest `count` ingeschakelde onderdelen van één soort: eerst onderdelen die
- * geen van de deelnemers ooit heeft gezien, daarna de langst geleden geziene.
- * Binnen dezelfde groep willekeurig, zodat een nieuw potje niet steeds met
- * dezelfde volgorde begint.
+ * geen van de deelnemers ooit heeft gezien (handgeschreven voorop, zie
+ * interleave), daarna de langst geleden geziene. Binnen dezelfde groep
+ * willekeurig, zodat een nieuw potje niet steeds met dezelfde volgorde begint.
  */
 export async function pickItems<K extends AlleskennerItemKind>(
   kind: K,
@@ -53,7 +81,9 @@ export async function pickItems<K extends AlleskennerItemKind>(
     .filter((c) => accept(c.data))
     .sort((a, b) => a.lastSeen - b.lastSeen || a.random - b.random);
 
-  return candidates.slice(0, count).map(({ id, data }) => ({ id, data }));
+  const unseen = candidates.filter((c) => c.lastSeen === 0);
+  const seen = candidates.filter((c) => c.lastSeen !== 0);
+  return [...interleave(unseen), ...seen].slice(0, count).map(({ id, data }) => ({ id, data }));
 }
 
 /** Registreert dat deze gebruikers deze onderdelen nu gezien hebben. */

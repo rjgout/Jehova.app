@@ -105,6 +105,15 @@ de minste seconden; na een pas of als je klaar bent, mag de volgende aanvullen.
   `prisma/alleskennerContent.ts`. Elke bewering heeft een bronvers met een
   letterlijk citaat; `npm run alleskenner:check` weigert inhoud waarvan het
   citaat niet in dat vers staat.
+- Daarnaast **automatisch samengestelde** onderdelen (`prisma/alleskennerGenerated.ts`),
+  rechtstreeks uit bestaande bronnen zodat het antwoord per definitie klopt:
+  "Wie wordt hier beschreven?" (personen van de introductiecursus), "In welk
+  boek staat het hoofdstuk over …?" en puzzels/onderwerpen uit de officiële
+  hoofdstukkoppen, "Welke naam ontbreekt?" en luistervragen uit de verzen,
+  Collectief Geheugen met een hoofdstukkop, en galerijen. Vaste ID's
+  (`gen-…`) en een vaste zaadwaarde, zodat "al gezien" en correcties in de
+  beheeromgeving blijven werken. Bij het kiezen gaan nog niet geziene
+  handgeschreven onderdelen voor; de generatoren wisselen elkaar af.
 - Import zet nieuwe onderdelen erbij en werkt ongewijzigde onderdelen bij, maar
   **overschrijft nooit een onderdeel dat in de beheeromgeving is aangepast**.
 - In `/adminbackend` staat alleen een editor voor **bestaande** onderdelen

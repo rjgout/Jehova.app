@@ -97,6 +97,9 @@ interface GridItem {
   grid: string[];
   passage?: string;
   verses?: { number: number; text: string }[];
+  // Uitspraken om aan te tikken (automatisch samengestelde onderwerpen): ook
+  // met quizmaster tikt wie aan de beurt is zelf, want hardop noemen past niet.
+  tapOnly?: boolean;
 }
 
 // Gedeeld door Open Deur, Collectief Geheugen en de Finale: een onderwerp met
@@ -297,9 +300,9 @@ function leaderOfActive(room: Room): string | null {
 // --- Weergave per deelnemer -------------------------------------------------
 
 function gridCells(room: Room, round: GridRound, viewerId: string, answerCount: number): AkGridCell[] | null {
-  const showGrid = room.quizmasterId === null || room.teamMode;
-  if (!showGrid) return null;
   const item = round.items[round.index];
+  const showGrid = room.quizmasterId === null || room.teamMode || item.tapOnly;
+  if (!showGrid) return null;
   const answers = item.answers.slice(0, answerCount);
   const mine = round.picks.get(viewerId);
   return item.grid.map((text) => {
@@ -357,6 +360,7 @@ function buildView(room: Room, viewerId: string): AkStateView {
       found: item ? foundTexts(state) : [],
       answerCount: OPEN_DEUR_ANSWERS,
       grid: item && !state.revealed ? gridCells(room, state, viewerId, OPEN_DEUR_ANSWERS) : null,
+      tapOnly: item?.tapOnly ?? false,
       revealed: item && state.revealed ? item.answers.slice(0, OPEN_DEUR_ANSWERS).map((a) => a.text) : null,
     };
   }
@@ -435,6 +439,7 @@ function buildView(room: Room, viewerId: string): AkStateView {
         found: foundTexts(state),
         answerCount: Math.min(FINALE_ANSWERS, item.answers.length),
         grid: !state.revealed ? gridCells(room, state, viewerId, FINALE_ANSWERS) : null,
+        tapOnly: item.tapOnly ?? false,
         revealed: state.revealed ? item.answers.slice(0, FINALE_ANSWERS).map((a) => a.text) : null,
       };
     }
@@ -644,13 +649,22 @@ function buildContestants(room: Room): Contestant[] | string {
   return teams;
 }
 
-function gridItem(id: string, subject: string, answers: TopicAnswer[], distractors: string[], answerCount: number, size: number): GridItem {
+function gridItem(
+  id: string,
+  subject: string,
+  answers: TopicAnswer[],
+  distractors: string[],
+  answerCount: number,
+  size: number,
+  tapOnly = false
+): GridItem {
   const used = answers.slice(0, answerCount);
   return {
     id,
     subject,
     answers: used,
     grid: shuffle([...used.map((a) => a.text), ...shuffle(distractors).slice(0, size - used.length)]),
+    tapOnly,
   };
 }
 
@@ -694,7 +708,9 @@ async function startGame(room: Room): Promise<string | null> {
   const listen = await pickItems("QUESTION", 1, everyone, (d) => Boolean(d.listen));
   const normal = await pickItems("QUESTION", QUESTIONS_369 - listen.length, everyone, (d) => !d.listen);
   if (normal.length + listen.length < 3) return "Er zijn nog te weinig vragen om te spelen.";
-  const questions = [...normal];
+  // Handgeschreven vragen komen bij het kiezen voorop (zie pickItems); de
+  // volgorde in het spel zelf is willekeurig.
+  const questions = shuffle(normal);
   // De luistervraag nooit als eerste: dan is iedereen er nog niet klaar voor.
   if (listen[0]) questions.splice(1 + Math.floor(Math.random() * Math.max(1, questions.length - 1)), 0, listen[0]);
 
@@ -731,7 +747,9 @@ async function startGame(room: Room): Promise<string | null> {
   };
   room.openDeur = {
     ...emptyGridRound(
-      doors.map((t) => gridItem(t.id, t.data.subject, t.data.answers, t.data.distractors, OPEN_DEUR_ANSWERS, OPEN_DEUR_GRID_SIZE))
+      doors.map((t) =>
+        gridItem(t.id, t.data.subject, t.data.answers, t.data.distractors, OPEN_DEUR_ANSWERS, OPEN_DEUR_GRID_SIZE, t.data.tapOnly)
+      )
     ),
     owners: [],
     taken: doors.map(() => false),
@@ -765,7 +783,8 @@ async function startGame(room: Room): Promise<string | null> {
   };
   const memoryItems: GridItem[] = [];
   for (const m of memories) {
-    const verses = await passageVerses(m.data.passage);
+    // Een hoofdstukkop (readText) wordt als één tekst getoond, zonder versnummer.
+    const verses = m.data.readText ? [{ number: 0, text: m.data.readText }] : await passageVerses(m.data.passage);
     if (verses.length === 0) continue;
     memoryItems.push({
       ...gridItem(m.id, m.data.title, m.data.answers, m.data.distractors, MEMORY_ANSWERS, GRID_SIZE),
@@ -776,7 +795,9 @@ async function startGame(room: Room): Promise<string | null> {
   room.memory = { ...emptyGridRound(memoryItems), owners: [], reading: false };
   room.finale = {
     ...emptyGridRound(
-      finaleTopics.map((t) => gridItem(t.id, t.data.subject, t.data.answers, t.data.distractors, FINALE_ANSWERS, GRID_SIZE))
+      finaleTopics.map((t) =>
+        gridItem(t.id, t.data.subject, t.data.answers, t.data.distractors, FINALE_ANSWERS, GRID_SIZE, t.data.tapOnly)
+      )
     ),
     finalists: [contestants[0].id, contestants[1].id],
   };
@@ -1759,7 +1780,8 @@ export function registerAlleskennerHandlers(server: SocketIOServer, socket: Sock
     const { round, count } = grid;
     const item = round.items[round.index];
     if (!item.grid.includes(text)) return;
-    const kind = actorKind(room, user.id);
+    let kind = actorKind(room, user.id);
+    if (kind === null && item.tapOnly && leaderOfActive(room) === user.id) kind = "team";
     if (kind === "team") {
       const index = item.answers.slice(0, count).findIndex((a) => a.text === text);
       if (index >= 0) gridFound(room, round, index);

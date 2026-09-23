@@ -75,6 +75,7 @@ export interface AkOpenDeurView {
   found: string[];
   answerCount: number;
   grid: AkGridCell[] | null;
+  tapOnly: boolean; // ook met quizmaster tikt wie aan de beurt is zelf
   revealed: string[] | null;
 }
 
@@ -121,6 +122,7 @@ export interface AkFinaleView {
   found: string[];
   answerCount: number;
   grid: AkGridCell[] | null;
+  tapOnly: boolean;
   revealed: string[] | null; // na afloop van een onderwerp: alle antwoorden
 }
 

@@ -1,8 +1,10 @@
 import type { AlleskennerItemKind } from "@prisma/client";
 
-// Vorm van AlleskennerItem.data per soort. Elk feit heeft een bronvers met een
-// letterlijk citaat; prisma/checkAlleskenner.ts controleert dat het citaat
-// echt in dat vers staat (zie docs/ALLESKENNER.md, "Inhoud").
+// Vorm van AlleskennerItem.data per soort. Elk handgeschreven feit heeft een
+// bronvers met een letterlijk citaat; prisma/checkAlleskenner.ts controleert
+// dat het citaat echt in dat vers staat (zie docs/ALLESKENNER.md, "Inhoud").
+// Automatisch samengestelde onderdelen (prisma/alleskennerGenerated.ts) hebben
+// in plaats daarvan een `source`: hun antwoord komt rechtstreeks uit die bron.
 
 export interface Evidence {
   ref: string; // bv. "1 Nephi 17:8"
@@ -16,18 +18,23 @@ export interface QuestionData {
   // Luistervraag: dit vers wordt voorgelezen in plaats van getoond.
   listen?: { ref: string };
   evidence: Evidence[];
+  source?: string;
 }
 
 export interface TopicAnswer {
   text: string;
   accept: string[]; // extra geldige formuleringen, voor de quizmaster en het typen
-  evidence: Evidence;
+  evidence?: Evidence; // verplicht, behalve bij onderdelen met een `source`
 }
 
 export interface TopicData {
   subject: string; // "Wat weet je van <subject>?"
   answers: TopicAnswer[]; // minstens 5; Open Deur gebruikt de eerste 4
   distractors: string[]; // geloofwaardige foute opties voor de tikvariant
+  // Antwoorden zijn uitspraken om aan te tikken, niet om hardop te noemen:
+  // ook met quizmaster tikt wie aan de beurt is zelf.
+  tapOnly?: boolean;
+  source?: string;
 }
 
 export interface PuzzleGroup {
@@ -39,6 +46,7 @@ export interface PuzzleGroup {
 
 export interface PuzzleData {
   groups: PuzzleGroup[]; // precies 3
+  source?: string;
 }
 
 // Galerij: 8 onderdelen. Bij citaten is het antwoord het boek waar het vers
@@ -51,9 +59,13 @@ export type GalleryData =
 // Collectief Geheugen: een passage die even in beeld staat, daarna 5 antwoorden.
 export interface MemoryData {
   title: string;
-  passage: string; // bv. "Alma 17:25-27"
+  passage: string; // bv. "Alma 17:25-27"; bij readText alleen een label
+  // In plaats van de verzen van `passage` deze tekst tonen (bv. een officiële
+  // hoofdstukkop); de antwoorden staan er dan letterlijk in.
+  readText?: string;
   answers: TopicAnswer[];
   distractors: string[];
+  source?: string;
 }
 
 export type AlleskennerSeedItem =

@@ -584,7 +584,7 @@ function RoundOpenDeur({ state, can }: { state: AkStateView; can: Abilities }) {
       {round.grid && (
         <GridCells
           cells={round.grid}
-          can={can}
+          can={round.tapOnly ? { ...can, canAct: can.myTurn } : can}
           hint="Tik de antwoorden aan die hierbij horen. Elk goed antwoord +20 seconden; een fout antwoord beëindigt je beurt."
         />
       )}
@@ -612,7 +612,7 @@ function RoundPuzzle({ state, can }: { state: AkStateView; can: Abilities }) {
       <p className="text-sm text-slate-500 dark:text-slate-400">
         Er horen telkens vier omschrijvingen bij elkaar. Noem het woord dat ze verbindt. Elke groep: +30 seconden.
       </p>
-      <div className="grid grid-cols-3 gap-2">
+      <div className={`grid gap-2 ${puzzle.clues.some((c) => c.text.length > 32) ? "grid-cols-2 sm:grid-cols-3" : "grid-cols-3"}`}>
         {puzzle.clues.map((clue) => (
           <div
             key={clue.text}
@@ -777,12 +777,21 @@ function RoundMemory({ state, can, deadlineLeft }: { state: AkStateView; can: Ab
         </div>
         <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Lees goed — straks is de tekst weg</p>
         <div className="flex flex-col gap-2 text-[15px] leading-relaxed dark:text-slate-100">
-          {memory.verses?.map((v) => (
-            <p key={v.number}>
-              <sup className="font-bold text-brand-600 dark:text-brand-300 mr-1">{v.number}</sup>
-              {v.text}
-            </p>
-          ))}
+          {memory.verses?.map((v) =>
+            // Versnummer 0 = een hoofdstukkop: de delen (gescheiden door " — ") onder elkaar.
+            v.number === 0 ? (
+              <ul key="kop" className="flex flex-col gap-1.5 list-disc pl-5">
+                {v.text.split(/\s+—\s+/).map((part) => (
+                  <li key={part}>{part}</li>
+                ))}
+              </ul>
+            ) : (
+              <p key={v.number}>
+                <sup className="font-bold text-brand-600 dark:text-brand-300 mr-1">{v.number}</sup>
+                {v.text}
+              </p>
+            )
+          )}
         </div>
       </div>
     );
@@ -832,7 +841,7 @@ function RoundFinale({ state, can }: { state: AkStateView; can: Abilities }) {
       {finale.grid && (
         <GridCells
           cells={finale.grid}
-          can={can}
+          can={finale.tapOnly ? { ...can, canAct: can.myTurn } : can}
           hint={`Tik de antwoorden aan die bij ${finale.subject} horen. Tik je een fout antwoord aan, dan is je beurt voorbij.`}
         />
       )}

@@ -6,6 +6,7 @@ import { kidsStory } from "@/lib/alleskenner/pool";
 import { parseItem, referencedVerses, validateAlleskennerItem } from "@/lib/alleskenner/validate";
 import { parsePassage } from "@/lib/alleskenner/content";
 import { alleskennerItems } from "../../../../../../prisma/alleskennerContent";
+import { generatedAlleskennerItems } from "../../../../../../prisma/alleskennerGenerated";
 
 const schema = z.union([
   z.object({ reset: z.literal(true) }),
@@ -49,7 +50,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
   }
 
   if ("reset" in body) {
-    const original = alleskennerItems.find((i) => i.id === id);
+    const original = [...alleskennerItems, ...generatedAlleskennerItems()].find((i) => i.id === id);
     if (!original) return NextResponse.json({ error: "Dit onderdeel staat niet (meer) in het inhoudsbestand." }, { status: 409 });
     await prisma.alleskennerItem.update({ where: { id }, data: { data: JSON.stringify(original.data), editedByAdmin: false } });
     return NextResponse.json({ ok: true });

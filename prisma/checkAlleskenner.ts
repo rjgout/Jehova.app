@@ -1,6 +1,7 @@
 import bomContent from "./bomContent.json";
 import kidsManifest from "./kidsManifest.json";
 import { alleskennerItems } from "./alleskennerContent";
+import { generatedAlleskennerItems } from "./alleskennerGenerated";
 import { validateAlleskennerItem } from "../src/lib/alleskenner/validate";
 
 // Controleert prisma/alleskennerContent.ts: vorm per soort, unieke ID's, en of
@@ -24,8 +25,12 @@ function verseText(ref: string): string | null {
 
 const kidsStories = kidsManifest as { number: number; title: string; images: string[] }[];
 
+// Ook de automatisch samengestelde onderdelen: die komen uit dezelfde bronnen,
+// maar een fout in de generator hoort hier net zo goed op te vallen.
+const allItems = [...alleskennerItems, ...generatedAlleskennerItems()];
+
 const seenIds = new Set<string>();
-for (const item of alleskennerItems) {
+for (const item of allItems) {
   if (seenIds.has(item.id)) errors.push(`${item.id}: dubbele ID`);
   seenIds.add(item.id);
   errors.push(
@@ -36,7 +41,7 @@ for (const item of alleskennerItems) {
   );
 }
 
-const counts = alleskennerItems.reduce<Record<string, number>>((acc, item) => {
+const counts = allItems.reduce<Record<string, number>>((acc, item) => {
   acc[item.kind] = (acc[item.kind] ?? 0) + 1;
   return acc;
 }, {});
