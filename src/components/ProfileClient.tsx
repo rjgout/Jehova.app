@@ -940,31 +940,36 @@ export default function ProfileClient() {
 
       <section className="card flex flex-col gap-3">
         <h2 className="font-extrabold text-lg dark:text-slate-100">Account</h2>
-        {!confirmingLogout ? (
-          <div className="flex gap-2 flex-wrap">
-            <Link href="/change-password" className="btn-secondary self-start">
-              Wachtwoord wijzigen
-            </Link>
+
+        <div>
+          <h3 className="font-extrabold text-base dark:text-slate-100 mb-2">Tweestapsverificatie</h3>
+          <TwoFactorSettings isAdmin={data.isAdmin} />
+        </div>
+
+        <div className="border-t border-slate-100 dark:border-slate-700 pt-4 mt-1">
+          <Link href="/change-password" className="btn-secondary self-start">
+            Wachtwoord wijzigen
+          </Link>
+        </div>
+
+        <div className="border-t border-slate-100 dark:border-slate-700 pt-4 mt-1">
+          {!confirmingLogout ? (
             <button className="btn-secondary self-start" onClick={() => setConfirmingLogout(true)}>
               Uitloggen
             </button>
-          </div>
-        ) : (
-          <div className="flex flex-col gap-3">
-            <p className="text-sm dark:text-slate-200">Weet je zeker dat je wilt uitloggen?</p>
-            <div className="flex gap-2 flex-wrap">
-              <button className="btn-primary self-start" onClick={logout}>
-                Ja, uitloggen
-              </button>
-              <button className="btn-secondary self-start" onClick={() => setConfirmingLogout(false)}>
-                Annuleren
-              </button>
+          ) : (
+            <div className="flex flex-col gap-3">
+              <p className="text-sm dark:text-slate-200">Weet je zeker dat je wilt uitloggen?</p>
+              <div className="flex gap-2 flex-wrap">
+                <button className="btn-primary self-start" onClick={logout}>
+                  Ja, uitloggen
+                </button>
+                <button className="btn-secondary self-start" onClick={() => setConfirmingLogout(false)}>
+                  Annuleren
+                </button>
+              </div>
             </div>
-          </div>
-        )}
-        <div className="border-t border-slate-100 dark:border-slate-700 pt-4 mt-1">
-          <h3 className="font-extrabold text-base dark:text-slate-100 mb-2">Tweestapsverificatie</h3>
-          <TwoFactorSettings isAdmin={data.isAdmin} />
+          )}
         </div>
       </section>
     </div>
