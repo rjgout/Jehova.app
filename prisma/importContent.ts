@@ -7,6 +7,7 @@ import {
   buildDistractorPool,
   shuffleWithSeed,
 } from "../src/lib/exerciseGen";
+import { generateExerciseHint } from "../src/lib/exerciseHints";
 import { syncCourses } from "../src/lib/courses";
 import type { SeedBook } from "./content";
 
@@ -28,14 +29,22 @@ import type { SeedBook } from "./content";
 export async function importBooks(
   prisma: PrismaClient,
   books: SeedBook[],
-  log: (msg: string) => void = console.log
+  log: (msg: string) => void = console.log,
+  contentCollectionId?: string
 ) {
+  const collectionId = contentCollectionId ?? (await prisma.contentCollection.findFirst({
+    where: { enabled: true },
+    orderBy: { order: "asc" },
+    select: { id: true },
+  }))?.id;
+  if (!collectionId) throw new Error("Geen contentcollectie beschikbaar om boeken aan te koppelen.");
+
   for (let bookOrder = 0; bookOrder < books.length; bookOrder++) {
     const seedBook = books[bookOrder];
     const book = await prisma.book.upsert({
       where: { slug: seedBook.slug },
-      update: { name: seedBook.name, order: bookOrder },
-      create: { slug: seedBook.slug, name: seedBook.name, order: bookOrder },
+      update: { name: seedBook.name, order: bookOrder, contentCollectionId: collectionId },
+      create: { slug: seedBook.slug, name: seedBook.name, order: bookOrder, contentCollectionId: collectionId },
     });
 
     for (let chapterOrder = 0; chapterOrder < seedBook.chapters.length; chapterOrder++) {
@@ -83,6 +92,13 @@ export async function importBooks(
             sourceVerseId,
             prompt: fillBlank.prompt,
             answers: JSON.stringify(fillBlank.answers),
+            hint: generateExerciseHint(
+              fillBlank.type,
+              fillBlank.prompt,
+              fillBlank.answers,
+              fillBlank.verseRef,
+              seedChapter.verses[i]
+            ),
           });
           fillBlank.options?.forEach((label, order) => {
             optionRows.push({
@@ -108,6 +124,13 @@ export async function importBooks(
               prompt: wordBank.prompt,
               answers: JSON.stringify(wordBank.answers),
               wordBank: JSON.stringify(wordBank.wordBank),
+              hint: generateExerciseHint(
+                wordBank.type,
+                wordBank.prompt,
+                wordBank.answers,
+                wordBank.verseRef,
+                seedChapter.verses[i]
+              ),
             });
           }
         } else {
@@ -122,6 +145,13 @@ export async function importBooks(
               sourceVerseId,
               prompt: trueFalse.prompt,
               answers: JSON.stringify(trueFalse.answers),
+              hint: generateExerciseHint(
+                trueFalse.type,
+                trueFalse.prompt,
+                trueFalse.answers,
+                trueFalse.verseRef,
+                seedChapter.verses[i]
+              ),
             });
           }
         }
@@ -142,6 +172,12 @@ export async function importBooks(
             verseRef: comp.verseRef,
             prompt: comp.prompt,
             answers: JSON.stringify([comp.options[comp.correctIndex].toLowerCase()]),
+            hint: generateExerciseHint(
+              "MULTIPLE_CHOICE",
+              comp.prompt,
+              [comp.options[comp.correctIndex]],
+              comp.verseRef
+            ),
           });
           // Geshuffeld, want handmatig geschreven meerkeuzevragen hebben het
           // juiste antwoord vaak als eerste optie genoteerd (leesbaarheid
@@ -165,6 +201,7 @@ export async function importBooks(
             prompt: comp.prompt,
             answers: JSON.stringify(comp.items.map((item) => item.toLowerCase())),
             wordBank: JSON.stringify(shuffled),
+            hint: generateExerciseHint("SEQUENCE", comp.prompt, comp.items, comp.verseRef),
           });
         }
       }

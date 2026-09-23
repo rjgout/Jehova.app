@@ -9,9 +9,8 @@ const items = [
   { href: "/profile", label: "Profiel", icon: "🙂" },
 ];
 
-// Zonder dit was er op mobiel (waar de meeste gebruikers waarschijnlijk
-// zitten) geen manier om bij Vrienden/Competitie/Spelen te komen: die links
-// stonden alleen in de header en die verdwijnt onder het "sm"-breakpoint.
+// Dezelfde navigatie blijft op elk scherm onderaan staan, zodat de app niet
+// van navigatiepatroon wisselt zodra er meer ruimte beschikbaar is.
 export default function BottomNav() {
   return (
     <nav
@@ -20,9 +19,11 @@ export default function BottomNav() {
       // viewportFit: "cover" in layout.tsx) op bij de gewone 0.25rem padding,
       // zodat de navigatie daar nooit onder valt. In een gewone browsertab
       // is die env()-waarde 0, dus daar verandert niets.
-      className="sm:hidden fixed bottom-0 inset-x-0 z-20 bg-white/95 dark:bg-slate-800/95 backdrop-blur border-t border-slate-100 dark:border-slate-700 flex justify-around pt-1 pb-[calc(0.25rem+env(safe-area-inset-bottom))]"
+      className="fixed bottom-0 inset-x-0 z-20 bg-white/95 dark:bg-slate-800/95 backdrop-blur border-t border-slate-100 dark:border-slate-700 shadow-[0_-2px_12px_rgba(0,0,0,0.04)] dark:shadow-[0_-2px_12px_rgba(0,0,0,0.2)]"
+      
       aria-label="Hoofdnavigatie"
     >
+      <div className="mx-auto flex w-full max-w-3xl justify-around pt-1 pb-[calc(0.25rem+env(safe-area-inset-bottom))]">
       {items.map((item) => (
         <Link
           key={item.href}
@@ -35,6 +36,7 @@ export default function BottomNav() {
           {item.label}
         </Link>
       ))}
+      </div>
     </nav>
   );
 }

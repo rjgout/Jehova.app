@@ -11,7 +11,7 @@ import { isExerciseCorrect } from "@/lib/exerciseGen";
 import { completeLesson, completeChapterGuess } from "@/lib/streak";
 import { checkAndAwardAchievements } from "@/lib/achievements";
 import { notifyNewAchievements } from "@/lib/notify";
-import { broadcastPresenceUpdate, setCurrentActivity, clearCurrentActivity } from "@/lib/presence";
+import { broadcastPresenceUpdate, sendFriendStatusesToUser, setCurrentActivity, clearCurrentActivity } from "@/lib/presence";
 import { generateChapterGuessQuestions, labelsFor, computeHintEffect, type LiveQuestionSeed, type ChapterLabel } from "@/lib/chapterGuess";
 import {
   BOARD,
@@ -650,6 +650,7 @@ export function initGameServer(httpServer: HttpServer) {
     // altijd actueel) naar vrienden kan pushen.
     socket.on("presence_settings_changed", () => {
       broadcastPresenceUpdate(ioInstance, user.id).catch(() => {});
+      sendFriendStatusesToUser(ioInstance, user.id).catch(() => {});
     });
 
     socket.on("join_game", async ({ code }: { code: string }) => {

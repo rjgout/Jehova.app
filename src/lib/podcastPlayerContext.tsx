@@ -14,6 +14,7 @@ interface PodcastPlayerContextValue {
   isPlaying: boolean;
   currentTime: number;
   duration: number;
+  isSuppressed: boolean;
   playEpisode: (episode: PodcastEpisodeInfo) => void;
   togglePlay: () => void;
   seek: (time: number) => void;
@@ -28,22 +29,11 @@ export function usePodcastPlayer(): PodcastPlayerContextValue {
   return ctx;
 }
 
-// Hoe vaak de afspeelpositie tijdens het afspelen naar de server gaat —
-// vaak genoeg om nooit meer dan een paar seconden terug te hoeven als de
-// app onverwacht sluit, niet zo vaak dat het onnodig veel schrijfacties
-// oplevert (zie ook de directe saves bij pauzeren/de pagina verlaten
-// hieronder, die dat "onverwacht sluiten"-geval al grotendeels afdekken).
+// Hoe vaak de afspeelpositie tijdens het afspelen naar de server gaat.
 const SAVE_INTERVAL_MS = 10_000;
-// Vanaf hier (in seconden resterend) telt een aflevering als "afgeluisterd":
-// de opgeslagen positie wordt dan gewist i.p.v. bijgewerkt.
+// Vanaf hier telt een aflevering als "afgeluisterd".
 const FINISHED_REMAINING_SECONDS = 15;
 
-// Onthoudt, puur lokaal in deze browser, welke aflevering je bewust met het
-// kruisje hebt weggeklikt — anders duikt "waar was ik gebleven" (zie de
-// mount-effect hieronder) 'm bij elke nieuwe paginalading weer op, ook al
-// wilde je 'm net even niet meer zien. De opgeslagen afspeelpositie zelf
-// blijft gewoon bestaan (zie close()), dus expliciet opnieuw afspelen vanaf
-// de aflevering zelf hervat nog steeds op de juiste plek.
 const DISMISSED_KEY = "podcast-dismissed-episode-id";
 
 function getDismissedEpisodeId(): string | null {
@@ -59,23 +49,17 @@ function setDismissedEpisodeId(id: string | null) {
     if (id) localStorage.setItem(DISMISSED_KEY, id);
     else localStorage.removeItem(DISMISSED_KEY);
   } catch {
-    // Privé-modus/geblokkeerde storage: dan komt de mini-player soms
-    // opnieuw terug na sluiten, maar de speler zelf blijft werken.
+    // Privé-modus/geblokkeerde storage: de speler blijft gewoon werken.
   }
 }
 
-/**
- * Eén gedeelde, altijd-gemonteerde <audio>-speler (zie layout.tsx) — zodat
- * navigeren tussen pagina's het afspelen niet meer onderbreekt, en de
- * huidige positie server-side onthouden wordt (zie /api/podcast-playback)
- * zodat je ook op een ander apparaat verder kan luisteren.
- */
 export function PodcastPlayerProvider({ children }: { children: React.ReactNode }) {
   const audioRef = useRef<HTMLAudioElement>(null);
   const [episode, setEpisode] = useState<PodcastEpisodeInfo | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
+  const [suppressedByOtherPlayer, setSuppressedByOtherPlayer] = useState(false);
 
   const loadedEpisodeIdRef = useRef<string | null>(null);
   const pendingSeekRef = useRef<number | null>(null);
@@ -90,34 +74,28 @@ export function PodcastPlayerProvider({ children }: { children: React.ReactNode 
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ episodeId: ep.id, positionSeconds: position }),
-      // Bij het verlaten/verbergen van de pagina (zie visibilitychange/
-      // pagehide hieronder) kan een gewone fetch halverwege afgebroken
-      // worden zodra de browser de pagina daadwerkelijk opruimt — keepalive
-      // laat 'm ook dan nog afronden (net als navigator.sendBeacon, maar
-      // met dezelfde aanroep als de periodieke save hierboven).
       keepalive,
     }).catch(() => {});
   }, []);
 
-  // Bij het laden van de app: is er een niet-afgeluisterde aflevering?
-  // Toon die dan meteen (gepauzeerd) in de mini-player, klaar om te hervatten.
   useEffect(() => {
-    fetch("/api/podcast-playback")
-      .then((r) => r.json())
-      .then((data) => {
-        if (data.episode && data.episode.id !== getDismissedEpisodeId()) {
-          pendingSeekRef.current = data.positionSeconds ?? 0;
-          setCurrentTime(data.positionSeconds ?? 0);
-          setEpisode(data.episode);
-        }
-      })
-      .catch(() => {});
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    const stopPodcast = () => {
+      const audio = audioRef.current;
+      if (!audio) return;
+      audio.pause();
+      setIsPlaying(false);
+      setSuppressedByOtherPlayer(true);
+    };
+    window.addEventListener("jehovaapp:stop-podcast", stopPodcast);
+    return () => window.removeEventListener("jehovaapp:stop-podcast", stopPodcast);
   }, []);
 
-  // Laadt de audiobron pas echt (en spoelt naar de bewaarde positie) zodra
-  // er daadwerkelijk een aflevering actief is — los van of dat net via
-  // playEpisode() of via de "waar was ik gebleven"-herstelling hierboven kwam.
+  useEffect(() => {
+    const stopReadAloud = () => window.dispatchEvent(new Event("jehovaapp:stop-read-aloud"));
+    window.addEventListener("jehovaapp:podcast-started", stopReadAloud);
+    return () => window.removeEventListener("jehovaapp:podcast-started", stopReadAloud);
+  }, []);
+
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio || !episode || loadedEpisodeIdRef.current === episode.id) return;
@@ -165,7 +143,6 @@ export function PodcastPlayerProvider({ children }: { children: React.ReactNode 
     };
   }, [episode]);
 
-  // Periodiek opslaan tijdens het afspelen.
   useEffect(() => {
     if (!isPlaying || !episode) return;
     saveIntervalRef.current = setInterval(() => {
@@ -177,10 +154,6 @@ export function PodcastPlayerProvider({ children }: { children: React.ReactNode 
     };
   }, [isPlaying, episode, savePosition]);
 
-  // Meteen opslaan bij een handmatige pauze (niet wachten op het interval
-  // hierboven) en bij het verlaten/verbergen van de pagina (dekt "de app
-  // sluiten" — een tabblad dat naar de achtergrond gaat of dichtgaat krijgt
-  // geen volgende interval-tik meer).
   useEffect(() => {
     if (!episode) return;
     function saveNow(keepalive: boolean) {
@@ -201,9 +174,8 @@ export function PodcastPlayerProvider({ children }: { children: React.ReactNode 
     const audio = audioRef.current;
     if (!audio) return;
 
-    // Een bewuste, nieuwe afspeelactie overschrijft een eerdere "wegklik" —
-    // de mini-player is nu toch weer zichtbaar, dus de dismissal heeft
-    // verder geen functie meer totdat er weer op het kruisje wordt gedrukt.
+    window.dispatchEvent(new Event("jehovaapp:podcast-started"));
+    setSuppressedByOtherPlayer(false);
     setDismissedEpisodeId(null);
 
     if ("mediaSession" in navigator) {
@@ -225,10 +197,6 @@ export function PodcastPlayerProvider({ children }: { children: React.ReactNode 
         pendingSeekRef.current = data.positionSeconds ?? 0;
         setCurrentTime(data.positionSeconds ?? 0);
         setEpisode(newEpisode);
-        // De src-toewijzing gebeurt in de useEffect hierboven zodra
-        // `episode` verandert; hier alleen nog na een korte tik afspelen
-        // (audio.load() is asynchroon, play() vlak erna werkt in de praktijk
-        // prima omdat browsers een pending load-aanvraag zelf afhandelen).
         requestAnimationFrame(() => audio.play().catch(() => {}));
       })
       .catch(() => {
@@ -264,10 +232,11 @@ export function PodcastPlayerProvider({ children }: { children: React.ReactNode 
     setIsPlaying(false);
     setCurrentTime(0);
     setDuration(0);
+    setSuppressedByOtherPlayer(false);
   }, [episode, savePosition]);
 
   return (
-    <PodcastPlayerContext.Provider value={{ episode, isPlaying, currentTime, duration, playEpisode, togglePlay, seek, close }}>
+    <PodcastPlayerContext.Provider value={{ episode, isPlaying, currentTime, duration, isSuppressed: suppressedByOtherPlayer, playEpisode, togglePlay, seek, close }}>
       {children}
       {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
       <audio ref={audioRef} className="hidden" />

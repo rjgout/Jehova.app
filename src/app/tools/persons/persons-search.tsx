@@ -8,12 +8,22 @@ export default function PersonsSearch({ persons }: { persons: any[] }) {
   const filteredPersons = useMemo(() => {
     if (!searchQuery.trim()) return persons;
 
-    const query = searchQuery.toLowerCase();
-    return persons.filter(
-      (p) =>
-        p.name.toLowerCase().includes(query) ||
-        p.description?.toLowerCase().includes(query)
-    );
+    const query = searchQuery.trim().toLowerCase();
+    return persons
+      .filter(
+        (p) =>
+          p.name.toLowerCase().includes(query) ||
+          p.description?.toLowerCase().includes(query)
+      )
+      .sort((a, b) => {
+        const aName = a.name.toLowerCase();
+        const bName = b.name.toLowerCase();
+        const aNameMatch = aName.includes(query);
+        const bNameMatch = bName.includes(query);
+
+        if (aNameMatch !== bNameMatch) return aNameMatch ? -1 : 1;
+        return aName.localeCompare(bName, "nl");
+      });
   }, [searchQuery, persons]);
 
   return (

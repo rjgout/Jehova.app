@@ -88,8 +88,11 @@ export async function getAcceptedFriendIds(userId: string): Promise<string[]> {
 
 /** Voor het initieel laden van de vriendenlijst — één keer alle statussen
  * tegelijk berekenen i.p.v. per vriend een broadcast te simuleren. */
-export async function getFriendStatusMap(friendIds: string[]): Promise<Record<string, FriendStatusView>> {
-  if (friendIds.length === 0) return {};
+export async function getFriendStatusMap(
+  friendIds: string[],
+  viewerCanSeePresence = true,
+): Promise<Record<string, FriendStatusView>> {
+  if (!viewerCanSeePresence || friendIds.length === 0) return {};
   const users = await prisma.user.findMany({ where: { id: { in: friendIds } }, select: PRESENCE_SELECT });
   const map: Record<string, FriendStatusView> = {};
   for (const u of users) {
@@ -116,9 +119,40 @@ export async function broadcastPresenceUpdate(io: SocketIOServer | null, userId:
 
   const status = computeFriendStatus(user);
   const friendIds = await getAcceptedFriendIds(userId);
+  const viewers = await prisma.user.findMany({
+    where: { id: { in: friendIds }, shareOnlineStatus: true },
+    select: { id: true },
+  });
   const payload = status ? { userId, hidden: false as const, ...status } : { userId, hidden: true as const };
-  for (const friendId of friendIds) {
-    io.to(`user:${friendId}`).emit("friend_status_update", payload);
+  for (const viewer of viewers) {
+    io.to(`user:${viewer.id}`).emit("friend_status_update", payload);
+  }
+}
+
+/**
+ * Stuurt alle actuele vriendstatussen naar één gebruiker. Dit wordt gebruikt
+ * wanneer iemand zijn eigen online-status delen aanzet: pas dan mag diegene
+ * ook de status van vrienden zien.
+ */
+export async function sendFriendStatusesToUser(io: SocketIOServer | null, userId: string): Promise<void> {
+  if (!io) return;
+  const viewer = await prisma.user.findUnique({ where: { id: userId }, select: { shareOnlineStatus: true } });
+  if (!viewer) return;
+
+  if (!viewer.shareOnlineStatus) {
+    io.to(`user:${userId}`).emit("friend_status_reset");
+    return;
+  }
+
+  const friendIds = await getAcceptedFriendIds(userId);
+  if (friendIds.length === 0) return;
+  const users = await prisma.user.findMany({ where: { id: { in: friendIds } }, select: PRESENCE_SELECT });
+  for (const friend of users) {
+    const status = computeFriendStatus(friend);
+    const payload = status
+      ? { userId: friend.id, hidden: false as const, ...status }
+      : { userId: friend.id, hidden: true as const };
+    io.to(`user:${userId}`).emit("friend_status_update", payload);
   }
 }
 

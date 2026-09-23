@@ -105,7 +105,7 @@ export default async function HomePage() {
         </div>
       )}
 
-      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 w-full max-w-4xl">
+      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 w-full max-w-5xl">
         {FEATURES.map((f) => (
           <div key={f.title} className="card text-left">
             <div className="text-3xl mb-2">{f.icon}</div>

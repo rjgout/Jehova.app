@@ -132,6 +132,23 @@ Controleer bij twijfel: `grep -rn "next/headers" src/lib src/server server.ts`
   `migration.sql` handmatig volgens het patroon hierboven, en pas toe met
   `prisma migrate deploy`.
 
+## Prisma schema en migraties — synchroniteit
+
+Bij iedere wijziging aan de database moeten **schema, migratie en gebruikende code als één geheel** worden behandeld:
+
+- `prisma/schema.prisma` is de bron van waarheid voor het actuele Prisma-datamodel.
+- Een nieuwe migratie in `prisma/migrations/**` mag alleen worden toegevoegd als dezelfde structurele wijziging ook in `prisma/schema.prisma` staat.
+- Omgekeerd: als TypeScript/Prisma-code een nieuw model, veld, enum of relatie gebruikt, controleer dan altijd of dit in `prisma/schema.prisma` bestaat én door een passende migratie in de database terechtkomt.
+- Controleer vóór iedere commit met Prisma-wijzigingen expliciet deze drie lagen:
+  1. `prisma/schema.prisma`
+  2. de bijbehorende `prisma/migrations/**/migration.sql`
+  3. alle code die het gewijzigde model of veld gebruikt.
+- Na een wijziging aan `schema.prisma` of een Prisma-model zijn minimaal deze controles verplicht: `npx prisma validate`, `npx prisma generate` en daarna `npx tsc --noEmit`.
+- `prisma generate` is belangrijk: alleen een migration aanpassen is niet genoeg, omdat de gegenereerde Prisma Client moet overeenkomen met het actuele schema.
+- Als een lokale database ontbreekt, gebruik dan niet automatisch `prisma migrate dev`: volg het migratiebeleid hierboven. `prisma validate` en `prisma generate` moeten nog steeds worden uitgevoerd; noteer expliciet wanneer een controle door de omgeving niet mogelijk is.
+- Voer bij wijzigingen aan verplichte of gedragsbepalende velden ook de bestaande backfill-regel uit: bestaande gebruikers/data mogen niet onverwacht nieuw gedrag krijgen.
+- Commit geen Prisma-wijziging zolang `schema.prisma`, migration en gebruikende code aantoonbaar niet met elkaar in overeenstemming zijn.
+
 ## Auth & autorisatie
 
 - Sessie = httpOnly JWT-cookie (`bvm_session`, `jose`, 30 dagen), wachtwoorden
@@ -202,78 +219,12 @@ verwerken". Fundamenteel anders dan de rest van de API:
     per content-tabel. Dient als sjabloon voor nieuwe, specifiekere routes
     in dezelfde namespace (zelfde `verifyContentApiKey`-check bovenaan,
     zelfde "alleen content"-grens).
-  - `GET /api/content-api/official-lessons`, `GET .../official-lessons/[id]`,
-    `GET .../official-lessons/runs`, `POST .../official-lessons/import`: zie
-    de sectie "Officiële content importeren" hieronder.
-- **Voor de bestaande, met de hand geschreven content (podcast/intro/kids)
-  blijft dit alleen lezen** — die plaats je nog steeds via de bestaande weg:
-  een TS-object toevoegen aan het relevante seed-bestand (bv.
-  `prisma/podcastContent.ts`), `npx tsc --noEmit`, committen naar de
-  werkbranch — zie "Podcastafleveringen verwerken" hieronder. De
-  `official-lessons/import`-route hierboven is hier een bewuste uitzondering
-  op: die schrijft, maar uitsluitend naar de losstaande
-  `ImportedOfficialLesson`-staging­tabel (zie hieronder), nooit naar een
-  bestaande content- of gebruikerstabel.
-
-## Officiële content importeren (`ImportedOfficialLesson`, `src/lib/officialContentImport.ts`)
-
-Haalt automatisch de officiële Nederlandse jeugd-lesmaterialen van
-`churchofjesuschrist.org` op — "Voor de kracht van de jeugd" (maandelijkse
-jeugdlessen: vastenzondag/tweede zondag/.../vijfde zondag) en "Kom, Volg Mij"
-voor jeugdwerk/zondagsschool — en slaat de **ongewijzigde, originele**
-brontekst op. Bewust een losstaande staging-tabel: (nog) niet gekoppeld aan
-enige bestaande content-tabel of aan de gebruikersinterface. AI-verwerking
-van deze content (oefeningen genereren e.d.) is een aparte, latere stap —
-hier bewust niet gebouwd.
-
-- **⚠️ De aannames over de bron-URL-structuur zijn NIET geverifieerd tegen
-  live HTML.** Deze devcontainer kan `churchofjesuschrist.org` (en eigenlijk
-  elk extern domein) niet bereiken — `WebFetch` en directe `curl`/`fetch`
-  worden hier organisatiebreed geblokkeerd op netwerkniveau, ook los van deze
-  app. De aangenomen structuur (hieronder) komt van de gebruiker zelf, niet
-  uit eigen onderzoek. `runOfficialContentImport()` faalt daarom bewust per
-  URL (gelogd in `OfficialContentImportRun.errors`) i.p.v. de hele run te
-  laten crashen — een verkeerde aanname moet zichtbaar mislukken, niet stil
-  de verkeerde dingen opslaan. **Controleer bij de eerste echte run in
-  productie altijd eerst `GET /api/content-api/official-lessons/runs`** om te
-  zien of er daadwerkelijk iets is gevonden, vóór je verder bouwt op deze
-  fundering.
-  - FSY: `/study/ftsoy/{jaar}/{maand}/` (overzicht) met lessen onder
-    `.../fsy-lessons/{volgnummer}-{slug}?lang=nld`.
-  - Kom, Volg Mij: ontdekt zelf het actuele jaar/manual via de vaste
-    landingspagina `/study/come-follow-me?lang=nld` (i.p.v. een jaartal te
-    hardcoden) — zoekt daar de eerste link naar
-    `/study/manual/come-follow-me-for-home-and-church-*`, en haalt vervolgens
-    alle sub-pagina's van dát manual op als weken. Geen filter op
-    "introductiepagina's" versus "echte weken" — alles onder het manual-pad
-    wordt geïmporteerd; `periodLabel`/`title` komt van de bronpagina zelf.
-- **Opslag**: de volledige, ruwe HTTP-responsebody (HTML) wordt verbatim
-  opgeslagen in `rawHtml` — geen contentextractie/opschoning, juist om nooit
-  per ongeluk de originele brontekst te herschrijven of iets te missen.
-  `title` is wel best-effort geëxtraheerd (`og:title` / `<title>`) puur voor
-  leesbaarheid in overzichten.
-- **Duplicaten/wijzigingen**: `sourceUrl` is uniek; bestaat de URL al, dan
-  wordt een sha256-hash van de nieuwe HTML vergeleken met `contentHash` — 
-  gelijk = alleen `lastCheckedAt` bijwerken, anders = content + `contentHash`
-  + `lastChangedAt` bijwerken. Geen enkele URL levert dus ooit een dubbele rij op.
-  `sequenceInPeriod` = volgorde van aantreffen op de overzichtspagina van de
-  bron (1 = eerst gevonden) — dat bepaalt de week-/zondagvolgorde, zonder zelf
-  een kalender te moeten narekenen; bijzondere weken (vastenzondag, een
-  eventuele vijfde zondag) zijn hierdoor vanzelf correct, want die bestaan als
-  losse lessen op de bron zelf of ontbreken simpelweg in maanden zonder vijfde
-  zondag.
-- **Runtime, geen Docker-rebuild nodig**: import gebeurt via `fetch()` op een
-  al draaiende server, niet tijdens de build. Twee triggers, beide roepen
-  dezelfde `runOfficialContentImport()` aan:
-  1. Automatisch: `runOfficialContentImportTick()` in `src/lib/scheduler.ts`,
-     dagelijks om 03:00 (Nederlandse tijd), zelfde self-gating-patroon als de
-     andere ticks in dat bestand.
-  2. Op verzoek: `POST /api/content-api/official-lessons/import` (zelfde
-     sleutel-auth als de rest van de content-API) — geeft de volledige
-     samenvatting (aantal nieuw/gewijzigd/ongewijzigd/mislukt) direct terug.
-- **Beleefd tegenover de bron**: een vaste, herkenbare `User-Agent`
-  (geen browser voorwenden) en een korte pauze (`FETCH_DELAY_MS`) tussen
-  verzoeken — dit is een klein aantal pagina's per dag, geen bulk-crawl.
+- **Alleen lezen vooralsnog.** Nieuwe content plaatsen gebeurt nog steeds
+  via de bestaande weg: een TS-object toevoegen aan het relevante
+  seed-bestand (bv. `prisma/podcastContent.ts`), `npx tsc --noEmit`, committen
+  naar de werkbranch — zie "Podcastafleveringen verwerken" hieronder. Een
+  schrijvende content-API-route (bv. om die stap te automatiseren) is een
+  bewuste, aparte vervolgstap — niet zomaar aannemen dat die er al is.
 
 ## Codestijl
 
@@ -304,6 +255,27 @@ hier bewust niet gebouwd.
   bij twijfel met `getComputedStyle(el).backgroundColor` in de browser, niet
   alleen visueel — het verschil tussen wit en een lichte tint (bv. gold-50)
   is op een screenshot makkelijk te missen.
+
+## Accountbeveiliging en 2FA
+
+- TOTP is de ingebouwde tweestapsverificatie. Voor gewone gebruikers is dit **optioneel**; voor accounts met isAdmin=true is TOTP **verplicht zodra de beheerder het heeft ingesteld**.
+- Een bestaande beheerder mag zonder TOTP inloggen om de eerste configuratie te kunnen uitvoeren. Na het instellen kan een beheerder 2FA niet meer zelf uitschakelen.
+- **Vergrendel de laatste beheerder nooit tijdens de uitrol van 2FA.** De eerste admin moet altijd een setup-pad kunnen bereiken voordat TOTP voor dat account wordt afgedwongen.
+- TOTP-secrets worden versleuteld opgeslagen met een sleutel die uit SESSION_SECRET wordt afgeleid. Sla TOTP-secrets nooit als leesbare tekst op en log ze nooit.
+- Herstelcodes worden alleen als hashes opgeslagen en worden na gebruik ongeldig gemaakt. Toon nieuwe herstelcodes alleen één keer tijdens het instellen.
+- Gebruik voor TOTP de standaard 30-secondenperiode en een kleine kloktolerantie. Wijzig dit niet zonder een concrete beveiligingsreden.
+- Bij wijzigingen aan de authenticatieflow moet zowel de normale login als de 2FA-login met een authenticator-code én een herstelcode worden gecontroleerd.
+
+## Paginabreedte en layout
+
+- **max-w-5xl (1024px) is de standaard maximale breedte voor desktop-pagina-inhoud.** De globale <main> in src/app/layout.tsx gebruikt deze breedte; nieuwe overzichts-, lijst- en dashboardpagina's horen daarom standaard de beschikbare 5xl-breedte te benutten.
+- Gebruik voor brede pagina's de combinatie **max-w-5xl mx-auto** op de hoofdcontainer wanneer de pagina zelf een container nodig heeft. Maak niet zonder reden een nieuwe, smallere pagina-container.
+- **Gebruik bewust smallere inner containers** wanneer de inhoud daar beter bij past: formulieren, foutmeldingen, lees-/studietekst, compacte instellingen en andere sterk gefocuste content mogen bijvoorbeeld max-w-md, max-w-xl of max-w-2xl gebruiken. Dit is een inhoudelijke keuze voor de leesbaarheid, geen alternatieve algemene paginastandaard.
+- Overzichtskaarten, lijsten en grids zoals **Cursussen, Spellen, Vrienden, Profiel, XP/Reeks en dashboards** mogen op desktop de 5xl-breedte gebruiken. Laat de kaarten zelf vervolgens met grid/flex de ruimte verdelen; beperk de hele pagina niet opnieuw tot 2xl/3xl zonder duidelijke reden.
+- **Mobiel blijft volledig responsive**: de globale px-4 uit de layout blijft leidend; de 5xl-grens is vooral een desktoplimiet.
+- Nieuwe pagina's moeten bij ontwerp eerst worden ingedeeld als **breed overzicht**, **gefocuste content** of **immersieve spel-/leesweergave**. Alleen de eerste categorie gebruikt standaard 5xl; de andere twee mogen bewust afwijken.
+- Bij een bestaande pagina met een smallere max-w-* moet je bij wijzigingen controleren of die beperking nog inhoudelijk gewenst is. Pas niet blind alle pagina's aan: de uitzondering moet bewust en uitlegbaar zijn.
+- Houd deze standaard ook aan bij nieuwe client components die de volledige pagina-inhoud renderen. Een server-page die alleen <FeatureClient /> teruggeeft, kan dus alsnog een bredere of smallere container in die client component hebben.
 
 ## Content & auteursrecht (relevant bij wijzigingen aan content/seeds)
 
@@ -377,3 +349,53 @@ geconfigureerd maar via `/adminbackend` in de app zelf.
 Vóór een taak als afgerond geldt: voer `npx tsc --noEmit` uit, test relevante
 functionaliteit waar mogelijk handmatig via de dev-server/API, en voer
 daarna een schone productiebuild uit met `rm -rf .next && npm run build`.
+
+
+## Versiebeheer
+
+Jehova.app bevindt zich momenteel in een intensieve beta-fase. Er zullen nog veel kleine bugfixes en verbeteringen plaatsvinden. Daarom vertegenwoordigt een versienummer een release en niet iedere individuele wijziging of deployment.
+
+- Gebruik `package.json` als enige bron van waarheid voor de applicatieversie.
+- De huidige beta-versie blijft op `0.x.0`-niveau; verhoog het versienummer alleen bewust voor een nieuwe release met relevante gebruikersgerichte wijzigingen.
+- Verhoog de versie niet automatisch bij iedere commit, bugfix of deployment.
+- Gebruik de Git commit SHA als technische build-identificatie. De combinatie van applicatieversie en korte SHA moet exact aangeven welke code gedeployed is.
+- Toon de versie in de profiel-/informatieomgeving als bijvoorbeeld `v0.1.0 · beta · build abc1234`.
+- Houd een `CHANGELOG.md` bij voor belangrijke gebruikersgerichte wijzigingen en releases. Registreer niet iedere kleine interne bugfix als aparte release.
+- Gebruik `1.0.0` pas voor de eerste stabiele release.
+- Houd het systeem eenvoudig zolang Jehova.app beta is; voeg geen complex release-management toe zonder concrete behoefte.
+
+
+## Verificatie- en wijzigingsdiscipline
+
+Dit project heeft eerder problemen gehad doordat meerdere kleine wijzigingen achter elkaar
+werden gemaakt zonder tussentijds de volledige TypeScript/build-status te controleren. Dat
+mag niet opnieuw gebeuren.
+
+- **Een wijziging is pas klaar als de code ook aantoonbaar compileert.** Na iedere wijziging
+  aan TypeScript/TSX moet minimaal `npx tsc --noEmit` worden uitgevoerd voordat een volgende
+  gerelateerde codewijziging wordt gemaakt.
+- Na een reeks wijzigingen aan één feature moet altijd een **schone productiebuild** worden
+  uitgevoerd: `rm -rf .next && npm run build`. Alleen een groene GitHub Actions-build telt
+  als bevestiging dat de gepushte commit daadwerkelijk door de productiebuild komt; als de
+  workflow nog niet gestart is, mag niet worden gezegd dat de build geslaagd is.
+- **Geen fout-op-fout stapelen.** Als een wijziging een compileerfout veroorzaakt, stop dan
+  met nieuwe wijzigingen en los eerst de eerste fout op. Controleer daarna opnieuw met
+  `npx tsc --noEmit`. Voeg geen tweede of derde "fix" toe op basis van aannames.
+- Controleer na iedere wijziging de volledige gewijzigde functie/imports in de actuele versie
+  van het bestand. Let vooral op imports die bij een eerdere wijziging zijn toegevoegd,
+  verwijderd of verplaatst. Een ongebruikte import is vervelend, maar een gebruikte functie
+  zonder import is een build-blocker.
+- **Vertrouw niet op een eerdere claim dat iets werkt.** Controleer de actuele branch, de
+  actuele commit en de actuele build-status zelf voordat je een volgende wijziging maakt of
+  zegt dat iets klaar is.
+- Bij meerdere samenhangende wijzigingen: werk eerst de implementatie uit, voer daarna de
+  TypeScript-check uit, en maak pas daarna een volgende wijziging. Houd commits zo klein dat
+  een fout direct aan één concrete wijziging te koppelen is.
+- Als GitHub Actions meerdere rode commits laat zien, behandel die niet als afzonderlijke
+  problemen zonder de logs te bekijken. Zoek eerst de **eerste inhoudelijke fout** en bepaal
+  welke latere commits daarvan afhankelijk zijn. Repareer de onderliggende oorzaak in plaats
+  van steeds een nieuwe workaround erbovenop te zetten.
+- Voor een bugfix geldt: reproduceer of lokaliseer eerst de fout in de actuele code, lees de
+  relevante bestaande implementatie en wijzig daarna zo minimaal mogelijk. Niet gokken,
+  niet "blind" een import toevoegen of verwijderen omdat een foutmelding dat oppervlakkig
+  lijkt te suggereren.

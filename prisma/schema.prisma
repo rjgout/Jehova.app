@@ -22,8 +22,14 @@ model User {
   // exacte e-mailadres gebruikt worden om ze te vinden bij het toevoegen
   // van vrienden (zie /api/users/search).
   searchableByEmail  Boolean   @default(false)
-  displayName        String
   passwordHash       String
+  // Verhoogd bij een wachtwoordreset/-wijziging zodat alle eerder uitgegeven sessietokens direct ongeldig worden.
+  sessionVersion     Int       @default(0)
+  // Optionele TOTP-tweestapsverificatie; het geheime seed wordt versleuteld opgeslagen.
+  totpEnabled          Boolean @default(false)
+  totpSecretEncrypted  String?
+  // JSON-array met bcrypt-hashes van eenmalige herstelcodes.
+  totpRecoveryCodes    String?
   // De allereerste ECHTE registratie op een verse installatie wordt
   // automatisch admin (zie /api/auth/register); daarna kan een admin dit
   // bij andere gebruikers aan/uit zetten via /adminbackend.
@@ -89,6 +95,11 @@ model User {
   // blijft de standaardvolgorde gewoon ongewijzigd.
   bomKnowledgeLevel  IntroKnowledgeLevel?
 
+  // De actieve contentcollectie voor de contentswitcher. Null betekent dat de gebruiker
+  // nog geen expliciete keuze heeft gemaakt; de app gebruikt dan de standaardcollectie.
+  activeContentCollectionId String?
+  activeContentCollection   ContentCollection? @relation("ActiveContentCollection", fields: [activeContentCollectionId], references: [id], onDelete: SetNull)
+
   // Eigen emoji voor het avatar-rondje (zie ProfileClient.tsx — klik op het
   // rondje op je profielpagina om 'm te zetten), los van de gebruikersnaam:
   // een naam die met een emoji begint, wordt daar bewust NIET automatisch
@@ -127,6 +138,10 @@ model User {
   // ander getal te zien, dus vervangen door dit ene gedeelde tegoed.
   hintBalance   Int     @default(0)
 
+  // Teller voor de badge van de webapp: één stap per verstuurde pushnotificatie,
+  // teruggezet zodra de gebruiker de app weer opent.
+  notificationBadgeCount Int @default(0)
+
   // Notificaties: allebei standaard UIT (zelfde privacy-by-default-principe
   // als searchableByEmail hierboven) — een gebruiker moet er zelf voor
   // kiezen. Pushnotificaties vereisen daarnaast browsertoestemming (zie
@@ -140,9 +155,12 @@ model User {
   // is nergens in deze app een per-gebruiker tijdzone bijgehouden — zie
   // dayKey() in src/lib/dates.ts die ook al bewust op UTC-dagbuckets werkt).
   dailyReminderTime            String  @default("20:00")
+  dailyTextTime                String  @default("09:00")
+  notifyDailyText              Boolean @default(true)
   // Voorkomen dat de in-process scheduler (zie src/lib/scheduler.ts) dezelfde
   // dag/week twee keer een herinnering/uitslag stuurt.
   lastDailyReminderSentDate    String?
+  lastDailyTextSentDate        String?
   lastWeeklyResultNotifiedWeek String?
   // Nieuw woord van de dag beschikbaar (zie src/lib/wordGame.ts) — apart
   // bijgehouden omdat dit op een vast Nederlands tijdstip (18:00) gaat,
@@ -196,6 +214,7 @@ model User {
   activeCourseId String?
   activeCourse   Course?              @relation("ActiveCourse", fields: [activeCourseId], references: [id], onDelete: SetNull)
   courseProgress UserCourseProgress[]
+  courseLessonProgress UserCourseLessonProgress[]
 
   podcastAttempts        PodcastExerciseAttempt[]
   podcastProgress        PodcastEpisodeProgress[]
@@ -290,6 +309,8 @@ model Book {
   order    Int
   chapters Chapter[]
   courses  Course[] // BY_BOOK-cursussen die dit boek dekken
+  contentCollectionId String
+  contentCollection   ContentCollection @relation(fields: [contentCollectionId], references: [id], onDelete: Cascade)
 }
 
 model Chapter {
@@ -309,10 +330,61 @@ model Chapter {
   liveGames            LiveGame[]
   readingSessions      ReadingSession[]
   courseChapters       CourseChapter[]
+  courseLessons        CourseLesson[]
   courseProgressCursor UserCourseProgress[]
   challenges           Challenge[]
 
   @@unique([bookId, number])
+}
+
+// --- Contentcollecties ------------------------------------------------------
+// Een collectie is het hoogste contentniveau voor de contentswitcher (bv. het
+// Boek van Mormon, Leer en Verbonden of een later eigen lesboek). Book blijft
+// de bestaande onderliggende boek/hoofdstukstructuur; de collectie bepaalt
+// welke cursussen en spellen in de app-context beschikbaar zijn.
+model ContentCollection {
+  id        String   @id
+  slug      String   @unique
+  name      String
+  icon      String
+  order     Int      @default(0)
+  enabled   Boolean  @default(true)
+  books     Book[]
+  courses   Course[]
+  gameScopes GameContentScope[]
+  users     User[]   @relation("ActiveContentCollection")
+  fsyLessons FsyLesson[]
+}
+
+// Koppelt een spel aan één of meer contentcollecties. gameKey is de stabiele
+// sleutel uit de spelcatalogus in LiveLobbyForm.tsx; daardoor hoeft de
+// spelcatalogus niet naar de database te verhuizen.
+model GameContentScope {
+  id                   String           @id @default(cuid())
+  gameKey              String
+  contentCollectionId  String
+  contentCollection    ContentCollection @relation(fields: [contentCollectionId], references: [id], onDelete: Cascade)
+
+  @@unique([gameKey, contentCollectionId])
+  @@index([contentCollectionId])
+}
+
+// Singleton: bepaalt alleen of de contentswitcher voor gewone gebruikers
+// zichtbaar is. De inhoud zelf komt uit ContentCollection.
+model ContentSwitcherSettings {
+  id      String  @id @default("singleton")
+  enabled Boolean @default(false)
+}
+
+// Singleton voor de automatische FSY-broncontrole. Nieuwe inhoud komt eerst
+// als concept binnen; pas na controle wordt de gepubliceerde versie vervangen.
+// Met autoPublish kan dit later bewust worden omgezet naar directe publicatie.
+model FsySettings {
+  id            String   @id @default("singleton")
+  autoPublish   Boolean  @default(false)
+  lastCheckedAt DateTime?
+  lastError     String?
+  updatedAt     DateTime @updatedAt
 }
 
 // --- Cursussen: verschillende manieren om door de content te lopen --------
@@ -324,6 +396,7 @@ model Chapter {
 // zelf een hoofdstuk"-modus over alle content heen, zonder vaste volgorde.
 enum CourseType {
   FRONT_TO_BACK
+  READING_LESSONS
   FREE_CHOICE
   BY_BOOK
   // Singleton (net als FREE_CHOICE): geen CourseChapter-rijen, alle
@@ -335,6 +408,9 @@ enum CourseType {
   // impliciet bij ("Ontdek het Boek van Mormon", de introductiecursus voor
   // wie nog geen voorkennis heeft).
   INTRO
+  // Singleton binnen de FSY-contentcollectie: de wekelijkse lessen staan
+  // in FsyLesson en hebben bewust geen Chapter/Verse-structuur.
+  FSY
 }
 
 model Course {
@@ -346,6 +422,8 @@ model Course {
   order       Int        @default(0)
   bookId      String? // alleen gezet voor BY_BOOK
   book        Book?      @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  contentCollectionId String
+  contentCollection   ContentCollection @relation(fields: [contentCollectionId], references: [id], onDelete: Cascade)
   // Door een admin uit te zetten via /adminbackend — verdwijnt dan uit ieders
   // cursussenoverzicht/toevoeg-catalogus (zie /api/courses en
   // /api/courses/catalog), maar bestaande voortgang blijft gewoon bestaan en
@@ -355,6 +433,7 @@ model Course {
   chapters       CourseChapter[]
   userProgress   UserCourseProgress[]
   activeForUsers User[]               @relation("ActiveCourse")
+  lessons        CourseLesson[]
 }
 
 model CourseChapter {
@@ -369,6 +448,60 @@ model CourseChapter {
   @@unique([courseId, order])
 }
 
+// Kleine leeslessen binnen een cursus. De grenzen worden één keer bepaald
+// op basis van het aantal verzen en blijven daarna vaststaan, zodat de route
+// door het boek voor alle gebruikers hetzelfde is.
+model CourseLesson {
+  id        String   @id @default(cuid())
+  courseId  String
+  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  chapterId String
+  chapter   Chapter  @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+  order     Int
+  startVerse Int
+  endVerse   Int
+
+  exercises CourseLessonExercise[]
+  progress  UserCourseLessonProgress[]
+  currentForCourseProgress UserCourseProgress[] @relation("CurrentCourseLesson")
+
+  @@unique([courseId, order])
+  @@unique([courseId, chapterId, startVerse])
+  @@index([courseId, chapterId])
+}
+
+// Koppelt de vaste 2-3 vragen aan een leesles. De vragen komen uit de
+// bestaande, gecontroleerde oefenbank van de bijbehorende verzen.
+model CourseLessonExercise {
+  id        String       @id @default(cuid())
+  lessonId  String
+  lesson    CourseLesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  exerciseId String
+  exercise  Exercise     @relation(fields: [exerciseId], references: [id], onDelete: Cascade)
+  order     Int
+
+  @@unique([lessonId, exerciseId])
+  @@unique([lessonId, order])
+}
+
+// Voortgang per gebruiker en per kleine leesles. Anders dan ChapterProgress
+// is dit bewust gekoppeld aan deze cursus, zodat de gewone hoofdstuklessen
+// ongemoeid blijven.
+model UserCourseLessonProgress {
+  id          String      @id @default(cuid())
+  userId      String
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lessonId    String
+  lesson      CourseLesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  completed   Boolean     @default(false)
+  bestScore   Int         @default(0)
+  xpEarned    Int         @default(0)
+  completedAt DateTime?
+
+  @@unique([userId, lessonId])
+  @@index([userId, completedAt])
+}
+
 // Per gebruiker, per cursus: welk hoofdstuk als volgende aan de beurt is.
 // Blijft bestaan als je naar een andere cursus wisselt, zodat je nooit je
 // plek kwijtraakt (zie User.activeCourseId hierboven).
@@ -378,8 +511,12 @@ model UserCourseProgress {
   user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   courseId         String
   course           Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  currentChapterId String? // null = cursus uitgelezen (of nog niet gestart, bij FREE_CHOICE)
+  currentChapterId String? // Bestaande cursussen gebruiken dit als huidige hoofdstuk.
   currentChapter   Chapter? @relation(fields: [currentChapterId], references: [id], onDelete: SetNull)
+  currentLessonId  String? // De kleine leeslessen gebruiken dit als volgende les.
+  currentLesson    CourseLesson? @relation("CurrentCourseLesson", fields: [currentLessonId], references: [id], onDelete: SetNull)
+  comboCount       Int      @default(0)
+  comboLastCompletedAt DateTime?
   lastActivityAt   DateTime @default(now())
   // Staat deze cursus in de persoonlijke cursussenlijst ("Cursussen")? Een
   // gebruiker kan een cursus verwijderen (dit op false zetten, zie
@@ -559,6 +696,44 @@ model KidsStoryProgress {
   completedAt DateTime?
 
   @@unique([userId, storyId])
+}
+
+// --- Voor de kracht van de jeugd -------------------------------------------
+//
+// Deze lessen komen uit de officiële maandelijkse FSY-lespagina's. Ze zijn
+// bewust geen Chapter/Verse en ook geen oefening: eerst tonen we alleen tekst
+// en afbeeldingen. De actuele gescrapete versie en de laatst gepubliceerde
+// versie staan apart zodat een bronwijziging niet automatisch zichtbaar wordt
+// wanneer autoPublish uitstaat.
+model FsyLesson {
+  id                  String          @id @default(cuid())
+  contentCollectionId String
+  contentCollection   ContentCollection @relation(fields: [contentCollectionId], references: [id], onDelete: Cascade)
+  year                Int
+  month               Int
+  category            String
+  slug                String
+  title               String
+  content             String          // JSON-array met tekst- en afbeeldingsblokken
+  images              String          // JSON-array met {url, alt}
+  sourceUrl           String
+  sourceHash          String
+  status              FsyLessonStatus @default(DRAFT)
+  publishedTitle      String?
+  publishedContent    String?
+  publishedImages     String?
+  publishedAt         DateTime?
+  lastScrapedAt       DateTime         @default(now())
+  order               Int              @default(0)
+
+  @@unique([contentCollectionId, sourceUrl])
+  @@unique([contentCollectionId, year, month, slug])
+  @@index([contentCollectionId, year, month, status, order])
+}
+
+enum FsyLessonStatus {
+  DRAFT
+  PUBLISHED
 }
 
 // --- Introductiecursus ("Ontdek het Boek van Mormon") ----------------------
@@ -841,10 +1016,12 @@ model Exercise {
   sourceVerse   Verse?           @relation(fields: [sourceVerseId], references: [id], onDelete: SetNull)
   prompt        String // tekst met "____" op de plek van het weggelaten woord, of de stelling bij TRUE_FALSE
   answers       String // JSON-array van geaccepteerde antwoorden (of ["true"]/["false"])
+  hint          String? // Zelfgeschreven/gegenereerde denkhint die het antwoord niet rechtstreeks verklapt
   wordBank      String? // JSON-array van keuzewoorden voor WORD_BANK type
   options       QuestionOption[]
 
   attempts ExerciseAttempt[]
+  courseLessonLinks CourseLessonExercise[]
 }
 
 // Nog niet gebruikt door de huidige generatoren (FILL_BLANK/WORD_BANK/
@@ -969,6 +1146,7 @@ model FreezeTransaction {
   related   User?        @relation("FreezeRelated", fields: [relatedId], references: [id], onDelete: SetNull)
   reason    String?
   createdAt DateTime     @default(now())
+  seenAt    DateTime?
 }
 
 // Eén rij per dag die meetelt voor de reeks-kalender (zie /streak): STUDIED
@@ -1313,10 +1491,13 @@ model WordGame {
   guesses    String         @default("[]") // JSON: array van geraden woorden, in volgorde
   status     WordGameStatus @default(IN_PROGRESS)
   xpEarned   Int            @default(0)
+  leaderboardXpBonus Int    @default(0) // Eenmalige XP-bonus voor een top-10-positie.
+  leaderboardRank   Int?
   createdAt  DateTime       @default(now())
   finishedAt DateTime?
 
   @@unique([userId, dayKey])
+  @@index([dayKey, status, finishedAt])
 }
 
 // Het woord zelf komt uit een deterministische functie van de dayKey (zie
@@ -1555,56 +1736,4 @@ model GameSettings {
   chapterGuessEnabled  Boolean @default(true)
   challengesEnabled    Boolean @default(true)
   liveExercisesEnabled Boolean @default(true) // "Nieuw spel starten"-formulier (oefeningen-race)
-}
-
-// --- Officiële content-import (zie CLAUDE.md, sectie "Officiële content
-// importeren", en src/lib/officialContentImport.ts) ---
-
-enum OfficialLessonSource {
-  FSY_YOUTH            // "Voor de kracht van de jeugd" — maandelijkse jeugdlessen (vastenzondag/tweede zondag/...)
-  COME_FOLLOW_ME_YOUTH // "Kom, Volg Mij" voor jeugdwerk en zondagsschool
-}
-
-// Ruwe, ongewijzigde broncontent van de officiële kerksite. Bewust een
-// losstaande staging-tabel: (nog) niet gekoppeld aan enige bestaande
-// content-/lestabel of gebruikersfunctionaliteit — zie officialContentImport.ts
-// voor de volledige achtergrond en de aannames over de bron-URL-structuur.
-model ImportedOfficialLesson {
-  id               String               @id @default(cuid())
-  source           OfficialLessonSource
-  sourceUrl        String               @unique
-  language         String               @default("nld")
-  // title/periodLabel komen ongewijzigd van de bronpagina zelf (og:title/
-  // <title>, resp. de eerste herkenbare koptekst) — geen eigen samenvatting.
-  title            String
-  periodLabel      String?
-  year             Int?
-  month            Int?
-  // Volgorde zoals aangetroffen op de overzichtspagina van de bron (1 = eerst
-  // gevonden), gebruikt om weken/zondagen op volgorde te zetten zonder zelf
-  // een kalender te moeten narekenen.
-  sequenceInPeriod Int?
-  rawHtml          String               @db.Text
-  contentHash      String
-  firstImportedAt  DateTime             @default(now())
-  lastCheckedAt    DateTime             @default(now())
-  lastChangedAt    DateTime             @default(now())
-
-  @@index([source, year, month])
-}
-
-// Eén rij per importrun (handmatig via de content-API, of automatisch via de
-// scheduler) — puur voor zichtbaarheid: wat is er gevonden, nieuw, gewijzigd,
-// of misgegaan.
-model OfficialContentImportRun {
-  id             String    @id @default(cuid())
-  startedAt      DateTime  @default(now())
-  finishedAt     DateTime?
-  urlsChecked    Int       @default(0)
-  newCount       Int       @default(0)
-  updatedCount   Int       @default(0)
-  unchangedCount Int       @default(0)
-  errorCount     Int       @default(0)
-  errors         String?   @db.Text // JSON-array van { url, message }, alleen gezet bij errorCount > 0
-  triggeredBy    String // "scheduler" | "api"
 }

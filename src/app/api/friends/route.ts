@@ -18,7 +18,10 @@ export async function GET() {
 
   const friends = friendships
     .filter((f) => f.status === "ACCEPTED")
-    .map((f) => (f.senderId === user.id ? f.receiver : f.sender));
+    .map((f) => ({
+      friendshipId: f.id,
+      user: f.senderId === user.id ? f.receiver : f.sender,
+    }));
 
   const incoming = friendships
     .filter((f) => f.status === "PENDING" && f.receiverId === user.id)
@@ -32,7 +35,7 @@ export async function GET() {
   // instellingen (zie computeFriendStatus in src/lib/presence.ts) — een
   // vriend die niets deelt komt hier gewoon niet in de map voor, in plaats
   // van met een "verborgen" waarde, zodat er ook via deze route niets lekt.
-  const statusByUserId = await getFriendStatusMap(friends.map((f) => f.id));
+  const statusByUserId = await getFriendStatusMap(friends.map((f) => f.user.id), user.shareOnlineStatus);
 
   return NextResponse.json({ friends, incoming, outgoing, statusByUserId });
 }

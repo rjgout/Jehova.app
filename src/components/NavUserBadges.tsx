@@ -7,11 +7,9 @@ import { onXpChanged } from "@/lib/xpBroadcast";
 export default function NavUserBadges({
   streak,
   xp,
-  displayName,
 }: {
   streak: number;
   xp: number;
-  displayName: string;
 }) {
   // De props zijn de server-gerenderde waarde bij laden van de pagina —
   // vanaf dan houdt deze component ze zelf bij, zodat een XP-wijziging
@@ -35,9 +33,6 @@ export default function NavUserBadges({
       </Link>
       <Link href="/xp" title="Ervaringspunten" className="flex items-center gap-1 text-gold-600">
         ⭐ {values.xp}
-      </Link>
-      <Link href="/profile" className="hidden md:inline text-slate-500">
-        {displayName}
       </Link>
     </div>
   );

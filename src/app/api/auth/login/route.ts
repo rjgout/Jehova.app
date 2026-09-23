@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
-import { createSessionToken, verifyPassword, SESSION_COOKIE, sessionCookieOptions } from "@/lib/auth";
+import { createSessionToken, createTwoFactorChallengeToken, verifyPassword, SESSION_COOKIE, sessionCookieOptions } from "@/lib/auth";
 import { parseTag } from "@/lib/handle";
 
 const schema = z.object({
@@ -36,8 +36,13 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(genericError, { status: 401 });
   }
 
+  if (user.totpEnabled) {
+    const challengeToken = await createTwoFactorChallengeToken(user.id);
+    return NextResponse.json({ requiresTwoFactor: true, challengeToken });
+  }
+
   const token = await createSessionToken(user.id);
-  const res = NextResponse.json({ id: user.id });
+  const res = NextResponse.json({ id: user.id, mustSetupTwoFactor: user.isAdmin });
   res.cookies.set(SESSION_COOKIE, token, sessionCookieOptions);
   return res;
 }

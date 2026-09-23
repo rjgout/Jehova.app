@@ -1,11 +1,12 @@
 import { prisma } from "@/lib/db";
 import { addDays, dayKey, weekStartKey, amsterdamNow, type AmsterdamTime } from "@/lib/dates";
 import { resolveWeeklyPlacement, getLeagueSettings, TIER_ORDER, TIER_LABELS } from "@/lib/leagues";
-import { notifyDailyReminder, notifyWeeklyResult, notifySeasonResult, notifyWordGame } from "@/lib/notify";
+import { notifyDailyReminder, notifyDailyText, notifyWeeklyResult, notifySeasonResult, notifyWordGame } from "@/lib/notify";
+import { getTextOfTheDay } from "@/lib/dailyText";
 import { wordGameDayKey } from "@/lib/wordGame";
 import { broadcastPresenceUpdate } from "@/lib/presence";
 import { getIO } from "@/server/gameServer";
-import { runOfficialContentImport } from "@/lib/officialContentImport";
+import { runFsyWeeklyCheckIfDue } from "@/lib/fsyContent";
 
 const TICK_MS = 60_000;
 // Vast (niet instelbaar) moment voor de wekelijkse uitslag — dit is geen
@@ -40,6 +41,29 @@ function previousWeekStart(weekStart: string): string {
  * heeft aangezet. lastDailyReminderSentDate voorkomt dubbel versturen als de
  * tick door trage queries iets uitloopt.
  */
+async function runDailyTextTick(): Promise<void> {
+  const now = new Date();
+  const time = amsterdamHHMM(amsterdamNow(now));
+  const today = dayKey(now);
+
+  const candidates = await prisma.user.findMany({
+    where: {
+      dailyTextTime: time,
+      notifyDailyText: true,
+      OR: [{ emailNotificationsEnabled: true }, { pushNotificationsEnabled: true }],
+      AND: [{ OR: [{ lastDailyTextSentDate: null }, { lastDailyTextSentDate: { not: today } }] }],
+    },
+    select: { id: true },
+  });
+  const text = await getTextOfTheDay(now);
+  if (!text) return;
+
+  for (const user of candidates) {
+    await notifyDailyText(user.id, { ...text, content: text.text }).catch(() => {});
+    await prisma.user.update({ where: { id: user.id }, data: { lastDailyTextSentDate: today } }).catch(() => {});
+  }
+}
+
 async function runDailyReminderTick(): Promise<void> {
   const now = new Date();
   const time = amsterdamHHMM(amsterdamNow(now));
@@ -262,20 +286,6 @@ async function runIncognitoExpiryTick(): Promise<void> {
   }
 }
 
-/**
- * Eén keer per dag, buiten piekuren, automatisch de officiële jeugd-
- * lesmaterialen ophalen/verversen (zie officialContentImport.ts) — puur
- * self-gating op tijdstip, net als de andere dag-/tijdgebonden ticks
- * hierboven. Fouten op individuele pagina's worden door
- * runOfficialContentImport zelf al opgevangen en gelogd (OfficialContentImportRun);
- * hier alleen nog een vangnet voor een fout die de hele run laat crashen.
- */
-async function runOfficialContentImportTick(): Promise<void> {
-  const amsterdam = amsterdamNow();
-  if (amsterdam.hour !== 3 || amsterdam.minute !== 0) return;
-  await runOfficialContentImport("scheduler");
-}
-
 let started = false;
 
 /** Start de in-process schedulers — bewust geen losse cron-infrastructuur (zie ook src/lib/leagues.ts). Eenmalig aan te roepen vanuit server.ts. */
@@ -283,11 +293,12 @@ export function startNotificationSchedulers(): void {
   if (started) return;
   started = true;
   setInterval(() => {
+    runDailyTextTick().catch((e) => console.error("Tekst van de dag mislukt:", e));
     runDailyReminderTick().catch((e) => console.error("Dagelijkse herinnering mislukt:", e));
     runWeeklyResultTick().catch((e) => console.error("Wekelijkse uitslag mislukt:", e));
     runSeasonRolloverTick().catch((e) => console.error("Seizoensafsluiting mislukt:", e));
     runWordGameNotificationTick().catch((e) => console.error("Woord-van-de-dag-melding mislukt:", e));
     runIncognitoExpiryTick().catch((e) => console.error("Incognito-vervaltijd mislukt:", e));
-    runOfficialContentImportTick().catch((e) => console.error("Officiële content-import mislukt:", e));
+    runFsyWeeklyCheckIfDue(prisma).catch((e) => console.error("FSY-weekcontrole mislukt:", e));
   }, TICK_MS);
 }

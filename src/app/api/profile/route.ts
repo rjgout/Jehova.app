@@ -61,6 +61,7 @@ export async function GET() {
 
   return NextResponse.json({
     displayName: user.handle,
+    isAdmin: user.isAdmin,
     handle: user.handle,
     discriminator: user.discriminator,
     avatarEmoji: user.avatarEmoji,
@@ -74,11 +75,14 @@ export async function GET() {
     emailNotificationsEnabled: user.emailNotificationsEnabled,
     pushNotificationsEnabled: user.pushNotificationsEnabled,
     dailyReminderTime: user.dailyReminderTime,
+    dailyTextTime: user.dailyTextTime,
+    notifyDailyText: user.notifyDailyText,
     notifyDailyReminder: user.notifyDailyReminder,
     notifySocial: user.notifySocial,
     notifyAchievements: user.notifyAchievements,
     notifyWordGame: user.notifyWordGame,
     changelogEnabled: user.changelogEnabled,
+    totpEnabled: user.totpEnabled,
     xpTotal: user.xpTotal,
     currentStreak: user.currentStreak,
     longestStreak: user.longestStreak,

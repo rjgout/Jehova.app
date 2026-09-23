@@ -299,12 +299,14 @@ export default function ScrabbleBoardClient({ gameId }: { gameId: string }) {
             Tegen {game.opponent.displayName}
           </h1>
         </div>
-        <div className="text-right">
-          <div className="font-extrabold text-lg dark:text-slate-100">
-            {game.myScore} - {game.opponentScore}
-          </div>
-          <div className="text-xs text-slate-400 dark:text-slate-500">
-            Zak: {game.bagCount} · Tegenstander: {game.opponentRackCount} letters
+        <div className="flex items-center gap-3">
+          <div className="text-right">
+            <div className="font-extrabold text-lg dark:text-slate-100">
+              {game.myScore} - {game.opponentScore}
+            </div>
+            <div className="text-xs text-slate-400 dark:text-slate-500">
+              Zak: {game.bagCount} · Tegenstander: {game.opponentRackCount} letters
+            </div>
           </div>
         </div>
       </div>
@@ -460,6 +462,8 @@ export default function ScrabbleBoardClient({ gameId }: { gameId: string }) {
           </div>
         </div>
       )}
+
+      
 
       {game.moves.length > 0 && (
         <section>

@@ -160,7 +160,7 @@ export default function XpHistoryClient() {
   const groups = groupTransactions(transactions);
 
   return (
-    <div className="max-w-xl mx-auto flex flex-col gap-5">
+    <div className="max-w-5xl mx-auto flex flex-col gap-5">
       <h1 className="text-2xl font-extrabold text-brand-800 dark:text-brand-300">⭐ Ervaringspunten</h1>
 
       <div className="card bg-gradient-to-br from-brand-500 to-brand-700 dark:from-brand-600 dark:to-brand-900 text-white flex flex-col items-center gap-1 !py-8">

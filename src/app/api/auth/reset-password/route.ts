@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { consumeAuthToken } from "@/lib/authTokens";
-import { createSessionToken, hashPassword, SESSION_COOKIE, sessionCookieOptions } from "@/lib/auth";
+import { createSessionToken, createTwoFactorChallengeToken, hashPassword, SESSION_COOKIE, sessionCookieOptions } from "@/lib/auth";
 
 const schema = z.object({
   token: z.string().min(1),
@@ -24,8 +24,17 @@ export async function POST(req: NextRequest) {
   const passwordHash = await hashPassword(parsed.data.newPassword);
   await prisma.user.update({
     where: { id: userId },
-    data: { passwordHash, mustChangePassword: false },
+    data: { passwordHash, mustChangePassword: false, sessionVersion: { increment: 1 } },
   });
+
+  // Een wachtwoordreset mag 2FA niet omzeilen. Als het account TOTP gebruikt,
+  // is het nieuwe wachtwoord wel opgeslagen, maar volgt eerst dezelfde
+  // tweede stap als bij een normale login.
+  const user = await prisma.user.findUnique({ where: { id: userId }, select: { totpEnabled: true } });
+  if (user?.totpEnabled) {
+    const challengeToken = await createTwoFactorChallengeToken(userId);
+    return NextResponse.json({ ok: true, requiresTwoFactor: true, challengeToken });
+  }
 
   // Meteen inloggen na een geslaagde reset, dat scheelt een stap.
   const token = await createSessionToken(userId);

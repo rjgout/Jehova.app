@@ -10,14 +10,15 @@ import InstallAppCard from "@/components/InstallAppCard";
 interface OnboardingClientProps {
   email: string;
   searchableByEmail: boolean;
+  shareOnlineStatus: boolean;
   pushNotificationsEnabled: boolean;
   emailNotificationsEnabled: boolean;
   emailConfigured: boolean;
 }
 
-type StepId = "kennis" | "webapp" | "uitleg" | "vrienden" | "notificaties";
+type StepId = "kennis" | "webapp" | "uitleg" | "vrienden" | "online-status" | "notificaties";
 
-const ALL_STEPS: StepId[] = ["kennis", "webapp", "uitleg", "vrienden", "notificaties"];
+const ALL_STEPS: StepId[] = ["kennis", "webapp", "uitleg", "vrienden", "online-status", "notificaties"];
 
 /**
  * Vierstaps onboarding: webapp-installatie (overgeslagen als de app al
@@ -30,6 +31,7 @@ const ALL_STEPS: StepId[] = ["kennis", "webapp", "uitleg", "vrienden", "notifica
 export default function OnboardingClient({
   email,
   searchableByEmail,
+  shareOnlineStatus,
   pushNotificationsEnabled,
   emailNotificationsEnabled,
   emailConfigured,
@@ -78,6 +80,7 @@ export default function OnboardingClient({
       {step === "webapp" && <WebappStep onNext={next} />}
       {step === "uitleg" && <UitlegStep onNext={next} />}
       {step === "vrienden" && <VriendenStep email={email} initialSearchable={searchableByEmail} onNext={next} />}
+      {step === "online-status" && <OnlineStatusStep initialShareOnlineStatus={shareOnlineStatus} onNext={next} />}
       {step === "notificaties" && (
         <NotificatiesStep
           emailConfigured={emailConfigured}
@@ -297,6 +300,69 @@ function VriendenStep({ email, initialSearchable, onNext }: { email: string; ini
 
       <button className="btn-primary self-center" onClick={onNext}>
         Volgende
+      </button>
+    </div>
+  );
+}
+
+function OnlineStatusStep({
+  initialShareOnlineStatus,
+  onNext,
+}: {
+  initialShareOnlineStatus: boolean;
+  onNext: () => void;
+}) {
+  const [shareOnlineStatus, setShareOnlineStatus] = useState(initialShareOnlineStatus);
+  const [saving, setSaving] = useState(false);
+
+  async function saveAndContinue() {
+    setSaving(true);
+    await fetch("/api/account", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ shareOnlineStatus }),
+    }).catch(() => {});
+    setSaving(false);
+    onNext();
+  }
+
+  return (
+    <div className="flex flex-col gap-4">
+      <h1 className="text-xl font-extrabold text-brand-800 dark:text-brand-300 text-center">Online status</h1>
+      <p className="text-sm text-slate-500 dark:text-slate-400 text-center">
+        Kies of je vrienden mogen zien wanneer je online bent. Deze keuze staat ook later altijd in je profiel.
+      </p>
+
+      <div className="flex flex-col gap-2">
+        <button
+          type="button"
+          className={`card text-left !border-2 ${shareOnlineStatus ? "!border-brand-500 !bg-brand-50 dark:!bg-slate-800" : "!border-transparent"}`}
+          onClick={() => setShareOnlineStatus(true)}
+          disabled={saving}
+          aria-pressed={shareOnlineStatus}
+        >
+          <div className="font-extrabold dark:text-slate-100">🟢 Ja, deel mijn online status</div>
+          <div className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+            Vrienden kunnen zien of je online bent en, als je dat toestaat, wat je aan het doen bent.
+          </div>
+        </button>
+
+        <button
+          type="button"
+          className={`card text-left !border-2 ${!shareOnlineStatus ? "!border-brand-500 !bg-brand-50 dark:!bg-slate-800" : "!border-transparent"}`}
+          onClick={() => setShareOnlineStatus(false)}
+          disabled={saving}
+          aria-pressed={!shareOnlineStatus}
+        >
+          <div className="font-extrabold dark:text-slate-100">🙈 Nee, liever niet</div>
+          <div className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+            Je bent onzichtbaar voor vrienden — en om het eerlijk te houden kun je dan ook hun online status niet zien.
+          </div>
+        </button>
+      </div>
+
+      <button className="btn-primary self-center" onClick={saveAndContinue} disabled={saving}>
+        {saving ? "Opslaan..." : "Volgende"}
       </button>
     </div>
   );

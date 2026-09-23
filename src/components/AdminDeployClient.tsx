@@ -25,11 +25,12 @@ const PHASE_LABELS: Record<DeployStatus["phase"], string> = {
   failed_critical: "Mislukt — ingrijpen nodig",
 };
 
-export default function AdminDeployClient({ configured }: { configured: boolean }) {
+export default function AdminDeployClient({ configured, onlineUserCount }: { configured: boolean; onlineUserCount: number }) {
   const [status, setStatus] = useState<DeployStatus | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [actionBusy, setActionBusy] = useState(false);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const statusRef = useRef<DeployStatus | null>(null);
   // Tijdens een echte deploy/rollback stopt jehova-app zelf even helemaal —
   // en dat is precies de container waar deze pagina op draait. Een gewone
   // fetch() daarnaartoe faalt dan met een kale netwerkfout; een échte
@@ -40,6 +41,7 @@ export default function AdminDeployClient({ configured }: { configured: boolean 
   // toevallige netwerkhapering op een ander moment niet ook een onnodige
   // herlaad veroorzaakt.
   const deployInFlightRef = useRef(false);
+  const transientStatusErrorsRef = useRef(0);
 
   function handleUnreachable() {
     if (deployInFlightRef.current) {
@@ -53,10 +55,21 @@ export default function AdminDeployClient({ configured }: { configured: boolean 
     try {
       const res = await fetch("/api/admin/deploy/status", { cache: "no-store" });
       if (!res.ok) {
+        // Tijdens het wisselen van de app-container kan de proxy of de
+        // deploy-agent heel kort een 502 geven. Dat is geen echte fout en
+        // verdwijnt vanzelf bij de volgende poll. Vooral direct na een
+        // succesvolle deploy willen we de gebruiker niet laten schrikken
+        // van een tijdelijke netwerkhapering.
+        if (res.status === 502 && (deployInFlightRef.current || statusRef.current?.phase === "success")) {
+          transientStatusErrorsRef.current += 1;
+          if (transientStatusErrorsRef.current <= 3) return;
+        }
         setError((await res.json().catch(() => null))?.error ?? "Kon status niet ophalen.");
         return;
       }
       const data: DeployStatus = await res.json();
+      transientStatusErrorsRef.current = 0;
+      statusRef.current = data;
       setStatus(data);
       setError(null);
       if (!BUSY_PHASES.includes(data.phase)) deployInFlightRef.current = false;
@@ -78,10 +91,8 @@ export default function AdminDeployClient({ configured }: { configured: boolean 
   async function callAction(path: string, body?: unknown) {
     setActionBusy(true);
     setError(null);
-    // Alleen deze twee acties vervangen de container zelf — de
-    // onderhoudsmodus-knop schakelt alleen een vlag bij de proxy om, zonder
-    // jehova-app te herstarten.
-    const startsOutage = path === "/api/admin/deploy/start" || path === "/api/admin/deploy/rollback";
+    // Alleen een echte deploy vervangt de app-container zelf.
+    const startsOutage = path === "/api/admin/deploy/start";
     if (startsOutage) deployInFlightRef.current = true;
     try {
       const res = await fetch(path, {
@@ -139,34 +150,29 @@ export default function AdminDeployClient({ configured }: { configured: boolean 
               aria-hidden
             />
             <span className="font-bold text-sm dark:text-slate-100">{PHASE_LABELS[status.phase]}</span>
-            <span className="text-xs text-slate-400 dark:text-slate-500">
-              {status.maintenanceOn ? "· onderhoudsmodus staat AAN" : "· site staat live"}
-            </span>
           </div>
           <p className="text-sm text-slate-500 dark:text-slate-400">{status.message}</p>
         </div>
       )}
 
-      <div className="flex gap-2 flex-wrap">
+      <div className="flex items-center justify-between gap-4 flex-wrap">
+        <div className="flex items-center gap-2">
+          <span
+            className={"inline-block w-3 h-3 rounded-full " + (onlineUserCount === 0 ? "bg-green-500" : onlineUserCount === 1 ? "bg-yellow-400" : "bg-orange-500")}
+            aria-hidden
+          />
+          <span className="font-bold text-sm dark:text-slate-100">
+            {onlineUserCount === 0
+              ? "Niemand online"
+              : onlineUserCount === 1
+                ? "1 gebruiker online"
+                : onlineUserCount + " gebruikers online"}
+          </span>
+        </div>
         <button className="btn-secondary !px-3 !py-1.5 !text-sm" disabled={isBusy} onClick={() => callAction("/api/admin/deploy/start")}>
           🚀 Nu deployen
         </button>
-        <button
-          className="btn-secondary !px-3 !py-1.5 !text-sm"
-          disabled={isBusy}
-          onClick={() => callAction("/api/admin/deploy/maintenance", { on: !status?.maintenanceOn })}
-        >
-          {status?.maintenanceOn ? "Onderhoudsmodus uit" : "Onderhoudsmodus aan"}
-        </button>
-        <button
-          className="btn-secondary !px-3 !py-1.5 !text-sm"
-          disabled={isBusy || !status?.hasRollbackTarget}
-          onClick={() => callAction("/api/admin/deploy/rollback")}
-        >
-          ⏪ Rollback naar vorige versie
-        </button>
       </div>
-
       {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
 
       {status && status.logs.length > 0 && (

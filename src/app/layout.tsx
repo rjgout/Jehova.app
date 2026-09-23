@@ -1,3 +1,4 @@
+import FreezeGiftPopup from "@/components/FreezeGiftPopup";
 import type { Metadata, Viewport } from "next";
 import Link from "next/link";
 import { headers } from "next/headers";
@@ -11,11 +12,17 @@ import ChangelogPopup from "@/components/ChangelogPopup";
 import ThemeScript from "@/components/ThemeScript";
 import BottomNav from "@/components/BottomNav";
 import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
+import NotificationBadgeClear from "@/components/NotificationBadgeClear";
 import EdgeSwipeGuard from "@/components/EdgeSwipeGuard";
 import PodcastMiniPlayer from "@/components/PodcastMiniPlayer";
 import HeaderInstallHint from "@/components/HeaderInstallHint";
+import ContentSwitcher from "@/components/ContentSwitcher";
+import { getContentContext } from "@/lib/contentCollections";
 import StickyHeader from "@/components/StickyHeader";
 import { PodcastPlayerProvider } from "@/lib/podcastPlayerContext";
+import { ReadAloudPlayerProvider } from "@/lib/readAloudPlayerContext";
+import ReadAloudMiniPlayer from "@/components/ReadAloudMiniPlayer";
+import ActivityTracker from "@/components/ActivityTracker";
 import { APP_TAGLINE, resolveAppName } from "@/lib/brand";
 
 // PWA: manifest + icons zijn wat een browser nodig heeft om "toevoegen aan
@@ -38,6 +45,9 @@ export async function generateMetadata(): Promise<Metadata> {
     description: APP_TAGLINE,
     manifest: "/manifest.webmanifest",
     metadataBase: new URL(appUrl),
+    alternates: {
+      canonical: "/",
+    },
     // Bepaalt de voorvertoning (titel/beschrijving/afbeelding) die apps als
     // WhatsApp, Telegram en Discord tonen bij het delen van een link — dit is
     // een los mechanisme van de browsericonen hieronder, maar gebruikt bewust
@@ -116,6 +126,7 @@ async function detectAppUrlFromHeaders(): Promise<void> {
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   detectAppUrlFromHeaders().catch(() => {});
   const [user, { logoDataUrl, appName }] = await Promise.all([getCurrentUser(), getBranding()]);
+  const contentContext = user ? await getContentContext(user.id) : null;
   const displayName = resolveAppName(appName);
 
   return (
@@ -125,14 +136,15 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       </head>
       <body>
         <PodcastPlayerProvider>
+        <ReadAloudPlayerProvider>
         {/* Header + mini-player samen in één vaste wrapper (i.p.v. sticky —
             zie StickyHeader.tsx voor waarom) zodat ze bij het scrollen als
             één geheel bovenaan blijven staan, ongeacht de exacte hoogte van
             de header — zie PodcastMiniPlayer.tsx. */}
         <StickyHeader>
         <header className="bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800">
-          <div className="mx-auto max-w-5xl px-4 py-3 flex items-center gap-4">
-            <Link href="/" className="flex items-center gap-2 font-extrabold text-brand-700 dark:text-brand-300 text-lg shrink-0">
+          <div className="mx-auto max-w-5xl px-4 py-3 flex items-center gap-4 relative">
+            <Link href={user ? "/dashboard" : "/"} className="flex items-center gap-2 font-extrabold text-brand-700 dark:text-brand-300 text-lg shrink-0 cursor-pointer">
               {logoDataUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={logoDataUrl} alt={displayName} className="h-8 w-auto" />
@@ -144,67 +156,37 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               )}
             </Link>
 
-            {/* Middenin de header (i.p.v. bij de andere navigatie) zodat de
-                installatiehint opvalt zonder een extra header-item te lijken —
-                zie HeaderInstallHint.tsx voor waarom deze na elke paginalading
-                weer kan terugkeren. */}
-            <div className="flex-1 flex justify-center">{user && <HeaderInstallHint />}</div>
+            {user && contentContext && (
+              <ContentSwitcher
+                enabled={contentContext.switcherEnabled || user.isAdmin}
+                active={contentContext.active}
+                collections={contentContext.collections}
+              />
+            )}
 
             {user ? (
-              <nav className="flex items-center gap-4">
-                <Link
-                  href="/courses"
-                  className="hidden sm:inline whitespace-nowrap text-sm font-bold text-slate-600 dark:text-slate-300 hover:text-brand-600 dark:hover:text-brand-300"
-                >
-                  Cursussen
-                </Link>
-                <Link
-                  href="/friends"
-                  className="hidden sm:inline whitespace-nowrap text-sm font-bold text-slate-600 dark:text-slate-300 hover:text-brand-600 dark:hover:text-brand-300"
-                >
-                  Vrienden
-                </Link>
-                <Link
-                  href="/competition"
-                  className="hidden sm:inline whitespace-nowrap text-sm font-bold text-slate-600 dark:text-slate-300 hover:text-brand-600 dark:hover:text-brand-300"
-                >
-                  Competitie
-                </Link>
-                <Link
-                  href="/live"
-                  className="hidden sm:inline whitespace-nowrap text-sm font-bold text-slate-600 dark:text-slate-300 hover:text-brand-600 dark:hover:text-brand-300"
-                >
-                  Spelen
-                </Link>
-                <Link
-                  href="/shop"
-                  className="hidden sm:inline whitespace-nowrap text-sm font-bold text-slate-600 dark:text-slate-300 hover:text-brand-600 dark:hover:text-brand-300"
-                >
-                  Winkel
-                </Link>
-                {user.isAdmin && (
-                  <Link
-                    href="/adminbackend"
-                    className="hidden sm:inline whitespace-nowrap text-sm font-bold text-slate-600 dark:text-slate-300 hover:text-brand-600 dark:hover:text-brand-300"
-                  >
-                    Admin
-                  </Link>
-                )}
-                <NavUserBadges streak={user.currentStreak} xp={user.xpTotal} displayName={user.handle} />
+              <nav className="ml-auto flex items-center gap-4">
+                <div className="hidden lg:block"><HeaderInstallHint /></div>
+                <NavUserBadges streak={user.currentStreak} xp={user.xpTotal} />
               </nav>
             ) : null}
           </div>
         </header>
         {user && <PodcastMiniPlayer />}
+        {user && <ReadAloudMiniPlayer />}
+        {user && <ActivityTracker />}
         </StickyHeader>
-        <main className="mx-auto max-w-5xl px-4 pb-8 pb-[calc(6rem+env(safe-area-inset-bottom))] sm:pb-8 pt-[calc(var(--header-height,4.5rem)+2rem)]">
+        <main className="mx-auto max-w-5xl px-4 pb-[calc(6rem+env(safe-area-inset-bottom))] pt-[calc(var(--header-height,4.5rem)+2rem)]">
           {children}
         </main>
         {user && <BottomNav />}
         {user && <InviteListener />}
         {user && <ChangelogPopup />}
+      {user && <FreezeGiftPopup />}
+        {user && <NotificationBadgeClear />}
         <ServiceWorkerRegister />
         <EdgeSwipeGuard />
+        </ReadAloudPlayerProvider>
         </PodcastPlayerProvider>
       </body>
     </html>

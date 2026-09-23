@@ -70,6 +70,10 @@ export default async function XpGuidePage() {
 
   return (
     <div className="max-w-2xl mx-auto flex flex-col gap-6">
+      <Link href="/tools" className="btn-secondary self-start">
+        ← Terug
+      </Link>
+
       <div>
         <h1 className="text-2xl font-extrabold text-brand-800 dark:text-brand-300">⭐ Wat levert XP op?</h1>
         <p className="text-slate-500 dark:text-slate-400 text-sm">Een overzicht van elke activiteit in de app.</p>

@@ -50,14 +50,14 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ use
     // gewoon met zijn huidige wachtwoord blijven inloggen in plaats van
     // buitengesloten te raken zonder werkende link.
     const unusableHash = await hashPassword(randomBytes(32).toString("hex"));
-    await prisma.user.update({ where: { id: userId }, data: { passwordHash: unusableHash, mustChangePassword: true } });
+    await prisma.user.update({ where: { id: userId }, data: { passwordHash: unusableHash, mustChangePassword: true, sessionVersion: { increment: 1 } } });
 
     return NextResponse.json({ emailed: true, email: target.email });
   }
 
   const tempPassword = generateTempPassword();
   const passwordHash = await hashPassword(tempPassword);
-  await prisma.user.update({ where: { id: userId }, data: { passwordHash, mustChangePassword: true } });
+  await prisma.user.update({ where: { id: userId }, data: { passwordHash, mustChangePassword: true, sessionVersion: { increment: 1 } } });
 
   return NextResponse.json({ tempPassword });
 }

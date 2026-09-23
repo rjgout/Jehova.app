@@ -16,9 +16,9 @@ function formatTime(seconds: number): string {
  * gemonteerde <audio> in PodcastPlayerProvider, dit is puur de bediening.
  */
 export default function PodcastMiniPlayer() {
-  const { episode, isPlaying, currentTime, duration, togglePlay, seek, close } = usePodcastPlayer();
+  const { episode, isPlaying, currentTime, duration, isSuppressed, togglePlay, seek, close } = usePodcastPlayer();
 
-  if (!episode) return null;
+  if (!episode || isSuppressed) return null;
 
   return (
     <div className="bg-brand-50 dark:bg-slate-800 border-b border-brand-100 dark:border-slate-700">

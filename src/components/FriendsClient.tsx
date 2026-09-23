@@ -20,7 +20,7 @@ interface FriendStatus {
 }
 
 interface FriendsData {
-  friends: FriendUser[];
+  friends: { friendshipId: string; user: FriendUser }[];
   incoming: { friendshipId: string; from: FriendUser }[];
   outgoing: { friendshipId: string; to: FriendUser }[];
   statusByUserId: Record<string, FriendStatus>;
@@ -30,6 +30,7 @@ interface SearchResult {
   id: string;
   handle: string;
   discriminator: string;
+  friendshipStatus: "PENDING" | "ACCEPTED" | "DECLINED" | null;
 }
 
 // Puur decoratief: elke gebruiker krijgt een stabiele (niet-willekeurige,
@@ -43,6 +44,15 @@ function avatarColorFor(id: string): string {
 }
 function initialsFor(handle: string): string {
   return handle.slice(0, 2).toUpperCase();
+}
+
+function FriendTag({ handle, discriminator }: { handle: string; discriminator: string }) {
+  return (
+    <span className="truncate">
+      {handle}
+      <span className="text-slate-400 dark:text-slate-500 font-normal">#{discriminator}</span>
+    </span>
+  );
 }
 
 function Avatar({
@@ -74,6 +84,8 @@ export default function FriendsClient() {
   const [message, setMessage] = useState<string | null>(null);
   const [sentTo, setSentTo] = useState<Set<string>>(new Set());
   const [giftedTo, setGiftedTo] = useState<string | null>(null);
+  const [pendingFreeze, setPendingFreeze] = useState<FriendUser | null>(null);
+  const [confirmingFreeze, setConfirmingFreeze] = useState(false);
 
   async function load() {
     const res = await fetch("/api/friends");
@@ -107,9 +119,14 @@ export default function FriendsClient() {
         return { ...prev, statusByUserId: next };
       });
     }
+    function onStatusReset() {
+      setData((prev) => (prev ? { ...prev, statusByUserId: {} } : prev));
+    }
     socket.on("friend_status_update", onStatusUpdate);
+    socket.on("friend_status_reset", onStatusReset);
     return () => {
       socket.off("friend_status_update", onStatusUpdate);
+      socket.off("friend_status_reset", onStatusReset);
     };
   }, []);
 
@@ -148,6 +165,14 @@ export default function FriendsClient() {
     load();
   }
 
+  async function removeFriendship(friendshipId: string, label: string) {
+    if (!window.confirm(`${label} verwijderen?\n\nWeet je het zeker?`)) return;
+    const res = await fetch(`/api/friends/${friendshipId}`, { method: "DELETE" });
+    const body = await res.json().catch(() => ({}));
+    if (!res.ok) { setMessage(body.error ?? "Kon dit niet verwijderen."); return; }
+    load();
+  }
+
   async function giftFreeze(toUserId: string) {
     setMessage(null);
     const res = await fetch("/api/freezes/gift", {
@@ -170,7 +195,7 @@ export default function FriendsClient() {
   const onlineCount = Object.values(data.statusByUserId).filter((s) => s.online).length;
 
   return (
-    <div className="max-w-3xl mx-auto flex flex-col gap-6">
+    <div className="max-w-5xl mx-auto flex flex-col gap-6">
       <div className="flex flex-col gap-1">
         <h1 className="text-2xl font-extrabold text-brand-800 dark:text-brand-300 flex items-center gap-2">
           <span aria-hidden>👥</span> Vrienden
@@ -221,10 +246,23 @@ export default function FriendsClient() {
                 </span>
                 <button
                   className="btn-secondary !px-3 !py-1.5"
-                  disabled={sentTo.has(r.id)}
+                  disabled={sentTo.has(r.id) || r.friendshipStatus === "PENDING" || r.friendshipStatus === "ACCEPTED"}
                   onClick={() => sendRequest(r)}
+                  aria-label={
+                    r.friendshipStatus === "ACCEPTED"
+                      ? "Al bevriend"
+                      : r.friendshipStatus === "PENDING"
+                        ? "Vriendschapsverzoek in behandeling"
+                        : undefined
+                  }
                 >
-                  {sentTo.has(r.id) ? "Verstuurd" : "Toevoegen"}
+                  {r.friendshipStatus === "ACCEPTED"
+                    ? "✅"
+                    : r.friendshipStatus === "PENDING"
+                      ? "⏳"
+                      : sentTo.has(r.id)
+                        ? "Verstuurd"
+                        : "Toevoegen"}
                 </button>
               </div>
             ))}
@@ -270,10 +308,11 @@ export default function FriendsClient() {
           <h2 className="font-extrabold text-slate-700 dark:text-slate-200">Verstuurde verzoeken</h2>
           <div className="flex flex-col gap-2">
             {data.outgoing.map(({ friendshipId, to }) => (
-              <div key={friendshipId} className="card flex items-center gap-2 !py-3 text-slate-500 dark:text-slate-400">
+              <div key={friendshipId} className="card flex items-center gap-3 !py-3 text-slate-500 dark:text-slate-400">
                 <Avatar id={to.id} handle={to.handle} avatarEmoji={to.avatarEmoji} size="sm" />
                 <span aria-hidden>⏳</span>
-                Wachten op {formatTag(to.handle, to.discriminator)}
+                <span className="min-w-0 flex-1">Wachten op {formatTag(to.handle, to.discriminator)}</span>
+                <button className="btn-secondary !px-3 !py-1.5 !text-xs" onClick={() => removeFriendship(friendshipId, "Vriendschapsverzoek")}>Annuleren</button>
               </div>
             ))}
           </div>
@@ -281,15 +320,12 @@ export default function FriendsClient() {
       )}
 
       <section className="flex flex-col gap-2">
-        <h2 className="font-extrabold text-slate-700 dark:text-slate-200 flex items-center gap-2">
+        <h2 className="font-extrabold text-slate-700 dark:text-slate-200">
           Jouw vrienden
-          <span className="inline-flex items-center justify-center min-w-[1.5rem] h-6 px-1.5 rounded-full bg-brand-50 dark:bg-slate-700 text-brand-700 dark:text-brand-300 text-xs font-extrabold">
-            {data.friends.length}
-          </span>
         </h2>
         {data.friends.length === 0 && <p className="text-slate-400 dark:text-slate-500">Nog geen vrienden — zoek iemand hierboven!</p>}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {data.friends.map((f) => {
+          {data.friends.map(({ friendshipId, user: f }) => {
             const status = data.statusByUserId[f.id];
             return (
               <div key={f.id} className="card flex flex-col gap-3">
@@ -301,7 +337,7 @@ export default function FriendsClient() {
                   </span>
                   <div className="min-w-0">
                     <div className="font-bold flex items-center gap-1.5 dark:text-slate-100">
-                      <span className="truncate">{formatTag(f.handle, f.discriminator)}</span>
+                      <FriendTag handle={f.handle} discriminator={f.discriminator} />
                       {status?.online && (
                         <span className="text-[10px] font-bold uppercase text-green-600 dark:text-green-400 shrink-0">Online</span>
                       )}
@@ -323,18 +359,54 @@ export default function FriendsClient() {
                     ⭐ {f.xpTotal} XP
                   </span>
                 </div>
-                <button
-                  className="btn-ice w-full !py-2"
-                  onClick={() => giftFreeze(f.id)}
-                  disabled={giftedTo === f.id}
-                >
-                  {giftedTo === f.id ? "Verstuurd!" : "🧊 Geef freeze"}
-                </button>
+                <div className="flex gap-2">
+                  <button className="btn-ice flex-1 !py-2" onClick={() => setPendingFreeze(f)} disabled={giftedTo === f.id}>
+                    {giftedTo === f.id ? "Verstuurd!" : "🧊 Geef freeze"}
+                  </button>
+                  <button className="btn-secondary !px-3 !py-2 !text-xs" onClick={() => removeFriendship(friendshipId, "Vriendschap")}>
+                    Ontvrienden
+                  </button>
+                </div>
               </div>
             );
           })}
         </div>
       </section>
+      {pendingFreeze && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="freeze-confirm-title"
+        >
+          <div className="card w-full max-w-sm !p-5 shadow-xl">
+            <h2 id="freeze-confirm-title" className="text-lg font-extrabold text-slate-800 dark:text-slate-100">
+              Freeze geven?
+            </h2>
+            <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
+              Weet je zeker dat je een streak freeze wilt geven aan{" "}
+              <span className="font-bold">{formatTag(pendingFreeze.handle, pendingFreeze.discriminator)}</span>?
+            </p>
+            <div className="mt-5 flex justify-end gap-2">
+              <button className="btn-secondary !px-3 !py-2" onClick={() => setPendingFreeze(null)}>
+                Annuleren
+              </button>
+              <button
+                className="btn-ice !px-3 !py-2"
+                disabled={confirmingFreeze}
+                onClick={async () => {
+                  setConfirmingFreeze(true);
+                  await giftFreeze(pendingFreeze.id);
+                  setConfirmingFreeze(false);
+                  setPendingFreeze(null);
+                }}
+              >
+                {confirmingFreeze ? "Versturen..." : "Ja, geef freeze"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

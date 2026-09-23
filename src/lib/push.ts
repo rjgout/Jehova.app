@@ -50,6 +50,7 @@ export interface PushPayload {
   title: string;
   body: string;
   url?: string;
+  badge?: number;
 }
 
 /**
@@ -81,7 +82,12 @@ export async function sendPushToUser(userId: string, payload: PushPayload): Prom
       try {
         await webpush.sendNotification(
           { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
-          JSON.stringify({ title: payload.title, body: payload.body, url: payload.url ?? "/" })
+          JSON.stringify({
+            title: payload.title,
+            body: payload.body,
+            url: payload.url ?? "/",
+            badge: payload.badge,
+          })
         );
       } catch (e) {
         const statusCode = (e as { statusCode?: number })?.statusCode;

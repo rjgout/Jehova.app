@@ -26,6 +26,12 @@ export default function BookmarksClient() {
       <h1 className="text-2xl font-extrabold text-brand-800 dark:text-brand-300">Bladwijzers</h1>
 
       {!items && <p className="text-slate-400">Laden...</p>}
+
+      <Link href="/tools" className="btn-secondary self-start">
+        ← Terug
+      </Link>
+
+
       {items && items.length === 0 && (
         <p className="text-slate-400">
           Nog geen bladwijzers. Tik op 🔖 bij een vers tijdens het lezen om 'm hier terug te vinden.
@@ -46,6 +52,10 @@ export default function BookmarksClient() {
           </Link>
         ))}
       </div>
+
+      <Link href="/tools" className="btn-secondary self-start">
+        ← Terug
+      </Link>
     </div>
   );
 }

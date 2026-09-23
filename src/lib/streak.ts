@@ -5,6 +5,7 @@ import { awardXp } from "@/lib/xp";
 import { checkAndAwardAchievements } from "@/lib/achievements";
 import { awardCompetitionXp } from "@/lib/competitionXp";
 import { XP_PER_CORRECT_LIGHT, applyRepeatDiscount } from "@/lib/xpRules";
+import { notifyFreezeReceived } from "@/lib/notify";
 
 const PASS_THRESHOLD = 60; // percentage nodig om een hoofdstuk als voltooid te tellen
 const STREAK_MILESTONE_FOR_FREEZE = 7; // elke 7-daagse streak levert een freeze op
@@ -50,7 +51,7 @@ interface DailyStreakResult {
  * user.update en de eventuele EARNED-freezetransactie aan de aanroeper (die
  * kan er zelf nog een hoofdstuk-mijlpaal freeze bovenop doen).
  */
-async function applyDailyStreak(tx: Tx, userId: string): Promise<DailyStreakResult> {
+export async function applyDailyStreak(tx: Tx, userId: string): Promise<DailyStreakResult> {
   const user = await tx.user.findUniqueOrThrow({ where: { id: userId } });
   const today = dayKey();
   const alreadyStudiedToday = user.lastStudyDate === today;
@@ -93,10 +94,12 @@ async function applyDailyStreak(tx: Tx, userId: string): Promise<DailyStreakResu
       });
     } else {
       // Niet genoeg freezes om ALLE gemiste dagen te overbruggen: er blijft
-      // dan sowieso minstens één echte gemiste dag over, dus breekt de reeks
-      // — en worden er ook geen freezes "voor niets" verbruikt.
+      // dan sowieso minstens één echte gemiste dag over, dus breekt de reeks.
+      // De nieuwe studieactiviteit van vandaag begint bewust nog geen nieuwe
+      // reeks: de teller blijft 0. De volgende aaneengesloten studiedag maakt
+      // daar weer 1 van. Er worden ook geen freezes "voor niets" verbruikt.
       streakBroken = currentStreak > 0;
-      currentStreak = 1;
+      currentStreak = 0;
     }
   }
   const longestStreak = Math.max(user.longestStreak, currentStreak);
@@ -657,5 +660,7 @@ export async function giftFreeze(fromUserId: string, toUserId: string) {
       data: { userId: toUserId, type: "GIFT_RECEIVED", amount: 1, relatedId: fromUserId },
     });
     await checkAndAwardAchievements(tx, fromUserId);
+    const senderName = sender.handle + "#" + sender.discriminator;
+    await notifyFreezeReceived(toUserId, senderName);
   });
 }

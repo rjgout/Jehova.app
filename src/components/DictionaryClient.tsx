@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 
 interface DictionaryEntry {
   word: string;
@@ -112,6 +113,10 @@ export default function DictionaryClient() {
 
   return (
     <div className="max-w-2xl mx-auto flex flex-col gap-4">
+      <Link href="/tools" className="btn-secondary self-start">
+        ← Terug
+      </Link>
+
       <div>
         <h1 className="text-2xl font-extrabold text-brand-800 dark:text-brand-300">Woordenboek</h1>
         <p className="text-slate-500 dark:text-slate-400 text-sm">
@@ -215,6 +220,12 @@ export default function DictionaryClient() {
       </p>
 
       <div className="card !p-0 overflow-hidden">
+
+      <Link href="/tools" className="btn-secondary self-start">
+        ← Terug
+      </Link>
+
+
         <ul className="max-h-[60vh] overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800">
           {filtered.map((e) => (
             <li key={e.word}>
@@ -275,6 +286,10 @@ export default function DictionaryClient() {
           </div>
         </div>
       )}
+
+      <Link href="/tools" className="btn-secondary self-start">
+        ← Terug
+      </Link>
     </div>
   );
 }

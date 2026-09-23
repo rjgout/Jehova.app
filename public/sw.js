@@ -19,10 +19,15 @@ self.addEventListener("push", (event) => {
   }
 
   event.waitUntil(
-    self.registration.showNotification(data.title, {
-      body: data.body,
-      data: { url: data.url },
-    })
+    Promise.all([
+      self.registration.showNotification(data.title, {
+        body: data.body,
+        data: { url: data.url },
+      }),
+      typeof data.badge === "number" && data.badge > 0
+        ? self.registration.setAppBadge(data.badge).catch(() => {})
+        : Promise.resolve(),
+    ])
   );
 });
 

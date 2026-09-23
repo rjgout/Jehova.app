@@ -8,11 +8,12 @@ import { applyPersonalOrder, fetchListOrder, saveListOrder } from "@/lib/listOrd
 interface CourseView {
   id: string;
   slug: string;
-  type: "FRONT_TO_BACK" | "FREE_CHOICE" | "BY_BOOK" | "PODCAST" | "KIDS" | "INTRO";
+  type: "FRONT_TO_BACK" | "FREE_CHOICE" | "BY_BOOK" | "PODCAST" | "KIDS" | "INTRO" | "READING_LESSONS" | "FSY";
   name: string;
   description: string | null;
   totalChapters: number;
   completedCount: number;
+  xpAvailable: number;
   isActive: boolean;
   currentChapter: { id: string; bookName: string; number: number } | null;
 }
@@ -28,11 +29,13 @@ interface CatalogCourseView {
 
 const TYPE_LABELS: Record<CourseView["type"], string> = {
   INTRO: "Introductie",
+  READING_LESSONS: "Kleine leeslessen",
   FRONT_TO_BACK: "Van voor naar achter",
   FREE_CHOICE: "Vrije keuze",
   BY_BOOK: "Per boek",
   PODCAST: "Podcast",
   KIDS: "Voor kinderen",
+  FSY: "Voor de kracht van de jeugd",
 };
 
 export default function CoursesClient() {
@@ -130,7 +133,7 @@ export default function CoursesClient() {
   const otherCatalogCourses = (catalog ?? []).filter((c) => c.type !== "BY_BOOK");
 
   return (
-    <div className="max-w-2xl mx-auto flex flex-col gap-6">
+    <div className="max-w-5xl mx-auto flex flex-col gap-6">
       <div>
         <h1 className="text-2xl font-extrabold text-brand-800 dark:text-brand-300">Cursussen</h1>
         <p className="text-slate-500 dark:text-slate-400 text-sm">
@@ -152,7 +155,7 @@ export default function CoursesClient() {
         dndId="courses-list"
         items={courses}
         onReorder={reorder}
-        className="flex flex-col gap-3"
+        className="flex flex-col gap-4"
         renderItem={(course, handle) => {
           const pct = course.totalChapters > 0 ? Math.round((course.completedCount / course.totalChapters) * 100) : 0;
           return (
@@ -161,62 +164,70 @@ export default function CoursesClient() {
                 course.isActive ? "!border-2 !border-brand-400 dark:!border-brand-500" : ""
               }`}
             >
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex items-start gap-2 min-w-0">
+              <div className="flex items-start gap-3">
+                <div className="pt-0.5 shrink-0">
                   <DragHandle {...handle} />
-                  <div className="min-w-0">
-                    <p className="text-xs font-extrabold uppercase tracking-wide text-slate-400 dark:text-slate-500">
-                      {TYPE_LABELS[course.type]}
-                    </p>
-                    <h2 className="font-extrabold text-lg dark:text-slate-100">{course.name}</h2>
-                    {course.description && (
-                      <p className="text-sm text-slate-500 dark:text-slate-400">{course.description}</p>
+                </div>
+                <div className="min-w-0 flex-1 flex flex-col">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="text-xs font-extrabold uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                        {TYPE_LABELS[course.type]}
+                      </p>
+                      <h2 className="font-extrabold text-lg leading-tight dark:text-slate-100">{course.name}</h2>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      {course.isActive && (
+                        <span className="text-xs font-extrabold uppercase text-brand-600 dark:text-brand-300 bg-brand-50 dark:bg-slate-700 rounded-full px-3 py-1">
+                          Actief
+                        </span>
+                      )}
+                      <button
+                        type="button"
+                        className="w-8 h-8 rounded-full border border-slate-200 dark:border-slate-700 text-slate-400 dark:text-slate-500 hover:text-red-500 hover:border-red-200 dark:hover:border-red-900 flex items-center justify-center text-lg leading-none transition-colors"
+                        disabled={removingId === course.id}
+                        onClick={() => remove(course.id)}
+                        aria-label={"Cursus " + course.name + " verwijderen"}
+                        title="Cursus verwijderen"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  </div>
+
+                  {course.description && (
+                    <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">{course.description}</p>
+                  )}
+
+                  {course.totalChapters > 0 && (
+                    <div className="flex flex-col gap-1 mt-3">
+                      <div className="h-2 rounded-full bg-slate-200 dark:bg-slate-600 overflow-hidden">
+                        <div className="h-full bg-gold-400" style={{ width: `${pct}%` }} />
+                      </div>
+                      <p className="text-xs text-slate-400 dark:text-slate-500">
+                        {course.completedCount} / {course.totalChapters} hoofdstukken voltooid
+                        {course.currentChapter &&
+                          ` — volgende: ${course.currentChapter.bookName} ${course.currentChapter.number}`}
+                      </p>
+                    </div>
+                  )}
+
+                  <div className="flex gap-3 mt-3">
+                    {course.isActive ? (
+                      <Link href={`/courses/${course.id}`} className="btn-primary self-start">
+                        Ga verder →
+                      </Link>
+                    ) : (
+                      <button
+                        className="btn-secondary self-start"
+                        disabled={activatingId === course.id}
+                        onClick={() => activate(course.id)}
+                      >
+                        {activatingId === course.id ? "Bezig..." : "Kies deze cursus"}
+                      </button>
                     )}
                   </div>
                 </div>
-                <div className="flex flex-col items-end gap-1 shrink-0">
-                  {course.isActive && (
-                    <span className="text-xs font-extrabold uppercase text-brand-600 dark:text-brand-300 bg-brand-50 dark:bg-slate-700 rounded-full px-3 py-1">
-                      Actief
-                    </span>
-                  )}
-                  <button
-                    className="text-xs text-red-500 dark:text-red-400 hover:underline"
-                    disabled={removingId === course.id}
-                    onClick={() => remove(course.id)}
-                  >
-                    Verwijderen
-                  </button>
-                </div>
-              </div>
-
-              {course.type !== "FREE_CHOICE" && course.totalChapters > 0 && (
-                <div className="flex flex-col gap-1">
-                  <div className="h-2 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
-                    <div className="h-full bg-gold-400" style={{ width: `${pct}%` }} />
-                  </div>
-                  <p className="text-xs text-slate-400 dark:text-slate-500">
-                    {course.completedCount} / {course.totalChapters} hoofdstukken voltooid
-                    {course.currentChapter &&
-                      ` — volgende: ${course.currentChapter.bookName} ${course.currentChapter.number}`}
-                  </p>
-                </div>
-              )}
-
-              <div className="flex gap-3">
-                {course.isActive ? (
-                  <Link href={`/courses/${course.id}`} className="btn-primary self-start">
-                    Ga verder →
-                  </Link>
-                ) : (
-                  <button
-                    className="btn-secondary self-start"
-                    disabled={activatingId === course.id}
-                    onClick={() => activate(course.id)}
-                  >
-                    {activatingId === course.id ? "Bezig..." : "Kies deze cursus"}
-                  </button>
-                )}
               </div>
             </div>
           );
@@ -284,7 +295,7 @@ export default function CoursesClient() {
         </div>
       )}
 
-      <Link href="/tools" className="btn-secondary self-center">
+      <Link href="/tools" className="btn-secondary w-full justify-center">
         🧰 Hulpmiddelen
       </Link>
     </div>

@@ -18,6 +18,7 @@ export default async function OnboardingPage() {
     <OnboardingClient
       email={user.email}
       searchableByEmail={user.searchableByEmail}
+      shareOnlineStatus={user.shareOnlineStatus}
       pushNotificationsEnabled={user.pushNotificationsEnabled}
       emailNotificationsEnabled={user.emailNotificationsEnabled}
       emailConfigured={emailConfigured}

@@ -45,6 +45,7 @@ export default async function PracticePage() {
     type: e.type as "FILL_BLANK" | "WORD_BANK" | "TRUE_FALSE" | "MULTIPLE_CHOICE" | "SEQUENCE",
     verseRef: e.verseRef,
     prompt: e.prompt,
+    hint: e.hint ?? undefined,
     blanks: (JSON.parse(e.answers) as string[]).length,
     wordBank: e.wordBank ? (JSON.parse(e.wordBank) as string[]) : undefined,
     options: e.options.length > 0 ? e.options.map((o) => o.label) : undefined,

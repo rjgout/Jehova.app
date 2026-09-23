@@ -7,10 +7,11 @@ import { APP_NAME } from "@/lib/brand";
 // Elke gebeurtenis valt in één categorie, die de gebruiker in zijn profiel
 // apart aan/uit kan zetten (zie User.notify* in schema.prisma) — bovenop,
 // niet in plaats van, de kanaalschakelaars (email/pushNotificationsEnabled).
-type NotifyCategory = "dailyReminder" | "social" | "achievements" | "wordGame";
+type NotifyCategory = "dailyReminder" | "dailyText" | "social" | "achievements" | "wordGame";
 
-const CATEGORY_FIELD: Record<NotifyCategory, "notifyDailyReminder" | "notifySocial" | "notifyAchievements" | "notifyWordGame"> = {
+const CATEGORY_FIELD: Record<NotifyCategory, "notifyDailyReminder" | "notifyDailyText" | "notifySocial" | "notifyAchievements" | "notifyWordGame"> = {
   dailyReminder: "notifyDailyReminder",
+  dailyText: "notifyDailyText",
   social: "notifySocial",
   achievements: "notifyAchievements",
   wordGame: "notifyWordGame",
@@ -44,6 +45,7 @@ async function notifyUser(input: NotifyInput): Promise<void> {
       emailNotificationsEnabled: true,
       pushNotificationsEnabled: true,
       notifyDailyReminder: true,
+      notifyDailyText: true,
       notifySocial: true,
       notifyAchievements: true,
       notifyWordGame: true,
@@ -57,13 +59,43 @@ async function notifyUser(input: NotifyInput): Promise<void> {
     jobs.push(sendMail({ to: user.email, subject: input.subject, html: input.emailHtml, text: input.emailText }));
   }
   if (user.pushNotificationsEnabled) {
-    jobs.push(sendPushToUser(input.userId, { title: input.pushTitle, body: input.pushBody, url: input.url }));
+    // De badge telt één keer per in-app notificatie, niet één keer per
+    // kanaal. Alleen gebruikers die push hebben ingeschakeld krijgen een
+    // badge, zodat er geen onzichtbare teller ontstaat als alle kanalen uitstaan.
+    const updated = await prisma.user.update({
+      where: { id: input.userId },
+      data: { notificationBadgeCount: { increment: 1 } },
+      select: { notificationBadgeCount: true },
+    });
+    jobs.push(
+      sendPushToUser(input.userId, {
+        title: input.pushTitle,
+        body: input.pushBody,
+        url: input.url,
+        badge: updated.notificationBadgeCount,
+      })
+    );
   }
   await Promise.allSettled(jobs);
 }
 
 function emailWrap(bodyHtml: string, ctaUrl: string, ctaLabel: string): string {
   return `<p>${bodyHtml}</p><p><a href="${ctaUrl}">${ctaLabel} →</a></p><p style="color:#94a3b8;font-size:12px">${APP_NAME} — je kan e-mailnotificaties uitzetten in je profiel.</p>`;
+}
+
+export async function notifyFreezeReceived(userId: string, senderDisplayName: string): Promise<void> {
+  const url = `${await getAppUrl()}/friends`;
+  const text = `${senderDisplayName} heeft je een streak freeze gegeven! 🧊`;
+  await notifyUser({
+    userId,
+    category: "social",
+    subject: "Je hebt een streak freeze gekregen! 🧊",
+    emailHtml: emailWrap(text, url, "Bekijk je vrienden"),
+    emailText: `${text} Bekijk je vrienden: ${url}`,
+    pushTitle: "Je hebt een streak freeze gekregen! 🧊",
+    pushBody: `${senderDisplayName} heeft je een streak freeze gegeven.`,
+    url: "/friends",
+  });
 }
 
 export async function notifyFriendRequest(receiverUserId: string, senderDisplayName: string): Promise<void> {
@@ -133,6 +165,21 @@ export async function notifySeasonResult(
     pushTitle: `Seizoen ${seasonIndex} afgesloten`,
     pushBody: text,
     url: "/profile",
+  });
+}
+
+export async function notifyDailyText(userId: string, text: { bookName: string; chapterNumber: number; verseNumber: number; content: string }): Promise<void> {
+  const url = `${await getAppUrl()}/dashboard`;
+  const reference = `${text.bookName} ${text.chapterNumber}:undefined`;
+  await notifyUser({
+    userId,
+    category: "dailyText",
+    subject: "Tekst van de dag",
+    emailHtml: emailWrap(`📖 <strong>${reference}</strong><br />${text.content}`, url, "Bekijk je dashboard"),
+    emailText: `📖 ${reference} — ${text.content} — ${url}`,
+    pushTitle: "Tekst van de dag 📖",
+    pushBody: `${reference} — ${text.content}`,
+    url: "/dashboard",
   });
 }
 

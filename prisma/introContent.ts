@@ -630,6 +630,19 @@ export const introLessons: IntroLessonSeed[] = [
           "blijven hangen. Je hoeft niets te onthouden voordat je begint.",
       },
       {
+        type: "text",
+        body:
+          "Wil je liever eerst lezen over het moment waarop Jezus Christus zelf aan de mensen in het Boek van Mormon " +
+          "verschijnt? Lees dan 3 Nephi 11. Dit is een bijzonder hoofdstuk om te lezen na wat je in deze cursus over " +
+          "Jezus Christus hebt geleerd.",
+      },
+      {
+        type: "chapterLink",
+        bookSlug: "3-nephi",
+        chapterNumber: 11,
+        label: "Lees 3 Nephi 11",
+      },
+      {
         type: "poll",
         question: "Wat spreekt je het meest aan om als eerste te doen?",
         options: ["Een hoofdstuk lezen", "Een spelletje spelen ter oefening", "Eerst nog meer over het verhaal ontdekken"],

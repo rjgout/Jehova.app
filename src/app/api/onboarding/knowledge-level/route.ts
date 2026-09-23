@@ -6,12 +6,8 @@ import { subscribeUserToCourse, INTRO_SLUG } from "@/lib/courses";
 
 const schema = z.object({ level: z.enum(["NEVER", "SOME", "READ_BEFORE", "UNSURE"]) });
 
-// Aangeroepen vanuit de nieuwe onboardingstap ("Hoeveel ken je het Boek van
-// Mormon al?"). Bij "nog nooit"/"weet niet meer" wordt de introductiecursus
-// automatisch aan de persoonlijke cursussenlijst toegevoegd (die staat door
-// zijn Course.order al standaard bovenaan, zie syncCourses in
-// src/lib/courses.ts) — bij de andere twee antwoorden verandert er niets,
-// die cursus blijft gewoon beschikbaar in de catalogus.
+// Bij weinig of geen voorkennis wordt de introductiecursus meteen de eerste
+// actieve cursus. Bij meer voorkennis blijft de bestaande actieve cursus staan.
 export async function POST(req: NextRequest) {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: "Niet ingelogd" }, { status: 401 });
@@ -23,7 +19,10 @@ export async function POST(req: NextRequest) {
 
   if (parsed.data.level === "NEVER" || parsed.data.level === "UNSURE") {
     const introCourse = await prisma.course.findUnique({ where: { slug: INTRO_SLUG } });
-    if (introCourse) await subscribeUserToCourse(prisma, user.id, introCourse.id);
+    if (introCourse) {
+      await subscribeUserToCourse(prisma, user.id, introCourse.id);
+      await prisma.user.update({ where: { id: user.id }, data: { activeCourseId: introCourse.id } });
+    }
   }
 
   return NextResponse.json({ ok: true });

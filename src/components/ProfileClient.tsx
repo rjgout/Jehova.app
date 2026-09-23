@@ -9,6 +9,8 @@ import { formatTag, firstGrapheme, isSingleEmoji } from "@/lib/handle";
 import { enableBrowserPush, disableBrowserPush, isPushSupported } from "@/lib/pushClient";
 import { getSocket } from "@/lib/socketClient";
 import ThemeToggle from "@/components/ThemeToggle";
+import TwoFactorSettings from "@/components/TwoFactorSettings";
+import { getDutchVoices, saveSelectedDutchVoice } from "@/lib/readAloud";
 
 interface AchievementView {
   slug: string;
@@ -20,6 +22,7 @@ interface AchievementView {
 
 interface ProfileData {
   displayName: string;
+  isAdmin: boolean;
   handle: string;
   discriminator: string;
   avatarEmoji: string | null;
@@ -31,6 +34,8 @@ interface ProfileData {
   emailNotificationsEnabled: boolean;
   pushNotificationsEnabled: boolean;
   dailyReminderTime: string;
+  dailyTextTime: string;
+  notifyDailyText: boolean;
   notifyDailyReminder: boolean;
   notifySocial: boolean;
   notifyAchievements: boolean;
@@ -69,6 +74,9 @@ export default function ProfileClient() {
   const [data, setData] = useState<ProfileData | null>(null);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [resettingReadingProgress, setResettingReadingProgress] = useState(false);
+  const [resetReadingMessage, setResetReadingMessage] = useState<string | null>(null);
+  const [confirmingLogout, setConfirmingLogout] = useState(false);
   const [savingPrivacy, setSavingPrivacy] = useState(false);
   const [savingNotifications, setSavingNotifications] = useState(false);
   const [pushError, setPushError] = useState<string | null>(null);
@@ -82,7 +90,29 @@ export default function ProfileClient() {
   const [avatarInput, setAvatarInput] = useState("");
   const [savingAvatarEmoji, setSavingAvatarEmoji] = useState(false);
   const [avatarError, setAvatarError] = useState<string | null>(null);
+  const [readAloudVoices, setReadAloudVoices] = useState<SpeechSynthesisVoice[]>([]);
+  const [selectedReadAloudVoice, setSelectedReadAloudVoice] = useState("");
+  const [testingReadAloudVoice, setTestingReadAloudVoice] = useState(false);
+  const [readAloudSpeed, setReadAloudSpeed] = useState(1);
   const router = useRouter();
+
+  useEffect(() => {
+    if (typeof window === "undefined" || !("speechSynthesis" in window)) return;
+
+    const loadVoices = () => {
+      setReadAloudVoices(getDutchVoices());
+      setSelectedReadAloudVoice(window.localStorage.getItem("jehovaapp-read-aloud-voice") ?? "");
+    };
+
+    loadVoices();
+    const savedSpeed = window.localStorage.getItem("jehovaapp-read-aloud-speed");
+    if (savedSpeed) setReadAloudSpeed(Number(savedSpeed));
+    window.speechSynthesis.addEventListener?.("voiceschanged", loadVoices);
+
+    return () => {
+      window.speechSynthesis.removeEventListener?.("voiceschanged", loadVoices);
+    };
+  }, []);
 
   useEffect(() => {
     fetch("/api/profile")
@@ -210,7 +240,7 @@ export default function ProfileClient() {
   }
 
   async function toggleCategory(
-    field: "notifyDailyReminder" | "notifySocial" | "notifyAchievements" | "notifyWordGame" | "changelogEnabled"
+    field: "notifyDailyReminder" | "notifyDailyText" | "notifySocial" | "notifyAchievements" | "notifyWordGame" | "changelogEnabled"
   ) {
     if (!data) return;
     const next = !data[field];
@@ -277,6 +307,36 @@ export default function ProfileClient() {
     saveAvatarEmoji(avatarInput.trim());
   }
 
+  function changeReadAloudSpeed(nextSpeed: number) {
+    setReadAloudSpeed(nextSpeed);
+    window.localStorage.setItem("jehovaapp-read-aloud-speed", String(nextSpeed));
+  }
+
+  function changeReadAloudVoice(voiceUri: string) {
+    setSelectedReadAloudVoice(voiceUri);
+    saveSelectedDutchVoice(voiceUri || null);
+  }
+
+  function testReadAloudVoice() {
+    if (!("speechSynthesis" in window) || readAloudVoices.length === 0) return;
+
+    const synth = window.speechSynthesis;
+
+    const voice = readAloudVoices.find((item) => item.voiceURI === selectedReadAloudVoice) ?? readAloudVoices[0];
+    const utterance = new SpeechSynthesisUtterance(
+      "Dit is een voorbeeld van de stem die wordt gebruikt bij het voorlezen."
+    );
+    utterance.voice = voice;
+    utterance.lang = voice.lang;
+    utterance.rate = readAloudSpeed;
+    utterance.onstart = () => setTestingReadAloudVoice(true);
+    utterance.onend = () => setTestingReadAloudVoice(false);
+    utterance.onerror = () => setTestingReadAloudVoice(false);
+
+    setTestingReadAloudVoice(true);
+    synth.speak(utterance);
+  }
+
   async function logout() {
     await fetch("/api/auth/logout", { method: "POST" });
     router.push("/");
@@ -300,10 +360,18 @@ export default function ProfileClient() {
   const initial = firstGrapheme(data.displayName).toUpperCase() || "?";
 
   return (
-    <div className="max-w-2xl mx-auto flex flex-col gap-8">
-      <Link href="/feedback" className="btn-secondary self-start">
-        💬 Feedback geven
-      </Link>
+    <div className="max-w-5xl mx-auto flex flex-col gap-8">
+      {data?.isAdmin && (
+        <Link href="/adminbackend" className="btn btn-primary w-full justify-center">
+          ⚙️ Naar adminbeheer
+        </Link>
+      )}
+      <div className="flex items-center justify-between gap-4 pr-4">
+        <Link href="/feedback" className="btn-secondary">
+          💬 Feedback geven
+        </Link>
+        <ThemeToggle />
+      </div>
 
       <div className="card bg-gradient-to-br from-brand-500 to-brand-700 dark:from-brand-600 dark:to-brand-900 text-white flex flex-col gap-5">
         <div className="flex items-center justify-between gap-3 flex-wrap">
@@ -450,7 +518,7 @@ export default function ProfileClient() {
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 text-center text-sm text-brand-100 border-t border-white/15 pt-4">
           <Stat value={data.longestStreak.toString()} label="Langste reeks" small light />
           <Stat value={`${data.duelsWon}/${data.duelsPlayed}`} label="Duels gewonnen" small light />
-          <Stat value={earnedCount.toString()} label="Achievements" small light />
+          <Stat value={earnedCount.toString()} label="Prestaties" small light />
         </div>
       </div>
 
@@ -499,7 +567,7 @@ export default function ProfileClient() {
 
       <section>
         <div className="flex items-center justify-between mb-3">
-          <h2 className="font-extrabold text-lg dark:text-slate-100">Achievements</h2>
+          <h2 className="font-extrabold text-lg dark:text-slate-100">Prestaties</h2>
           <span className="text-sm font-bold text-slate-400 dark:text-slate-500">
             {earnedCount}/{data.achievements.length}
           </span>
@@ -521,21 +589,108 @@ export default function ProfileClient() {
       </section>
 
       <section className="card flex flex-col gap-3">
+        <h2 className="font-extrabold text-lg dark:text-slate-100">Leesvoortgang</h2>
+        <p className="text-sm text-slate-500 dark:text-slate-400">
+          Opnieuw beginnen met het lezen van het Boek van Mormon? Hiermee wis je je voortgang van de leesroutes en de kleine leeslessen.
+          Je XP, achievements en andere statistieken blijven behouden.
+        </p>
+        {!resetReadingMessage ? (
+          <button
+            className="btn-secondary self-start !border-red-300 !text-red-600 dark:!border-red-700 dark:!text-red-400"
+            disabled={resettingReadingProgress}
+            onClick={async () => {
+              if (
+                !window.confirm(
+                  "Weet je zeker dat je de volledige leesvoortgang van het Boek van Mormon wilt resetten? Je XP blijft behouden."
+                )
+              ) {
+                return;
+              }
+              setResettingReadingProgress(true);
+              const res = await fetch("/api/progress/reset-reading", { method: "POST" });
+              setResettingReadingProgress(false);
+              if (res.ok) {
+                setResetReadingMessage("Je leesvoortgang is gereset. Je kunt weer helemaal opnieuw beginnen.");
+                router.refresh();
+              }
+            }}
+          >
+            {resettingReadingProgress ? "Bezig..." : "Leesvoortgang resetten"}
+          </button>
+        ) : (
+          <p className="text-sm font-bold text-brand-600 dark:text-brand-300">{resetReadingMessage}</p>
+        )}
+      </section>
+
+      <section className="card flex flex-col gap-3">
         <h2 className="font-extrabold text-lg dark:text-slate-100">Account</h2>
 
-        <div className="flex items-center gap-3">
-          <span className="text-sm dark:text-slate-200">Weergave (licht/donker)</span>
-          <ThemeToggle />
-        </div>
-
         <div className="flex gap-2 flex-wrap">
-          <Link href="/change-password" className="btn-secondary self-start">
-            Wachtwoord wijzigen
-          </Link>
           <Link href="/onboarding" className="btn-secondary self-start">
             Rondleiding opnieuw bekijken
           </Link>
         </div>
+      </section>
+
+      <section className="card flex flex-col gap-3">
+        <h2 className="font-extrabold text-lg dark:text-slate-100">Voorlezen</h2>
+        <p className="text-sm text-slate-500 dark:text-slate-400">
+          Kies hier de Nederlandse stem die op dit apparaat wordt gebruikt voor het voorlezen van hoofdstukken.
+          De beschikbare stemmen komen van je apparaat.
+        </p>
+
+        {readAloudVoices.length > 0 ? (
+          <>
+            <label className="flex flex-col gap-1.5">
+              <span className="text-sm font-semibold dark:text-slate-200">Nederlandse stem</span>
+              <select
+                className="input"
+                value={selectedReadAloudVoice}
+                onChange={(e) => changeReadAloudVoice(e.target.value)}
+              >
+                <option value="">Automatisch</option>
+                {readAloudVoices.map((voice) => (
+                  <option key={voice.voiceURI} value={voice.voiceURI}>
+                    {voice.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <div className="flex flex-col gap-2">
+              <label className="flex items-center gap-3">
+                <span className="text-sm font-semibold dark:text-slate-200">Voorleessnelheid</span>
+                <select
+                  className="input !w-auto"
+                  value={readAloudSpeed}
+                  onChange={(e) => changeReadAloudSpeed(Number(e.target.value))}
+                >
+                  {[0.75, 1, 1.25, 1.5, 2].map((value) => (
+                    <option key={value} value={value}>
+                      {value}×
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <div className="flex items-center gap-3">
+              <button
+                className="btn-secondary !px-3 !py-1.5"
+                disabled={testingReadAloudVoice}
+                onClick={testReadAloudVoice}
+              >
+                {testingReadAloudVoice ? "Voorbeeld wordt afgespeeld..." : "🔊 Stem beluisteren"}
+              </button>
+              <span className="text-xs text-slate-400 dark:text-slate-500">
+                Je keuze wordt op dit apparaat bewaard.
+              </span>
+              </div>
+            </div>
+          </>
+        ) : (
+          <p className="text-sm text-slate-400 dark:text-slate-500">
+            Nog geen Nederlandse stemmen beschikbaar. Probeer de pagina opnieuw te laden.
+          </p>
+        )}
       </section>
 
       <section className="card flex flex-col gap-3">
@@ -585,6 +740,30 @@ export default function ProfileClient() {
             {pushTestMessage && <p className="text-xs text-slate-500 dark:text-slate-400">{pushTestMessage}</p>}
           </div>
         )}
+
+        <div className="border-t border-slate-100 dark:border-slate-700 pt-3 mt-1 flex flex-col gap-3">
+          <p className="text-sm font-semibold dark:text-slate-200">Tekst van de dag</p>
+          <label className="flex items-start gap-3 cursor-pointer">
+            <input
+              type="checkbox"
+              className="mt-1 h-5 w-5 accent-brand-500"
+              checked={data.notifyDailyText}
+              onChange={() => toggleCategory("notifyDailyText")}
+              disabled={savingNotifications}
+            />
+            <span className="text-sm dark:text-slate-200">Stuur mij elke dag de tekst van de dag</span>
+          </label>
+          <label className="flex items-center gap-3">
+            <span className="text-sm dark:text-slate-200">Stuur rond</span>
+            <input
+              type="time"
+              className="input !w-auto"
+              value={data.dailyTextTime}
+              onChange={(e) => saveAccountPatch({ dailyTextTime: e.target.value }).then(() => setData((current) => current ? { ...current, dailyTextTime: e.target.value } : current))}
+            />
+          </label>
+          <p className="text-xs text-slate-400 dark:text-slate-500">De tekst van de dag staat vanaf 00:00 uur al op je dashboard.</p>
+        </div>
 
         <label className="flex items-center gap-3">
           <span className="text-sm dark:text-slate-200">Dagelijkse herinnering rond</span>
@@ -759,10 +938,39 @@ export default function ProfileClient() {
         )}
       </section>
 
-      <section className="card">
-        <button className="btn-secondary self-start" onClick={logout}>
-          Uitloggen
-        </button>
+      <section className="card flex flex-col gap-3">
+        <h2 className="font-extrabold text-lg dark:text-slate-100">Account</h2>
+
+        <div>
+          <h3 className="font-extrabold text-base dark:text-slate-100 mb-2">Tweestapsverificatie</h3>
+          <TwoFactorSettings isAdmin={data.isAdmin} />
+        </div>
+
+        <div className="border-t border-slate-100 dark:border-slate-700 pt-4 mt-1">
+          <Link href="/change-password" className="btn-secondary self-start">
+            Wachtwoord wijzigen
+          </Link>
+        </div>
+
+        <div className="border-t border-slate-100 dark:border-slate-700 pt-4 mt-1">
+          {!confirmingLogout ? (
+            <button className="btn-secondary self-start" onClick={() => setConfirmingLogout(true)}>
+              Uitloggen
+            </button>
+          ) : (
+            <div className="flex flex-col gap-3">
+              <p className="text-sm dark:text-slate-200">Weet je zeker dat je wilt uitloggen?</p>
+              <div className="flex gap-2 flex-wrap">
+                <button className="btn-primary self-start" onClick={logout}>
+                  Ja, uitloggen
+                </button>
+                <button className="btn-secondary self-start" onClick={() => setConfirmingLogout(false)}>
+                  Annuleren
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
       </section>
     </div>
   );
