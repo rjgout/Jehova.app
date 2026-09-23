@@ -118,9 +118,9 @@ function Lobby({ state }: { state: AkStateView }) {
     <>
       <div className="card !bg-gradient-to-br from-brand-600 to-brand-800 text-white !border-0 flex flex-col gap-1">
         <p className="text-xs font-bold uppercase tracking-wider text-brand-100">
-          De Alleskenner · {season ? (season.isLast ? "laatste seizoensfinale-avond" : season.isFinale ? "seizoensfinale-avond" : "seizoensavond") : "lobby"}
+          {season ? (season.isLast ? "Laatste seizoensfinale-avond" : season.isFinale ? "Seizoensfinale-avond" : "Seizoensavond") : "Lobby"}
         </p>
-        <h1 className="text-2xl font-extrabold">Spelcode {state.code}</h1>
+        <h1 className="text-2xl font-extrabold">De Alleskenner</h1>
         <p className="text-sm text-brand-100">
           {isHost
             ? "Nodig je vrienden uit, kies wie meespeelt en wie de quizmaster is, en start het spel."

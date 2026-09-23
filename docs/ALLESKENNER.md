@@ -116,9 +116,10 @@ de minste seconden; na een pas of als je klaar bent, mag de volgende aanvullen.
 
 ## Techniek
 
-- Een potje is een `LiveGame` met `mode = ALLESKENNER`, zodat lobbycode,
-  uitnodigingen (push, melding bovenin, gloed bij Spelen) en `/api/activity-status`
-  meteen werken.
+- Een potje is een `LiveGame` met `mode = ALLESKENNER`, zodat uitnodigingen
+  (push, melding bovenin, gloed bij Spelen) en `/api/activity-status` meteen
+  werken. Meedoen gaat alleen via een uitnodiging van de host (vrienden) of,
+  bij een seizoen, als lid; de interne spelcode wordt nergens getoond.
 - Spellogica in `src/server/alleskenner.ts` (niet in `gameServer.ts`); de
   spelstatus leeft in het geheugen van de server, zoals de andere live-spellen.
   Let op de eager-importketen van `server.ts` (zie `CLAUDE.md`).
