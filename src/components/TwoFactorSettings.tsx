@@ -119,7 +119,9 @@ export default function TwoFactorSettings({ isAdmin }: { isAdmin: boolean }) {
           {setup ? (
             <div className="flex flex-col gap-4">
               <div className="flex flex-col sm:flex-row gap-5 items-start">
-                <div className="bg-white rounded-xl p-3 shrink-0" dangerouslySetInnerHTML={{ __html: qrDataUrl(setup.otpauthUri).replace(/^data:image\/gif;base64,/, "") }} />
+                <div className="bg-white rounded-xl p-3 shrink-0">
+                  <img src={qrDataUrl(setup.otpauthUri)} alt="QR-code voor tweestapsverificatie" className="w-48 h-48" />
+                </div>
                 <div className="flex flex-col gap-2 text-sm">
                   <p className="font-semibold">1. Scan de QR-code met je authenticator-app.</p>
                   <p>2. Voer daarna de 6-cijferige code hieronder in.</p>
