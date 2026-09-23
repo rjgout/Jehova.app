@@ -104,7 +104,11 @@ export default function AlleskennerGame({ state, receivedAt }: { state: AkStateV
     <>
       <Header state={state} deadlineLeft={deadlineLeft} />
 
-      <div className={`grid gap-2 ${scoreboard.length <= 2 ? "grid-cols-2" : "grid-cols-2 sm:grid-cols-3"}`}>
+      <div
+        className={`grid gap-2 ${
+          scoreboard.length === 1 ? "grid-cols-1 w-full max-w-[12rem] self-center" : scoreboard.length === 2 ? "grid-cols-2" : "grid-cols-2 sm:grid-cols-3"
+        }`}
+      >
         {scoreboard.map((c) => {
           const isActive = c.id === state.activeId;
           const isMine = c.id === state.me.contestantId;
@@ -171,7 +175,15 @@ export default function AlleskennerGame({ state, receivedAt }: { state: AkStateV
       {state.me.isHost && (
         <button
           className="text-xs text-slate-400 hover:text-red-500 hover:underline self-center"
-          onClick={() => window.confirm("Het spel nu stoppen?") && socket.emit("ak:stop")}
+          onClick={() =>
+            window.confirm(
+              state.solo?.mode === "DAILY"
+                ? "Nu stoppen? Je poging van vandaag is dan op en telt niet mee."
+                : state.solo
+                  ? "Nu stoppen? Dit potje telt dan niet mee."
+                  : "Het spel nu stoppen?"
+            ) && socket.emit("ak:stop")
+          }
         >
           Spel stoppen
         </button>

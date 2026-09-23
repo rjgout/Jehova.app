@@ -67,6 +67,7 @@ export const DEFAULT_ACTIVITY_RULES: Record<string, ActivityRule> = {
   SCRABBLE_WON: { dailyCap: 60, decayFactor: 0.7 },
   SCRABBLE_PLAYED: { dailyCap: 30, decayFactor: 0.7 },
   CHALLENGE_WON: { dailyCap: 60, decayFactor: 0.7 },
+  ALLESKENNER_SOLO: { dailyCap: 80, decayFactor: 0.7 },
 };
 
 const DEFAULT_SETTINGS: LeagueSettingsView = {

@@ -8,11 +8,14 @@
 
 export type AkPhase = "LOBBY" | "R369" | "OPEN_DEUR" | "PUZZLE" | "GALLERY" | "MEMORY" | "FINALE" | "FINISHED";
 export type AkRole = "player" | "spectator" | "quizmaster";
-export type AkLength = "SHORT" | "FULL";
+// SOLO: alleen spelen (zie src/lib/alleskenner/solo.ts): alle rondes behalve
+// de finale, want daar heb je een tegenstander voor nodig.
+export type AkLength = "SHORT" | "FULL" | "SOLO";
 
 export const AK_ROUNDS: Record<AkLength, AkPhase[]> = {
   SHORT: ["R369", "PUZZLE", "FINALE"],
   FULL: ["R369", "OPEN_DEUR", "PUZZLE", "GALLERY", "MEMORY", "FINALE"],
+  SOLO: ["R369", "OPEN_DEUR", "PUZZLE", "GALLERY", "MEMORY"],
 };
 
 export const AK_ROUND_TITLES: Record<AkPhase, string> = {
@@ -168,6 +171,8 @@ export interface AkStateView {
     safeId: string | null; // Alleskenner van de avond
   } | null;
   personal: { mine: number | null; ranking: { userId: string; name: string; points: number }[] | null } | null;
+  // Alleen spelen. xpEarned/rank komen pas na afloop, als het resultaat is vastgelegd.
+  solo: { mode: "DAILY" | "PRACTICE"; xpEarned: number | null; rank: number | null } | null;
   feedback: { contestantId: string | null; text: string; kind: "good" | "bad" | "info"; at: number } | null;
 }
 

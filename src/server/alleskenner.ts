@@ -2,6 +2,7 @@ import type { Server as SocketIOServer, Socket } from "socket.io";
 import { prisma } from "@/lib/db";
 import { notifyGameInvite } from "@/lib/notify";
 import { cancelSeasonEvening, recordSeasonEvening } from "@/lib/alleskenner/season";
+import { recordSoloRun, type SoloItems, type SoloResult } from "@/lib/alleskenner/solo";
 import {
   answerMatches,
   bookOfRef,
@@ -12,12 +13,14 @@ import {
 } from "@/lib/alleskenner/content";
 import {
   ensureAlleskennerContent,
+  itemsByIds,
   kidsStory,
   markSeen,
   passageVerses,
   pickItems,
   siblingBookNames,
   verseTextByRef,
+  type PickedItem,
 } from "@/lib/alleskenner/pool";
 import {
   AK_369_POINTS,
@@ -142,6 +145,9 @@ interface Room {
   code: string;
   gameId: string;
   season: SeasonInfo | null;
+  // Alleen spelen: één deelnemer, geen LiveGame; het resultaat gaat naar
+  // AlleskennerSoloRun (zie src/lib/alleskenner/solo.ts).
+  solo: { runId: string; mode: "DAILY" | "PRACTICE"; result: SoloResult | null } | null;
   hostId: string;
   quizmasterId: string | null;
   participants: Map<string, Participant>;
@@ -540,6 +546,9 @@ function buildView(room: Room, viewerId: string): AkStateView {
     personal: room.teamMode
       ? { mine: myContestant ? (room.personal.get(viewerId) ?? 0) : null, ranking: personalRanking }
       : null,
+    solo: room.solo
+      ? { mode: room.solo.mode, xpEarned: room.solo.result?.xpEarned ?? null, rank: room.solo.result?.rank ?? null }
+      : null,
     feedback: room.feedback,
   };
 }
@@ -696,6 +705,15 @@ async function buildGallery(id: string, data: GalleryData) {
   return { id, variant: data.variant, entries };
 }
 
+interface GameContent {
+  questions: PickedItem<"QUESTION">[]; // in speelvolgorde
+  doors: PickedItem<"TOPIC">[];
+  puzzles: PickedItem<"PUZZLE">[];
+  galleries: PickedItem<"GALLERY">[];
+  memories: PickedItem<"MEMORY">[];
+  finaleTopics: PickedItem<"TOPIC">[];
+}
+
 async function startGame(room: Room): Promise<string | null> {
   const contestants = buildContestants(room);
   if (typeof contestants === "string") return contestants;
@@ -726,7 +744,16 @@ async function startGame(room: Room): Promise<string | null> {
   const memories = full ? await pickItems("MEMORY", n, everyone) : [];
 
   await markSeen([...questions, ...puzzles, ...doors, ...finaleTopics, ...galleries, ...memories].map((i) => i.id), everyone);
+  await setupGame(room, contestants, { questions, doors, puzzles, galleries, memories, finaleTopics });
 
+  await prisma.liveGame.update({ where: { id: room.gameId }, data: { status: "IN_PROGRESS" } }).catch(() => {});
+  await revokeOpenInvites(room).catch(() => {});
+  return null;
+}
+
+/** Zet de gekozen inhoud klaar en begint de eerste ronde (quizavond én alleen spelen). */
+async function setupGame(room: Room, contestants: Contestant[], content: GameContent) {
+  const { questions, doors, puzzles, galleries, memories, finaleTopics } = content;
   room.r369 = {
     items: await Promise.all(
       questions.map(async (q) => ({
@@ -793,14 +820,18 @@ async function startGame(room: Room): Promise<string | null> {
     });
   }
   room.memory = { ...emptyGridRound(memoryItems), owners: [], reading: false };
-  room.finale = {
-    ...emptyGridRound(
-      finaleTopics.map((t) =>
-        gridItem(t.id, t.data.subject, t.data.answers, t.data.distractors, FINALE_ANSWERS, GRID_SIZE, t.data.tapOnly)
-      )
-    ),
-    finalists: [contestants[0].id, contestants[1].id],
-  };
+  // Een finale heeft twee deelnemers nodig; alleen spelen heeft er geen.
+  room.finale =
+    contestants.length >= 2 && finaleTopics.length > 0
+      ? {
+          ...emptyGridRound(
+            finaleTopics.map((t) =>
+              gridItem(t.id, t.data.subject, t.data.answers, t.data.distractors, FINALE_ANSWERS, GRID_SIZE, t.data.tapOnly)
+            )
+          ),
+          finalists: [contestants[0].id, contestants[1].id],
+        }
+      : null;
 
   room.contestants = contestants;
   room.seconds = new Map(contestants.map((c) => [c.id, AK_START_SECONDS]));
@@ -811,15 +842,12 @@ async function startGame(room: Room): Promise<string | null> {
       (phase !== "OPEN_DEUR" || room.openDeur!.items.length > 0) &&
       (phase !== "PUZZLE" || room.puzzle!.items.length > 0) &&
       (phase !== "GALLERY" || room.gallery!.items.length > 0) &&
-      (phase !== "MEMORY" || room.memory!.items.length > 0)
+      (phase !== "MEMORY" || room.memory!.items.length > 0) &&
+      (phase !== "FINALE" || room.finale !== null)
   );
   room.roundIndex = -1;
   nextRound(room);
-
-  await prisma.liveGame.update({ where: { id: room.gameId }, data: { status: "IN_PROGRESS" } }).catch(() => {});
-  await revokeOpenInvites(room).catch(() => {});
   ensureTicking(room);
-  return null;
 }
 
 // Uitgenodigden die niet zijn toegetreden: uitnodiging vervalt (zie InviteListener).
@@ -831,12 +859,24 @@ async function revokeOpenInvites(room: Room) {
 }
 
 const ROUND_SUBTITLES: Partial<Record<AkPhase, string>> = {
-  R369: `Iedereen begint met ${AK_START_SECONDS} seconden. Punten bij vraag 3, 6, 9, 12 en 15.`,
   OPEN_DEUR: `Wie de minste seconden heeft, kiest als eerste een onderwerp. Vier antwoorden, elk +${AK_OPEN_DEUR_POINTS} seconden. Je klok loopt.`,
   PUZZLE: `Vind de drie groepen van vier. Elke groep +${AK_PUZZLE_POINTS} seconden. Je klok loopt.`,
   GALLERY: `Noem bij elk citaat het boek, of bij elke illustratie het verhaal. Elk goed antwoord +${AK_GALLERY_POINTS} seconden.`,
   MEMORY: `Lees de passage goed: je hebt ${AK_MEMORY_READ_MS / 1000} seconden. Daarna vijf antwoorden, elk volgend antwoord is meer waard.`,
 };
+
+function roundSubtitle(room: Room, phase: AkPhase): string {
+  if (phase === "R369") {
+    const total = room.r369?.items.length ?? QUESTIONS_369;
+    const points = Array.from({ length: Math.floor(total / 3) }, (_, i) => String((i + 1) * 3));
+    const list = points.length > 1 ? `${points.slice(0, -1).join(", ")} en ${points[points.length - 1]}` : (points[0] ?? "");
+    return `${room.solo ? "Je begint" : "Iedereen begint"} met ${AK_START_SECONDS} seconden. Punten bij vraag ${list}.`;
+  }
+  if (phase === "OPEN_DEUR" && room.solo) {
+    return `Kies een onderwerp en vind vier antwoorden, elk +${AK_OPEN_DEUR_POINTS} seconden. Je klok loopt.`;
+  }
+  return ROUND_SUBTITLES[phase] ?? "";
+}
 
 function nextRound(room: Room) {
   room.roundIndex++;
@@ -855,7 +895,7 @@ function nextRound(room: Room) {
   room.phase = phase;
   room.intermission = {
     title: `Ronde ${room.roundIndex + 1}: ${AK_ROUND_TITLES[phase]}`,
-    subtitle: ROUND_SUBTITLES[phase] ?? "",
+    subtitle: roundSubtitle(room, phase),
     standings: room.roundIndex > 0,
   };
   schedule(room, INTERMISSION_MS, () => {
@@ -948,7 +988,7 @@ function answer369(room: Room, correct: boolean, note?: string, wrongOption?: st
     });
     return;
   }
-  feedback(room, active, `${note ?? "Fout"} — niemand wist het`, "bad");
+  feedback(room, active, room.contestants.length === 1 ? (note ?? "Fout") : `${note ?? "Fout"} — niemand wist het`, "bad");
   finish369Question(room, state.starter ?? active, false);
 }
 
@@ -1067,6 +1107,7 @@ function revealGrid(room: Room, round: GridRound) {
   }
   schedule(room, REVEAL_ROUND_ITEM_MS, () => {
     if (room.phase === "OPEN_DEUR") nextDoor(room);
+    else if (room.phase === "MEMORY" && room.solo) nextMemory(room);
     else if (room.phase === "MEMORY") {
       // Tussenstand na elk fragment.
       room.intermission = { title: "Tussenstand", subtitle: standingsText(room), standings: true };
@@ -1364,6 +1405,11 @@ function finish(room: Room, winnerId: string | null) {
   room.timer = null;
   broadcast(room);
 
+  if (room.solo) {
+    recordSolo(room, room.solo, winnerId !== null);
+    scheduleRoomCleanup(room);
+    return;
+  }
   prisma.liveGame.update({ where: { id: room.gameId }, data: { status: "FINISHED" } }).catch(() => {});
   if (room.season && room.finale) {
     const season = room.season;
@@ -1380,9 +1426,24 @@ function finish(room: Room, winnerId: string | null) {
         .catch(() => {});
     }
   }
+  scheduleRoomCleanup(room);
+}
+
+function scheduleRoomCleanup(room: Room) {
   setTimeout(() => {
     if (rooms.get(room.code) === room) rooms.delete(room.code);
   }, ROOM_TTL_AFTER_FINISH_MS);
+}
+
+/** Resultaat vastleggen (XP, reeks, klassement) en daarna nog één keer tonen. */
+function recordSolo(room: Room, solo: NonNullable<Room["solo"]>, finished: boolean) {
+  recordSoloRun(solo.runId, room.hostId, secondsOf(room, room.hostId), finished)
+    .then((result) => {
+      if (!result) return;
+      solo.result = result;
+      broadcast(room);
+    })
+    .catch((e) => console.error("Alleskenner alleen: resultaat vastleggen mislukt:", e));
 }
 
 // --- Lobby: teams -----------------------------------------------------------------
@@ -1456,10 +1517,11 @@ async function loadRoom(code: string): Promise<Room | string> {
     : null;
   // Speelt de host zelf mee op deze avond, dan is er standaard geen quizmaster.
   const hostPlays = season?.lineup.includes(game.hostId) ?? false;
-  const room: Room = {
+  const room = newRoom({
     code,
     gameId: game.id,
     season,
+    solo: null,
     hostId: game.hostId,
     quizmasterId: hostPlays ? null : game.hostId,
     participants: new Map([
@@ -1468,8 +1530,19 @@ async function loadRoom(code: string): Promise<Room | string> {
         { userId: game.hostId, name: host?.handle ?? "Host", role: (hostPlays ? "player" : "quizmaster") as AkRole, team: null },
       ],
     ]),
-    sockets: new Map(),
     length: season ? "FULL" : "SHORT",
+  });
+  rooms.set(code, room);
+  if (season) inviteSeasonMembers(room, host?.handle ?? "De host").catch(() => {});
+  return room;
+}
+
+function newRoom(
+  fields: Pick<Room, "code" | "gameId" | "season" | "solo" | "hostId" | "quizmasterId" | "participants" | "length">
+): Room {
+  return {
+    ...fields,
+    sockets: new Map(),
     teamMode: false,
     lobbyTeams: [],
     phase: "LOBBY",
@@ -1496,8 +1569,66 @@ async function loadRoom(code: string): Promise<Room | string> {
     lastBroadcast: 0,
     timer: null,
   };
-  rooms.set(code, room);
-  if (season) inviteSeasonMembers(room, host?.handle ?? "De host").catch(() => {});
+}
+
+// --- Alleen spelen ------------------------------------------------------------------
+
+function soloCode(runId: string): string {
+  return `SOLO-${runId}`;
+}
+
+/**
+ * Een solokamer begint meteen: geen lobby. Na een herstart van de server is
+ * een lopend potje weg; het begint dan opnieuw met dezelfde onderdelen (de
+ * poging van de dag blijft dezelfde rij, zie startSoloRun).
+ */
+async function loadSoloRoom(runId: string, user: { id: string; handle: string }): Promise<Room | string> {
+  const run = await prisma.alleskennerSoloRun.findUnique({ where: { id: runId } });
+  if (!run || run.userId !== user.id) return "Dit spel bestaat niet (meer).";
+  if (run.status !== "IN_PROGRESS") return "Dit spel is al afgelopen.";
+  const items = JSON.parse(run.items) as SoloItems;
+  const content: GameContent = {
+    questions: await itemsByIds("QUESTION", items.questions),
+    doors: await itemsByIds("TOPIC", items.doors),
+    puzzles: await itemsByIds("PUZZLE", items.puzzles),
+    galleries: await itemsByIds("GALLERY", items.galleries),
+    memories: await itemsByIds("MEMORY", items.memories),
+    finaleTopics: [],
+  };
+  if (content.questions.length === 0) return "De vragen van dit spel zijn niet meer beschikbaar.";
+  const room = newRoom({
+    code: soloCode(runId),
+    gameId: "",
+    season: null,
+    solo: { runId, mode: run.mode, result: null },
+    hostId: user.id,
+    quizmasterId: null,
+    participants: new Map([[user.id, { userId: user.id, name: user.handle, role: "player" as AkRole, team: null }]]),
+    length: "SOLO",
+  });
+  await setupGame(room, [{ id: user.id, name: user.handle, members: [user.id], leaderId: user.id, color: 0 }], content);
+  rooms.set(room.code, room);
+  return room;
+}
+
+async function joinSoloRoom(socket: Socket, user: { id: string; handle: string }, runId: string): Promise<Room | string> {
+  const code = soloCode(runId);
+  let room = rooms.get(code);
+  if (!room) {
+    let loading = loadingRooms.get(code);
+    if (!loading) {
+      loading = loadSoloRoom(runId, user).finally(() => loadingRooms.delete(code));
+      loadingRooms.set(code, loading);
+    }
+    const loaded = await loading;
+    if (typeof loaded === "string") return loaded;
+    room = loaded;
+  }
+  if (room.hostId !== user.id) return "Dit spel bestaat niet (meer).";
+  const sockets = room.sockets.get(user.id) ?? new Set<string>();
+  sockets.add(socket.id);
+  room.sockets.set(user.id, sockets);
+  socket.data.akCode = code;
   return room;
 }
 
@@ -1528,6 +1659,7 @@ async function joinRoom(socket: Socket, user: { id: string; handle: string }, co
     if (typeof loaded === "string") return loaded;
     room = loaded;
   }
+  if (room.solo) return "Dit spel bestaat niet (meer).";
 
   if (!room.participants.has(user.id)) {
     if (!(await mayJoin(room, user.id))) return "Je bent niet uitgenodigd voor dit spel. Vraag de host om je uit te nodigen.";
@@ -1589,6 +1721,19 @@ export function registerAlleskennerHandlers(server: SocketIOServer, socket: Sock
   socket.on("ak:join", async ({ code }: { code?: unknown }) => {
     if (typeof code !== "string") return;
     const result = await joinRoom(socket, user, code).catch(() => "Kon niet deelnemen aan dit spel.");
+    if (typeof result === "string") {
+      fail(result);
+      return;
+    }
+    broadcast(result);
+  });
+
+  socket.on("ak:solo_join", async ({ runId }: { runId?: unknown }) => {
+    if (typeof runId !== "string" || runId.length > 64) return;
+    const result = await joinSoloRoom(socket, user, runId).catch((e) => {
+      console.error("Alleskenner alleen: starten mislukt:", e);
+      return "Kon het spel niet starten.";
+    });
     if (typeof result === "string") {
       fail(result);
       return;

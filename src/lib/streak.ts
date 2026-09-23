@@ -401,6 +401,59 @@ export async function completeWordGame(userId: string, xpEarned: number): Promis
 }
 
 /**
+ * De Alleskenner alleen gespeeld (van de dag of vrij oefenen): telt als
+ * gestudeerd voor de reeks, net als het woordspel. De XP is al berekend uit
+ * de eindstand (soloXp in src/lib/alleskenner/solo.ts).
+ */
+export async function completeAlleskennerSolo(
+  userId: string,
+  xpEarned: number,
+  metadata: Record<string, unknown>
+): Promise<StudyResult> {
+  return prisma.$transaction(async (tx) => {
+    const daily = await applyDailyStreak(tx, userId);
+    const freezeCount = daily.freezeCountBeforeMilestone + daily.freezesEarned;
+
+    await tx.user.update({
+      where: { id: userId },
+      data: {
+        currentStreak: daily.currentStreak,
+        longestStreak: daily.longestStreak,
+        lastStudyDate: daily.today,
+        freezeCount,
+      },
+    });
+
+    if (daily.freezesEarned > 0) {
+      await tx.freezeTransaction.create({
+        data: { userId, type: "EARNED", amount: daily.freezesEarned, reason: "Mijlpaal bereikt" },
+      });
+    }
+
+    if (xpEarned > 0) {
+      await awardXp(tx, userId, xpEarned, "ALLESKENNER_SOLO", metadata);
+      await awardCompetitionXp(tx, userId, "ALLESKENNER_SOLO", xpEarned);
+    }
+
+    const newAchievements = await checkAndAwardAchievements(tx, userId);
+
+    return {
+      xpEarned,
+      chapterCompleted: false,
+      scorePercent: 100,
+      currentStreak: daily.currentStreak,
+      longestStreak: daily.longestStreak,
+      streakBroken: daily.streakBroken,
+      freezeUsed: daily.freezeUsed,
+      freezesEarned: daily.freezesEarned,
+      freezeCount,
+      newAchievements,
+      alreadyStudiedToday: daily.alreadyStudiedToday,
+    };
+  });
+}
+
+/**
  * Rondt één van de twee modi (CONTENT/BOM_CONNECTION) van een
  * podcastaflevering af — zelfde soort boekhouding als completeLesson, maar
  * tegen PodcastEpisodeProgress i.p.v. ChapterProgress. Raakt bewust geen

@@ -16,7 +16,8 @@ type XPReason =
   | "FREEZE_PURCHASED"
   | "CHAPTER_GUESS_COMPLETED"
   | "WORD_GAME_WON"
-  | "INTRO_LESSON_COMPLETED";
+  | "INTRO_LESSON_COMPLETED"
+  | "ALLESKENNER_SOLO";
 
 interface XpTransaction {
   id: string;
@@ -39,6 +40,7 @@ const REASON_LABELS: Record<XPReason, string> = {
   CHAPTER_GUESS_COMPLETED: "Raad het hoofdstuk",
   WORD_GAME_WON: "Woordspel gewonnen",
   INTRO_LESSON_COMPLETED: "Introductieles afgerond",
+  ALLESKENNER_SOLO: "De Alleskenner alleen",
 };
 
 const REASON_ICONS: Record<XPReason, string> = {
@@ -55,6 +57,7 @@ const REASON_ICONS: Record<XPReason, string> = {
   CHAPTER_GUESS_COMPLETED: "🔍",
   WORD_GAME_WON: "🔤",
   INTRO_LESSON_COMPLETED: "🧭",
+  ALLESKENNER_SOLO: "🧠",
 };
 
 function startOfDay(d: Date): number {

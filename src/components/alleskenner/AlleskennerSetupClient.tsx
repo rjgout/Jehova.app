@@ -48,6 +48,21 @@ export default function AlleskennerSetupClient() {
         {error && <p className="text-sm font-semibold text-red-200">{error}</p>}
       </div>
 
+      <Link href="/alleskenner/alleen" className="card flex items-center gap-4 hover:shadow-md transition">
+        <span className="text-3xl" aria-hidden>
+          🧠
+        </span>
+        <span className="flex-1">
+          <span className="block font-extrabold dark:text-slate-100">Alleen spelen</span>
+          <span className="block text-sm text-slate-500 dark:text-slate-400">
+            De Alleskenner van de dag met een klassement, of vrij oefenen. Levert XP op en houdt je reeks vast.
+          </span>
+        </span>
+        <span className="text-slate-400" aria-hidden>
+          →
+        </span>
+      </Link>
+
       <Link href="/alleskenner/seizoen" className="card flex items-center gap-4 hover:shadow-md transition">
         <span className="text-3xl" aria-hidden>
           📅

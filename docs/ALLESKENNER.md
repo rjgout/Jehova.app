@@ -2,7 +2,8 @@
 
 Een live quizspel voor mensen die **fysiek bij elkaar** zijn. Iedereen speelt op
 zijn eigen telefoon met zijn eigen account; de server bewaakt de spelstatus,
-beurten, klokken en scores. Seconden zijn de enige score-eenheid.
+beurten, klokken en scores. Seconden zijn de enige score-eenheid. Je kunt hem
+ook alleen spelen (zie "Alleen spelen").
 
 Dit document legt het afgesproken ontwerp vast. Bouwstatus staat onderaan.
 
@@ -94,6 +95,35 @@ de minste seconden; na een pas of als je klaar bent, mag de volgende aanvullen.
 - Een avond die wordt gestopt of waarvan de lobby wordt geannuleerd, telt
   niet mee.
 
+## Alleen spelen (`/alleskenner/alleen`)
+
+- **Alleskenner van de dag**: elke dag voor iedereen dezelfde onderdelen,
+  vastgelegd door wie als eerste speelt (`AlleskennerDailySet`, zelfde idee
+  als het woord van de dag). Eén poging per dag (unieke index op
+  `AlleskennerSoloRun(userId, dayKey)`); een lopend potje kun je hervatten.
+  De dag is de UTC-dag van de rest van de app (`dayKey()`), net als de reeks.
+- **Vrij oefenen**: zo vaak je wilt, met onderdelen die je nog niet had (zelfde
+  keuze als bij een quizavond). Telt niet mee in het klassement.
+- Rondes: 3-6-9 (negen vragen, punten bij 3, 6 en 9), Open Deur (kies één
+  van drie onderwerpen), Puzzel, Galerij en Collectief Geheugen. Geen finale:
+  daar is een tegenstander voor nodig. Je begint met 60 seconden; wat je
+  overhoudt is je score.
+- Van de dag heeft geen luistervraag: die vraagt geluid en de bedenktijd
+  start pas na het voorlezen, wat in een klassement niet eerlijk te
+  controleren is. Oefenen heeft er wel een.
+- Klassementen: vandaag (seconden, bij gelijke stand wie eerder klaar was),
+  deze week (seconden van alle dagen sinds maandag opgeteld) en vrienden
+  (vandaag).
+- XP (`soloXp`): van de dag 20 + seconden/5 (max 60), oefenen 5 +
+  seconden/10 (max 20). Beide verlengen de reeks (`completeAlleskennerSolo`)
+  en tellen als `ALLESKENNER_SOLO` mee voor de competitie. Zelf stoppen telt
+  niet mee: geen XP, geen reeks, en de poging van de dag is wel op.
+- Techniek: dezelfde spelserver als een quizavond, met een kamer van één
+  deelnemer (`length = "SOLO"`, `ak:solo_join`), zonder `LiveGame`. Wat je
+  alleen speelt, telt als gezien, dus het komt op een quizavond niet meteen
+  terug. Na een herstart van de server begint een lopend potje opnieuw met
+  dezelfde onderdelen.
+
 ## Inhoud
 
 - Eén pool in de database (`AlleskennerItem`), elk onderdeel met een vaste ID.
@@ -150,3 +180,4 @@ de minste seconden; na een pas of als je klaar bent, mag de volgende aanvullen.
 4. [x] Teams, Open Deur, Galerij, Collectief Geheugen, kort/volledig spel
 5. [x] Seizoensmodus en seizoensfinale (`/alleskenner/seizoen`)
 6. [x] Editor voor bestaande inhoud in `/adminbackend`
+7. [x] Alleen spelen: van de dag met klassement, en vrij oefenen

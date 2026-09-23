@@ -202,6 +202,7 @@ model User {
   alleskennerSeasonsDeputy AlleskennerSeason[]       @relation("AlleskennerSeasonDeputy")
   alleskennerSeasonsWon    AlleskennerSeason[]       @relation("AlleskennerSeasonChampion")
   alleskennerSeasonMembers AlleskennerSeasonMember[]
+  alleskennerSoloRuns      AlleskennerSoloRun[]
 
   chapterGuessGames ChapterGuessGame[]
   wordGames         WordGame[]
@@ -1091,6 +1092,9 @@ enum XPReason {
   WORD_GAME_WON
   // Een les uit de introductiecursus afgerond. Zie completeIntroLesson.
   INTRO_LESSON_COMPLETED
+  // De Alleskenner alleen gespeeld (van de dag of vrij oefenen). Zie
+  // completeAlleskennerSolo.
+  ALLESKENNER_SOLO
 }
 
 model XPTransaction {
@@ -1785,6 +1789,47 @@ model AlleskennerSeen {
 
   @@id([userId, itemId])
   @@index([itemId])
+}
+
+// --- De Alleskenner: alleen spelen (zie docs/ALLESKENNER.md, "Alleen spelen") --
+
+enum AlleskennerSoloMode {
+  DAILY // Alleskenner van de dag: voor iedereen dezelfde onderdelen, één poging
+  PRACTICE // vrij oefenen: eigen onderdelen, telt niet mee in het klassement
+}
+
+enum AlleskennerSoloStatus {
+  IN_PROGRESS
+  FINISHED
+  ABANDONED // zelf gestopt: telt niet mee, de poging van de dag is wel op
+}
+
+model AlleskennerSoloRun {
+  id         String                @id @default(cuid())
+  userId     String
+  user       User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  mode       AlleskennerSoloMode
+  // Alleen bij DAILY; de unieke index dwingt "één poging per dag" af
+  // (meerdere NULLs mogen, dus oefenpotjes zijn onbeperkt).
+  dayKey     String?
+  items      String // JSON: gekozen onderdelen per ronde (zie src/lib/alleskenner/solo.ts)
+  status     AlleskennerSoloStatus @default(IN_PROGRESS)
+  seconds    Int                   @default(0)
+  xpEarned   Int                   @default(0)
+  createdAt  DateTime              @default(now())
+  finishedAt DateTime?
+
+  @@unique([userId, dayKey])
+  @@index([mode, dayKey, status])
+}
+
+// De onderdelen van de Alleskenner van de dag, vastgelegd door de eerste die
+// die dag speelt: zo krijgt iedereen dezelfde, ook als de inhoud tussendoor
+// verandert (zelfde reden als DailyWord).
+model AlleskennerDailySet {
+  dayKey    String   @id
+  items     String // JSON, zelfde vorm als AlleskennerSoloRun.items
+  createdAt DateTime @default(now())
 }
 
 // --- De Alleskenner: seizoenen (zie docs/ALLESKENNER.md, "Seizoen") ---------

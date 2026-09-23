@@ -35,7 +35,7 @@ function family(id: string): string {
  * (willekeurig), daarna om en om per generator, zodat een spel niet uit
  * vijftien vragen van hetzelfde soort bestaat.
  */
-function interleave<T extends { id: string }>(items: T[]): T[] {
+export function interleave<T extends { id: string }>(items: T[]): T[] {
   const hand = items.filter((i) => family(i.id) === "hand");
   const groups = new Map<string, T[]>();
   for (const item of items) {
@@ -84,6 +84,23 @@ export async function pickItems<K extends AlleskennerItemKind>(
   const unseen = candidates.filter((c) => c.lastSeen === 0);
   const seen = candidates.filter((c) => c.lastSeen !== 0);
   return [...interleave(unseen), ...seen].slice(0, count).map(({ id, data }) => ({ id, data }));
+}
+
+/**
+ * Onderdelen op volgorde van `ids` (bv. de vastgelegde Alleskenner van de
+ * dag). Wat inmiddels is uitgeschakeld of verwijderd, valt weg.
+ */
+export async function itemsByIds<K extends AlleskennerItemKind>(kind: K, ids: string[]): Promise<PickedItem<K>[]> {
+  if (ids.length === 0) return [];
+  const rows = await prisma.alleskennerItem.findMany({
+    where: { kind, enabled: true, id: { in: ids } },
+    select: { id: true, data: true },
+  });
+  const byId = new Map(rows.map((row) => [row.id, JSON.parse(row.data) as AlleskennerDataFor<K>]));
+  return ids.flatMap((id) => {
+    const data = byId.get(id);
+    return data ? [{ id, data }] : [];
+  });
 }
 
 /** Registreert dat deze gebruikers deze onderdelen nu gezien hebben. */

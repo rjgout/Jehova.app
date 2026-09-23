@@ -18,7 +18,7 @@ interface Friend {
  * (src/server/alleskenner.ts) via "ak:state"; elke deelnemer krijgt een eigen
  * weergave, dus dit component beslist niets zelf over goed/fout of seconden.
  */
-export default function AlleskennerRoom({ code }: { code: string }) {
+export default function AlleskennerRoom({ code, soloRunId }: { code: string; soloRunId?: string }) {
   const router = useRouter();
   const [state, setState] = useState<AkStateView | null>(null);
   const [receivedAt, setReceivedAt] = useState(0);
@@ -26,7 +26,7 @@ export default function AlleskennerRoom({ code }: { code: string }) {
 
   useEffect(() => {
     const socket = getSocket();
-    const join = () => socket.emit("ak:join", { code });
+    const join = () => (soloRunId ? socket.emit("ak:solo_join", { runId: soloRunId }) : socket.emit("ak:join", { code }));
     function onState(next: AkStateView) {
       if (next.code !== code) return;
       setState(next);
@@ -51,7 +51,7 @@ export default function AlleskennerRoom({ code }: { code: string }) {
       socket.off("game_cancelled", onCancelled);
       socket.off("connect", join);
     };
-  }, [code, router]);
+  }, [code, soloRunId, router]);
 
   if (!state) {
     return (
@@ -59,8 +59,8 @@ export default function AlleskennerRoom({ code }: { code: string }) {
         {error ? (
           <>
             <p className="font-semibold text-red-600 dark:text-red-400">{error}</p>
-            <Link href="/live" className="btn-secondary self-center">
-              Terug naar Spelen
+            <Link href={soloRunId ? "/alleskenner/alleen" : "/live"} className="btn-secondary self-center">
+              {soloRunId ? "Terug naar alleen spelen" : "Terug naar Spelen"}
             </Link>
           </>
         ) : (
@@ -309,6 +309,7 @@ function Lobby({ state }: { state: AkStateView }) {
 
 function Finished({ state }: { state: AkStateView }) {
   if (state.season && state.winnerId) return <SeasonFinished state={state} />;
+  if (state.solo) return <SoloFinished state={state} solo={state.solo} />;
   const winner = state.contestants.find((c) => c.id === state.winnerId);
   const standings = [...state.contestants].sort((a, b) => b.seconds - a.seconds);
   const best = state.personal?.ranking?.[0] ?? null;
@@ -414,6 +415,68 @@ function SeasonFinished({ state }: { state: AkStateView }) {
       <Link href={`/alleskenner/seizoen/${season.seasonId}`} className="btn-primary self-center">
         Naar het seizoen
       </Link>
+    </>
+  );
+}
+
+function SoloFinished({ state, solo }: { state: AkStateView; solo: NonNullable<AkStateView["solo"]> }) {
+  const router = useRouter();
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const seconds = Math.round(state.contestants[0]?.seconds ?? 0);
+  const stopped = state.winnerId === null;
+
+  async function practice() {
+    setBusy(true);
+    setError(null);
+    const res = await fetch("/api/alleskenner/solo", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ mode: "PRACTICE" }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      setBusy(false);
+      setError(data.error ?? "Kon geen nieuw potje beginnen.");
+      return;
+    }
+    router.push(`/alleskenner/alleen/${data.runId}`);
+  }
+
+  return (
+    <>
+      <div className="card !bg-gradient-to-br from-gold-500 to-gold-700 !border-0 text-brand-900 text-center flex flex-col items-center gap-2 animate-pop">
+        <p className="text-xs font-bold uppercase tracking-wider">
+          {solo.mode === "DAILY" ? "Alleskenner van de dag" : "Vrij oefenen"}
+        </p>
+        {stopped ? (
+          <>
+            <h1 className="text-2xl font-extrabold">Je bent gestopt</h1>
+            <p className="font-semibold">
+              {solo.mode === "DAILY" ? "Deze poging telt niet mee. Morgen staat er een nieuwe klaar." : "Dit potje telt niet mee."}
+            </p>
+          </>
+        ) : (
+          <>
+            <p className="text-6xl font-extrabold tabular-nums">{seconds}</p>
+            <p className="font-bold">seconden over</p>
+            <p className="text-sm font-semibold">
+              {solo.xpEarned === null
+                ? "Resultaat opslaan..."
+                : `+${solo.xpEarned} XP${solo.rank !== null ? ` · plek ${solo.rank} van vandaag` : ""}`}
+            </p>
+          </>
+        )}
+      </div>
+      {error && <p className="card !py-3 text-sm font-semibold text-red-600 dark:text-red-400">{error}</p>}
+      <div className="flex flex-wrap justify-center gap-2">
+        <Link href="/alleskenner/alleen" className="btn-primary">
+          {solo.mode === "DAILY" ? "Naar het klassement" : "Terug"}
+        </Link>
+        <button className="btn-secondary" onClick={practice} disabled={busy}>
+          {busy ? "Bezig..." : solo.mode === "DAILY" ? "Vrij oefenen" : "Nog een potje"}
+        </button>
+      </div>
     </>
   );
 }

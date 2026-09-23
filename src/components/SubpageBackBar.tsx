@@ -23,6 +23,7 @@ function backTargetFor(pathname: string): BackTarget | null {
   const tool = TOOL_SUBPAGES[pathname];
   if (tool) return { href: "/tools", parent: "Hulpmiddelen", ...tool };
   if (pathname === "/feedback") return { href: "/profile", parent: "Profiel", title: "Feedback", icon: "💬" };
+  if (pathname === "/alleskenner/alleen") return { href: "/alleskenner", parent: "De Alleskenner", title: "Alleen spelen", icon: "🧠" };
   if (/^\/scrabble\/[^/]+$/.test(pathname)) return { href: "/scrabble", parent: "Woordspellen", title: "Woordspel", icon: "🔤" };
   if (/^\/fsy\/[^/]+$/.test(pathname)) return { href: "/courses", parent: "Cursussen", title: "Les", icon: "📘" };
   const chapter = /^\/courses\/([^/]+)\/chapter\/[^/]+$/.exec(pathname);
