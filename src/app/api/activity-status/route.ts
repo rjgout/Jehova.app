@@ -9,6 +9,7 @@ interface ActivityItem {
   label: string;
   link: string;
   myTurn: boolean | null;
+  contentCollectionId?: string;
   // Alleen gezet bij kind "live": de speelcode, nodig om cancel_game te
   // kunnen versturen (zie ActiveGamesBanner) zonder eerst naar de lobby te
   // navigeren.
@@ -28,7 +29,7 @@ export async function GET() {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: "Niet ingelogd" }, { status: 401 });
 
-  const [challenges, scrabbleGames, liveGames, soloChapterGuessGames] = await Promise.all([
+  const [challenges, scrabbleGames, liveGames, soloChapterGuessGames, gameScopes, contentContext] = await Promise.all([
     prisma.challenge.findMany({
       where: { OR: [{ senderId: user.id }, { receiverId: user.id }], status: { in: ["PENDING", "ACCEPTED"] } },
       include: {
@@ -58,8 +59,34 @@ export async function GET() {
     prisma.chapterGuessGame.findMany({
       where: { userId: user.id, status: "IN_PROGRESS" },
       orderBy: { createdAt: "desc" },
+      include: { questions: { orderBy: { order: "asc" }, take: 1, select: { chapterId: true } } },
     }),
+    prisma.gameContentScope.findMany({
+      where: { gameKey: { in: ["scrabble", "gezinsavond", "chapter-guess"] } },
+      select: { gameKey: true, contentCollectionId: true },
+    }),
+    getContentContext(user.id),
   ]);
+
+  const soloChapterIds = soloChapterGuessGames
+    .map((game) => game.questions[0]?.chapterId)
+    .filter((id): id is string => Boolean(id));
+
+  const soloChapterCollections = soloChapterIds.length
+    ? await prisma.chapter.findMany({
+        where: { id: { in: soloChapterIds } },
+        select: { id: true, book: { select: { contentCollectionId: true } } },
+      })
+    : [];
+
+  const soloChapterCollectionById = new Map(
+    soloChapterCollections.map((chapter) => [chapter.id, chapter.book.contentCollectionId])
+  );
+
+  const singleScope = (gameKey: string): string | undefined => {
+    const matches = gameScopes.filter((scope) => scope.gameKey === gameKey);
+    return matches.length === 1 ? matches[0].contentCollectionId : undefined;
+  };
 
   const invitesReceived: ActivityItem[] = [];
   const invitesSent: ActivityItem[] = [];
@@ -77,6 +104,7 @@ export async function GET() {
         label,
         link: "/challenges",
         myTurn: null,
+        contentCollectionId: c.chapter.book.contentCollectionId,
       });
     } else {
       const myCompletedAt = isSender ? c.senderCompletedAt : c.receiverCompletedAt;
@@ -87,6 +115,7 @@ export async function GET() {
         label,
         link: "/challenges",
         myTurn: myCompletedAt === null,
+        contentCollectionId: c.chapter.book.contentCollectionId,
       });
     }
   }
@@ -94,6 +123,7 @@ export async function GET() {
   for (const g of scrabbleGames) {
     const isPlayer1 = g.player1Id === user.id;
     const opponent = isPlayer1 ? g.player2 : g.player1;
+    const contentCollectionId = singleScope("scrabble");
     if (g.status === "PENDING") {
       (isPlayer1 ? invitesSent : invitesReceived).push({
         kind: "scrabble",
@@ -102,6 +132,7 @@ export async function GET() {
         label: "Woordspel",
         link: "/scrabble",
         myTurn: null,
+        contentCollectionId,
       });
     } else {
       activeGames.push({
@@ -111,12 +142,16 @@ export async function GET() {
         label: "Woordspel",
         link: `/scrabble/${g.id}`,
         myTurn: g.turnUserId === user.id,
+        contentCollectionId,
       });
     }
   }
 
   for (const lg of liveGames) {
     const suffix = lg.status === "LOBBY" ? " (lobby)" : "";
+    const contentCollectionId =
+      lg.chapter?.book.contentCollectionId ??
+      (lg.mode === "FAMILY_GAME" ? singleScope("gezinsavond") : singleScope("chapter-guess"));
     const label =
       lg.mode === "CHAPTER_GUESS"
         ? `Live spel — Raad het hoofdstuk${suffix}`
@@ -142,6 +177,7 @@ export async function GET() {
           label,
           link: `/live/${lg.code}`,
           myTurn: null,
+          contentCollectionId,
           code: lg.code,
         });
       }
@@ -155,6 +191,7 @@ export async function GET() {
       label,
       link: `/live/${lg.code}`,
       myTurn: null,
+      contentCollectionId,
       code: lg.code,
     });
   }
@@ -168,8 +205,16 @@ export async function GET() {
       label: `Raad het hoofdstuk (${LEVEL_LABELS[g.level]}) — vraag ${g.currentIndex + 1}/${g.questionCount}`,
       link: `/chapter-guess/solo/${g.id}`,
       myTurn: null,
+      contentCollectionId: g.questions[0]?.chapterId
+        ? soloChapterCollectionById.get(g.questions[0].chapterId)
+        : undefined,
     });
   }
 
-  return NextResponse.json({ invitesReceived, invitesSent, activeGames });
+  return NextResponse.json({
+    invitesReceived,
+    invitesSent,
+    activeGames,
+    activeContentCollectionId: contentContext.active.id,
+  });
 }
