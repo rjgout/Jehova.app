@@ -195,7 +195,7 @@ export default function FriendsClient() {
   const onlineCount = Object.values(data.statusByUserId).filter((s) => s.online).length;
 
   return (
-    <div className="max-w-3xl mx-auto flex flex-col gap-6">
+    <div className="max-w-5xl mx-auto flex flex-col gap-6">
       <div className="flex flex-col gap-1">
         <h1 className="text-2xl font-extrabold text-brand-800 dark:text-brand-300 flex items-center gap-2">
           <span aria-hidden>👥</span> Vrienden
