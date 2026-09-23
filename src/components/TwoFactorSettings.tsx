@@ -107,14 +107,14 @@ export default function TwoFactorSettings({ isAdmin }: { isAdmin: boolean }) {
 
   if (recoveryCodes) {
     return (
-      <div className="flex flex-col gap-3 rounded-2xl border border-gold-400/40 bg-gold-50 dark:bg-slate-800 p-4">
+      <div className="flex flex-col gap-3 rounded-2xl border border-gold-400/40 bg-gold-50 dark:bg-slate-900/50 p-4">
         <p className="font-extrabold text-gold-700 dark:text-gold-300">🔑 Bewaar je herstelcodes</p>
         <p className="text-sm text-slate-600 dark:text-slate-300">
           Ben je je telefoon kwijt, dan log je met één van deze codes in. Elke code werkt één keer. Je ziet ze alleen nu.
         </p>
         <div className="grid grid-cols-2 gap-2 font-mono text-sm">
           {recoveryCodes.map((item) => (
-            <div key={item} className="rounded-lg bg-white dark:bg-slate-900 px-3 py-2 text-center dark:text-slate-100">
+            <div key={item} className="rounded-lg bg-white dark:bg-slate-800 px-3 py-2 text-center dark:text-slate-100">
               {item}
             </div>
           ))}
@@ -155,7 +155,7 @@ export default function TwoFactorSettings({ isAdmin }: { isAdmin: boolean }) {
       </div>
 
       {mode === "setup" && setup && (
-        <div className="flex flex-col gap-4 rounded-2xl bg-slate-50 dark:bg-slate-800 p-4">
+        <div className="flex flex-col gap-4 rounded-2xl bg-slate-50 dark:bg-slate-900/50 p-4">
           <div className="flex flex-col sm:flex-row gap-4 items-center sm:items-start">
             <div className="bg-white rounded-xl p-2 shrink-0 shadow-sm">
               <img src={qrDataUrl(setup.otpauthUri)} alt="QR-code voor tweestapsverificatie" className="w-40 h-40" />
@@ -190,7 +190,7 @@ export default function TwoFactorSettings({ isAdmin }: { isAdmin: boolean }) {
       )}
 
       {(mode === "reset-code" || mode === "disable-code") && (
-        <div className="flex flex-col gap-3 rounded-2xl bg-slate-50 dark:bg-slate-800 p-4">
+        <div className="flex flex-col gap-3 rounded-2xl bg-slate-50 dark:bg-slate-900/50 p-4">
           <p className="text-sm dark:text-slate-200">
             {mode === "reset-code"
               ? "Vul een ongebruikte herstelcode in. Daarna koppel je je authenticator-app opnieuw."
@@ -198,7 +198,7 @@ export default function TwoFactorSettings({ isAdmin }: { isAdmin: boolean }) {
           </p>
           <div className="flex flex-wrap items-center gap-2">
             <input
-              className="input !w-44 text-center tracking-wider"
+              className="input !w-44 text-center tracking-wider uppercase placeholder:normal-case"
               placeholder={mode === "reset-code" ? "ABCDE-12345" : "123456 of herstelcode"}
               value={code}
               onChange={(e) => setCode(e.target.value.slice(0, 16))}
