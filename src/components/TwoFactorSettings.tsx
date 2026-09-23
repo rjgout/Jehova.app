@@ -51,6 +51,26 @@ export default function TwoFactorSettings({ isAdmin }: { isAdmin: boolean }) {
     setRecoveryCodes(data.recoveryCodes);
   }
 
+  async function resetWithRecoveryCode() {
+    const input = window.prompt("Voer een ongebruikte herstelcode in.");
+    if (!input) return;
+    setBusy(true);
+    setMessage(null);
+    const res = await fetch("/api/account/totp/reset", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ code: input }),
+    });
+    const data = await res.json().catch(() => ({}));
+    setBusy(false);
+    if (!res.ok) {
+      setMessage(data.error ?? "Kon 2FA niet opnieuw instellen.");
+      return;
+    }
+    setEnabled(false);
+    setMessage("2FA is opnieuw ingesteld. Stel het nu opnieuw in met je authenticator-app.");
+  }
+
   async function disable() {
     const input = window.prompt("Voer je huidige 2FA-code of een herstelcode in.");
     if (!input) return;
@@ -109,10 +129,13 @@ export default function TwoFactorSettings({ isAdmin }: { isAdmin: boolean }) {
         <>
           <p className="font-semibold text-green-600 dark:text-green-400">✓ 2FA is ingeschakeld.</p>
           {isAdmin ? (
-            <p className="text-sm text-slate-500 dark:text-slate-400">Als beheerder kun je 2FA niet uitschakelen.</p>
+            <p className="text-sm text-slate-500 dark:text-slate-400">Als beheerder kun je 2FA niet uitschakelen. Ben je je authenticator kwijt, gebruik dan een herstelcode om hem opnieuw in te stellen.</p>
           ) : (
             <button className="btn-secondary self-start" onClick={disable} disabled={busy}>2FA uitschakelen</button>
           )}
+          <button className="btn-secondary self-start" onClick={resetWithRecoveryCode} disabled={busy}>
+            Authenticator opnieuw instellen
+          </button>
         </>
       ) : (
         <>
