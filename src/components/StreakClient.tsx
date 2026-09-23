@@ -116,7 +116,7 @@ export default function StreakClient() {
   const today = todayKey();
 
   return (
-    <div className="max-w-xl mx-auto flex flex-col gap-5">
+    <div className="max-w-5xl mx-auto flex flex-col gap-5">
       <h1 className="text-2xl font-extrabold text-brand-800 dark:text-brand-300">🔥 Reeks</h1>
 
       <div className="card bg-gradient-to-br from-orange-400 to-red-500 text-white flex flex-col items-center gap-1 !py-8">
