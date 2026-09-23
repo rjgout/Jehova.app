@@ -25,6 +25,11 @@ model User {
   passwordHash       String
   // Verhoogd bij een wachtwoordreset/-wijziging zodat alle eerder uitgegeven sessietokens direct ongeldig worden.
   sessionVersion     Int       @default(0)
+  // Optionele TOTP-tweestapsverificatie; het geheime seed wordt versleuteld opgeslagen.
+  totpEnabled          Boolean @default(false)
+  totpSecretEncrypted  String?
+  // JSON-array met bcrypt-hashes van eenmalige herstelcodes.
+  totpRecoveryCodes    String?
   // De allereerste ECHTE registratie op een verse installatie wordt
   // automatisch admin (zie /api/auth/register); daarna kan een admin dit
   // bij andere gebruikers aan/uit zetten via /adminbackend.
