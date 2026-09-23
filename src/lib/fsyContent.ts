@@ -269,9 +269,27 @@ export async function updateFsyAutoPublish(client: PrismaClient, autoPublish: bo
   });
 }
 
-export async function syncFsyContent(
+// De scheduler tikt elke minuut en lastCheckedAt wordt pas aan het eind van
+// een run gezet. Een run over twaalf maanden duurt langer dan een minuut, dus
+// zonder deze vlag startten er tientallen overlappende runs. Een tweede
+// aanroep wacht nu op de run die al loopt.
+let syncInFlight: Promise<void> | null = null;
+
+export function syncFsyContent(
   client: PrismaClient,
   log: (msg: string) => void = console.log
+): Promise<void> {
+  if (!syncInFlight) {
+    syncInFlight = runFsySync(client, log).finally(() => {
+      syncInFlight = null;
+    });
+  }
+  return syncInFlight;
+}
+
+async function runFsySync(
+  client: PrismaClient,
+  log: (msg: string) => void
 ): Promise<void> {
   const settings = await client.fsySettings.findUnique({ where: { id: "singleton" } });
   const autoPublish = settings?.autoPublish ?? false;
@@ -407,6 +425,7 @@ export async function runFsyWeeklyCheckIfDue(
   }).formatToParts(now);
   const parts = Object.fromEntries(amsterdam.map((part) => [part.type, part.value]));
   if (parts.weekday !== "Mon" || Number(parts.hour) !== 3) return;
+  if (syncInFlight) return;
 
   const lastChecked = await client.fsySettings.findUnique({
     where: { id: "singleton" },
