@@ -91,8 +91,8 @@ export default async function DashboardPage() {
           </div>
           <span className="text-sm font-extrabold text-brand-600 dark:text-brand-300">{completed} / {total}</span>
         </div>
-        <div className="h-3 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
-          <div className="h-full bg-brand-500 transition-all" style={{ width: `${progressPercent}%` }} />
+        <div className="h-3 rounded-full bg-slate-100 dark:bg-slate-700 overflow-hidden">
+          <div className="h-full bg-brand-500 dark:bg-brand-400 transition-all" style={{ width: `${progressPercent}%` }} />
         </div>
         <div className="flex items-center justify-between gap-3 text-sm">
           <span className="text-slate-500 dark:text-slate-400">{progressPercent}% gelezen</span>
