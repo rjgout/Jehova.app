@@ -707,7 +707,9 @@ async function startGame(room: Room): Promise<string | null> {
     items: await Promise.all(
       questions.map(async (q) => ({
         id: q.id,
-        data: q.data,
+        // In het inhoudsbestand staat het goede antwoord meestal voorop;
+        // per spel schudden, net als bij de andere oefeningen in de app.
+        data: { ...q.data, options: shuffle(q.data.options) },
         listenText: q.data.listen ? await verseTextByRef(q.data.listen.ref) : null,
       }))
     ),
