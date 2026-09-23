@@ -3,7 +3,7 @@ import { addDays, dayKey, weekStartKey, amsterdamNow, type AmsterdamTime } from 
 import { resolveWeeklyPlacement, getLeagueSettings, TIER_ORDER, TIER_LABELS } from "@/lib/leagues";
 import { notifyDailyReminder, notifyDailyText, notifyWeeklyResult, notifySeasonResult, notifyWordGame } from "@/lib/notify";
 import { getTextOfTheDay } from "@/lib/dailyText";
-import { wordGameDayKey } from "@/lib/wordGame";
+import { awardWordGameLeaderboardBonuses, previousWordGameDayKey, wordGameDayKey } from "@/lib/wordGame";
 import { broadcastPresenceUpdate } from "@/lib/presence";
 import { getIO } from "@/server/gameServer";
 import { runFsyWeeklyCheckIfDue } from "@/lib/fsyContent";
@@ -62,6 +62,24 @@ async function runDailyTextTick(): Promise<void> {
   for (const user of candidates) {
     await notifyDailyText(user.id, { ...text, content: text.text }).catch(() => {});
     await prisma.user.update({ where: { id: user.id }, data: { lastDailyTextSentDate: today } }).catch(() => {});
+  }
+}
+
+// Na 18:00 is de vorige woord-van-de-dag-dag afgesloten en staat de
+// ranglijst vast. Het uitkeren zelf is idempotent per spel; dit geheugen
+// voorkomt alleen dat elke minuut dezelfde dag opnieuw wordt doorgerekend.
+let lastLeaderboardDayAwarded: string | null = null;
+let leaderboardTickRunning = false;
+
+async function runWordGameLeaderboardTick(): Promise<void> {
+  const dayKey = previousWordGameDayKey();
+  if (dayKey === lastLeaderboardDayAwarded || leaderboardTickRunning) return;
+  leaderboardTickRunning = true;
+  try {
+    await awardWordGameLeaderboardBonuses(dayKey);
+    lastLeaderboardDayAwarded = dayKey;
+  } finally {
+    leaderboardTickRunning = false;
   }
 }
 
@@ -299,6 +317,7 @@ export function startNotificationSchedulers(): void {
     runWeeklyResultTick().catch((e) => console.error("Wekelijkse uitslag mislukt:", e));
     runSeasonRolloverTick().catch((e) => console.error("Seizoensafsluiting mislukt:", e));
     runWordGameNotificationTick().catch((e) => console.error("Woord-van-de-dag-melding mislukt:", e));
+    runWordGameLeaderboardTick().catch((e) => console.error("Woord-van-de-dag-ranglijstbonus mislukt:", e));
     runIncognitoExpiryTick().catch((e) => console.error("Incognito-vervaltijd mislukt:", e));
     runFsyWeeklyCheckIfDue(prisma).catch((e) => console.error("FSY-weekcontrole mislukt:", e));
   }, TICK_MS);

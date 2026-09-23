@@ -22,6 +22,7 @@ interface LeaderboardEntry {
   rank: number;
   handle: string;
   discriminator: string;
+  guesses: number;
   finishedAt: string;
 }
 
@@ -212,10 +213,16 @@ export default function WordGameClient() {
           {game.xpEarned > 0 && (
             <div className="flex flex-col items-center gap-1">
               <p className="text-gold-600 dark:text-gold-400 font-extrabold text-lg">+{game.xpEarned} XP</p>
-              {game.leaderboardRank && game.leaderboardXpBonus > 0 && (
+              {game.leaderboardRank && game.leaderboardXpBonus > 0 ? (
                 <p className="text-sm text-slate-500 dark:text-slate-400">
                   🏆 #{game.leaderboardRank} van vandaag · +{game.leaderboardXpBonus} XP bonus
                 </p>
+              ) : (
+                game.status === "WON" && (
+                  <p className="text-sm text-slate-500 dark:text-slate-400">
+                    Sta je om 18:00 uur in de top 10, dan krijg je een bonus tot +50 XP.
+                  </p>
+                )
               )}
             </div>
           )}
@@ -249,9 +256,9 @@ export default function WordGameClient() {
 
       <div className="card flex flex-col gap-3">
         <div>
-          <h2 className="font-extrabold dark:text-slate-100">🏆 Snelste spelers van vandaag</h2>
+          <h2 className="font-extrabold dark:text-slate-100">🏆 Beste spelers van vandaag</h2>
           <p className="text-sm text-slate-400 dark:text-slate-500">
-            De eerste tien die het woord goed hebben geraden, op volgorde van aankomst.
+            Minste pogingen wint; bij gelijkspel telt wie eerder klaar was. Om 18:00 uur krijgt de top 10 een XP-bonus.
           </p>
         </div>
 
@@ -267,9 +274,10 @@ export default function WordGameClient() {
                     {entry.handle}#{entry.discriminator}
                   </p>
                 </div>
-                <time className="text-sm font-bold text-slate-500 dark:text-slate-400 shrink-0">
-                  {formatFinishedAt(entry.finishedAt)}
-                </time>
+                <span className="text-sm font-bold text-slate-500 dark:text-slate-400 shrink-0">
+                  {entry.guesses} {entry.guesses === 1 ? "poging" : "pogingen"} ·{" "}
+                  <time dateTime={entry.finishedAt}>{formatFinishedAt(entry.finishedAt)}</time>
+                </span>
               </div>
             ))}
           </div>
