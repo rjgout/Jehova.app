@@ -3,7 +3,7 @@ import { z } from "zod";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { getCurrentUser } from "@/lib/session";
-import { SESSION_COOKIE, hashPassword, verifyPassword } from "@/lib/auth";
+import { SESSION_COOKIE, createSessionToken, hashPassword, sessionCookieOptions, verifyPassword } from "@/lib/auth";
 import { generateDiscriminator, HANDLE_REGEX, HANDLE_MIN_LENGTH, HANDLE_MAX_LENGTH, containsForbiddenEmoji, isSingleEmoji } from "@/lib/handle";
 import { setIncognito, INCOGNITO_DURATIONS_HOURS } from "@/lib/presence";
 
@@ -79,12 +79,16 @@ export async function PUT(req: NextRequest) {
   }
 
   const passwordHash = await hashPassword(parsed.data.newPassword);
+  // sessionVersion ophogen logt alle andere apparaten uit (bv. als het oude
+  // wachtwoord is uitgelekt). Dit apparaat krijgt direct een nieuw token.
   await prisma.user.update({
     where: { id: user.id },
-    data: { passwordHash, mustChangePassword: false },
+    data: { passwordHash, mustChangePassword: false, sessionVersion: { increment: 1 } },
   });
 
-  return NextResponse.json({ ok: true });
+  const res = NextResponse.json({ ok: true });
+  res.cookies.set(SESSION_COOKIE, await createSessionToken(user.id), sessionCookieOptions);
+  return res;
 }
 
 // Privacy-instelling: standaard uit. Alleen als een gebruiker dit zelf
