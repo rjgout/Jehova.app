@@ -10,7 +10,7 @@ import { parseCookieHeader } from "@/lib/parseCookieHeader";
 import { isExerciseCorrect } from "@/lib/exerciseGen";
 import { completeLesson, completeChapterGuess } from "@/lib/streak";
 import { checkAndAwardAchievements } from "@/lib/achievements";
-import { notifyNewAchievements } from "@/lib/notify";
+import { notifyGameInvite, notifyNewAchievements } from "@/lib/notify";
 import { broadcastPresenceUpdate, sendFriendStatusesToUser, setCurrentActivity, clearCurrentActivity } from "@/lib/presence";
 import { generateChapterGuessQuestions, labelsFor, computeHintEffect, type LiveQuestionSeed, type ChapterLabel } from "@/lib/chapterGuess";
 import {
@@ -189,6 +189,27 @@ async function loadExercises(chapterId: string): Promise<GameExercise[]> {
     wordBank: r.wordBank ? (JSON.parse(r.wordBank) as string[]) : undefined,
     options: r.options.length > 0 ? r.options.map((o) => o.label) : undefined,
   }));
+}
+
+function liveGameLabel(game: { mode: string; chapter?: { number: number; book: { name: string } } | null }): string {
+  if (game.mode === "CHAPTER_GUESS") return "Raad het hoofdstuk";
+  if (game.mode === "FAMILY_GAME") return "Gezinsavond";
+  return game.chapter ? `${game.chapter.book.name} ${game.chapter.number}` : "een live spel";
+}
+
+// Uitgenodigden die nog niet zijn toegetreden laten weten dat de uitnodiging
+// vervalt (host annuleert of start zonder hen), zodat de melding en de
+// gloeiende regel bij Spelen meteen verdwijnen.
+async function revokeOpenInvites(code: string): Promise<void> {
+  const game = await prisma.liveGame.findUnique({
+    where: { code },
+    select: { invites: { select: { userId: true } }, players: { select: { userId: true } } },
+  });
+  if (!game) return;
+  const joined = new Set(game.players.map((p) => p.userId));
+  for (const invite of game.invites) {
+    if (!joined.has(invite.userId)) ioInstance?.to(`user:${invite.userId}`).emit("game_invite_revoked", { code });
+  }
 }
 
 function lobbyPayload(room: RoomState) {
@@ -463,6 +484,7 @@ function broadcastFamilyTurn(room: RoomState) {
 async function startFamilyGame(room: RoomState) {
   room.status = "IN_PROGRESS";
   await prisma.liveGame.update({ where: { code: room.code }, data: { status: "IN_PROGRESS" } });
+  revokeOpenInvites(room.code).catch(() => {});
   ioInstance?.to(room.code).emit("family_game_started", {
     board: room.board,
     finishIndex: room.finishIndex,
@@ -854,6 +876,7 @@ export function initGameServer(httpServer: HttpServer) {
 
       room.status = "IN_PROGRESS";
       await prisma.liveGame.update({ where: { code }, data: { status: "IN_PROGRESS" } });
+      revokeOpenInvites(code).catch(() => {});
       broadcastLobby(room);
       askQuestion(room);
     });
@@ -962,8 +985,11 @@ export function initGameServer(httpServer: HttpServer) {
     });
 
     socket.on("invite_friend", async ({ toUserId, code }: { toUserId: string; code: string }) => {
-      const game = await prisma.liveGame.findUnique({ where: { code: code.toUpperCase() }, include: { host: true } });
-      if (!game) return;
+      const game = await prisma.liveGame.findUnique({
+        where: { code: code.toUpperCase() },
+        include: { host: true, chapter: { include: { book: true } } },
+      });
+      if (!game || game.status !== "LOBBY") return;
       const friendship = await prisma.friendship.findFirst({
         where: {
           status: "ACCEPTED",
@@ -985,10 +1011,20 @@ export function initGameServer(httpServer: HttpServer) {
           update: {},
         })
         .catch(() => {});
+      const gameLabel = liveGameLabel(game);
       ioInstance?.to(`user:${toUserId}`).emit("game_invite", {
         code: game.code,
         fromDisplayName: user.handle,
+        gameLabel,
       });
+
+      // Staat de app bij de ander open, dan verschijnt de melding in de app
+      // zelf (InviteListener); anders een pushmelding, zodat hij of zij het
+      // ook ziet met de app dicht.
+      const openSockets = (await ioInstance?.in(`user:${toUserId}`).fetchSockets().catch(() => [])) ?? [];
+      if (openSockets.length === 0) {
+        notifyGameInvite(toUserId, user.handle, gameLabel, game.code).catch(() => {});
+      }
     });
 
     // Alleen de host kan een spel dat nog niet gestart is beëindigen — nodig
@@ -1004,6 +1040,7 @@ export function initGameServer(httpServer: HttpServer) {
         socket.emit("error_message", { message: "Kon dit spel niet beëindigen." });
         return;
       }
+      await revokeOpenInvites(upperCode).catch(() => {});
       await prisma.liveGame.delete({ where: { id: game.id } }).catch(() => {});
       rooms.delete(upperCode);
       ioInstance?.to(upperCode).emit("error_message", { message: "Dit spel is beëindigd." });

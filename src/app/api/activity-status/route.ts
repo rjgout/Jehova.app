@@ -30,7 +30,7 @@ export async function GET() {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: "Niet ingelogd" }, { status: 401 });
 
-  const [challenges, scrabbleGames, liveGames, soloChapterGuessGames, gameScopes, contentContext] = await Promise.all([
+  const [challenges, scrabbleGames, liveGames, soloChapterGuessGames, gameScopes, contentContext, receivedLiveInvites] = await Promise.all([
     prisma.challenge.findMany({
       where: { OR: [{ senderId: user.id }, { receiverId: user.id }], status: { in: ["PENDING", "ACCEPTED"] } },
       include: {
@@ -67,6 +67,26 @@ export async function GET() {
       select: { gameKey: true, contentCollectionId: true },
     }),
     getContentContext(user.id),
+    // Alleen zolang het spel nog in de lobby staat en je nog niet bent
+    // toegetreden: start of annuleert de host, dan vervalt de uitnodiging.
+    prisma.liveGameInvite.findMany({
+      where: {
+        userId: user.id,
+        game: { status: "LOBBY", players: { none: { userId: user.id } } },
+      },
+      orderBy: { createdAt: "desc" },
+      include: {
+        game: {
+          select: {
+            id: true,
+            code: true,
+            mode: true,
+            host: { select: { handle: true } },
+            chapter: { select: { number: true, book: { select: { name: true, contentCollectionId: true } } } },
+          },
+        },
+      },
+    }),
   ]);
 
   const soloChapterIds = soloChapterGuessGames
@@ -212,7 +232,26 @@ export async function GET() {
     });
   }
 
+  const liveInvitesReceived: ActivityItem[] = receivedLiveInvites.map(({ game }) => ({
+    kind: "live",
+    id: game.id,
+    opponentName: game.host.handle,
+    label:
+      game.mode === "CHAPTER_GUESS"
+        ? "Raad het hoofdstuk"
+        : game.mode === "FAMILY_GAME"
+          ? "Gezinsavond"
+          : `${game.chapter?.book.name} ${game.chapter?.number}`,
+    link: `/live/${game.code}`,
+    myTurn: null,
+    contentCollectionId:
+      game.chapter?.book.contentCollectionId ??
+      (game.mode === "FAMILY_GAME" ? singleScope("gezinsavond") : singleScope("chapter-guess")),
+    code: game.code,
+  }));
+
   return NextResponse.json({
+    liveInvitesReceived,
     invitesReceived,
     invitesSent,
     activeGames,

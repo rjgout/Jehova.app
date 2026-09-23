@@ -51,6 +51,16 @@ const config: Config = {
           "25%": { transform: "translateX(-6px)" },
           "75%": { transform: "translateX(6px)" },
         },
+        // Kloppende gloed rond een openstaande live-uitnodiging (Spelen).
+        "invite-glow": {
+          "0%, 100%": { boxShadow: "0 0 0 0 rgba(46, 134, 245, 0.55), 0 0 12px 0 rgba(246, 185, 59, 0.35)" },
+          "50%": { boxShadow: "0 0 0 6px rgba(46, 134, 245, 0), 0 0 22px 4px rgba(246, 185, 59, 0.55)" },
+        },
+        // Melding die van boven het scherm in schuift, zoals een systeemmelding.
+        "slide-down": {
+          "0%": { transform: "translateY(-120%)", opacity: "0" },
+          "100%": { transform: "translateY(0)", opacity: "1" },
+        },
         indeterminate: {
           "0%": { transform: "translateX(-60%) scaleX(0.4)" },
           "50%": { transform: "translateX(20%) scaleX(0.6)" },
@@ -61,6 +71,8 @@ const config: Config = {
         pop: "pop 0.2s ease-out",
         shake: "shake 0.3s ease-in-out",
         indeterminate: "indeterminate 1.3s ease-in-out infinite",
+        "invite-glow": "invite-glow 1.8s ease-in-out infinite",
+        "slide-down": "slide-down 0.35s cubic-bezier(0.2, 0.9, 0.3, 1.2)",
       },
     },
   },

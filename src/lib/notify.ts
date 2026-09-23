@@ -26,6 +26,9 @@ interface NotifyInput {
   pushTitle: string;
   pushBody: string;
   url: string;
+  // Voor meldingen die alleen op dat moment zin hebben (bv. een live-
+  // uitnodiging): geen e-mail, die komt pas binnen als het spel al voorbij is.
+  pushOnly?: boolean;
 }
 
 /**
@@ -55,7 +58,7 @@ async function notifyUser(input: NotifyInput): Promise<void> {
   if (!user[CATEGORY_FIELD[input.category]]) return;
 
   const jobs: Promise<unknown>[] = [];
-  if (user.emailNotificationsEnabled) {
+  if (user.emailNotificationsEnabled && !input.pushOnly) {
     jobs.push(sendMail({ to: user.email, subject: input.subject, html: input.emailHtml, text: input.emailText }));
   }
   if (user.pushNotificationsEnabled) {
@@ -95,6 +98,21 @@ export async function notifyFreezeReceived(userId: string, senderDisplayName: st
     pushTitle: "Je hebt een streak freeze gekregen! 🧊",
     pushBody: `${senderDisplayName} heeft je een streak freeze gegeven.`,
     url: "/friends",
+  });
+}
+
+export async function notifyGameInvite(userId: string, hostName: string, gameLabel: string, code: string): Promise<void> {
+  const text = `${hostName} nodigt je uit voor ${gameLabel}. Doe je mee?`;
+  await notifyUser({
+    userId,
+    category: "social",
+    subject: "Uitnodiging voor een live spel 🎮",
+    emailHtml: "",
+    emailText: "",
+    pushTitle: "Uitnodiging voor een live spel 🎮",
+    pushBody: text,
+    url: `/live/${code}`,
+    pushOnly: true,
   });
 }
 

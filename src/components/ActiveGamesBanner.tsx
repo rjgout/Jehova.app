@@ -16,6 +16,7 @@ interface ActivityItem {
 }
 
 interface ActivityStatus {
+  liveInvitesReceived: ActivityItem[];
   invitesReceived: ActivityItem[];
   invitesSent: ActivityItem[];
   activeGames: ActivityItem[];
@@ -48,8 +49,18 @@ export default function ActiveGamesBanner() {
   useEffect(() => {
     const socket = getSocket();
     socket.on("game_cancelled", reload);
+    // Een nieuwe of vervallen live-uitnodiging meteen tonen/weghalen.
+    socket.on("game_invite", reload);
+    socket.on("game_invite_revoked", reload);
+    const onVisible = () => {
+      if (document.visibilityState === "visible") reload();
+    };
+    document.addEventListener("visibilitychange", onVisible);
     return () => {
       socket.off("game_cancelled", reload);
+      socket.off("game_invite", reload);
+      socket.off("game_invite_revoked", reload);
+      document.removeEventListener("visibilitychange", onVisible);
     };
   }, []);
 
@@ -79,7 +90,15 @@ export default function ActiveGamesBanner() {
 
   if (!status) return null;
   const { invitesReceived, invitesSent, activeGames } = status;
-  if (invitesReceived.length === 0 && invitesSent.length === 0 && activeGames.length === 0) return null;
+  const liveInvitesReceived = status.liveInvitesReceived ?? [];
+  if (
+    liveInvitesReceived.length === 0 &&
+    invitesReceived.length === 0 &&
+    invitesSent.length === 0 &&
+    activeGames.length === 0
+  ) {
+    return null;
+  }
 
   // Live-uitnodigingen krijgen een eigen regel mét een knop om te
   // beëindigen (zie cancelGame) — anders dan Uitdagingen/Woordspel kan een
@@ -89,6 +108,28 @@ export default function ActiveGamesBanner() {
 
   return (
     <div className="card flex flex-col gap-2 !py-3">
+      {liveInvitesReceived.length > 0 && (
+        <div className="flex flex-col gap-2">
+          {liveInvitesReceived.map((item) => (
+            <Link
+              key={`live-invite-${item.id}`}
+              href={item.link}
+              onClick={(event) => openGame(item, event)}
+              className="animate-invite-glow flex items-center gap-3 rounded-2xl border-2 border-brand-400 bg-gradient-to-r from-brand-50 to-gold-50 dark:from-slate-800 dark:to-slate-800 dark:border-brand-500 px-3 py-2.5 transition active:scale-[0.98]"
+            >
+              <span className="text-2xl" aria-hidden>🎮</span>
+              <span className="min-w-0 flex-1">
+                <span className="block text-sm font-extrabold text-brand-800 dark:text-brand-200 leading-snug">
+                  {item.opponentName} nodigt je uit!
+                </span>
+                <span className="block text-xs text-slate-500 dark:text-slate-400 leading-snug">Live spel — {item.label}</span>
+              </span>
+              <span className="btn-primary !px-3 !py-1.5 !text-xs shrink-0">Meedoen</span>
+            </Link>
+          ))}
+        </div>
+      )}
+
       {invitesReceived.length > 0 && (
         <div className="flex flex-col gap-1">
           {invitesReceived.map((item) => (
