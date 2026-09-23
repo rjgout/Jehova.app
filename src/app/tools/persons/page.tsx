@@ -19,6 +19,10 @@ export default async function PersonsToolPage() {
 
   return (
     <div className="max-w-4xl mx-auto flex flex-col gap-6">
+      <Link href="/tools" className="btn-secondary self-start">
+        ← Terug
+      </Link>
+
       <div>
         <h1 className="text-2xl font-extrabold text-brand-800 dark:text-brand-300">👤 Personages</h1>
         <p className="text-slate-500 dark:text-slate-400 text-sm">
@@ -27,12 +31,6 @@ export default async function PersonsToolPage() {
       </div>
 
       <PersonsSearch persons={persons} />
-
-      <Link href="/tools" className="btn-secondary self-start">
-        ← Terug
-      </Link>
-
-
 
       <Link href="/tools" className="btn-secondary self-start">
         ← Terug
