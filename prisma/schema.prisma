@@ -202,6 +202,7 @@ model User {
   hostedGames LiveGame[]       @relation("GameHost")
   gamePlayers LiveGamePlayer[]
   gameInvites LiveGameInvite[]
+  alleskennerSeen AlleskennerSeen[]
 
   chapterGuessGames ChapterGuessGame[]
   wordGames         WordGame[]
@@ -1361,6 +1362,7 @@ enum LiveGameMode {
   EXERCISES
   CHAPTER_GUESS
   FAMILY_GAME
+  ALLESKENNER
 }
 
 // Alleen relevant bij mode FAMILY_GAME. DIGITAL = de app gooit (server-
@@ -1736,4 +1738,48 @@ model GameSettings {
   chapterGuessEnabled  Boolean @default(true)
   challengesEnabled    Boolean @default(true)
   liveExercisesEnabled Boolean @default(true) // "Nieuw spel starten"-formulier (oefeningen-race)
+}
+
+// --- De Alleskenner ----------------------------------------------------------
+//
+// Zie docs/ALLESKENNER.md. De inhoud komt uit prisma/alleskennerContent.ts
+// (vaste ID's, elk feit met een bronvers) en wordt via de reseed geïmporteerd;
+// de vorm van `data` per soort staat in src/lib/alleskenner/content.ts. Een
+// potje zelf is een LiveGame met mode ALLESKENNER; de spelstatus leeft in het
+// geheugen van de socketserver (src/server/alleskenner.ts).
+
+enum AlleskennerItemKind {
+  QUESTION // 3-6-9
+  TOPIC // Open Deur en Finale: "Wat weet je van ...?"
+  PUZZLE
+  GALLERY
+  MEMORY // Collectief Geheugen
+}
+
+model AlleskennerItem {
+  id            String              @id // vaste ID uit alleskennerContent.ts, bv. "vraag-0001"
+  kind          AlleskennerItemKind
+  data          String // JSON, vorm per soort (zie src/lib/alleskenner/content.ts)
+  enabled       Boolean             @default(true)
+  // Door een beheerder aangepast in /adminbackend: de import overschrijft dit
+  // onderdeel dan niet meer vanuit het contentbestand.
+  editedByAdmin Boolean             @default(false)
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+  seenBy        AlleskennerSeen[]
+
+  @@index([kind, enabled])
+}
+
+// Wat iemand al gezien heeft (als speler, quizmaster of toeschouwer), zodat
+// een nieuw potje eerst onderdelen kiest die nog niemand van de deelnemers kent.
+model AlleskennerSeen {
+  userId String
+  user   User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  itemId String
+  item   AlleskennerItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  seenAt DateTime        @default(now())
+
+  @@id([userId, itemId])
+  @@index([itemId])
 }

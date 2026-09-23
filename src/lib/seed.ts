@@ -11,6 +11,8 @@ import kidsManifest from "../../prisma/kidsManifest.json";
 import { importIntroLessons, importIntroPersons } from "../../prisma/importIntro";
 import { introLessons } from "../../prisma/introContent";
 import { introPersons } from "../../prisma/introPersons";
+import { alleskennerItems } from "../../prisma/alleskennerContent";
+import { importAlleskennerItems } from "../../prisma/importAlleskenner";
 
 // Namen/omschrijvingen bij de achievement-slugs uit src/lib/achievements.ts.
 const achievementDefs = [
@@ -74,6 +76,9 @@ export async function runSeed(client: PrismaClient, log: (msg: string) => void =
 
   log("Seeding introductiecursus (Ontdek het Boek van Mormon)...");
   await importIntroLessons(client, introLessons, log);
+
+  log("Seeding De Alleskenner...");
+  await importAlleskennerItems(client, alleskennerItems, log);
 
   log("Seeding achievements...");
   for (const def of achievementDefs) {
