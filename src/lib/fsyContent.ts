@@ -5,6 +5,28 @@ export const FSY_COLLECTION_ID = "content_fsy";
 export const FSY_COURSE_SLUG = "voor-de-kracht-van-de-jeugd";
 const FSY_BASE_URL = "https://www.churchofjesuschrist.org";
 const FETCH_TIMEOUT_MS = 15_000;
+// Een paar pagina's tegelijk ophalen: één voor één maakte de controle (en
+// daarmee de hele seed) traag, maar de bron hoeft niet bestookt te worden.
+const FETCH_CONCURRENCY = 4;
+
+type Fetched<T> = { value: T } | { error: unknown };
+
+/** `work` over alle items, met hooguit `limit` tegelijk; resultaten op volgorde. */
+async function mapLimited<I, T>(items: I[], limit: number, work: (item: I) => Promise<T>): Promise<Fetched<T>[]> {
+  const results: Fetched<T>[] = new Array(items.length);
+  let next = 0;
+  async function worker() {
+    while (next < items.length) {
+      const index = next++;
+      results[index] = await work(items[index]).then(
+        (value) => ({ value }),
+        (error: unknown) => ({ error })
+      );
+    }
+  }
+  await Promise.all(Array.from({ length: Math.min(limit, items.length) }, worker));
+  return results;
+}
 
 export interface FsyContentBlock {
   type: "heading" | "paragraph" | "list-item" | "quote" | "image";
@@ -303,11 +325,14 @@ async function runFsySync(
   let published = 0;
 
   try {
-    for (const month of MONTHS) {
+    const intros = await mapLimited(MONTHS, FETCH_CONCURRENCY, (month) => fetchHtml(monthUrl(year, month)));
+    for (const [monthIndex, month] of MONTHS.entries()) {
       const introUrl = monthUrl(year, month);
       let introHtml: string;
       try {
-        introHtml = await fetchHtml(introUrl);
+        const intro = intros[monthIndex];
+        if ("error" in intro) throw intro.error;
+        introHtml = intro.value;
       } catch (e) {
         // Niet-gepubliceerde toekomstige maanden geven normaal 404. Alleen
         // echte netwerk-/serverfouten worden in de log zichtbaar gemaakt.
@@ -320,11 +345,15 @@ async function runFsySync(
       const introLinks = extractLessonLinks(introHtml, year, month);
       const urls = [introUrl, ...introLinks.filter((url) => url !== introUrl)];
       discovered += urls.length;
+      // Ophalen tegelijk, verwerken daarna op volgorde (de volgorde is de lesvolgorde).
+      const pages = await mapLimited(urls, FETCH_CONCURRENCY, scrapeLesson);
 
       for (let order = 0; order < urls.length; order++) {
         const url = urls[order];
         try {
-          const page = await scrapeLesson(url);
+          const fetched = pages[order];
+          if ("error" in fetched) throw fetched.error;
+          const page = fetched.value;
           const hash = contentHash(page);
           const slug = slugFromUrl(url);
           const category = categoryFromSlug(slug);

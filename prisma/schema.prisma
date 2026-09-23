@@ -447,6 +447,7 @@ model CourseChapter {
 
   @@unique([courseId, chapterId])
   @@unique([courseId, order])
+  @@index([chapterId])
 }
 
 // Kleine leeslessen binnen een cursus. De grenzen worden één keer bepaald
@@ -469,6 +470,7 @@ model CourseLesson {
   @@unique([courseId, order])
   @@unique([courseId, chapterId, startVerse])
   @@index([courseId, chapterId])
+  @@index([chapterId])
 }
 
 // Koppelt de vaste 2-3 vragen aan een leesles. De vragen komen uit de
@@ -483,6 +485,7 @@ model CourseLessonExercise {
 
   @@unique([lessonId, exerciseId])
   @@unique([lessonId, order])
+  @@index([exerciseId])
 }
 
 // Voortgang per gebruiker en per kleine leesles. Anders dan ChapterProgress
@@ -527,6 +530,7 @@ model UserCourseProgress {
   subscribed       Boolean  @default(true)
 
   @@unique([userId, courseId])
+  @@index([currentChapterId])
 }
 
 // --- Podcastcursus ("Geloof je dat ook?") ----------------------------------
@@ -935,6 +939,7 @@ model Bookmark {
   createdAt DateTime @default(now())
 
   @@unique([userId, verseId])
+  @@index([verseId])
 }
 
 model Highlight {
@@ -947,6 +952,7 @@ model Highlight {
   createdAt DateTime @default(now())
 
   @@unique([userId, verseId])
+  @@index([verseId])
 }
 
 model Note {
@@ -960,6 +966,7 @@ model Note {
   updatedAt DateTime @updatedAt
 
   @@unique([userId, verseId])
+  @@index([verseId])
 }
 
 // Een "leesmoment": aparte registratie van het lézen, los van de quiz erna.
@@ -973,6 +980,8 @@ model ReadingSession {
   chapter    Chapter   @relation(fields: [chapterId], references: [id], onDelete: Cascade)
   startedAt  DateTime  @default(now())
   finishedAt DateTime?
+
+  @@index([chapterId])
 }
 
 // --- Oefeningen: gekoppeld aan concrete brontekst, bewust weinig multiple
@@ -1023,6 +1032,9 @@ model Exercise {
 
   attempts ExerciseAttempt[]
   courseLessonLinks CourseLessonExercise[]
+
+  @@index([chapterId])
+  @@index([sourceVerseId])
 }
 
 // Nog niet gebruikt door de huidige generatoren (FILL_BLANK/WORD_BANK/
@@ -1036,6 +1048,8 @@ model QuestionOption {
   label      String
   isCorrect  Boolean  @default(false)
   order      Int      @default(0)
+
+  @@index([exerciseId])
 }
 
 model ExerciseAttempt {
@@ -1047,6 +1061,8 @@ model ExerciseAttempt {
   givenText  String
   correct    Boolean
   createdAt  DateTime @default(now())
+
+  @@index([exerciseId])
 }
 
 model ChapterProgress {
@@ -1061,6 +1077,7 @@ model ChapterProgress {
   completedAt DateTime?
 
   @@unique([userId, chapterId])
+  @@index([chapterId])
 }
 
 // --- XP: elke mutatie is een transactie, auditbaar en met een reden -------
@@ -1397,6 +1414,8 @@ model LiveGame {
   invites       LiveGameInvite[]
   // Alleen bij een seizoensavond van De Alleskenner.
   alleskennerEvening AlleskennerEvening?
+
+  @@index([chapterId])
 }
 
 model LiveGamePlayer {
@@ -1593,6 +1612,7 @@ model Challenge {
 
   @@index([receiverId])
   @@index([senderId])
+  @@index([chapterId])
 }
 
 // --- Woordspel (woordlegspel, alleen woorden uit het Boek van Mormon) --
