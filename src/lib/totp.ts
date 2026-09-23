@@ -1,4 +1,4 @@
-import { createCipheriv, createDecipheriv, createHmac, randomBytes, timingSafeEqual } from "node:crypto";
+import { createCipheriv, createDecipheriv, createHash, createHmac, randomBytes, timingSafeEqual } from "node:crypto";
 import bcrypt from "bcryptjs";
 
 const TOTP_PERIOD_SECONDS = 30;
@@ -13,7 +13,6 @@ function getEncryptionKey(): Buffer {
   return createHash("sha256").update(secret).digest();
 }
 
-import { createHash } from "node:crypto";
 
 export function generateTotpSecret(): string {
   const bytes = randomBytes(20);
