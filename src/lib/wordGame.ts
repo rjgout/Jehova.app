@@ -1,9 +1,7 @@
 import bomWords from "../../prisma/bomWords.json";
-import { addDays, amsterdamNow } from "@/lib/dates";
+import { amsterdamNow } from "@/lib/dates";
 import { prisma } from "@/lib/db";
 import { completeWordGame } from "@/lib/streak";
-import { awardXp } from "@/lib/xp";
-import { awardCompetitionXp } from "@/lib/competitionXp";
 import { findVersesContainingWord, type VerseMatch } from "@/lib/dictionary";
 
 export const WORD_LENGTH = 5;
@@ -126,69 +124,7 @@ export interface WordGameLeaderboardEntry {
   rank: number;
   handle: string;
   discriminator: string;
-  guesses: number;
   finishedAt: string;
-}
-
-// Rangorde: minste pogingen eerst, bij gelijkspel wie eerder klaar was.
-// Voorheen telde alleen de aankomsttijd, waardoor vooral wie direct om 18:00
-// speelde de bonus kreeg in plaats van wie het woord het slimst raadde.
-async function rankWinners(dayKey: string, limit = 10) {
-  const games = await prisma.wordGame.findMany({
-    where: { dayKey, status: "WON", finishedAt: { not: null } },
-    select: {
-      id: true,
-      userId: true,
-      guesses: true,
-      finishedAt: true,
-      leaderboardRank: true,
-      leaderboardXpBonus: true,
-      user: { select: { handle: true, discriminator: true } },
-    },
-  });
-
-  return games
-    .map((game) => ({ ...game, guessCount: (JSON.parse(game.guesses) as string[]).length }))
-    .sort(
-      (a, b) =>
-        a.guessCount - b.guessCount ||
-        a.finishedAt!.getTime() - b.finishedAt!.getTime() ||
-        a.id.localeCompare(b.id)
-    )
-    .slice(0, limit)
-    .map((game, index) => ({ ...game, rank: index + 1 }));
-}
-
-/**
- * Keert de ranglijstbonus uit voor een afgesloten dag (na 18:00 de volgende
- * dag). Pas dan staat de volgorde vast: een bonus bij het afronden zelf kon
- * later niet meer kloppen als iemand daarna met minder pogingen won.
- * Idempotent per spel via leaderboardRank; een spel dat onder de oude regels
- * al een bonus kreeg, wordt overgeslagen.
- */
-export async function awardWordGameLeaderboardBonuses(dayKey: string): Promise<number> {
-  const ranked = await rankWinners(dayKey);
-  let awarded = 0;
-  for (const entry of ranked) {
-    if (entry.leaderboardRank !== null || entry.leaderboardXpBonus > 0) continue;
-    const bonus = leaderboardXpBonusForRank(entry.rank);
-    await prisma.$transaction(async (tx) => {
-      const claimed = await tx.wordGame.updateMany({
-        where: { id: entry.id, leaderboardRank: null },
-        data: { leaderboardRank: entry.rank, leaderboardXpBonus: bonus, xpEarned: { increment: bonus } },
-      });
-      if (claimed.count === 0 || bonus === 0) return;
-      await awardXp(tx, entry.userId, bonus, "WORD_GAME_WON", { dayKey, leaderboardRank: entry.rank });
-      await awardCompetitionXp(tx, entry.userId, "WORD_GAME", bonus);
-      awarded++;
-    });
-  }
-  return awarded;
-}
-
-/** De laatst afgesloten dag: de dag vóór het woord dat nu speelbaar is. */
-export function previousWordGameDayKey(date: Date = new Date()): string {
-  return addDays(wordGameDayKey(date), -1);
 }
 
 export interface WordGameView {
@@ -207,12 +143,29 @@ export interface WordGameView {
 }
 
 async function getTodayLeaderboard(dayKey: string): Promise<WordGameLeaderboardEntry[]> {
-  const ranked = await rankWinners(dayKey);
-  return ranked.map((game) => ({
-    rank: game.rank,
+  const games = await prisma.wordGame.findMany({
+    where: {
+      dayKey,
+      status: "WON",
+      finishedAt: { not: null },
+    },
+    orderBy: { finishedAt: "asc" },
+    take: 10,
+    select: {
+      finishedAt: true,
+      user: {
+        select: {
+          handle: true,
+          discriminator: true,
+        },
+      },
+    },
+  });
+
+  return games.map((game, index) => ({
+    rank: index + 1,
     handle: game.user.handle,
     discriminator: game.user.discriminator,
-    guesses: game.guessCount,
     finishedAt: game.finishedAt!.toISOString(),
   }));
 }
@@ -297,21 +250,41 @@ export async function submitGuess(
   const finished = won || outOfGuesses;
   const xpEarned = won ? xpForWin(guesses.length) : 0;
 
+  const finishedAt = finished ? new Date() : undefined;
+  let leaderboardRank: number | null = null;
+  let leaderboardXpBonus = 0;
+  let totalXpEarned = xpEarned;
+
+  if (finished && won) {
+    const fasterWinners = await prisma.wordGame.count({
+      where: {
+        dayKey,
+        status: "WON",
+        finishedAt: { not: null, lt: finishedAt },
+      },
+    });
+    leaderboardRank = fasterWinners + 1;
+    leaderboardXpBonus = leaderboardXpBonusForRank(leaderboardRank);
+    totalXpEarned += leaderboardXpBonus;
+  }
+
   // Voorwaardelijk bijwerken: twee gelijktijdige gokken op hetzelfde spel
-  // (dubbelklik, twee tabbladen) mogen niet allebei XP opleveren.
+  // (dubbelklik, twee tabbladen) mogen niet allebei XP en een bonus opleveren.
   const saved = await prisma.wordGame.updateMany({
     where: { id: game.id, status: "IN_PROGRESS", guesses: game.guesses },
     data: {
       guesses: JSON.stringify(guesses),
       status: finished ? (won ? "WON" : "LOST") : "IN_PROGRESS",
-      xpEarned,
-      finishedAt: finished ? new Date() : undefined,
+      xpEarned: totalXpEarned,
+      leaderboardRank,
+      leaderboardXpBonus,
+      finishedAt,
     },
   });
   if (saved.count === 0) return { error: "Je gok is al verwerkt. Ververs de pagina." };
   const updated = await prisma.wordGame.findUniqueOrThrow({ where: { id: game.id } });
 
-  const newAchievements = finished ? (await completeWordGame(userId, xpEarned)).newAchievements : [];
+  const newAchievements = finished ? (await completeWordGame(userId, totalXpEarned)).newAchievements : [];
 
   return { ...(await buildView(updated)), newAchievements };
 }
