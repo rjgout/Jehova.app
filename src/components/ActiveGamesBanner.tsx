@@ -11,6 +11,7 @@ interface ActivityItem {
   label: string;
   link: string;
   myTurn: boolean | null;
+  contentCollectionId?: string;
   code?: string;
 }
 
@@ -18,6 +19,7 @@ interface ActivityStatus {
   invitesReceived: ActivityItem[];
   invitesSent: ActivityItem[];
   activeGames: ActivityItem[];
+  activeContentCollectionId: string;
 }
 
 const KIND_ICON: Record<ActivityItem["kind"], string> = {
@@ -51,6 +53,23 @@ export default function ActiveGamesBanner() {
     };
   }, []);
 
+  async function openGame(item: ActivityItem, event: React.MouseEvent<HTMLAnchorElement>) {
+    if (!item.contentCollectionId || item.contentCollectionId === status?.activeContentCollectionId) return;
+
+    event.preventDefault();
+    const response = await fetch("/api/content-context", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ contentCollectionId: item.contentCollectionId }),
+    });
+    if (!response.ok) return;
+
+    // Een volledige navigatie is hier bewust: de contentswitcher bepaalt via
+    // serverdata ook welke cursussen, spellen en andere menu's zichtbaar zijn.
+    // router.refresh() alleen kan bestaande client-state laten staan.
+    window.location.assign(item.link);
+  }
+
   function cancelGame(code: string) {
     if (!window.confirm("Dit spel beëindigen? Dit kan niet ongedaan worden gemaakt.")) return;
     // De banner ververst zichzelf pas via het "game_cancelled"-event
@@ -76,6 +95,7 @@ export default function ActiveGamesBanner() {
             <Link
               key={`${item.kind}-${item.id}`}
               href={item.link}
+              onClick={(event) => openGame(item, event)}
               className="flex items-center gap-2 text-sm font-semibold text-brand-700 dark:text-brand-300 hover:underline"
             >
               <span>{KIND_ICON[item.kind]}</span>
