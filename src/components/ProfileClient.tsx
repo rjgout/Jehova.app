@@ -373,8 +373,6 @@ export default function ProfileClient() {
         <ThemeToggle />
       </div>
 
-      <TwoFactorSettings isAdmin={data.isAdmin} />
-
       <div className="card bg-gradient-to-br from-brand-500 to-brand-700 dark:from-brand-600 dark:to-brand-900 text-white flex flex-col gap-5">
         <div className="flex items-center justify-between gap-3 flex-wrap">
           <div className="flex items-center gap-3">
@@ -964,6 +962,10 @@ export default function ProfileClient() {
             </div>
           </div>
         )}
+        <div className="border-t border-slate-100 dark:border-slate-700 pt-4 mt-1">
+          <h3 className="font-extrabold text-base dark:text-slate-100 mb-2">Tweestapsverificatie</h3>
+          <TwoFactorSettings isAdmin={data.isAdmin} />
+        </div>
       </section>
     </div>
   );
