@@ -30,6 +30,7 @@ export default function AdminDeployClient({ configured }: { configured: boolean 
   const [error, setError] = useState<string | null>(null);
   const [actionBusy, setActionBusy] = useState(false);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const statusRef = useRef<DeployStatus | null>(null);
   // Tijdens een echte deploy/rollback stopt jehova-app zelf even helemaal —
   // en dat is precies de container waar deze pagina op draait. Een gewone
   // fetch() daarnaartoe faalt dan met een kale netwerkfout; een échte
@@ -59,7 +60,7 @@ export default function AdminDeployClient({ configured }: { configured: boolean 
         // verdwijnt vanzelf bij de volgende poll. Vooral direct na een
         // succesvolle deploy willen we de gebruiker niet laten schrikken
         // van een tijdelijke netwerkhapering.
-        if (res.status === 502 && (deployInFlightRef.current || status?.phase === "success")) {
+        if (res.status === 502 && (deployInFlightRef.current || statusRef.current?.phase === "success")) {
           transientStatusErrorsRef.current += 1;
           if (transientStatusErrorsRef.current <= 3) return;
         }
@@ -68,6 +69,7 @@ export default function AdminDeployClient({ configured }: { configured: boolean 
       }
       const data: DeployStatus = await res.json();
       transientStatusErrorsRef.current = 0;
+      statusRef.current = data;
       setStatus(data);
       setError(null);
       if (!BUSY_PHASES.includes(data.phase)) deployInFlightRef.current = false;
