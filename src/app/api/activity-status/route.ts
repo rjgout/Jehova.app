@@ -254,11 +254,16 @@ export async function GET() {
     code: game.code,
   }));
 
-  return NextResponse.json({
-    liveInvitesReceived,
-    invitesReceived,
-    invitesSent,
-    activeGames,
-    activeContentCollectionId: contentContext.active.id,
-  });
+  // Persoonlijk en snel veranderend: nergens cachen (browser, geïnstalleerde
+  // webapp, of een proxy ertussen).
+  return NextResponse.json(
+    {
+      liveInvitesReceived,
+      invitesReceived,
+      invitesSent,
+      activeGames,
+      activeContentCollectionId: contentContext.active.id,
+    },
+    { headers: { "Cache-Control": "private, no-store" } }
+  );
 }

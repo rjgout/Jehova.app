@@ -30,18 +30,29 @@ const KIND_ICON: Record<ActivityItem["kind"], string> = {
   "chapter-guess-solo": "🔎",
 };
 
-// Compacte melding bovenaan /live ("Spelen") zodat je openstaande
-// uitnodigingen en lopende spellen (Uitdagingen, Woordspel, Live spel) ook
-// ziet zonder eerst naar die spelpagina's zelf te gaan. Toont niets zodra
-// er niets openstaat.
+// Blok "Actieve spellen" bovenaan /live ("Spelen"): openstaande
+// uitnodigingen en lopende spellen (Uitdagingen, Woordspel, Live spel), zodat
+// je die ziet zonder eerst naar de spelpagina's zelf te gaan. Toont bewust
+// ook een lege staat en een foutmelding: voorheen verdween het blok stil bij
+// een mislukte fetch, waardoor "geen spellen" en "kon niet laden" (zoals in
+// de geïnstalleerde webapp) niet van elkaar te onderscheiden waren.
 export default function ActiveGamesBanner() {
   const [status, setStatus] = useState<ActivityStatus | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   function reload() {
-    fetch("/api/activity-status")
-      .then((r) => (r.ok ? r.json() : null))
-      .then((d) => setStatus(d))
-      .catch(() => {});
+    // no-store: de API stuurt geen cacheheaders mee, en een geïnstalleerde
+    // webapp mag hier nooit een oud antwoord uit zijn HTTP-cache gebruiken.
+    fetch("/api/activity-status", { cache: "no-store" })
+      .then(async (r) => {
+        if (!r.ok) throw new Error(`fout ${r.status}`);
+        return r.json();
+      })
+      .then((d) => {
+        setStatus(d);
+        setError(null);
+      })
+      .catch((e) => setError(e instanceof Error ? e.message : "onbekende fout"));
   }
 
   useEffect(reload, []);
@@ -88,7 +99,25 @@ export default function ActiveGamesBanner() {
     getSocket().emit("cancel_game", { code });
   }
 
-  if (!status) return null;
+  const heading = <h2 className="text-sm font-extrabold text-slate-700 dark:text-slate-200">Actieve spellen</h2>;
+
+  if (!status) {
+    return (
+      <div className="card flex flex-col gap-2 !py-3">
+        {heading}
+        {error ? (
+          <p className="text-sm text-red-600 dark:text-red-400">
+            Kon je spellen niet ophalen ({error}).{" "}
+            <button className="font-bold underline" onClick={reload}>
+              Opnieuw proberen
+            </button>
+          </p>
+        ) : (
+          <p className="text-sm text-slate-400 dark:text-slate-500">Laden...</p>
+        )}
+      </div>
+    );
+  }
   const { invitesReceived, invitesSent, activeGames } = status;
   const liveInvitesReceived = status.liveInvitesReceived ?? [];
   if (
@@ -97,7 +126,12 @@ export default function ActiveGamesBanner() {
     invitesSent.length === 0 &&
     activeGames.length === 0
   ) {
-    return null;
+    return (
+      <div className="card flex flex-col gap-1 !py-3">
+        {heading}
+        <p className="text-sm text-slate-500 dark:text-slate-400">Je hebt nu geen lopende spellen of uitnodigingen.</p>
+      </div>
+    );
   }
 
   // Live-uitnodigingen krijgen een eigen regel mét een knop om te
@@ -108,6 +142,7 @@ export default function ActiveGamesBanner() {
 
   return (
     <div className="card flex flex-col gap-2 !py-3">
+      {heading}
       {liveInvitesReceived.length > 0 && (
         <div className="flex flex-col gap-2">
           {liveInvitesReceived.map((item) => (
