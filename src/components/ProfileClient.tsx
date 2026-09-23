@@ -9,6 +9,7 @@ import { formatTag, firstGrapheme, isSingleEmoji } from "@/lib/handle";
 import { enableBrowserPush, disableBrowserPush, isPushSupported } from "@/lib/pushClient";
 import { getSocket } from "@/lib/socketClient";
 import ThemeToggle from "@/components/ThemeToggle";
+import TwoFactorSettings from "@/components/TwoFactorSettings";
 import { getDutchVoices, saveSelectedDutchVoice } from "@/lib/readAloud";
 
 interface AchievementView {
@@ -371,6 +372,8 @@ export default function ProfileClient() {
         </Link>
         <ThemeToggle />
       </div>
+
+      <TwoFactorSettings isAdmin={data.isAdmin} />
 
       <div className="card bg-gradient-to-br from-brand-500 to-brand-700 dark:from-brand-600 dark:to-brand-900 text-white flex flex-col gap-5">
         <div className="flex items-center justify-between gap-3 flex-wrap">
