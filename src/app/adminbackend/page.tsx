@@ -17,6 +17,7 @@ import AdminLeagueSettingsClient from "@/components/AdminLeagueSettingsClient";
 import AdminDeployClient from "@/components/AdminDeployClient";
 import AdminContentSwitcherClient from "@/components/AdminContentSwitcherClient";
 import AdminFsyClient from "@/components/AdminFsyClient";
+import AdminAlleskennerClient from "@/components/AdminAlleskennerClient";
 import { isDeployAgentConfigured } from "@/lib/deployAgent";
 import packageJson from "../../../package.json";
 
@@ -107,6 +108,8 @@ export default async function AdminBackendPage() {
       <AdminLiveGamesClient />
 
       <AdminGameSettingsClient />
+
+      <AdminAlleskennerClient />
 
       <AdminCoursesClient />
 
