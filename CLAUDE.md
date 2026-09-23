@@ -239,6 +239,17 @@ verwerken". Fundamenteel anders dan de rest van de API:
   alleen visueel — het verschil tussen wit en een lichte tint (bv. gold-50)
   is op een screenshot makkelijk te missen.
 
+## Paginabreedte en layout
+
+- **max-w-5xl (1024px) is de standaard maximale breedte voor desktop-pagina-inhoud.** De globale <main> in src/app/layout.tsx gebruikt deze breedte; nieuwe overzichts-, lijst- en dashboardpagina's horen daarom standaard de beschikbare 5xl-breedte te benutten.
+- Gebruik voor brede pagina's de combinatie **max-w-5xl mx-auto** op de hoofdcontainer wanneer de pagina zelf een container nodig heeft. Maak niet zonder reden een nieuwe, smallere pagina-container.
+- **Gebruik bewust smallere inner containers** wanneer de inhoud daar beter bij past: formulieren, foutmeldingen, lees-/studietekst, compacte instellingen en andere sterk gefocuste content mogen bijvoorbeeld max-w-md, max-w-xl of max-w-2xl gebruiken. Dit is een inhoudelijke keuze voor de leesbaarheid, geen alternatieve algemene paginastandaard.
+- Overzichtskaarten, lijsten en grids zoals **Cursussen, Spellen, Vrienden, Profiel, XP/Reeks en dashboards** mogen op desktop de 5xl-breedte gebruiken. Laat de kaarten zelf vervolgens met grid/flex de ruimte verdelen; beperk de hele pagina niet opnieuw tot 2xl/3xl zonder duidelijke reden.
+- **Mobiel blijft volledig responsive**: de globale px-4 uit de layout blijft leidend; de 5xl-grens is vooral een desktoplimiet.
+- Nieuwe pagina's moeten bij ontwerp eerst worden ingedeeld als **breed overzicht**, **gefocuste content** of **immersieve spel-/leesweergave**. Alleen de eerste categorie gebruikt standaard 5xl; de andere twee mogen bewust afwijken.
+- Bij een bestaande pagina met een smallere max-w-* moet je bij wijzigingen controleren of die beperking nog inhoudelijk gewenst is. Pas niet blind alle pagina's aan: de uitzondering moet bewust en uitlegbaar zijn.
+- Houd deze standaard ook aan bij nieuwe client components die de volledige pagina-inhoud renderen. Een server-page die alleen <FeatureClient /> teruggeeft, kan dus alsnog een bredere of smallere container in die client component hebben.
+
 ## Content & auteursrecht (relevant bij wijzigingen aan content/seeds)
 
 - `prisma/content.ts` bevat **geen** letterlijke Boek van Mormon-tekst — dat
