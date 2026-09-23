@@ -14,8 +14,6 @@ interface VerseMatch {
   text: string;
 }
 
-const ALPHABET = "abcdefghijklmnopqrstuvwxyz".split("");
-
 type FilterMode = "letter" | "length";
 
 export default function DictionaryClient() {
@@ -46,6 +44,14 @@ export default function DictionaryClient() {
   const lengths = useMemo(() => {
     if (!entries) return [];
     return Array.from(new Set(entries.map((e) => e.word.length))).sort((a, b) => a - b);
+  }, [entries]);
+
+  // Alleen beginletters waar echt woorden mee beginnen (net als de lengtes
+  // hierboven uit de data): een vaste a-z-rij toonde ook q, x en y, die in
+  // het Boek van Mormon nergens aan het begin van een woord staan.
+  const letters = useMemo(() => {
+    if (!entries) return [];
+    return Array.from(new Set(entries.map((e) => e.word[0]))).sort((a, b) => a.localeCompare(b, "nl"));
   }, [entries]);
 
   // Bij typen doorzoek je de hele lijst (het letter-/lengtefilter doet er dan
@@ -160,7 +166,7 @@ export default function DictionaryClient() {
           >
             Alle
           </button>
-          {ALPHABET.map((l) => (
+          {letters.map((l) => (
             <button
               key={l}
               className={`w-7 h-7 rounded-lg text-xs font-bold uppercase ${
