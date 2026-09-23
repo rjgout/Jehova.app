@@ -51,7 +51,8 @@ export default function ContentSwitcher({
       });
       if (!response.ok) return;
       setOpen(false);
-      router.refresh();
+      // Een volledige reload zorgt dat ook client components hun content opnieuw ophalen.
+      window.location.reload();
     } finally {
       setBusy(false);
     }
