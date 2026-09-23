@@ -179,7 +179,7 @@ export default function ReadingLessonFlow({
                 🔥 Ga je door?
               </p>
               <p className="text-sm text-gold-600 dark:text-gold-400">
-                De volgende les levert <strong>+{result.nextXpEarned} XP</strong> op (×{result.nextComboMultiplier}).
+                De volgende les levert tot <strong>+{result.nextXpEarned} XP</strong> op (×{result.nextComboMultiplier}).
               </p>
             </div>
           )}

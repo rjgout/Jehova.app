@@ -4,6 +4,7 @@ import { applyDailyStreak, type StudyResult } from "@/lib/streak";
 import { awardXp } from "@/lib/xp";
 import { checkAndAwardAchievements } from "@/lib/achievements";
 import { awardCompetitionXp } from "@/lib/competitionXp";
+import { applyRepeatDiscount } from "@/lib/xpRules";
 
 const COMBO_TIMEOUT_MS = 15 * 60 * 1000;
 const SPLIT_CHAPTER_XP_BUDGET = 70;
@@ -126,9 +127,19 @@ export async function completeReadingLesson(
     const daily = await applyDailyStreak(tx, userId);
     const freezeCount = daily.freezeCountBeforeMilestone + daily.freezesEarned;
 
-    const xpEarned = Math.round(
+    const maxXp = Math.round(
       splitLessonXp(lessonIndex, lessonCount) * comboMultiplier(nextComboCount) / comboWeight(Math.min(lessonIndex + 1, 3))
     );
+    // Doorgaan mag altijd, maar de XP schaalt mee met de score (een les
+    // zonder vragen telt als 100%). Na een reset van de leesvoortgang is de
+    // voortgangsrij weg; de XP-historie niet. Is deze les al eens beloond,
+    // dan geldt dezelfde herhalingskorting als bij andere lessen.
+    const scaledXp = Math.round((maxXp * scorePercent) / 100);
+    const earnedBefore = await tx.xPTransaction.findFirst({
+      where: { userId, reason: "LESSON_COMPLETED", metadata: { contains: `"readingLessonId":"${lessonId}"` } },
+      select: { id: true },
+    });
+    const xpEarned = earnedBefore ? applyRepeatDiscount(scaledXp) : scaledXp;
 
     const nextLesson = await tx.courseLesson.findFirst({
       where: { courseId: lesson.courseId, order: lesson.order + 1 },

@@ -35,16 +35,21 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Leesles niet gevonden" }, { status: 404 });
   }
 
-  const allowed = new Map(lesson.exercises.map(({ exercise }) => [exercise.id, exercise]));
+  // De score telt altijd over ALLE vragen van deze les: niet-ingestuurde
+  // vragen tellen als fout en een dubbel ingestuurde vraag telt maar één
+  // keer. Anders levert een lege of gedeeltelijke inzending 100% op.
+  const submittedById = new Map<string, string[]>();
+  for (const submitted of parsed.data.answers) {
+    if (!submittedById.has(submitted.exerciseId)) submittedById.set(submitted.exerciseId, submitted.given);
+  }
+
   let correctCount = 0;
   const results: { exerciseId: string; correct: boolean; correctAnswer: string[] }[] = [];
 
-  for (const submitted of parsed.data.answers) {
-    const exercise = allowed.get(submitted.exerciseId);
-    if (!exercise) continue;
-
+  for (const { exercise } of lesson.exercises) {
     const accepted = JSON.parse(exercise.answers) as string[];
-    const correct = isExerciseCorrect(exercise.type, submitted.given, accepted);
+    const given = submittedById.get(exercise.id);
+    const correct = given ? isExerciseCorrect(exercise.type, given, accepted) : false;
     if (correct) correctCount++;
 
     results.push({
@@ -53,19 +58,28 @@ export async function POST(req: NextRequest) {
       correctAnswer: accepted,
     });
 
-    await prisma.exerciseAttempt.create({
-      data: {
-        userId: user.id,
-        exerciseId: exercise.id,
-        givenText: submitted.given.join(" "),
-        correct,
-      },
-    });
+    if (given) {
+      await prisma.exerciseAttempt.create({
+        data: {
+          userId: user.id,
+          exerciseId: exercise.id,
+          givenText: given.join(" "),
+          correct,
+        },
+      });
+    }
   }
 
-  const total = results.length;
-  const scorePercent = total === 0 ? 0 : Math.round((correctCount / total) * 100);
-  const result = await completeReadingLesson(user.id, lesson.id, scorePercent, correctCount);
+  const total = lesson.exercises.length;
+  const scorePercent = total === 0 ? 100 : Math.round((correctCount / total) * 100);
+
+  let result;
+  try {
+    result = await completeReadingLesson(user.id, lesson.id, scorePercent, correctCount);
+  } catch (e) {
+    const message = e instanceof Error ? e.message : "Kon de les niet afronden.";
+    return NextResponse.json({ error: message }, { status: 409 });
+  }
 
   return NextResponse.json({
     results,
