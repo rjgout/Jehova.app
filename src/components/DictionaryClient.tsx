@@ -113,6 +113,10 @@ export default function DictionaryClient() {
 
   return (
     <div className="max-w-2xl mx-auto flex flex-col gap-4">
+      <Link href="/tools" className="btn-secondary self-start">
+        ← Terug
+      </Link>
+
       <div>
         <h1 className="text-2xl font-extrabold text-brand-800 dark:text-brand-300">Woordenboek</h1>
         <p className="text-slate-500 dark:text-slate-400 text-sm">
