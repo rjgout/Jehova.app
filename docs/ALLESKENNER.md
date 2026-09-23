@@ -79,10 +79,20 @@ de minste seconden; na een pas of als je klaar bent, mag de volgende aanvullen.
   ander op 0 zet is **Alleskenner van het seizoen**.
 - Host kan een afwezige finalist overslaan; die stapt later in.
 
+- Finaleavonden tellen niet mee voor het klassement: dat bepaalt alleen de
+  instapvolgorde.
+
 ### Host
 
 - Host kan de hostrol op afstand overdragen; optioneel een vaste vervangende
-  host. Host is standaard quizmaster, overdraagbaar vóór de start.
+  host, die ook avonden kan starten. Host is standaard quizmaster,
+  overdraagbaar vóór de start; speelt de host zelf mee op een avond, dan is er
+  standaard geen quizmaster.
+- De opstelling van een avond wordt op de seizoenspagina vastgelegd (met
+  afwezigen); in de lobby ligt die vast. Alle leden krijgen bij het openen van
+  de lobby een uitnodiging (melding of push) en kijken mee als toeschouwer.
+- Een avond die wordt gestopt of waarvan de lobby wordt geannuleerd, telt
+  niet mee.
 
 ## Inhoud
 
@@ -97,8 +107,11 @@ de minste seconden; na een pas of als je klaar bent, mag de volgende aanvullen.
   citaat niet in dat vers staat.
 - Import zet nieuwe onderdelen erbij en werkt ongewijzigde onderdelen bij, maar
   **overschrijft nooit een onderdeel dat in de beheeromgeving is aangepast**.
-- In `/adminbackend` komt alleen een editor voor **bestaande** onderdelen
-  (corrigeren, uitschakelen) — geen nieuwe toevoegen.
+- In `/adminbackend` staat alleen een editor voor **bestaande** onderdelen
+  (corrigeren als JSON, uitschakelen, terugzetten naar het bestand) — geen
+  nieuwe toevoegen. Een correctie doorloopt dezelfde controle als
+  `npm run alleskenner:check` (`src/lib/alleskenner/validate.ts`), maar dan
+  tegen de verzen in de database.
 - Geen merknamen van bestaande tv-programma's in de app.
 
 ## Techniek
@@ -124,5 +137,5 @@ de minste seconden; na een pas of als je klaar bent, mag de volgende aanvullen.
 2. [x] Contentmodel, controle, eerste inhoud
 3. [x] Speelbare kern: lobby, quizmaster/tikvariant, 3-6-9, Puzzel, Finale
 4. [x] Teams, Open Deur, Galerij, Collectief Geheugen, kort/volledig spel
-5. [ ] Seizoensmodus en seizoensfinale
-6. [ ] Editor voor bestaande inhoud in `/adminbackend`
+5. [x] Seizoensmodus en seizoensfinale (`/alleskenner/seizoen`)
+6. [x] Editor voor bestaande inhoud in `/adminbackend`

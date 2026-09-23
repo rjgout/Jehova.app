@@ -91,7 +91,8 @@ function Lobby({ state }: { state: AkStateView }) {
   const [invited, setInvited] = useState<Set<string>>(new Set());
   const playerCount = state.participants.filter((p) => p.role === "player").length;
   const teams = state.lobbyTeams;
-  const minPlayers = teams ? AK_MIN_TEAM_PLAYERS : AK_MIN_PLAYERS;
+  const season = state.season;
+  const minPlayers = season ? season.lineup.length : teams ? AK_MIN_TEAM_PLAYERS : AK_MIN_PLAYERS;
 
   useEffect(() => {
     if (!isHost) return;
@@ -116,13 +117,20 @@ function Lobby({ state }: { state: AkStateView }) {
   return (
     <>
       <div className="card !bg-gradient-to-br from-brand-600 to-brand-800 text-white !border-0 flex flex-col gap-1">
-        <p className="text-xs font-bold uppercase tracking-wider text-brand-100">De Alleskenner · lobby</p>
+        <p className="text-xs font-bold uppercase tracking-wider text-brand-100">
+          De Alleskenner · {season ? (season.isLast ? "laatste seizoensfinale-avond" : season.isFinale ? "seizoensfinale-avond" : "seizoensavond") : "lobby"}
+        </p>
         <h1 className="text-2xl font-extrabold">Spelcode {state.code}</h1>
         <p className="text-sm text-brand-100">
           {isHost
             ? "Nodig je vrienden uit, kies wie meespeelt en wie de quizmaster is, en start het spel."
             : `Je doet mee als ${ROLE_LABEL[state.me.role].toLowerCase()}. Wachten tot de host het spel start...`}
         </p>
+        {season && (
+          <p className="text-sm text-white mt-1">
+            Vanavond spelen: <strong>{season.lineup.map((p) => p.name).join(", ")}</strong>. De rest van het seizoen kijkt mee.
+          </p>
+        )}
         <p className="text-xs font-bold text-gold-400 mt-1">
           {state.length === "FULL" ? "Volledig spel: zes rondes" : "Kort spel: 3-6-9, Puzzel en Finale"}
           {teams ? ` · ${teams.length} teams` : ""}
@@ -165,7 +173,7 @@ function Lobby({ state }: { state: AkStateView }) {
                     <button
                       className={`rounded-full px-2.5 py-1 text-xs font-bold ${
                         isLeader
-                          ? "bg-gold-100 text-gold-700 dark:bg-slate-700 dark:text-gold-400"
+                          ? "bg-gold-50 text-gold-700 dark:bg-slate-700 dark:text-gold-400"
                           : "bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400 hover:text-gold-600"
                       }`}
                       disabled={isLeader}
@@ -176,7 +184,7 @@ function Lobby({ state }: { state: AkStateView }) {
                     </button>
                   </>
                 )}
-                {isHost && p.role !== "quizmaster" ? (
+                {isHost && p.role !== "quizmaster" && !season ? (
                   <select
                     className="input !w-auto !py-1 !text-sm"
                     value={p.role}
@@ -230,11 +238,13 @@ function Lobby({ state }: { state: AkStateView }) {
             onChange={(e) => socket.emit("ak:set_quizmaster", { userId: e.target.value || null })}
           >
             <option value="">Zonder quizmaster — iedereen tikt zijn antwoord</option>
-            {state.participants.map((p) => (
+            {state.participants
+              .filter((p) => !season?.lineup.some((l) => l.userId === p.userId))
+              .map((p) => (
               <option key={p.userId} value={p.userId}>
                 {p.name} is quizmaster (speelt niet mee)
               </option>
-            ))}
+              ))}
           </select>
           <p className="text-xs text-slate-500 dark:text-slate-400">
             Met quizmaster antwoord je hardop en keurt de quizmaster het goed of fout. Zonder quizmaster tikt iedereen zelf.
@@ -242,7 +252,7 @@ function Lobby({ state }: { state: AkStateView }) {
         </div>
       )}
 
-      {isHost && (playerCount >= AK_MIN_TEAM_PLAYERS || teams) && (
+      {isHost && !season && (playerCount >= AK_MIN_TEAM_PLAYERS || teams) && (
         <div className="card flex flex-col gap-3">
           <h2 className="font-extrabold dark:text-slate-100">Teams</h2>
           <select
@@ -264,7 +274,7 @@ function Lobby({ state }: { state: AkStateView }) {
         </div>
       )}
 
-      {isHost && invitable.length > 0 && (
+      {isHost && !season && invitable.length > 0 && (
         <div className="card flex flex-col gap-2">
           <h2 className="font-extrabold dark:text-slate-100">Vrienden uitnodigen</h2>
           <ul className="flex flex-col gap-2">
@@ -298,6 +308,7 @@ function Lobby({ state }: { state: AkStateView }) {
 }
 
 function Finished({ state }: { state: AkStateView }) {
+  if (state.season && state.winnerId) return <SeasonFinished state={state} />;
   const winner = state.contestants.find((c) => c.id === state.winnerId);
   const standings = [...state.contestants].sort((a, b) => b.seconds - a.seconds);
   const best = state.personal?.ranking?.[0] ?? null;
@@ -356,6 +367,52 @@ function Finished({ state }: { state: AkStateView }) {
       )}
       <Link href="/live" className="btn-secondary self-center">
         Terug naar Spelen
+      </Link>
+    </>
+  );
+}
+
+function SeasonFinished({ state }: { state: AkStateView }) {
+  const season = state.season!;
+  const name = (id: string | null) =>
+    id === state.me.userId ? "Jij" : (state.contestants.find((c) => c.id === id)?.name ?? "");
+  const loser = state.finalists?.find((id) => id !== state.winnerId) ?? null;
+  const standings = [...state.contestants].sort((a, b) => b.seconds - a.seconds);
+  return (
+    <>
+      <div className="card !bg-gradient-to-br from-gold-500 to-gold-700 !border-0 text-brand-900 text-center flex flex-col items-center gap-2 animate-pop">
+        <p className="text-5xl" aria-hidden>
+          {season.isLast ? "👑" : "🏆"}
+        </p>
+        {season.isLast ? (
+          <h1 className="text-2xl font-extrabold">{name(state.winnerId)} {state.winnerId === state.me.userId ? "bent" : "is"} de Alleskenner van het seizoen!</h1>
+        ) : (
+          <>
+            {season.safeId && (
+              <h1 className="text-2xl font-extrabold">
+                {name(season.safeId)} {season.safeId === state.me.userId ? "bent" : "is"} Alleskenner van de avond!
+              </h1>
+            )}
+            <p className="font-bold">
+              {name(state.winnerId)} wint de finale en is door. {name(loser)} ligt eruit.
+            </p>
+          </>
+        )}
+      </div>
+      <div className="card flex flex-col gap-2">
+        <h2 className="font-extrabold dark:text-slate-100">Stand van vanavond</h2>
+        <ol className="flex flex-col divide-y divide-slate-100 dark:divide-slate-700">
+          {standings.map((c, i) => (
+            <li key={c.id} className="flex items-center gap-3 py-2">
+              <span className="w-6 text-center font-extrabold text-slate-400">{i + 1}</span>
+              <span className="flex-1 font-semibold dark:text-slate-100">{c.name}</span>
+              <span className="font-extrabold tabular-nums dark:text-slate-100">{Math.round(c.seconds)} s</span>
+            </li>
+          ))}
+        </ol>
+      </div>
+      <Link href={`/alleskenner/seizoen/${season.seasonId}`} className="btn-primary self-center">
+        Naar het seizoen
       </Link>
     </>
   );

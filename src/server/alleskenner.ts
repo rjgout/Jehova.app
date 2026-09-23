@@ -1,5 +1,7 @@
 import type { Server as SocketIOServer, Socket } from "socket.io";
 import { prisma } from "@/lib/db";
+import { notifyGameInvite } from "@/lib/notify";
+import { cancelSeasonEvening, recordSeasonEvening } from "@/lib/alleskenner/season";
 import {
   answerMatches,
   bookOfRef,
@@ -117,9 +119,24 @@ interface GalleryEntry {
   options: string[];
 }
 
+// Seizoensavond: vaste opstelling van drie, nieuwkomers eerst; alle leden
+// tellen mee voor "niets herhalen binnen een seizoen".
+interface SeasonInfo {
+  eveningId: string;
+  seasonId: string;
+  isFinale: boolean;
+  isLast: boolean;
+  lineup: string[];
+  names: Record<string, string>;
+  memberIds: string[];
+  safeId: string | null; // Alleskenner van de avond (hoogste stand na de rondes)
+  afterRounds: { userId: string; seconds: number }[];
+}
+
 interface Room {
   code: string;
   gameId: string;
+  season: SeasonInfo | null;
   hostId: string;
   quizmasterId: string | null;
   participants: Map<string, Participant>;
@@ -498,6 +515,15 @@ function buildView(room: Room, viewerId: string): AkStateView {
     finale,
     quizmaster,
     winnerId: room.winnerId,
+    season: room.season
+      ? {
+          seasonId: room.season.seasonId,
+          isFinale: room.season.isFinale,
+          isLast: room.season.isLast,
+          lineup: room.season.lineup.map((userId) => ({ userId, name: room.season!.names[userId] ?? nameOf(room, userId) })),
+          safeId: room.season.safeId,
+        }
+      : null,
     personal: room.teamMode
       ? { mine: myContestant ? (room.personal.get(viewerId) ?? 0) : null, ranking: personalRanking }
       : null,
@@ -583,6 +609,13 @@ function endTurn(room: Room) {
 
 function buildContestants(room: Room): Contestant[] | string {
   const players = lobbyPlayers(room);
+  if (room.season) {
+    const missing = room.season.lineup.filter((id) => !players.some((p) => p.userId === id));
+    if (missing.length > 0) {
+      return `Wacht tot iedereen van deze avond er is: ${missing.map((id) => room.season!.names[id] ?? "speler").join(", ")}.`;
+    }
+    return room.season.lineup.map((id, i) => ({ id, name: nameOf(room, id), members: [id], leaderId: id, color: i }));
+  }
   if (!room.teamMode) {
     if (players.length < AK_MIN_PLAYERS) return `Er zijn minstens ${AK_MIN_PLAYERS} spelers nodig.`;
     return players.map((p, i) => ({ id: p.userId, name: p.name, members: [p.userId], leaderId: p.userId, color: i }));
@@ -647,7 +680,8 @@ async function startGame(room: Room): Promise<string | null> {
   const full = room.length === "FULL";
 
   await ensureAlleskennerContent();
-  const everyone = [...room.participants.keys()];
+  // Binnen een seizoen komt niets terug: alle leden tellen mee, ook wie er vanavond niet is.
+  const everyone = [...new Set([...room.participants.keys(), ...(room.season?.memberIds ?? [])])];
   const listen = await pickItems("QUESTION", 1, everyone, (d) => Boolean(d.listen));
   const normal = await pickItems("QUESTION", QUESTIONS_369 - listen.length, everyone, (d) => !d.listen);
   if (normal.length + listen.length < 3) return "Er zijn nog te weinig vragen om te spelen.";
@@ -1184,13 +1218,27 @@ function startMemoryAnswering(room: Room) {
 function beginFinale(room: Room) {
   const state = room.finale!;
   const ranked = byMostSeconds(room, contestantIds(room));
+  let subtitle = `${contestantName(room, ranked[0])} tegen ${contestantName(room, ranked[1])}. Elk goed antwoord kost je tegenstander ${AK_FINALE_PENALTY} seconden.`;
   state.finalists = [ranked[0], ranked[1]];
+  if (room.season) {
+    room.season.afterRounds = ranked.map((userId) => ({ userId, seconds: secondsOf(room, userId) }));
+    // Seizoensavond: de hoogste stand is Alleskenner van de avond en is door;
+    // de andere twee spelen om de laatste plek. Alleen op de laatste
+    // finaleavond spelen de twee hoogsten om de titel.
+    if (!room.season.isLast && ranked.length >= 3) {
+      room.season.safeId = ranked[0];
+      state.finalists = [ranked[1], ranked[2]];
+      subtitle = `${contestantName(room, ranked[0])} is Alleskenner van de avond! ${contestantName(room, ranked[1])} en ${contestantName(room, ranked[2])} spelen om de laatste plek; de verliezer ligt eruit.`;
+    } else if (room.season.isLast) {
+      subtitle = `${contestantName(room, ranked[0])} tegen ${contestantName(room, ranked[1])} om de titel Alleskenner van het seizoen.`;
+    }
+  }
   room.phase = "FINALE";
   room.activeId = null;
   room.clockRunning = false;
   room.intermission = {
-    title: "Finale",
-    subtitle: `${contestantName(room, ranked[0])} tegen ${contestantName(room, ranked[1])}. Elk goed antwoord kost je tegenstander ${AK_FINALE_PENALTY} seconden.`,
+    title: room.season?.isLast ? "Seizoensfinale" : "Finale",
+    subtitle,
     standings: true,
   };
   schedule(room, INTERMISSION_MS + 1000, () => {
@@ -1225,6 +1273,14 @@ function finish(room: Room, winnerId: string | null) {
   broadcast(room);
 
   prisma.liveGame.update({ where: { id: room.gameId }, data: { status: "FINISHED" } }).catch(() => {});
+  if (room.season && room.finale) {
+    const season = room.season;
+    const record =
+      winnerId && season.afterRounds.length > 0
+        ? recordSeasonEvening(season.eveningId, { afterRounds: season.afterRounds, finalists: room.finale.finalists, winnerId })
+        : cancelSeasonEvening(season.eveningId);
+    record.catch((e) => console.error("Seizoensavond verwerken mislukt:", e));
+  }
   for (const contestant of room.contestants) {
     for (const userId of contestant.members) {
       prisma.liveGamePlayer
@@ -1284,16 +1340,39 @@ async function loadRoom(code: string): Promise<Room | string> {
   if (!game || game.mode !== "ALLESKENNER") return "Dit spel bestaat niet (meer).";
   if (game.status !== "LOBBY") return "Dit spel is al afgelopen.";
   const host = await prisma.user.findUnique({ where: { id: game.hostId }, select: { handle: true } });
+  const evening = await prisma.alleskennerEvening.findUnique({
+    where: { gameId: game.id },
+    include: { season: { select: { members: { select: { userId: true, user: { select: { handle: true } } } } } } },
+  });
+  const season: SeasonInfo | null = evening
+    ? {
+        eveningId: evening.id,
+        seasonId: evening.seasonId,
+        isFinale: evening.isFinale,
+        isLast: evening.isLast,
+        lineup: JSON.parse(evening.lineup) as string[],
+        names: Object.fromEntries(evening.season.members.map((m) => [m.userId, m.user.handle])),
+        memberIds: evening.season.members.map((m) => m.userId),
+        safeId: null,
+        afterRounds: [],
+      }
+    : null;
+  // Speelt de host zelf mee op deze avond, dan is er standaard geen quizmaster.
+  const hostPlays = season?.lineup.includes(game.hostId) ?? false;
   const room: Room = {
     code,
     gameId: game.id,
+    season,
     hostId: game.hostId,
-    quizmasterId: game.hostId,
+    quizmasterId: hostPlays ? null : game.hostId,
     participants: new Map([
-      [game.hostId, { userId: game.hostId, name: host?.handle ?? "Host", role: "quizmaster" as AkRole, team: null }],
+      [
+        game.hostId,
+        { userId: game.hostId, name: host?.handle ?? "Host", role: (hostPlays ? "player" : "quizmaster") as AkRole, team: null },
+      ],
     ]),
     sockets: new Map(),
-    length: "SHORT",
+    length: season ? "FULL" : "SHORT",
     teamMode: false,
     lobbyTeams: [],
     phase: "LOBBY",
@@ -1321,7 +1400,22 @@ async function loadRoom(code: string): Promise<Room | string> {
     timer: null,
   };
   rooms.set(code, room);
+  if (season) inviteSeasonMembers(room, host?.handle ?? "De host").catch(() => {});
   return room;
+}
+
+// Bij een seizoensavond worden alle leden meteen uitgenodigd (spelers én
+// toeschouwers): de melding bovenin als de app open staat, anders een push.
+async function inviteSeasonMembers(room: Room, hostName: string) {
+  for (const userId of room.season!.memberIds) {
+    if (userId === room.hostId) continue;
+    await prisma.liveGameInvite
+      .upsert({ where: { gameId_userId: { gameId: room.gameId, userId } }, create: { gameId: room.gameId, userId }, update: {} })
+      .catch(() => {});
+    io?.to(`user:${userId}`).emit("game_invite", { code: room.code, fromDisplayName: hostName, gameLabel: "De Alleskenner" });
+    const open = (await io?.in(`user:${userId}`).fetchSockets().catch(() => [])) ?? [];
+    if (open.length === 0) notifyGameInvite(userId, hostName, "De Alleskenner", room.code).catch(() => {});
+  }
 }
 
 async function joinRoom(socket: Socket, user: { id: string; handle: string }, code: string): Promise<Room | string> {
@@ -1342,7 +1436,7 @@ async function joinRoom(socket: Socket, user: { id: string; handle: string }, co
     room.participants.set(user.id, {
       userId: user.id,
       name: user.handle,
-      role: room.phase === "LOBBY" ? "player" : "spectator",
+      role: room.season ? (room.season.lineup.includes(user.id) && room.phase === "LOBBY" ? "player" : "spectator") : room.phase === "LOBBY" ? "player" : "spectator",
       team: null,
     });
     normalizeTeams(room);
@@ -1404,7 +1498,8 @@ export function registerAlleskennerHandlers(server: SocketIOServer, socket: Sock
 
   socket.on("ak:set_role", ({ userId, role }: { userId?: unknown; role?: unknown }) => {
     const room = hostInLobby();
-    if (!room || typeof userId !== "string" || (role !== "player" && role !== "spectator")) return;
+    // Op een seizoensavond ligt de opstelling vast (gekozen op de seizoenspagina).
+    if (!room || room.season || typeof userId !== "string" || (role !== "player" && role !== "spectator")) return;
     const participant = room.participants.get(userId);
     if (!participant) return;
     if (room.quizmasterId === userId) room.quizmasterId = null;
@@ -1417,9 +1512,10 @@ export function registerAlleskennerHandlers(server: SocketIOServer, socket: Sock
   socket.on("ak:set_quizmaster", ({ userId }: { userId?: unknown }) => {
     const room = hostInLobby();
     if (!room) return;
+    if (typeof userId === "string" && room.season?.lineup.includes(userId)) return;
     if (room.quizmasterId) {
       const previous = room.participants.get(room.quizmasterId);
-      if (previous) previous.role = "player";
+      if (previous) previous.role = room.season ? "spectator" : "player";
     }
     if (typeof userId === "string" && room.participants.has(userId)) {
       room.quizmasterId = userId;
@@ -1440,7 +1536,8 @@ export function registerAlleskennerHandlers(server: SocketIOServer, socket: Sock
 
   socket.on("ak:set_teams", ({ count }: { count?: unknown }) => {
     const room = hostInLobby();
-    if (!room || typeof count !== "number" || !Number.isInteger(count)) return;
+    // Seizoenen zijn altijd individueel.
+    if (!room || room.season || typeof count !== "number" || !Number.isInteger(count)) return;
     if (count !== 0 && (count < 2 || count > AK_MAX_TEAMS)) return;
     if (count > 0 && lobbyPlayers(room).length < AK_MIN_TEAM_PLAYERS) {
       fail(`Teams kan vanaf ${AK_MIN_TEAM_PLAYERS} spelers.`);

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 const ROUNDS = [
@@ -46,6 +47,22 @@ export default function AlleskennerSetupClient() {
         </button>
         {error && <p className="text-sm font-semibold text-red-200">{error}</p>}
       </div>
+
+      <Link href="/alleskenner/seizoen" className="card flex items-center gap-4 hover:shadow-md transition">
+        <span className="text-3xl" aria-hidden>
+          📅
+        </span>
+        <span className="flex-1">
+          <span className="block font-extrabold dark:text-slate-100">Seizoen spelen</span>
+          <span className="block text-sm text-slate-500 dark:text-slate-400">
+            Vaste quizavond met vrienden: elke avond drie spelers, een klassement en aan het eind de Alleskenner van het
+            seizoen.
+          </span>
+        </span>
+        <span className="text-slate-400" aria-hidden>
+          →
+        </span>
+      </Link>
 
       <div className="grid gap-3 sm:grid-cols-3">
         {ROUNDS.map((round) => (

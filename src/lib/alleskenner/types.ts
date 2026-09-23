@@ -156,6 +156,13 @@ export interface AkStateView {
   finale: AkFinaleView | null;
   quizmaster: AkQuizmasterView | null;
   winnerId: string | null;
+  season: {
+    seasonId: string;
+    isFinale: boolean;
+    isLast: boolean;
+    lineup: { userId: string; name: string }[];
+    safeId: string | null; // Alleskenner van de avond
+  } | null;
   personal: { mine: number | null; ranking: { userId: string; name: string; points: number }[] | null } | null;
   feedback: { contestantId: string | null; text: string; kind: "good" | "bad" | "info"; at: number } | null;
 }

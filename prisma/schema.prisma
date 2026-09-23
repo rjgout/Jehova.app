@@ -203,6 +203,10 @@ model User {
   gamePlayers LiveGamePlayer[]
   gameInvites LiveGameInvite[]
   alleskennerSeen AlleskennerSeen[]
+  alleskennerSeasonsHosted AlleskennerSeason[]       @relation("AlleskennerSeasonHost")
+  alleskennerSeasonsDeputy AlleskennerSeason[]       @relation("AlleskennerSeasonDeputy")
+  alleskennerSeasonsWon    AlleskennerSeason[]       @relation("AlleskennerSeasonChampion")
+  alleskennerSeasonMembers AlleskennerSeasonMember[]
 
   chapterGuessGames ChapterGuessGame[]
   wordGames         WordGame[]
@@ -1392,6 +1396,8 @@ model LiveGame {
   createdAt     DateTime           @default(now())
   players       LiveGamePlayer[]
   invites       LiveGameInvite[]
+  // Alleen bij een seizoensavond van De Alleskenner.
+  alleskennerEvening AlleskennerEvening?
 }
 
 model LiveGamePlayer {
@@ -1784,4 +1790,84 @@ model AlleskennerSeen {
 
   @@id([userId, itemId])
   @@index([itemId])
+}
+
+// --- De Alleskenner: seizoenen (zie docs/ALLESKENNER.md, "Seizoen") ---------
+
+enum AlleskennerSeasonStatus {
+  REGULAR // gewone avonden
+  FINALE // seizoensfinale-avonden
+  FINISHED
+}
+
+enum AlleskennerMemberStatus {
+  WAITING // in de wachtrij, nog niet gespeeld
+  ACTIVE // blijver: ongeslagen, nog geen 3 avonden
+  ELIMINATED // finale van een avond verloren
+  RETIRED // 3 avonden gespeeld, ongeslagen gestopt
+}
+
+enum AlleskennerEveningStatus {
+  PLANNED
+  DONE
+  CANCELLED
+}
+
+model AlleskennerSeason {
+  id           String                    @id @default(cuid())
+  name         String
+  hostId       String
+  host         User                      @relation("AlleskennerSeasonHost", fields: [hostId], references: [id], onDelete: Cascade)
+  deputyHostId String?
+  deputyHost   User?                     @relation("AlleskennerSeasonDeputy", fields: [deputyHostId], references: [id], onDelete: SetNull)
+  status       AlleskennerSeasonStatus   @default(REGULAR)
+  championId   String?
+  champion     User?                     @relation("AlleskennerSeasonChampion", fields: [championId], references: [id], onDelete: SetNull)
+  createdAt    DateTime                  @default(now())
+  finishedAt   DateTime?
+  members      AlleskennerSeasonMember[]
+  evenings     AlleskennerEvening[]
+
+  @@index([hostId])
+}
+
+model AlleskennerSeasonMember {
+  id            String                  @id @default(cuid())
+  seasonId      String
+  season        AlleskennerSeason       @relation(fields: [seasonId], references: [id], onDelete: Cascade)
+  userId        String
+  user          User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status        AlleskennerMemberStatus @default(WAITING)
+  queuePosition Int
+  evenings      Int                     @default(0)
+  points        Int                     @default(0) // 3/2/1 per gewone avond
+  secondsTotal  Int                     @default(0) // gelijkstand in het klassement
+  // Seizoensfinale: instapvolgorde (laagst geplaatste eerst), en of iemand al
+  // is ingestapt of eruit ligt.
+  finaleSeed    Int?
+  finaleEntered Boolean                 @default(false)
+  finaleOut     Boolean                 @default(false)
+  joinedAt      DateTime                @default(now())
+
+  @@unique([seasonId, userId])
+  @@index([userId])
+}
+
+model AlleskennerEvening {
+  id         String                   @id @default(cuid())
+  seasonId   String
+  season     AlleskennerSeason        @relation(fields: [seasonId], references: [id], onDelete: Cascade)
+  number     Int
+  isFinale   Boolean                  @default(false)
+  isLast     Boolean                  @default(false) // laatste finaleavond: winnaar = Alleskenner van het seizoen
+  gameId     String?                  @unique
+  game       LiveGame?                @relation(fields: [gameId], references: [id], onDelete: SetNull)
+  lineup     String // JSON: userIds in speelvolgorde (nieuwkomers eerst)
+  newcomers  String // JSON: userIds die deze avond voor het eerst meedoen
+  results    String? // JSON: [{ userId, place, seconds, points }]
+  status     AlleskennerEveningStatus @default(PLANNED)
+  createdAt  DateTime                 @default(now())
+  finishedAt DateTime?
+
+  @@index([seasonId])
 }
