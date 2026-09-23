@@ -653,6 +653,30 @@ export function initGameServer(httpServer: HttpServer) {
       sendFriendStatusesToUser(ioInstance, user.id).catch(() => {});
     });
 
+    // Zelfde reden als hierboven: de accept-/verzoekroutes draaien in Next's
+    // eigen bundel en kunnen deze Socket.io-instantie niet bereiken. Na een
+    // geslaagd verzoek of een acceptatie seint de client dit zelf, zodat een
+    // openstaande vriendenpagina van de ander direct ververst (in plaats van
+    // "Wachten op ..." te blijven tonen). Alleen doorgeven als er echt een
+    // vriendschap of verzoek tussen beiden bestaat; het signaal bevat geen
+    // gegevens, de ander haalt alles zelf opnieuw op.
+    socket.on("friendship_changed", async (payload: { otherUserId?: unknown }) => {
+      const otherUserId = payload?.otherUserId;
+      if (typeof otherUserId !== "string" || otherUserId === user.id) return;
+      const related = await prisma.friendship
+        .findFirst({
+          where: {
+            OR: [
+              { senderId: user.id, receiverId: otherUserId },
+              { senderId: otherUserId, receiverId: user.id },
+            ],
+          },
+          select: { id: true },
+        })
+        .catch(() => null);
+      if (related) ioInstance?.to(`user:${otherUserId}`).emit("friends_changed");
+    });
+
     socket.on("join_game", async ({ code }: { code: string }) => {
       const upperCode = code.toUpperCase();
       let room = rooms.get(upperCode);

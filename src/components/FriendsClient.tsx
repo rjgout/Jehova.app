@@ -94,6 +94,13 @@ export default function FriendsClient() {
 
   useEffect(() => {
     load();
+    // Een iPhone-app die je terughaalt laadt de pagina niet opnieuw; zonder
+    // dit bleef bv. "Wachten op ..." staan nadat de ander had geaccepteerd.
+    const onVisible = () => {
+      if (document.visibilityState === "visible") load();
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => document.removeEventListener("visibilitychange", onVisible);
   }, []);
 
   // Live updates: dezelfde altijd-open socketverbinding die ook
@@ -122,11 +129,18 @@ export default function FriendsClient() {
     function onStatusReset() {
       setData((prev) => (prev ? { ...prev, statusByUserId: {} } : prev));
     }
+    // Seintje van de server dat de ander een verzoek stuurde of accepteerde
+    // (zie "friendship_changed" in gameServer.ts): lijst opnieuw ophalen.
+    function onFriendsChanged() {
+      load();
+    }
     socket.on("friend_status_update", onStatusUpdate);
     socket.on("friend_status_reset", onStatusReset);
+    socket.on("friends_changed", onFriendsChanged);
     return () => {
       socket.off("friend_status_update", onStatusUpdate);
       socket.off("friend_status_reset", onStatusReset);
+      socket.off("friends_changed", onFriendsChanged);
     };
   }, []);
 
@@ -156,12 +170,14 @@ export default function FriendsClient() {
     } else {
       setMessage(`Vriendschapsverzoek naar ${formatTag(target.handle, target.discriminator)} verstuurd!`);
       setSentTo((prev) => new Set(prev).add(target.id));
+      getSocket().emit("friendship_changed", { otherUserId: target.id });
       load();
     }
   }
 
-  async function respond(friendshipId: string, action: "accept" | "decline") {
-    await fetch(`/api/friends/${friendshipId}/${action}`, { method: "POST" });
+  async function respond(friendshipId: string, action: "accept" | "decline", otherUserId: string) {
+    const res = await fetch(`/api/friends/${friendshipId}/${action}`, { method: "POST" });
+    if (res.ok && action === "accept") getSocket().emit("friendship_changed", { otherUserId });
     load();
   }
 
@@ -290,10 +306,10 @@ export default function FriendsClient() {
                   {formatTag(from.handle, from.discriminator)}
                 </span>
                 <div className="flex gap-2">
-                  <button className="btn-primary !px-3 !py-1.5" onClick={() => respond(friendshipId, "accept")}>
+                  <button className="btn-primary !px-3 !py-1.5" onClick={() => respond(friendshipId, "accept", from.id)}>
                     Accepteren
                   </button>
-                  <button className="btn-secondary !px-3 !py-1.5" onClick={() => respond(friendshipId, "decline")}>
+                  <button className="btn-secondary !px-3 !py-1.5" onClick={() => respond(friendshipId, "decline", from.id)}>
                     Weigeren
                   </button>
                 </div>
