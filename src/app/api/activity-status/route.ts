@@ -176,6 +176,8 @@ export async function GET() {
     const label =
       lg.mode === "CHAPTER_GUESS"
         ? `Live spel — Raad het hoofdstuk${suffix}`
+        : lg.mode === "ALLESKENNER"
+          ? `De Alleskenner${suffix}`
         : lg.mode === "FAMILY_GAME"
           ? `Gezinsavond${suffix}`
           : `Live spel — ${lg.chapter?.book.name} ${lg.chapter?.number}${suffix}`;
@@ -239,6 +241,8 @@ export async function GET() {
     label:
       game.mode === "CHAPTER_GUESS"
         ? "Raad het hoofdstuk"
+        : game.mode === "ALLESKENNER"
+          ? "De Alleskenner"
         : game.mode === "FAMILY_GAME"
           ? "Gezinsavond"
           : `${game.chapter?.book.name} ${game.chapter?.number}`,

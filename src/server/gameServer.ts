@@ -26,6 +26,7 @@ import {
   type FamilyCard,
   type FamilyDifficulty,
 } from "@/lib/familyGame";
+import { forgetAlleskennerRoom, registerAlleskennerHandlers } from "@/server/alleskenner";
 
 const EXERCISES_TIME_MS = 20_000;
 // "Raad het hoofdstuk" krijgt bewust ruim meer tijd (1 minuut, zoals
@@ -194,6 +195,7 @@ async function loadExercises(chapterId: string): Promise<GameExercise[]> {
 function liveGameLabel(game: { mode: string; chapter?: { number: number; book: { name: string } } | null }): string {
   if (game.mode === "CHAPTER_GUESS") return "Raad het hoofdstuk";
   if (game.mode === "FAMILY_GAME") return "Gezinsavond";
+  if (game.mode === "ALLESKENNER") return "De Alleskenner";
   return game.chapter ? `${game.chapter.book.name} ${game.chapter.number}` : "een live spel";
 }
 
@@ -641,6 +643,7 @@ export function initGameServer(httpServer: HttpServer) {
     socket.data.userId = user.id;
     socket.data.displayName = user.handle;
     socket.join(`user:${user.id}`);
+    registerAlleskennerHandlers(ioInstance!, socket, user);
 
     // Aanwezigheid voor het adminoverzicht (/adminbackend): zie de opmerking
     // bij User.onlineSocketCount in schema.prisma voor waarom dit in de
@@ -1043,6 +1046,7 @@ export function initGameServer(httpServer: HttpServer) {
       await revokeOpenInvites(upperCode).catch(() => {});
       await prisma.liveGame.delete({ where: { id: game.id } }).catch(() => {});
       rooms.delete(upperCode);
+      forgetAlleskennerRoom(upperCode);
       ioInstance?.to(upperCode).emit("error_message", { message: "Dit spel is beëindigd." });
       socket.emit("game_cancelled", { code: upperCode });
     });

@@ -10,6 +10,7 @@ const schema = z.object({
   chapterGuessEnabled: z.boolean().optional(),
   challengesEnabled: z.boolean().optional(),
   liveExercisesEnabled: z.boolean().optional(),
+  alleskennerEnabled: z.boolean().optional(),
 });
 
 export async function GET() {

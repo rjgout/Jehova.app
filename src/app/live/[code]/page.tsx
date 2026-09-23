@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db";
 import GameRoom from "@/components/GameRoom";
 import ChapterGuessGameRoom from "@/components/ChapterGuessGameRoom";
 import FamilyGameRoom from "@/components/FamilyGameRoom";
+import AlleskennerRoom from "@/components/alleskenner/AlleskennerRoom";
 
 export default async function LiveGamePage({ params }: { params: Promise<{ code: string }> }) {
   const user = await getCurrentUser();
@@ -19,6 +20,9 @@ export default async function LiveGamePage({ params }: { params: Promise<{ code:
 
   if (game?.mode === "CHAPTER_GUESS") {
     return <ChapterGuessGameRoom code={upperCode} myUserId={user.id} />;
+  }
+  if (game?.mode === "ALLESKENNER") {
+    return <AlleskennerRoom code={upperCode} />;
   }
   if (game?.mode === "FAMILY_GAME") {
     return <FamilyGameRoom code={upperCode} myUserId={user.id} />;

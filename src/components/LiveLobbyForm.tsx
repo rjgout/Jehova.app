@@ -20,6 +20,7 @@ interface GameSettings {
   chapterGuessEnabled: boolean;
   challengesEnabled: boolean;
   liveExercisesEnabled: boolean;
+  alleskennerEnabled: boolean;
 }
 
 interface Props {
@@ -63,6 +64,17 @@ const GAMES: GameEntry[] = [
     href: "/scrabble",
     linkLabel: "Woordspel openen",
     rules: {"title":"Zo speel je","bullets":["Maak geldige woorden en verzamel meer punten dan je tegenstander.","Je kunt een woord leggen, letters wisselen of passen. 2L/3L en 2W/3W geven bonuspunten.","Het spel eindigt normaal als de zak leeg is én een speler geen stenen meer heeft, of na 6 opeenvolgende passen/wissels. Opgeven betekent verlies."]},
+  },
+  {
+    id: "alleskenner",
+    enabledKey: "alleskennerEnabled",
+    icon: "🧠",
+    title: "De Alleskenner",
+    description:
+      "Een quizavond voor als je bij elkaar bent: iedereen speelt op zijn eigen telefoon, met of zonder quizmaster. Verdien seconden en zet in de finale je tegenstander op nul.",
+    href: "/alleskenner",
+    linkLabel: "De Alleskenner openen",
+    rules: {"title":"Zo speel je","bullets":["Iedereen begint met 60 seconden. In 3-6-9 verdien je seconden bij vraag 3, 6, 9, 12 en 15.","In de puzzel zoek je drie groepen van vier omschrijvingen; je eigen klok loopt terwijl je aan de beurt bent.","De twee spelers met de meeste seconden spelen de finale: elk goed antwoord kost je tegenstander 20 seconden. Wie op 0 staat, verliest."]},
   },
   {
     id: "gezinsavond",

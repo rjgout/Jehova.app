@@ -9,6 +9,7 @@ interface SettingsView {
   chapterGuessEnabled: boolean;
   challengesEnabled: boolean;
   liveExercisesEnabled: boolean;
+  alleskennerEnabled: boolean;
 }
 
 const GAMES: { key: keyof SettingsView; label: string }[] = [
@@ -18,6 +19,7 @@ const GAMES: { key: keyof SettingsView; label: string }[] = [
   { key: "chapterGuessEnabled", label: "🔎 Raad het hoofdstuk" },
   { key: "challengesEnabled", label: "⚔️ Uitdagingen" },
   { key: "liveExercisesEnabled", label: "🏁 Nieuw live spel starten (oefeningen-race)" },
+  { key: "alleskennerEnabled", label: "🧠 De Alleskenner" },
 ];
 
 export default function AdminGameSettingsClient() {

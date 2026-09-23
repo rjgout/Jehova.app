@@ -115,8 +115,8 @@ de minste seconden; na een pas of als je klaar bent, mag de volgende aanvullen.
 ## Bouwstatus
 
 1. [x] Ontwerp vastgelegd (dit document)
-2. [ ] Contentmodel, controle, eerste inhoud
-3. [ ] Speelbare kern: lobby, quizmaster/tikvariant, 3-6-9, Puzzel, Finale
+2. [x] Contentmodel, controle, eerste inhoud
+3. [x] Speelbare kern: lobby, quizmaster/tikvariant, 3-6-9, Puzzel, Finale
 4. [ ] Teams, Open Deur, Galerij, Collectief Geheugen
 5. [ ] Seizoensmodus en seizoensfinale
 6. [ ] Editor voor bestaande inhoud in `/adminbackend`

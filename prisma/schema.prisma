@@ -1738,6 +1738,8 @@ model GameSettings {
   chapterGuessEnabled  Boolean @default(true)
   challengesEnabled    Boolean @default(true)
   liveExercisesEnabled Boolean @default(true) // "Nieuw spel starten"-formulier (oefeningen-race)
+  // Standaard uit: een beheerder test het eerst (beheerders zien de kaart altijd).
+  alleskennerEnabled   Boolean @default(false)
 }
 
 // --- De Alleskenner ----------------------------------------------------------

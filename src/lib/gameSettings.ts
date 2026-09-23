@@ -7,6 +7,7 @@ export interface GameSettingsView {
   chapterGuessEnabled: boolean;
   challengesEnabled: boolean;
   liveExercisesEnabled: boolean;
+  alleskennerEnabled: boolean;
 }
 
 const DEFAULTS: GameSettingsView = {
@@ -16,6 +17,7 @@ const DEFAULTS: GameSettingsView = {
   chapterGuessEnabled: true,
   challengesEnabled: true,
   liveExercisesEnabled: true,
+  alleskennerEnabled: false,
 };
 
 export async function getGameSettings(): Promise<GameSettingsView> {
