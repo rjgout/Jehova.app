@@ -622,15 +622,7 @@ export default function ProfileClient() {
         )}
       </section>
 
-      <section className="card flex flex-col gap-3">
-        <h2 className="font-extrabold text-lg dark:text-slate-100">Account</h2>
-
-        <div className="flex gap-2 flex-wrap">
-          <Link href="/onboarding" className="btn-secondary self-start">
-            Rondleiding opnieuw bekijken
-          </Link>
-        </div>
-      </section>
+>
 
       <section className="card flex flex-col gap-3">
         <h2 className="font-extrabold text-lg dark:text-slate-100">Voorlezen</h2>
@@ -915,6 +907,11 @@ export default function ProfileClient() {
       </section>
 
       <section className="card flex flex-col gap-3">
+        <h2 className="font-extrabold text-lg dark:text-slate-100">Tweestapsverificatie</h2>
+        <TwoFactorSettings isAdmin={data.isAdmin} />
+      </section>
+
+      <section className="card flex flex-col gap-3">
         <h2 className="font-extrabold text-lg dark:text-slate-100">Account verwijderen</h2>
         {!confirmingDelete ? (
           <button className="btn-secondary self-start !text-red-500 !border-red-200" onClick={() => setConfirmingDelete(true)}>
@@ -1083,3 +1080,14 @@ function HeroStat({ value, label, href }: { value: string; label: string; href?:
   }
   return content;
 }
+
+
+      <section className="card flex flex-col gap-3">
+        <h2 className="font-extrabold text-lg dark:text-slate-100">Account</h2>
+
+        <div className="flex gap-2 flex-wrap">
+          <Link href="/onboarding" className="btn-secondary self-start">
+            Rondleiding opnieuw bekijken
+          </Link>
+        </div>
+      </section
