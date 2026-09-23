@@ -68,7 +68,11 @@ export default function ResetPasswordClient({ token }: { token: string | null })
             </p>
             <input
               className="input"
-              inputMode="numeric"
+              // Geen numeriek toetsenbord: herstelcodes bevatten letters (A–F).
+              inputMode="text"
+              autoCapitalize="characters"
+              autoCorrect="off"
+              spellCheck={false}
               autoComplete="one-time-code"
               placeholder="2FA-code of herstelcode"
               required
