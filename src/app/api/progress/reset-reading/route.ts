@@ -11,19 +11,17 @@ export async function POST() {
   await prisma.$transaction(async (tx) => {
     const readingCourses = await tx.course.findMany({
       where: { type: { in: [...READING_COURSE_TYPES] } },
-      select: { id: true, type: true },
+      select: { id: true, type: true, contentCollectionId: true },
     });
     const readingCourseIds = readingCourses.map((course) => course.id);
-    const bomChapterIds = (
-      await tx.chapter.findMany({
-        where: { book: { name: "Boek van Mormon" } },
-        select: { id: true },
-      })
-    ).map((chapter) => chapter.id);
+    // De Book-tabel bevat de losse boeken ("1 Nephi", "Alma", ...), niet één
+    // boek met de naam van de hele collectie. Selecteer daarom op de
+    // contentcollectie van de leescursussen.
+    const collectionIds = [...new Set(readingCourses.map((course) => course.contentCollectionId))];
 
-    if (bomChapterIds.length > 0) {
+    if (collectionIds.length > 0) {
       await tx.chapterProgress.deleteMany({
-        where: { userId: user.id, chapterId: { in: bomChapterIds } },
+        where: { userId: user.id, chapter: { book: { contentCollectionId: { in: collectionIds } } } },
       });
     }
 
