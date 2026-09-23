@@ -369,9 +369,9 @@ export default function ScrabbleBoardClient({ gameId }: { gameId: string }) {
                   className={`aspect-square flex items-center justify-center relative text-[0.65rem] font-bold ${
                     tile
                       ? pend
-                        ? "bg-sky-200 dark:bg-sky-600 text-sky-950 dark:text-white ring-2 ring-sky-500"
+                        ? "bg-violet-500 dark:bg-violet-400 text-white ring-2 ring-inset ring-gold-400"
                         : isMine
-                          ? "bg-sky-300 dark:bg-sky-700 text-sky-950 dark:text-white"
+                          ? "bg-violet-600 dark:bg-violet-500 text-white"
                           : "bg-amber-100 dark:bg-amber-800 text-amber-900 dark:text-amber-50"
                       : SQUARE_CLASS[squareType]
                   } ${flashing ? "animate-tile-flash z-10 rounded-sm" : ""}`}
@@ -399,7 +399,7 @@ export default function ScrabbleBoardClient({ gameId }: { gameId: string }) {
 
       <div className="flex items-center justify-center gap-4 text-xs text-slate-500 dark:text-slate-400">
         <span className="flex items-center gap-1.5">
-          <span className="h-3.5 w-3.5 rounded-sm bg-sky-300 dark:bg-sky-700 ring-1 ring-sky-400 dark:ring-sky-500" aria-hidden />
+          <span className="h-3.5 w-3.5 rounded-sm bg-violet-600 dark:bg-violet-500 ring-1 ring-violet-800 dark:ring-violet-300" aria-hidden />
           Jouw letters
         </span>
         <span className="flex items-center gap-1.5">
@@ -427,12 +427,12 @@ export default function ScrabbleBoardClient({ gameId }: { gameId: string }) {
                   onClick={() => (exchangeMode ? toggleExchangeTile(i) : pickRackTile(i))}
                   className={`relative w-10 h-10 sm:w-12 sm:h-12 rounded-md font-extrabold text-lg flex items-center justify-center border-2 ${
                     used
-                      ? "opacity-30 bg-amber-100 dark:bg-amber-900 border-transparent"
+                      ? "opacity-30 bg-violet-600 dark:bg-violet-500 text-white border-transparent"
                       : selectedForPlace || selectedForExchange
-                        ? "bg-brand-200 dark:bg-brand-700 border-brand-500"
+                        ? "bg-violet-600 dark:bg-violet-500 text-white border-gold-400 ring-2 ring-gold-400 -translate-y-1"
                         : hinted
                           ? "bg-yellow-200 dark:bg-yellow-600 border-yellow-500 ring-4 ring-yellow-400 dark:ring-yellow-300"
-                          : "bg-amber-100 dark:bg-amber-800 border-amber-300 dark:border-amber-600"
+                          : "bg-violet-600 dark:bg-violet-500 text-white border-violet-800 dark:border-violet-300"
                   }`}
                 >
                   {letter === BLANK ? "★" : letter}
