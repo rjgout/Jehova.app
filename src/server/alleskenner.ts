@@ -22,6 +22,7 @@ import {
 import {
   AK_369_POINTS,
   AK_369_THINK_MS,
+  AK_LISTEN_MAX_MS,
   AK_FINALE_PENALTY,
   AK_GALLERY_POINTS,
   AK_MAX_TEAMS,
@@ -161,6 +162,10 @@ interface Room {
     index: number;
     reveal: { correct: boolean | null } | null;
     picks: Map<string, string>;
+    starter: string | null; // kreeg de vraag als eerste; krijgt de volgende als niemand het weet
+    attempted: string[]; // deelnemers die deze vraag al fout hadden
+    wrongOptions: string[];
+    listening: boolean; // luistervraag: bedenktijd start pas na het voorlezen
   } | null;
   openDeur: (GridRound & { owners: string[]; taken: boolean[]; choosing: boolean }) | null;
   puzzle: {
@@ -333,6 +338,8 @@ function buildView(room: Room, viewerId: string): AkStateView {
       listenText: current.listenText,
       options: showOptions ? current.data.options : null,
       myPick: room.r369.picks.get(viewerId) ?? null,
+      wrongOptions: room.r369.wrongOptions,
+      listening: room.r369.listening,
       reveal: room.r369.reveal ? { correct: room.r369.reveal.correct, answer: current.data.answer } : null,
     };
   }
@@ -588,7 +595,8 @@ function onClockZero(room: Room) {
 }
 
 function onTurnTimeout(room: Room) {
-  if (room.phase === "R369") answer369(room, false, "De tijd is om");
+  if (room.phase === "R369" && room.r369?.listening) startThinking369(room);
+  else if (room.phase === "R369") answer369(room, false, "De tijd is om");
   else if (room.phase === "PUZZLE") endPuzzleTurn(room);
   else if (room.phase === "OPEN_DEUR" && room.openDeur?.choosing) {
     chooseDoor(room, room.openDeur.taken.findIndex((t) => !t));
@@ -716,6 +724,10 @@ async function startGame(room: Room): Promise<string | null> {
     index: 0,
     reveal: null,
     picks: new Map(),
+    starter: null,
+    attempted: [],
+    wrongOptions: [],
+    listening: false,
   };
   room.openDeur = {
     ...emptyGridRound(
@@ -840,49 +852,105 @@ function nextRound(room: Room) {
 // --- 3-6-9 ----------------------------------------------------------------------
 
 function ask369(room: Room) {
-  if (!room.r369) return;
-  room.r369.reveal = null;
-  room.r369.picks = new Map();
+  const state = room.r369;
+  if (!state) return;
+  state.reveal = null;
+  state.picks = new Map();
+  state.starter = room.activeId;
+  state.attempted = [];
+  state.wrongOptions = [];
   room.clockRunning = false;
+  // Luistervraag: de bedenktijd start pas als het vers is voorgelezen op het
+  // apparaat van wie aan de beurt is (ak:listen_done). De deadline hier is
+  // alleen een vangnet voor als dat bericht nooit komt (voorlezen geblokkeerd,
+  // telefoon weggelegd).
+  state.listening = state.items[state.index].listenText !== null;
+  room.turnDeadline = Date.now() + (state.listening ? AK_LISTEN_MAX_MS : AK_369_THINK_MS);
+}
+
+function startThinking369(room: Room) {
+  if (!room.r369?.listening) return;
+  room.r369.listening = false;
   room.turnDeadline = Date.now() + AK_369_THINK_MS;
 }
 
-function answer369(room: Room, correct: boolean, note?: string) {
+/** Eerstvolgende deelnemer (na de huidige) die deze vraag nog niet heeft geprobeerd. */
+function nextUntried(room: Room, from: string): string | null {
+  const state = room.r369!;
+  const start = orderIndex(room, from);
+  for (let step = 1; step < room.contestants.length; step++) {
+    const id = room.contestants[(start + step) % room.contestants.length].id;
+    if (!state.attempted.includes(id)) return id;
+  }
+  return null;
+}
+
+/**
+ * Goed: punten (bij vraag 3, 6, 9, ...) en wie het goed had krijgt de
+ * volgende vraag. Fout (ook passen of de tijd om): de vraag gaat naar de
+ * volgende die hem nog niet heeft geprobeerd; weet niemand het, dan krijgt
+ * wie de vraag als eerste kreeg de volgende vraag.
+ */
+function answer369(room: Room, correct: boolean, note?: string, wrongOption?: string) {
   const state = room.r369;
   const active = room.activeId;
   if (!state || state.reveal || !active) return;
   const number = state.index + 1;
   const answer = state.items[state.index].data.answer;
-  room.turnDeadline = null;
-  state.reveal = { correct };
-  if (correct && number % 3 === 0) {
-    addSeconds(room, active, AK_369_POINTS);
-    feedback(room, active, `Goed! +${AK_369_POINTS} seconden`, "good");
-  } else if (correct) {
-    feedback(room, active, "Goed! Je mag door", "good");
-  } else {
-    feedback(room, active, note ?? "Helaas", "bad");
-  }
-  // Persoonlijke punten: de keuze van de teamleider is het teamantwoord.
   const leader = leaderOfActive(room);
-  if (leader) addPersonal(room, leader, correct ? 1 : 0);
-  for (const [userId, pick] of state.picks) {
-    if (userId !== leader && pick === answer) addPersonal(room, userId, 1);
+  room.turnDeadline = null;
+  state.listening = false;
+
+  if (correct) {
+    // Met quizmaster antwoordt de teamleider hardop; zijn keuze is dan het goede antwoord.
+    if (leader && room.quizmasterId) state.picks.set(leader, answer);
+    if (number % 3 === 0) {
+      addSeconds(room, active, AK_369_POINTS);
+      feedback(room, active, `Goed! +${AK_369_POINTS} seconden`, "good");
+    } else {
+      feedback(room, active, "Goed! Je mag door", "good");
+    }
+    finish369Question(room, active, true);
+    return;
   }
+
+  if (leader && room.quizmasterId) state.picks.set(leader, "");
+  if (wrongOption && !state.wrongOptions.includes(wrongOption)) state.wrongOptions.push(wrongOption);
+  state.attempted.push(active);
+  const next = nextUntried(room, active);
+  if (next) {
+    feedback(room, active, `${note ?? "Fout"} — ${contestantName(room, next)} mag het proberen`, "bad");
+    room.activeId = null;
+    schedule(room, BETWEEN_TURNS_MS, () => {
+      room.activeId = next;
+      room.turnDeadline = Date.now() + AK_369_THINK_MS;
+    });
+    return;
+  }
+  feedback(room, active, `${note ?? "Fout"} — niemand wist het`, "bad");
+  finish369Question(room, state.starter ?? active, false);
+}
+
+/** Onthullen, persoonlijke punten verdelen en de volgende vraag aan `nextActive`. */
+function finish369Question(room: Room, nextActive: string, correct: boolean) {
+  const state = room.r369!;
+  const answer = state.items[state.index].data.answer;
+  state.reveal = { correct };
+  // Persoonlijke punten (teams): elke keuze die het goede antwoord was. De
+  // tik van een teamleider namens zijn team telt ook als zijn eigen keuze.
+  for (const [userId, pick] of state.picks) {
+    if (pick === answer) addPersonal(room, userId, 1);
+  }
+  room.activeId = null;
   schedule(room, REVEAL_369_MS, () => {
     state.index++;
     if (state.index >= state.items.length) {
       nextRound(room);
       return;
     }
-    if (!correct) room.activeId = nextInOrder(room, active);
+    room.activeId = nextActive;
     ask369(room);
   });
-}
-
-function nextInOrder(room: Room, id: string): string {
-  const index = orderIndex(room, id);
-  return room.contestants[(index + 1) % room.contestants.length].id;
 }
 
 // --- Gedeelde beurtlogica (Open Deur, Collectief Geheugen, Finale) --------------
@@ -1639,8 +1707,10 @@ export function registerAlleskennerHandlers(server: SocketIOServer, socket: Sock
     if (!current369.data.options.includes(option)) return;
     const kind = actorKind(room, user.id);
     if (kind === "team") {
+      if (room.r369.wrongOptions.includes(option)) return;
       room.r369.picks.set(user.id, option);
-      answer369(room, option === current369.data.answer);
+      const correct = option === current369.data.answer;
+      answer369(room, correct, undefined, correct ? undefined : option);
     } else if (kind === "silent") {
       room.r369.picks.set(user.id, option);
     }
@@ -1723,6 +1793,18 @@ export function registerAlleskennerHandlers(server: SocketIOServer, socket: Sock
     if (!room || room.phase !== "OPEN_DEUR" || typeof index !== "number") return;
     if (!(isQuizmaster(room) || leaderOfActive(room) === user.id)) return;
     chooseDoor(room, index);
+    broadcast(room);
+  });
+
+  // Het apparaat dat voorleest (quizmaster, of zonder quizmaster wie aan de
+  // beurt is) meldt dat het vers is uitgesproken: nu pas start de bedenktijd.
+  socket.on("ak:listen_done", ({ number }: { number?: unknown }) => {
+    const room = activeRoom();
+    const state = room?.r369;
+    if (!room || !state || room.phase !== "R369" || !state.listening || number !== state.index + 1) return;
+    const speaker = room.quizmasterId ?? leaderOfActive(room);
+    if (speaker !== user.id) return;
+    startThinking369(room);
     broadcast(room);
   });
 

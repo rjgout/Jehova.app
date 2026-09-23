@@ -39,7 +39,7 @@ de minste seconden; na een pas of als je klaar bent, mag de volgende aanvullen.
 
 | Ronde | Inhoud | Seconden |
 |---|---|---|
-| 3-6-9 | 15 meerkeuzevragen; goed = je houdt de beurt, fout = volgende speler krijgt de volgende vraag. Eén luistervraag (vers wordt voorgelezen). Klok loopt nog niet, wel een maximale bedenktijd. | +10 bij vraag 3, 6, 9, 12, 15 |
+| 3-6-9 | 15 meerkeuzevragen; goed = je houdt de beurt. Fout (of passen) = de volgende mag dezelfde vraag proberen; wie hem goed heeft krijgt de volgende vraag, weet niemand het, dan krijgt wie hem als eerste kreeg de volgende. Eén luistervraag: het vers wordt voorgelezen op het apparaat van wie aan de beurt is (of de quizmaster), en pas daarna start de bedenktijd. Klok loopt nog niet, wel een maximale bedenktijd. | +10 bij vraag 3, 6, 9, 12, 15 (voor wie hem goed heeft) |
 | Open Deur | "Wat weet je eigenlijk van …?", 4 antwoorden; laagste stand kiest onderwerp | +20 per antwoord |
 | Puzzel | 12 omschrijvingen, 3 groepen van 4, elk met een verbindend woord | +30 per groep |
 | Galerij | Citaten (8 versfragmenten) of illustraties (8 kinderplaatjes) | +15 per antwoord |

@@ -26,14 +26,21 @@ function useNow(active: boolean) {
 }
 
 /** Leest een vers voor met een Nederlandse stem (alleen op één apparaat, zie hieronder). */
-function speak(text: string) {
-  if (typeof window === "undefined" || !("speechSynthesis" in window)) return;
+function speak(text: string, onDone?: () => void) {
+  if (typeof window === "undefined" || !("speechSynthesis" in window)) {
+    // Geen spraak op dit apparaat: niet eeuwig laten wachten op het voorlezen.
+    onDone?.();
+    return;
+  }
   window.speechSynthesis.cancel();
   const utterance = new SpeechSynthesisUtterance(text);
   utterance.lang = "nl-NL";
   const voice = getSelectedDutchVoice() ?? getDutchVoices()[0];
   if (voice) utterance.voice = voice;
   utterance.rate = 0.95;
+  // Alleen bij echt uitgesproken: een geblokkeerde automatische start (iOS
+  // zonder tik) meldt geen einde; dan gebruikt de speler de knop Voorlezen.
+  if (onDone) utterance.onend = onDone;
   window.speechSynthesis.speak(utterance);
 }
 
@@ -187,7 +194,10 @@ function Header({ state, deadlineLeft }: { state: AkStateView; deadlineLeft: num
   else if (state.memory) detail = `Fragment ${state.memory.number} van ${state.memory.total}`;
   else if (state.finale) detail = `Onderwerp ${state.finale.number} van ${state.finale.total}`;
   // Tijdens het lezen bij Collectief Geheugen staat de teller al bij de tekst zelf.
-  const showDeadline = deadlineLeft !== null && !(state.phase === "MEMORY" && state.memory?.reading);
+  // Tijdens het lezen (Collectief Geheugen) of luisteren (luistervraag) staat
+  // er geen bedenktijd: de teller daar is alleen een vangnet.
+  const showDeadline =
+    deadlineLeft !== null && !(state.phase === "MEMORY" && state.memory?.reading) && !state.r369?.listening;
   return (
     <div className="flex items-center justify-between gap-3">
       <div>
@@ -288,12 +298,14 @@ function OptionButtons({
   enabled,
   myPick,
   answer,
+  wrong = [],
   onPick,
 }: {
   options: string[];
   enabled: boolean;
   myPick: string | null;
   answer: string | null;
+  wrong?: string[];
   onPick: (option: string) => void;
 }) {
   return (
@@ -301,15 +313,18 @@ function OptionButtons({
       {options.map((option) => {
         const isAnswer = answer !== null && option === answer;
         const picked = myPick === option;
+        const isWrong = !isAnswer && wrong.includes(option);
         return (
           <button
             key={option}
-            disabled={!enabled}
+            disabled={!enabled || isWrong}
             onClick={() => onPick(option)}
             className={`rounded-2xl border-2 px-4 py-3 text-left font-bold transition ${
               isAnswer
                 ? "border-green-500 bg-green-50 dark:bg-green-900/40 text-green-800 dark:text-green-200"
-                : picked
+                : isWrong
+                  ? "border-red-400 bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300 line-through"
+                  : picked
                   ? "border-gold-500 bg-gold-50 dark:bg-slate-700 dark:text-slate-100"
                   : "border-slate-200 dark:border-slate-600 dark:text-slate-100 enabled:hover:border-brand-400 enabled:active:scale-[0.98]"
             } disabled:cursor-default`}
@@ -441,13 +456,16 @@ function Round369({ state, can }: { state: AkStateView; can: Abilities }) {
   // iedere telefoon in de kamer door elkaar heen.
   const speaker = can.tapMode ? can.myTurn : can.isQuizmaster;
   const spokenFor = useRef<string | null>(null);
+  const number = q.number;
+  const listenDone = () => socket.emit("ak:listen_done", { number });
   useEffect(() => {
-    if (!q.listenText || !speaker || q.reveal) return;
+    if (!q.listenText || !speaker || !q.listening) return;
     const key = `${q.number}`;
     if (spokenFor.current === key) return;
     spokenFor.current = key;
-    speak(q.listenText);
-  }, [q.listenText, q.number, q.reveal, speaker]);
+    speak(q.listenText, () => socket.emit("ak:listen_done", { number: q.number }));
+  }, [q.listenText, q.number, q.listening, speaker, socket]);
+  const activeName = state.contestants.find((c) => c.id === state.activeId)?.name;
 
   return (
     <div className="card flex flex-col gap-4">
@@ -462,14 +480,31 @@ function Round369({ state, can }: { state: AkStateView; can: Abilities }) {
             🔊
           </span>
           <p className="flex-1 text-sm font-semibold text-brand-800 dark:text-brand-200">
-            Luistervraag — {speaker ? "het vers wordt op dit apparaat voorgelezen." : "luister goed naar het voorgelezen vers."}
+            Luistervraag —{" "}
+            {q.listening
+              ? speaker
+                ? "het vers wordt op dit apparaat voorgelezen. Hoor je niets? Tik op Voorlezen. De bedenktijd start daarna."
+                : "luister goed. De bedenktijd start zodra het vers is voorgelezen."
+              : "het vers is voorgelezen."}
           </p>
-          <button className="btn-secondary !px-3 !py-1.5 !text-xs" onClick={() => speak(q.listenText!)}>
-            Afspelen
-          </button>
+          {(speaker || !q.listening) && (
+            <button
+              className="btn-secondary !px-3 !py-1.5 !text-xs shrink-0"
+              onClick={() => speak(q.listenText!, q.listening && speaker ? listenDone : undefined)}
+            >
+              {q.listening ? "Voorlezen" : "Nog eens"}
+            </button>
+          )}
         </div>
       )}
       <h2 className="text-xl font-extrabold dark:text-slate-100">{q.prompt}</h2>
+
+      {q.wrongOptions.length > 0 && !q.reveal && (
+        <p className="text-sm font-semibold text-slate-500 dark:text-slate-400">
+          Nog niet goed —{" "}
+          {can.myTurn ? "nu mag jij het proberen." : activeName ? `nu mag ${activeName} het proberen.` : "de volgende mag het proberen."}
+        </p>
+      )}
 
       {q.options && (
         <OptionButtons
@@ -477,6 +512,7 @@ function Round369({ state, can }: { state: AkStateView; can: Abilities }) {
           enabled={(can.canAct || can.canSilent) && q.reveal === null}
           myPick={q.myPick}
           answer={q.reveal?.answer ?? null}
+          wrong={q.wrongOptions}
           onPick={(option) => socket.emit("ak:tap_369", { option })}
         />
       )}

@@ -61,6 +61,8 @@ export interface Ak369View {
   listenText: string | null;
   options: string[] | null; // zonder quizmaster, of bij teams (stil meekiezen)
   myPick: string | null;
+  wrongOptions: string[]; // al fout gegeven door wie het eerder probeerde
+  listening: boolean; // luistervraag wordt nog voorgelezen; bedenktijd loopt nog niet
   reveal: { correct: boolean | null; answer: string } | null;
 }
 
@@ -175,6 +177,7 @@ export const AK_GALLERY_POINTS = 15;
 export const AK_MEMORY_STEP = 10; // k-de gevonden antwoord = k × 10
 export const AK_FINALE_PENALTY = 20;
 export const AK_369_THINK_MS = 20_000;
+export const AK_LISTEN_MAX_MS = 90_000; // vangnet als het voorlezen nooit gemeld wordt
 export const AK_PUZZLE_TURN_MS = 60_000;
 export const AK_MEMORY_READ_MS = 20_000;
 export const AK_MIN_PLAYERS = 2;
