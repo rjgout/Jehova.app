@@ -2,6 +2,7 @@
 
 import { useEffect, useState, type SyntheticEvent } from "react";
 import Link from "next/link";
+import CollapsibleCard from "@/components/CollapsibleCard";
 import { useRouter } from "next/navigation";
 import type { LeagueTier } from "@prisma/client";
 import { TIER_LABELS, TIER_ICONS } from "@/lib/leagues";
@@ -540,8 +541,7 @@ export default function ProfileClient() {
         </div>
       </div>
 
-      <div className="card !py-4 !bg-gold-50 dark:!bg-slate-800 !border-gold-400/30 dark:!border-slate-700 flex flex-col gap-4">
-        <h2 className="font-extrabold text-lg dark:text-slate-100">Competitie</h2>
+      <CollapsibleCard title="Competitie" className="!bg-gold-50 dark:!bg-slate-800 !border-gold-400/30 dark:!border-slate-700">
         <div className="grid grid-cols-2 gap-3">
           <div className="rounded-2xl bg-white/70 dark:bg-slate-700/70 !py-3 flex flex-col items-center gap-0.5">
             <Link href="/competition" className="block text-center hover:opacity-75">
@@ -564,12 +564,11 @@ export default function ProfileClient() {
           <Stat value={data.competitionsWon.toString()} label="Competities" small />
           <Stat value={data.bestNationalRank ? `#${data.bestNationalRank}` : "—"} label="NL-rang" small />
         </div>
-      </div>
+      </CollapsibleCard>
 
       {data.seasons.length > 0 && (
-        <section>
-          <h2 className="font-extrabold text-lg mb-3 dark:text-slate-100">Seizoenen</h2>
-          <div className="card flex flex-col divide-y divide-slate-100 dark:divide-slate-700">
+        <CollapsibleCard title="Seizoenen">
+          <div className="flex flex-col divide-y divide-slate-100 dark:divide-slate-700">
             {data.seasons.map((s) => (
               <div key={s.seasonIndex} className="flex items-center justify-between py-2.5">
                 <span className="font-bold dark:text-slate-100">Seizoen {s.seasonIndex}</span>
@@ -580,23 +579,26 @@ export default function ProfileClient() {
               </div>
             ))}
           </div>
-        </section>
+        </CollapsibleCard>
       )}
 
-      <section>
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="font-extrabold text-lg dark:text-slate-100">Prestaties</h2>
+      <CollapsibleCard
+        title="Prestaties"
+        extra={
           <span className="text-sm font-bold text-slate-400 dark:text-slate-500">
             {earnedCount}/{data.achievements.length}
           </span>
-        </div>
+        }
+      >
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {data.achievements.map((a) => (
             <div
               key={a.slug}
               title={a.description}
-              className={`card !p-4 flex flex-col items-center text-center gap-1 ${
-                a.earnedAt ? "!bg-gold-50 dark:!bg-slate-700" : "opacity-40 grayscale"
+              className={`rounded-2xl border p-4 flex flex-col items-center text-center gap-1 ${
+                a.earnedAt
+                  ? "bg-gold-50 dark:bg-slate-700 border-gold-400/30 dark:border-slate-600"
+                  : "border-slate-100 dark:border-slate-700 opacity-40 grayscale"
               }`}
             >
               <span className="text-3xl">{a.icon}</span>
@@ -604,10 +606,9 @@ export default function ProfileClient() {
             </div>
           ))}
         </div>
-      </section>
+      </CollapsibleCard>
 
-      <section className="card flex flex-col gap-3">
-        <h2 className="font-extrabold text-lg dark:text-slate-100">Leesvoortgang</h2>
+      <CollapsibleCard title="Leesvoortgang">
         <p className="text-sm text-slate-500 dark:text-slate-400">
           Opnieuw beginnen met het lezen van het Boek van Mormon? Hiermee wis je je voortgang van de leesroutes en de kleine leeslessen.
           Je XP, achievements en andere statistieken blijven behouden.
@@ -638,20 +639,18 @@ export default function ProfileClient() {
         ) : (
           <p className="text-sm font-bold text-brand-600 dark:text-brand-300">{resetReadingMessage}</p>
         )}
-      </section>
+      </CollapsibleCard>
 
-      <section className="card flex flex-col gap-3">
-        <h2 className="font-extrabold text-lg dark:text-slate-100">Account</h2>
+      <CollapsibleCard title="Rondleiding">
 
         <div className="flex gap-2 flex-wrap">
           <Link href="/onboarding" className="btn-secondary self-start">
             Rondleiding opnieuw bekijken
           </Link>
         </div>
-      </section>
+      </CollapsibleCard>
 
-      <section className="card flex flex-col gap-3">
-        <h2 className="font-extrabold text-lg dark:text-slate-100">Voorlezen</h2>
+      <CollapsibleCard title="Voorlezen">
         <p className="text-sm text-slate-500 dark:text-slate-400">
           Kies hier de Nederlandse stem die op dit apparaat wordt gebruikt voor het voorlezen van hoofdstukken.
           De beschikbare stemmen komen van je apparaat.
@@ -709,10 +708,9 @@ export default function ProfileClient() {
             Nog geen Nederlandse stemmen beschikbaar. Probeer de pagina opnieuw te laden.
           </p>
         )}
-      </section>
+      </CollapsibleCard>
 
-      <section className="card flex flex-col gap-3">
-        <h2 className="font-extrabold text-lg dark:text-slate-100">Notificaties</h2>
+      <CollapsibleCard title="Notificaties">
         <p className="text-sm text-slate-500 dark:text-slate-400">
           Voor: dagelijkse herinnering, vriendschapsverzoeken, prestaties, wekelijkse competitie-uitslag,
           uitdagingen en het woord van de dag. E-mail en push staan standaard allebei uit — zet aan wat je wil
@@ -847,7 +845,7 @@ export default function ProfileClient() {
             <span className="text-sm dark:text-slate-200">Woord van de dag — elke dag om 18:00 uur</span>
           </label>
         </div>
-      </section>
+      </CollapsibleCard>
 
       <ChangelogSection
         enabled={data.changelogEnabled}
@@ -855,8 +853,7 @@ export default function ProfileClient() {
         onToggle={() => toggleCategory("changelogEnabled")}
       />
 
-      <section className="card flex flex-col gap-3">
-        <h2 className="font-extrabold text-lg dark:text-slate-100">Privacy</h2>
+      <CollapsibleCard title="Privacy">
         <label className="flex items-start gap-3 cursor-pointer">
           <input
             type="checkbox"
@@ -874,10 +871,9 @@ export default function ProfileClient() {
             </span>
           </span>
         </label>
-      </section>
+      </CollapsibleCard>
 
-      <section className="card flex flex-col gap-3">
-        <h2 className="font-extrabold text-lg dark:text-slate-100">Online & activiteit</h2>
+      <CollapsibleCard title="Online & activiteit">
         <label className="flex items-start gap-3 cursor-pointer">
           <input
             type="checkbox"
@@ -935,10 +931,9 @@ export default function ProfileClient() {
             </div>
           )}
         </div>
-      </section>
+      </CollapsibleCard>
 
-      <section className="card flex flex-col gap-3">
-        <h2 className="font-extrabold text-lg dark:text-slate-100">Account verwijderen</h2>
+      <CollapsibleCard title="Account verwijderen">
         {!confirmingDelete ? (
           <button className="btn-secondary self-start !text-red-500 !border-red-200" onClick={() => setConfirmingDelete(true)}>
             Account verwijderen
@@ -959,10 +954,9 @@ export default function ProfileClient() {
             </div>
           </div>
         )}
-      </section>
+      </CollapsibleCard>
 
-      <section className="card flex flex-col gap-3">
-        <h2 className="font-extrabold text-lg dark:text-slate-100">Account</h2>
+      <CollapsibleCard title="Account" defaultOpen>
 
         <div>
           <h3 className="font-extrabold text-base dark:text-slate-100 mb-2">Tweestapsverificatie</h3>
@@ -994,7 +988,7 @@ export default function ProfileClient() {
             </div>
           )}
         </div>
-      </section>
+      </CollapsibleCard>
     </div>
   );
 }

@@ -113,7 +113,8 @@ export default function AdminDeployClient({ configured, onlineUserCount }: { con
 
   if (!configured) {
     return (
-      <details className="group card flex flex-col gap-3">
+      // Bovenste kaart van /adminbackend: standaard open, net als de variant hieronder.
+      <details className="group card flex flex-col gap-3" open>
         <summary className="font-extrabold cursor-pointer select-none list-none [&::-webkit-details-marker]:hidden flex items-center justify-between">
           Deployen &amp; onderhoudsmodus
           <span className="text-slate-400 transition-transform group-open:rotate-180" aria-hidden>

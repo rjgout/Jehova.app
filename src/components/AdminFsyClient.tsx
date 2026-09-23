@@ -97,9 +97,14 @@ export default function AdminFsyClient() {
   const published = data.lessons.filter((lesson) => lesson.publishedAt !== null);
 
   return (
-    <section className="card flex flex-col gap-4">
+    <details className="group card flex flex-col gap-4">
+      <summary className="font-extrabold text-lg dark:text-slate-100 cursor-pointer select-none list-none [&::-webkit-details-marker]:hidden flex items-center justify-between">
+        Voor de kracht van de jeugd
+        <span className="text-slate-400 transition-transform group-open:rotate-180" aria-hidden>
+          ▾
+        </span>
+      </summary>
       <div>
-        <h2 className="font-extrabold dark:text-slate-100">Voor de kracht van de jeugd</h2>
         <p className="text-sm text-slate-500 dark:text-slate-400">
           De officiële FSY-lespagina&apos;s worden wekelijks gecontroleerd. Nieuwe of gewijzigde inhoud blijft
           standaard als concept staan totdat jij die controleert.
@@ -179,6 +184,6 @@ export default function AdminFsyClient() {
       )}
 
       {drafts.length === 0 && <p className="text-sm text-slate-500 dark:text-slate-400">Geen concepten om te controleren.</p>}
-    </section>
+    </details>
   );
 }

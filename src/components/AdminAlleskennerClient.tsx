@@ -118,9 +118,14 @@ export default function AdminAlleskennerClient() {
   }
 
   return (
-    <section className="card flex flex-col gap-4">
+    <details className="group card flex flex-col gap-4">
+      <summary className="font-extrabold text-lg dark:text-slate-100 cursor-pointer select-none list-none [&::-webkit-details-marker]:hidden flex items-center justify-between">
+        De Alleskenner — inhoud
+        <span className="text-slate-400 transition-transform group-open:rotate-180" aria-hidden>
+          ▾
+        </span>
+      </summary>
       <div>
-        <h2 className="text-lg font-extrabold dark:text-slate-100">De Alleskenner — inhoud</h2>
         <p className="text-sm text-slate-500 dark:text-slate-400">
           Corrigeer of schakel bestaande onderdelen uit. Bij opslaan wordt alles opnieuw gecontroleerd, ook of elk citaat
           letterlijk in het genoemde vers staat. Aangepaste onderdelen worden bij een volgende import niet overschreven.
@@ -204,6 +209,6 @@ export default function AdminAlleskennerClient() {
           ))}
         </ul>
       )}
-    </section>
+    </details>
   );
 }
