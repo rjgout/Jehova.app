@@ -53,6 +53,31 @@ export async function verifySessionToken(token: string): Promise<{ userId: strin
   }
 }
 
+
+export async function createTwoFactorChallengeToken(userId: string): Promise<string> {
+  return new SignJWT({ userId, purpose: "2fa" })
+    .setProtectedHeader({ alg: "HS256" })
+    .setIssuedAt()
+    .setExpirationTime("5m")
+    .sign(getSecretKey());
+}
+
+export async function verifyTwoFactorChallengeToken(token: string): Promise<string | null> {
+  try {
+    const { payload } = await jwtVerify(token, getSecretKey());
+    if (payload.purpose !== "2fa" || typeof payload.userId !== "string") return null;
+
+    const user = await prisma.user.findUnique({
+      where: { id: payload.userId },
+      select: { sessionVersion: true, totpEnabled: true },
+    });
+    if (!user?.totpEnabled) return null;
+    return payload.userId;
+  } catch {
+    return null;
+  }
+}
+
 // Cookies met Secure worden door de browser genegeerd op een pagina die
 // zelf over plain http geladen is (bv. testen via het LAN-IP van je NAS in
 // plaats van je https-domein). ALLOW_INSECURE_COOKIES=true zet Secure uit
