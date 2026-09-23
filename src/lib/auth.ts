@@ -55,7 +55,10 @@ export async function verifySessionToken(token: string): Promise<{ userId: strin
 
 
 export async function createTwoFactorChallengeToken(userId: string): Promise<string> {
-  return new SignJWT({ userId, purpose: "2fa" })
+  const user = await prisma.user.findUnique({ where: { id: userId }, select: { sessionVersion: true } });
+  if (!user) throw new Error("Gebruiker niet gevonden.");
+
+  return new SignJWT({ userId, sessionVersion: user.sessionVersion, purpose: "2fa" })
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
     .setExpirationTime("5m")
@@ -65,13 +68,17 @@ export async function createTwoFactorChallengeToken(userId: string): Promise<str
 export async function verifyTwoFactorChallengeToken(token: string): Promise<string | null> {
   try {
     const { payload } = await jwtVerify(token, getSecretKey());
-    if (payload.purpose !== "2fa" || typeof payload.userId !== "string") return null;
+    if (
+      payload.purpose !== "2fa" ||
+      typeof payload.userId !== "string" ||
+      typeof payload.sessionVersion !== "number"
+    ) return null;
 
     const user = await prisma.user.findUnique({
       where: { id: payload.userId },
       select: { sessionVersion: true, totpEnabled: true },
     });
-    if (!user?.totpEnabled) return null;
+    if (!user?.totpEnabled || user.sessionVersion !== payload.sessionVersion) return null;
     return payload.userId;
   } catch {
     return null;
