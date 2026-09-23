@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type MouseEvent } from "react";
 import Link from "next/link";
 import { getSocket } from "@/lib/socketClient";
 
@@ -53,7 +53,7 @@ export default function ActiveGamesBanner() {
     };
   }, []);
 
-  async function openGame(item: ActivityItem, event: React.MouseEvent<HTMLAnchorElement>) {
+  async function openGame(item: ActivityItem, event: MouseEvent<HTMLAnchorElement>) {
     if (!item.contentCollectionId || item.contentCollectionId === status?.activeContentCollectionId) return;
 
     event.preventDefault();
