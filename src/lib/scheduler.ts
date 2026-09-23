@@ -55,6 +55,7 @@ async function runDailyTextTick(): Promise<void> {
     },
     select: { id: true },
   });
+  if (candidates.length === 0) return;
   const text = await getTextOfTheDay(now);
   if (!text) return;
 

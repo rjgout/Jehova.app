@@ -17,32 +17,11 @@ export interface DailyText {
  * specifieke naam.
  */
 export async function getTextOfTheDay(date = new Date()): Promise<DailyText | null> {
-  const books = await prisma.book.findMany({
-    orderBy: { order: "asc" },
-    select: {
-      name: true,
-      chapters: {
-        orderBy: { order: "asc" },
-        select: {
-          number: true,
-          verses: { orderBy: { number: "asc" }, select: { number: true, text: true } },
-        },
-      },
-    },
-  });
-
-  const verses = books.flatMap((book) =>
-    book.chapters.flatMap((chapter) =>
-      chapter.verses.map((verse) => ({
-        bookName: book.name,
-        chapterNumber: chapter.number,
-        verseNumber: verse.number,
-        text: verse.text,
-      }))
-    )
-  );
-
-  if (verses.length === 0) return null;
+  // Tellen en daarna met skip precies één vers ophalen, in plaats van elke
+  // aanroep (dashboard én elke schedulertick) de volledige schrifttekst in
+  // het geheugen te laden.
+  const total = await prisma.verse.count();
+  if (total === 0) return null;
 
   const amsterdam = amsterdamNow(date);
   const key = `${amsterdam.year}-${String(amsterdam.month).padStart(2, "0")}-${String(amsterdam.day).padStart(2, "0")}`;
@@ -51,6 +30,23 @@ export async function getTextOfTheDay(date = new Date()): Promise<DailyText | nu
     hash ^= character.charCodeAt(0);
     hash = Math.imul(hash, 16777619);
   }
-  const index = (hash >>> 0) % verses.length;
-  return verses[index];
+  const index = (hash >>> 0) % total;
+
+  const verse = await prisma.verse.findFirst({
+    orderBy: [{ chapter: { book: { order: "asc" } } }, { chapter: { order: "asc" } }, { number: "asc" }],
+    skip: index,
+    select: {
+      number: true,
+      text: true,
+      chapter: { select: { number: true, book: { select: { name: true } } } },
+    },
+  });
+  if (!verse) return null;
+
+  return {
+    bookName: verse.chapter.book.name,
+    chapterNumber: verse.chapter.number,
+    verseNumber: verse.number,
+    text: verse.text,
+  };
 }

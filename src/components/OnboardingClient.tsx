@@ -13,6 +13,8 @@ interface OnboardingClientProps {
   shareOnlineStatus: boolean;
   pushNotificationsEnabled: boolean;
   emailNotificationsEnabled: boolean;
+  notifyDailyText: boolean;
+  dailyTextTime: string;
   emailConfigured: boolean;
 }
 
@@ -34,6 +36,8 @@ export default function OnboardingClient({
   shareOnlineStatus,
   pushNotificationsEnabled,
   emailNotificationsEnabled,
+  notifyDailyText,
+  dailyTextTime,
   emailConfigured,
 }: OnboardingClientProps) {
   const router = useRouter();
@@ -86,6 +90,8 @@ export default function OnboardingClient({
           emailConfigured={emailConfigured}
           initialPush={pushNotificationsEnabled}
           initialEmail={emailNotificationsEnabled}
+          initialDailyText={notifyDailyText}
+          initialDailyTextTime={dailyTextTime}
           onNext={next}
           finishing={finishing}
         />
@@ -372,17 +378,23 @@ function NotificatiesStep({
   emailConfigured,
   initialPush,
   initialEmail,
+  initialDailyText,
+  initialDailyTextTime,
   onNext,
   finishing,
 }: {
   emailConfigured: boolean;
   initialPush: boolean;
   initialEmail: boolean;
+  initialDailyText: boolean;
+  initialDailyTextTime: string;
   onNext: () => void;
   finishing: boolean;
 }) {
   const [push, setPush] = useState(initialPush);
   const [email, setEmail] = useState(initialEmail);
+  const [dailyText, setDailyText] = useState(initialDailyText);
+  const [dailyTextTime, setDailyTextTime] = useState(initialDailyTextTime);
   const [pushError, setPushError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const pushSupported = isPushSupported();
@@ -412,6 +424,25 @@ function NotificatiesStep({
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ emailNotificationsEnabled: next }),
     }).catch(() => {});
+  }
+
+  async function saveDailyText(patch: { notifyDailyText?: boolean; dailyTextTime?: string }) {
+    await fetch("/api/account", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(patch),
+    }).catch(() => {});
+  }
+
+  function toggleDailyText() {
+    const next = !dailyText;
+    setDailyText(next);
+    saveDailyText({ notifyDailyText: next });
+  }
+
+  function changeDailyTextTime(value: string) {
+    setDailyTextTime(value);
+    saveDailyText({ dailyTextTime: value });
   }
 
   return (
@@ -444,6 +475,30 @@ function NotificatiesStep({
           </span>
         </label>
       )}
+
+      <div className="card text-left flex flex-col gap-3">
+        <label className="flex items-start gap-3 cursor-pointer">
+          <input type="checkbox" className="mt-1 h-5 w-5 accent-brand-500" checked={dailyText} onChange={toggleDailyText} />
+          <span className="text-sm dark:text-slate-200">
+            📖 Tekst van de dag (optioneel)
+            <br />
+            <span className="text-slate-400 dark:text-slate-500">
+              Elke dag één vers als melding, via push{emailConfigured ? " of e-mail" : ""}. Je kunt dit altijd uitzetten in je profiel.
+            </span>
+          </span>
+        </label>
+        {dailyText && (
+          <label className="flex items-center gap-2 text-sm dark:text-slate-200 pl-8">
+            Tijdstip
+            <input
+              type="time"
+              className="input !w-auto !py-1"
+              value={dailyTextTime}
+              onChange={(e) => e.target.value && changeDailyTextTime(e.target.value)}
+            />
+          </label>
+        )}
+      </div>
 
       <button className="btn-primary self-center" onClick={onNext} disabled={finishing}>
         {finishing ? "Bezig..." : "Klaar, aan de slag!"}

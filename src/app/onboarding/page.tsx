@@ -21,6 +21,8 @@ export default async function OnboardingPage() {
       shareOnlineStatus={user.shareOnlineStatus}
       pushNotificationsEnabled={user.pushNotificationsEnabled}
       emailNotificationsEnabled={user.emailNotificationsEnabled}
+      notifyDailyText={user.notifyDailyText}
+      dailyTextTime={user.dailyTextTime}
       emailConfigured={emailConfigured}
     />
   );
