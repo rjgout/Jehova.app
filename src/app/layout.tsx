@@ -166,36 +166,6 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 
             {user ? (
               <nav className="ml-auto flex items-center gap-4">
-                <Link
-                  href="/courses"
-                  className="hidden lg:inline whitespace-nowrap text-sm font-bold text-slate-600 dark:text-slate-300 hover:text-brand-600 dark:hover:text-brand-300"
-                >
-                  Cursussen
-                </Link>
-                <Link
-                  href="/friends"
-                  className="hidden lg:inline whitespace-nowrap text-sm font-bold text-slate-600 dark:text-slate-300 hover:text-brand-600 dark:hover:text-brand-300"
-                >
-                  Vrienden
-                </Link>
-                <Link
-                  href="/competition"
-                  className="hidden lg:inline whitespace-nowrap text-sm font-bold text-slate-600 dark:text-slate-300 hover:text-brand-600 dark:hover:text-brand-300"
-                >
-                  Competitie
-                </Link>
-                <Link
-                  href="/live"
-                  className="hidden lg:inline whitespace-nowrap text-sm font-bold text-slate-600 dark:text-slate-300 hover:text-brand-600 dark:hover:text-brand-300"
-                >
-                  Spelen
-                </Link>
-                <Link
-                  href="/shop"
-                  className="hidden lg:inline whitespace-nowrap text-sm font-bold text-slate-600 dark:text-slate-300 hover:text-brand-600 dark:hover:text-brand-300"
-                >
-                  Winkel
-                </Link>
                 <div className="hidden lg:block"><HeaderInstallHint /></div>
                 <NavUserBadges streak={user.currentStreak} xp={user.xpTotal} displayName={user.handle} />
               </nav>
@@ -206,7 +176,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         {user && <ReadAloudMiniPlayer />}
         {user && <ActivityTracker />}
         </StickyHeader>
-        <main className="mx-auto max-w-5xl px-4 pb-8 pb-[calc(6rem+env(safe-area-inset-bottom))] sm:pb-8 pt-[calc(var(--header-height,4.5rem)+2rem)]">
+        <main className="mx-auto max-w-5xl px-4 pb-[calc(6rem+env(safe-area-inset-bottom))] pt-[calc(var(--header-height,4.5rem)+2rem)]">
           {children}
         </main>
         {user && <BottomNav />}
