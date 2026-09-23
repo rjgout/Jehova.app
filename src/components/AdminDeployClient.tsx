@@ -40,6 +40,7 @@ export default function AdminDeployClient({ configured }: { configured: boolean 
   // toevallige netwerkhapering op een ander moment niet ook een onnodige
   // herlaad veroorzaakt.
   const deployInFlightRef = useRef(false);
+  const transientStatusErrorsRef = useRef(0);
 
   function handleUnreachable() {
     if (deployInFlightRef.current) {
@@ -53,10 +54,20 @@ export default function AdminDeployClient({ configured }: { configured: boolean 
     try {
       const res = await fetch("/api/admin/deploy/status", { cache: "no-store" });
       if (!res.ok) {
+        // Tijdens het wisselen van de app-container kan de proxy of de
+        // deploy-agent heel kort een 502 geven. Dat is geen echte fout en
+        // verdwijnt vanzelf bij de volgende poll. Vooral direct na een
+        // succesvolle deploy willen we de gebruiker niet laten schrikken
+        // van een tijdelijke netwerkhapering.
+        if (res.status === 502 && (deployInFlightRef.current || status?.phase === "success")) {
+          transientStatusErrorsRef.current += 1;
+          if (transientStatusErrorsRef.current <= 3) return;
+        }
         setError((await res.json().catch(() => null))?.error ?? "Kon status niet ophalen.");
         return;
       }
       const data: DeployStatus = await res.json();
+      transientStatusErrorsRef.current = 0;
       setStatus(data);
       setError(null);
       if (!BUSY_PHASES.includes(data.phase)) deployInFlightRef.current = false;
