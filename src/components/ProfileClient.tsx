@@ -359,7 +359,7 @@ export default function ProfileClient() {
   const initial = firstGrapheme(data.displayName).toUpperCase() || "?";
 
   return (
-    <div className="max-w-2xl mx-auto flex flex-col gap-8">
+    <div className="max-w-5xl mx-auto flex flex-col gap-8">
       {data?.isAdmin && (
         <Link href="/adminbackend" className="btn btn-primary w-full justify-center">
           ⚙️ Naar adminbeheer
