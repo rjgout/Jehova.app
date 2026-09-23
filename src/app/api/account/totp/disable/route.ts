@@ -2,7 +2,15 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { getCurrentUser } from "@/lib/session";
-import { consumeRecoveryCode, decryptTotpSecret, verifyTotpCode } from "@/lib/totp";
+import {
+  consumeRecoveryCode,
+  decryptTotpSecret,
+  TWO_FACTOR_MAX_FAILURES,
+  TWO_FACTOR_WINDOW_MS,
+  twoFactorFailureKey,
+  verifyTotpCode,
+} from "@/lib/totp";
+import { failureLockSeconds, registerFailure, tooManyAttemptsMessage } from "@/lib/rateLimit";
 
 const schema = z.object({ code: z.string().min(1) });
 
@@ -11,6 +19,12 @@ export async function POST(req: NextRequest) {
   if (!user) return NextResponse.json({ error: "Niet ingelogd" }, { status: 401 });
   if (user.isAdmin) {
     return NextResponse.json({ error: "2FA kan voor beheerders niet worden uitgeschakeld." }, { status: 403 });
+  }
+
+  const failureKey = twoFactorFailureKey(user.id);
+  const lockSeconds = failureLockSeconds(failureKey, TWO_FACTOR_MAX_FAILURES);
+  if (lockSeconds > 0) {
+    return NextResponse.json({ error: tooManyAttemptsMessage(lockSeconds) }, { status: 429 });
   }
 
   const parsed = schema.safeParse(await req.json().catch(() => null));
@@ -31,7 +45,10 @@ export async function POST(req: NextRequest) {
   }
 
   const remaining = await consumeRecoveryCode(current.totpRecoveryCodes, parsed.data.code);
-  if (!remaining) return NextResponse.json({ error: "Code klopt niet." }, { status: 400 });
+  if (!remaining) {
+    registerFailure(failureKey, TWO_FACTOR_WINDOW_MS);
+    return NextResponse.json({ error: "Code klopt niet." }, { status: 400 });
+  }
 
   await prisma.user.update({
     where: { id: user.id },
