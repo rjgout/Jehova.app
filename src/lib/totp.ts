@@ -3,6 +3,13 @@ import bcrypt from "bcryptjs";
 
 const TOTP_PERIOD_SECONDS = 30;
 const TOTP_DIGITS = 6;
+export const TWO_FACTOR_MAX_FAILURES = 5;
+export const TWO_FACTOR_WINDOW_MS = 15 * 60 * 1000;
+
+export function twoFactorFailureKey(userId: string): string {
+  return `2fa:${userId}`;
+}
+
 const BASE32_ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
 
 function getEncryptionKey(): Buffer {
@@ -117,10 +124,21 @@ export async function hashRecoveryCodes(codes: string[]): Promise<string> {
   return JSON.stringify(await Promise.all(codes.map((code) => bcrypt.hash(code, 10))));
 }
 
+// Herstelcodes zijn 10 hex-tekens in de vorm "ABCDE-12345". Invoer zonder
+// streepje of met spaties/kleine letters wordt eerst naar die vorm gebracht.
+// Alles wat daarna geen herstelcode kan zijn (bv. een 6-cijferige TOTP-code)
+// wordt meteen afgewezen, zonder 8 dure bcrypt-vergelijkingen.
+function normalizeRecoveryCode(input: string): string | null {
+  const compact = input.toUpperCase().replace(/[^0-9A-F]/g, "");
+  if (compact.length !== 10) return null;
+  return `${compact.slice(0, 5)}-${compact.slice(5)}`;
+}
+
 export async function consumeRecoveryCode(stored: string | null, input: string): Promise<string | null> {
   if (!stored) return null;
+  const normalized = normalizeRecoveryCode(input);
+  if (!normalized) return null;
   const hashes = JSON.parse(stored) as string[];
-  const normalized = input.trim().toUpperCase();
   for (let i = 0; i < hashes.length; i++) {
     if (await bcrypt.compare(normalized, hashes[i])) {
       hashes.splice(i, 1);

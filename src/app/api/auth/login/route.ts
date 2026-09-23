@@ -3,6 +3,14 @@ import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { createSessionToken, createTwoFactorChallengeToken, verifyPassword, SESSION_COOKIE, sessionCookieOptions } from "@/lib/auth";
 import { parseTag } from "@/lib/handle";
+import { clearFailures, clientIp, failureLockSeconds, registerFailure, tooManyAttemptsMessage } from "@/lib/rateLimit";
+
+// Per IP+account een krappe grens tegen wachtwoord raden op één account,
+// per IP een ruimere tegen het afgaan van veel accounts. Bewust niet alleen
+// per account: dan kan een ander iemands inlog blokkeren.
+const LOGIN_WINDOW_MS = 15 * 60 * 1000;
+const MAX_FAILURES_PER_ACCOUNT = 10;
+const MAX_FAILURES_PER_IP = 30;
 
 const schema = z.object({
   identifier: z.string().trim().min(1, "Vul je e-mailadres of gebruikersnaam in."),
@@ -17,6 +25,22 @@ export async function POST(req: NextRequest) {
   }
   const { identifier, password } = parsed.data;
 
+  const ip = clientIp(req);
+  const accountKey = `login:${ip}:${identifier.toLowerCase()}`;
+  const ipKey = `login-ip:${ip}`;
+  const lockSeconds = Math.max(
+    failureLockSeconds(accountKey, MAX_FAILURES_PER_ACCOUNT),
+    failureLockSeconds(ipKey, MAX_FAILURES_PER_IP)
+  );
+  if (lockSeconds > 0) {
+    return NextResponse.json({ error: tooManyAttemptsMessage(lockSeconds) }, { status: 429 });
+  }
+  const fail = () => {
+    registerFailure(accountKey, LOGIN_WINDOW_MS);
+    registerFailure(ipKey, LOGIN_WINDOW_MS);
+    return NextResponse.json({ error: "Onjuiste inloggegevens." }, { status: 401 });
+  };
+
   // Inloggen kan met e-mailadres, of met de volledige unieke tag
   // ("Handle#42") — de kale handle alleen is niet uniek genoeg.
   const tag = parseTag(identifier);
@@ -26,15 +50,11 @@ export async function POST(req: NextRequest) {
       })
     : await prisma.user.findUnique({ where: { email: identifier.toLowerCase() } });
 
-  const genericError = { error: "Onjuiste inloggegevens." };
-  if (!user) {
-    return NextResponse.json(genericError, { status: 401 });
-  }
+  if (!user) return fail();
 
   const valid = await verifyPassword(password, user.passwordHash);
-  if (!valid) {
-    return NextResponse.json(genericError, { status: 401 });
-  }
+  if (!valid) return fail();
+  clearFailures(accountKey);
 
   if (user.totpEnabled) {
     const challengeToken = await createTwoFactorChallengeToken(user.id);
