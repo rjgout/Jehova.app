@@ -1,8 +1,15 @@
-# CLAUDE.md
+# CLAUDE.md / AGENTS.md
 
-Instructies voor Claude Code bij het werken aan dit project. Voor
-functionaliteit/features: zie `README.md`. Voor een uitgewerkt
-deployvoorbeeld: zie `docs/DEPLOY-SYNOLOGY.md`.
+Instructies voor AI-codeassistenten (Claude Code, Codex en vergelijkbare
+tools) bij het werken aan dit project. Voor functionaliteit/features: zie
+`README.md`. Voor een uitgewerkt deployvoorbeeld: zie
+`docs/DEPLOY-SYNOLOGY.md`.
+
+`AGENTS.md` is een symlink naar dit bestand (`CLAUDE.md`): het is één en
+hetzelfde bestand onder twee namen, zodat Claude Code en Codex altijd
+dezelfde instructies lezen. Pas dus gewoon één van beide aan. Vervang de
+symlink nooit door een losse kopie; controleer bij twijfel met
+`git ls-files -s AGENTS.md` (modus `120000` = symlink).
 
 ## Wat dit is
 
@@ -265,6 +272,9 @@ verwerken". Fundamenteel anders dan de rest van de API:
 - Herstelcodes worden alleen als hashes opgeslagen en worden na gebruik ongeldig gemaakt. Toon nieuwe herstelcodes alleen één keer tijdens het instellen.
 - Gebruik voor TOTP de standaard 30-secondenperiode en een kleine kloktolerantie. Wijzig dit niet zonder een concrete beveiligingsreden.
 - Bij wijzigingen aan de authenticatieflow moet zowel de normale login als de 2FA-login met een authenticator-code én een herstelcode worden gecontroleerd.
+- Mislukte pogingen zijn begrensd via `src/lib/rateLimit.ts` (in-memory, per kwartier): inloggen per IP+account en per IP, 2FA-codes en herstelcodes per account. Nieuwe routes die een wachtwoord, TOTP-code of herstelcode controleren, horen dezelfde begrenzing te krijgen.
+- "Nieuwe telefoon koppelen" (`/api/account/totp/reset`) zet 2FA nooit uit: een herstelcode koppelt direct een nieuw secret. Alleen `/api/account/totp/disable` schakelt 2FA uit, en die weigert beheerders.
+- Een wachtwoordwijziging of -reset verhoogt `sessionVersion`, zodat andere apparaten worden uitgelogd.
 
 ## Paginabreedte en layout
 
