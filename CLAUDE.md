@@ -132,6 +132,23 @@ Controleer bij twijfel: `grep -rn "next/headers" src/lib src/server server.ts`
   `migration.sql` handmatig volgens het patroon hierboven, en pas toe met
   `prisma migrate deploy`.
 
+## Prisma schema en migraties — synchroniteit
+
+Bij iedere wijziging aan de database moeten **schema, migratie en gebruikende code als één geheel** worden behandeld:
+
+- `prisma/schema.prisma` is de bron van waarheid voor het actuele Prisma-datamodel.
+- Een nieuwe migratie in `prisma/migrations/**` mag alleen worden toegevoegd als dezelfde structurele wijziging ook in `prisma/schema.prisma` staat.
+- Omgekeerd: als TypeScript/Prisma-code een nieuw model, veld, enum of relatie gebruikt, controleer dan altijd of dit in `prisma/schema.prisma` bestaat én door een passende migratie in de database terechtkomt.
+- Controleer vóór iedere commit met Prisma-wijzigingen expliciet deze drie lagen:
+  1. `prisma/schema.prisma`
+  2. de bijbehorende `prisma/migrations/**/migration.sql`
+  3. alle code die het gewijzigde model of veld gebruikt.
+- Na een wijziging aan `schema.prisma` of een Prisma-model zijn minimaal deze controles verplicht: `npx prisma validate`, `npx prisma generate` en daarna `npx tsc --noEmit`.
+- `prisma generate` is belangrijk: alleen een migration aanpassen is niet genoeg, omdat de gegenereerde Prisma Client moet overeenkomen met het actuele schema.
+- Als een lokale database ontbreekt, gebruik dan niet automatisch `prisma migrate dev`: volg het migratiebeleid hierboven. `prisma validate` en `prisma generate` moeten nog steeds worden uitgevoerd; noteer expliciet wanneer een controle door de omgeving niet mogelijk is.
+- Voer bij wijzigingen aan verplichte of gedragsbepalende velden ook de bestaande backfill-regel uit: bestaande gebruikers/data mogen niet onverwacht nieuw gedrag krijgen.
+- Commit geen Prisma-wijziging zolang `schema.prisma`, migration en gebruikende code aantoonbaar niet met elkaar in overeenstemming zijn.
+
 ## Auth & autorisatie
 
 - Sessie = httpOnly JWT-cookie (`bvm_session`, `jose`, 30 dagen), wachtwoorden
