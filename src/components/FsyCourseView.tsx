@@ -41,7 +41,7 @@ export default function FsyCourseView({ courseName, lessons }: Props) {
   }
 
   return (
-    <div className="max-w-3xl mx-auto flex flex-col gap-8">
+    <div className="max-w-5xl mx-auto flex flex-col gap-8">
       <div>
         <h1 className="text-2xl font-extrabold text-brand-800 dark:text-brand-300">{courseName}</h1>
         <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
