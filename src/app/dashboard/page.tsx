@@ -74,7 +74,7 @@ export default async function DashboardPage() {
   ];
 
   return (
-    <div className="max-w-2xl mx-auto flex flex-col gap-6">
+    <div className="max-w-5xl mx-auto flex flex-col gap-6">
       {dailyText && (
         <section className="card bg-gradient-to-br from-brand-500 to-brand-700 text-white flex flex-col gap-3">
           <p className="text-brand-100 font-bold uppercase text-xs tracking-wide">Tekst van de dag</p>
