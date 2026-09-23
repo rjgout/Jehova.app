@@ -325,3 +325,39 @@ Jehova.app bevindt zich momenteel in een intensieve beta-fase. Er zullen nog vee
 - Houd een `CHANGELOG.md` bij voor belangrijke gebruikersgerichte wijzigingen en releases. Registreer niet iedere kleine interne bugfix als aparte release.
 - Gebruik `1.0.0` pas voor de eerste stabiele release.
 - Houd het systeem eenvoudig zolang Jehova.app beta is; voeg geen complex release-management toe zonder concrete behoefte.
+
+
+## Verificatie- en wijzigingsdiscipline
+
+Dit project heeft eerder problemen gehad doordat meerdere kleine wijzigingen achter elkaar
+werden gemaakt zonder tussentijds de volledige TypeScript/build-status te controleren. Dat
+mag niet opnieuw gebeuren.
+
+- **Een wijziging is pas klaar als de code ook aantoonbaar compileert.** Na iedere wijziging
+  aan TypeScript/TSX moet minimaal `npx tsc --noEmit` worden uitgevoerd voordat een volgende
+  gerelateerde codewijziging wordt gemaakt.
+- Na een reeks wijzigingen aan één feature moet altijd een **schone productiebuild** worden
+  uitgevoerd: `rm -rf .next && npm run build`. Alleen een groene GitHub Actions-build telt
+  als bevestiging dat de gepushte commit daadwerkelijk door de productiebuild komt; als de
+  workflow nog niet gestart is, mag niet worden gezegd dat de build geslaagd is.
+- **Geen fout-op-fout stapelen.** Als een wijziging een compileerfout veroorzaakt, stop dan
+  met nieuwe wijzigingen en los eerst de eerste fout op. Controleer daarna opnieuw met
+  `npx tsc --noEmit`. Voeg geen tweede of derde "fix" toe op basis van aannames.
+- Controleer na iedere wijziging de volledige gewijzigde functie/imports in de actuele versie
+  van het bestand. Let vooral op imports die bij een eerdere wijziging zijn toegevoegd,
+  verwijderd of verplaatst. Een ongebruikte import is vervelend, maar een gebruikte functie
+  zonder import is een build-blocker.
+- **Vertrouw niet op een eerdere claim dat iets werkt.** Controleer de actuele branch, de
+  actuele commit en de actuele build-status zelf voordat je een volgende wijziging maakt of
+  zegt dat iets klaar is.
+- Bij meerdere samenhangende wijzigingen: werk eerst de implementatie uit, voer daarna de
+  TypeScript-check uit, en maak pas daarna een volgende wijziging. Houd commits zo klein dat
+  een fout direct aan één concrete wijziging te koppelen is.
+- Als GitHub Actions meerdere rode commits laat zien, behandel die niet als afzonderlijke
+  problemen zonder de logs te bekijken. Zoek eerst de **eerste inhoudelijke fout** en bepaal
+  welke latere commits daarvan afhankelijk zijn. Repareer de onderliggende oorzaak in plaats
+  van steeds een nieuwe workaround erbovenop te zetten.
+- Voor een bugfix geldt: reproduceer of lokaliseer eerst de fout in de actuele code, lees de
+  relevante bestaande implementatie en wijzig daarna zo minimaal mogelijk. Niet gokken,
+  niet "blind" een import toevoegen of verwijderen omdat een foutmelding dat oppervlakkig
+  lijkt te suggereren.
