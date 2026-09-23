@@ -1,4 +1,4 @@
-import { redirect } from "@/next/navigation";
+import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/session";
 import { prisma } from "@/lib/db";
 import { formatElapsedDutch } from "@/lib/dates";
