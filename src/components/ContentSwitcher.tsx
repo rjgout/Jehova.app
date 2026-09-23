@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
 
 interface Collection {
   id: string;
@@ -20,7 +19,6 @@ export default function ContentSwitcher({
   active: Collection;
   collections: Collection[];
 }) {
-  const router = useRouter();
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
