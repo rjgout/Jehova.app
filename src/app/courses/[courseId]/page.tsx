@@ -42,18 +42,25 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ c
   if (!(await isContentCollectionSelectable(course.contentCollectionId, user.isAdmin))) redirect("/courses");
 
   if (course.type === "PODCAST") {
-    const episodes = await prisma.podcastEpisode.findMany({
-      orderBy: { order: "asc" },
-      include: {
-        progress: { where: { userId: user.id } },
-        exercises: { select: { mode: true } },
-        playbackProgress: { where: { userId: user.id }, select: { positionSeconds: true } },
-      },
-    });
+    const [podcast, episodes] = await Promise.all([
+      course.podcastId ? prisma.podcast.findUnique({ where: { id: course.podcastId }, select: { name: true } }) : null,
+      prisma.podcastEpisode.findMany({
+        // Een cursus zonder podcastId bestaat na de migratie niet meer; dan
+        // liever geen afleveringen dan die van alle podcasts door elkaar.
+        where: { podcastId: course.podcastId ?? "" },
+        orderBy: { order: "asc" },
+        include: {
+          progress: { where: { userId: user.id } },
+          exercises: { select: { mode: true } },
+          playbackProgress: { where: { userId: user.id }, select: { positionSeconds: true } },
+        },
+      }),
+    ]);
 
     return (
       <PodcastCourseView
         courseName={course.name}
+        podcastName={podcast?.name ?? course.name}
         episodes={episodes.map((episode) => {
           const contentProgress = episode.progress.find((p) => p.mode === "CONTENT");
           const bomProgress = episode.progress.find((p) => p.mode === "BOM_CONNECTION");

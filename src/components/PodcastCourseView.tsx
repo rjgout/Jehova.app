@@ -22,6 +22,7 @@ interface EpisodeView {
 
 interface Props {
   courseName: string;
+  podcastName: string;
   episodes: EpisodeView[];
 }
 
@@ -45,7 +46,7 @@ function episodeStatus(episode: EpisodeView): StatusFilter {
   return "TODO";
 }
 
-export default function PodcastCourseView({ courseName, episodes }: Props) {
+export default function PodcastCourseView({ courseName, podcastName, episodes }: Props) {
   const [filter, setFilter] = useState<StatusFilter>("ALL");
   const [page, setPage] = useState(1);
 
@@ -70,8 +71,8 @@ export default function PodcastCourseView({ courseName, episodes }: Props) {
         <div className="card bg-gradient-to-br from-brand-500 to-brand-600 text-white flex flex-col gap-2">
           <p className="text-brand-100 font-bold uppercase text-xs tracking-wide">Over deze cursus</p>
           <p>
-            Bij elke aflevering van de{" "}
-            <span className="font-extrabold">Geloof je dat ook?</span> podcast horen twee korte oefenrondes: één
+            Bij elke aflevering van <span className="font-extrabold">{podcastName}</span> horen twee korte
+            oefenrondes: één
             over de inhoud van de aflevering, en één die de brug slaat naar het Boek van Mormon.
           </p>
         </div>
@@ -126,7 +127,7 @@ export default function PodcastCourseView({ courseName, episodes }: Props) {
                 </a>
               )}
             </div>
-            {episode.audioUrl && <EpisodePlayButton episode={episode} />}
+            {episode.audioUrl && <EpisodePlayButton episode={episode} podcastName={podcastName} />}
             {episode.summary && <EpisodeSummary text={episode.summary} />}
             <div className="flex gap-3 flex-wrap">
               <ModeButton
@@ -192,7 +193,7 @@ function PageControls({
   );
 }
 
-function EpisodePlayButton({ episode }: { episode: EpisodeView }) {
+function EpisodePlayButton({ episode, podcastName }: { episode: EpisodeView; podcastName: string }) {
   const player = usePodcastPlayer();
   if (!episode.audioUrl) return null;
 
@@ -208,7 +209,13 @@ function EpisodePlayButton({ episode }: { episode: EpisodeView }) {
     if (isThisEpisode) {
       player.togglePlay();
     } else {
-      player.playEpisode({ id: episode.id, number: episode.number, title: episode.title, audioUrl: episode.audioUrl! });
+      player.playEpisode({
+        id: episode.id,
+        number: episode.number,
+        title: episode.title,
+        audioUrl: episode.audioUrl!,
+        podcastName,
+      });
     }
   }
 

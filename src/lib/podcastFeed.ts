@@ -1,9 +1,6 @@
 import Parser from "rss-parser";
 import type { PrismaClient } from "@prisma/client";
-
-// Overschrijfbaar via env var voor het geval de feed-URL ooit verhuist,
-// zonder dat daarvoor een code-wijziging nodig is.
-const FEED_URL = process.env.PODCAST_FEED_URL || "https://geloofjedatook.nl/@geloofjedatook/feed.xml";
+import { ensurePodcasts, PODCASTS, type PodcastDefinition } from "./podcasts";
 
 interface FeedItem {
   title?: string;
@@ -16,6 +13,7 @@ interface FeedItem {
   enclosure?: { url: string; length?: number; type?: string };
   "itunes:episode"?: string;
   "itunes:summary"?: string;
+  transcripts?: { $?: { url?: string; type?: string } }[];
 }
 
 const FETCH_TIMEOUT_MS = 10_000;
@@ -30,7 +28,7 @@ const FETCH_TIMEOUT_MS = 10_000;
 // de content-import mag blokkeren.
 const parser = new Parser<Record<string, unknown>, FeedItem>({
   customFields: {
-    item: ["itunes:episode", "itunes:summary"],
+    item: ["itunes:episode", "itunes:summary", ["podcast:transcript", "transcripts", { keepArray: true }]],
   },
 });
 
@@ -64,33 +62,71 @@ function extractEpisodeNumber(item: FeedItem): number | null {
   return null;
 }
 
+// De app zet zelf "Aflevering N — " voor de titel; een feed die het nummer
+// ook in de titel zet ("Aflevering 82: de rechtszaak ...") gaf dan het nummer
+// dubbel. Blijft er niets over, dan de titel zoals hij was.
+function cleanTitle(raw: string): string {
+  const stripped = raw.replace(/^\s*(?:aflevering\s*)?#?\d{1,5}\s*[:.\-–]\s*/i, "").trim();
+  if (!stripped) return raw;
+  return stripped.charAt(0).toUpperCase() + stripped.slice(1);
+}
+
 function extractSummary(item: FeedItem): string | null {
   const raw = item.contentSnippet ?? item["itunes:summary"] ?? item.summary ?? item.content ?? "";
-  const cleaned = raw.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+  const cleaned = raw
+    .replace(/<[^>]+>/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    // Standaardtekst die sommige podcasthosts aan elke omschrijving plakken:
+    // een link om de makers te mailen, en bij oudere afleveringen een
+    // doorverwijzing naar de website. Hoort niet in de cursus.
+    .replace(/^Send us Fan Mail\s*/i, "")
+    .replace(/\s*The post .* first appeared on .*$/i, "")
+    .trim();
   return cleaned || null;
 }
 
+// Een feed kan per aflevering meerdere transcripten geven (vtt, srt, json,
+// html); vtt heeft de voorkeur, want daar is de werkwijze op ingericht.
+function extractTranscriptUrl(item: FeedItem): string | null {
+  const transcripts = (item.transcripts ?? []).map((t) => t.$).filter((t) => t?.url);
+  const vtt = transcripts.find((t) => t?.type === "text/vtt");
+  return (vtt ?? transcripts[0])?.url ?? null;
+}
+
 /**
- * Haalt de podcastfeed op en zet elke aflevering die erin staat neer als
- * PodcastEpisode-rij (titel/omschrijving/link/publicatiedatum), zodat die
- * nooit met de hand overgetypt hoeven te worden. Raakt bewust nooit
- * PodcastExercise-rijen aan: de oefeningen per aflevering blijven handwerk
- * (zie prisma/podcastContent.ts + prisma/importPodcast.ts) en worden hier
- * niet aangemaakt of overschreven — een nieuwe aflevering verschijnt dus met
- * de juiste naam/omschrijving in de cursus, met "oefeningen volgen nog"
- * totdat die met de hand zijn toegevoegd.
+ * Haalt de feed van elke podcast op (zie src/lib/podcasts.ts) en zet elke
+ * aflevering die erin staat neer als PodcastEpisode-rij (titel/omschrijving/
+ * link/publicatiedatum/transcript), zodat die nooit met de hand overgetypt
+ * hoeven te worden. Raakt bewust nooit PodcastExercise-rijen aan: de
+ * oefeningen per aflevering blijven handwerk (zie prisma/podcastContent.ts +
+ * prisma/importPodcast.ts) en worden hier niet aangemaakt of overschreven —
+ * een nieuwe aflevering verschijnt dus met de juiste naam/omschrijving in de
+ * cursus, met "oefeningen volgen nog" totdat die met de hand zijn toegevoegd.
  *
- * Faalt het ophalen van de feed (offline, onbereikbaar, onverwacht formaat),
+ * Faalt het ophalen van een feed (offline, onbereikbaar, onverwacht formaat),
  * dan loggen we een waarschuwing i.p.v. de hele content-import te laten
- * mislukken: dit is een aanvulling op db:seed, geen vereiste stap.
+ * mislukken: dit is een aanvulling op db:seed, geen vereiste stap. Een
+ * mislukte feed slaat ook de andere podcasts niet over.
  */
 export async function syncPodcastFeed(client: PrismaClient, log: (msg: string) => void = console.log): Promise<void> {
+  await ensurePodcasts(client);
+  for (const podcast of PODCASTS) {
+    await syncOnePodcast(client, podcast, log);
+  }
+}
+
+async function syncOnePodcast(
+  client: PrismaClient,
+  podcast: PodcastDefinition,
+  log: (msg: string) => void
+): Promise<void> {
   let feed;
   try {
-    const xml = await fetchFeedXml(FEED_URL);
+    const xml = await fetchFeedXml(podcast.feedUrl);
     feed = await parser.parseString(xml);
   } catch (e) {
-    log(`Podcastfeed ophalen mislukt (${FEED_URL}): ${e instanceof Error ? e.message : String(e)} — overgeslagen.`);
+    log(`Feed van ${podcast.name} ophalen mislukt (${podcast.feedUrl}): ${e instanceof Error ? e.message : String(e)} — overgeslagen.`);
     return;
   }
 
@@ -103,7 +139,7 @@ export async function syncPodcastFeed(client: PrismaClient, log: (msg: string) =
       continue;
     }
 
-    const title = item.title?.trim() || `Aflevering ${number}`;
+    const title = cleanTitle(item.title?.trim() ?? "") || `Aflevering ${number}`;
     const summary = extractSummary(item);
     // Bewust twee losse velden: listenUrl is de webpagina (RSS <link>, voor
     // "bekijk op de website"), audioUrl het daadwerkelijk afspeelbare bestand
@@ -111,18 +147,21 @@ export async function syncPodcastFeed(client: PrismaClient, log: (msg: string) =
     // niet als <audio src>.
     const listenUrl = item.link ?? null;
     const audioUrl = item.enclosure?.url ?? null;
+    const transcriptUrl = extractTranscriptUrl(item);
     const isoDate = item.isoDate ?? item.pubDate;
     const publishedAt = isoDate && !Number.isNaN(Date.parse(isoDate)) ? new Date(isoDate) : null;
 
-    const existing = await client.podcastEpisode.findUnique({ where: { number } });
+    const where = { podcastId_number: { podcastId: podcast.id, number } };
+    const data = { title, summary, listenUrl, audioUrl, transcriptUrl, publishedAt, order: -number };
+    const existing = await client.podcastEpisode.findUnique({ where, select: { id: true } });
     await client.podcastEpisode.upsert({
-      where: { number },
-      update: { title, summary, listenUrl, audioUrl, publishedAt, order: -number },
-      create: { number, title, summary, listenUrl, audioUrl, publishedAt, order: -number },
+      where,
+      update: data,
+      create: { podcastId: podcast.id, number, ...data },
     });
     if (existing) updated++;
     else created++;
   }
 
-  log(`Podcastfeed gesynchroniseerd: ${created} nieuw, ${updated} bijgewerkt.`);
+  log(`Feed van ${podcast.name} gesynchroniseerd: ${created} nieuw, ${updated} bijgewerkt.`);
 }

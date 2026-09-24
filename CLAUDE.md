@@ -300,8 +300,18 @@ verwerken". Fundamenteel anders dan de rest van de API:
 
 ## Podcastafleveringen verwerken (`prisma/podcastContent.ts`)
 
-Wanneer de eigenaar nieuwe `.vtt`-transcripten van "Geloof je dat ook?"
-aanlevert (bv. in een `VTT/`-map) om te verwerken tot leeroefeningen:
+De app kent meerdere podcasts (vaste lijst in `src/lib/podcasts.ts`, elk met
+een eigen PODCAST-cursus). Afleveringen (titel, omschrijving, audio en, als
+de feed die meegeeft, `transcriptUrl` uit `<podcast:transcript>`) komen per
+podcast uit de feed via `syncPodcastFeed()`; alleen de oefeningen zijn
+handwerk, in één contentbestand per podcast: `prisma/podcastContent.ts`
+("Geloof je dat ook?") en `prisma/kastVanMormonContent.ts` ("De Kast van
+Mormon"), geïmporteerd in `src/lib/seed.ts` met het podcast-id uit
+`src/lib/podcasts.ts`. Afleveringsnummers zijn uniek per podcast.
+
+Wanneer er nieuwe transcripten zijn (door de eigenaar aangeleverd in een
+`VTT/`-map, of via `transcriptUrl` uit de feed) om te verwerken tot
+leeroefeningen:
 
 - **Structuur per aflevering** (zie bestaande entries in
   `prisma/podcastContent.ts` als voorbeeld): 4-5 `content`-oefeningen
@@ -337,9 +347,9 @@ aanlevert (bv. in een `VTT/`-map) om te verwerken tot leeroefeningen:
 - **Afsluitende validatie** nadat alle afleveringen zijn toegevoegd:
   `npx tsc --noEmit`, een lokale import-test tegen een Postgres-instantie
   (roep `importPodcastEpisodes()` uit `prisma/importPodcast.ts` rechtstreeks
-  aan met `podcastEpisodes`, niet de volledige `runSeed()`, want die roept
-  ook `syncPodcastFeed()` aan die een netwerkverzoek naar de echte RSS-feed
-  doet), controleer dat elke aflevering het verwachte aantal oefeningen
+  aan met het podcast-id en de array van die podcast, niet de volledige
+  `runSeed()`, want die roept ook `syncPodcastFeed()` aan die netwerkverzoeken
+  naar de echte RSS-feeds doet), controleer dat elke aflevering het verwachte aantal oefeningen
   heeft, ruim de testdata daarna weer op, en tot slot
   `rm -rf .next && npm run build`.
 

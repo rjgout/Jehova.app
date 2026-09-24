@@ -2,6 +2,7 @@ import { PrismaClient, Prisma } from "@prisma/client";
 import { randomUUID } from "crypto";
 import { shuffleWithSeed } from "../src/lib/exerciseGen";
 import type { PodcastEpisodeSeed, PodcastComprehensionExercise } from "./podcastContent";
+import { ensurePodcasts } from "../src/lib/podcasts";
 
 // De vragen zijn handmatig geschreven met het juiste antwoord steeds als
 // eerste optie genoteerd (leesbaarheid tijdens het schrijven) — zonder
@@ -49,18 +50,21 @@ function toAnswersAndOptions(comp: PodcastComprehensionExercise, seed: number): 
  */
 export async function importPodcastEpisodes(
   prisma: PrismaClient,
+  podcastId: string,
   episodes: PodcastEpisodeSeed[],
   log: (msg: string) => void = console.log
 ) {
+  await ensurePodcasts(prisma);
   for (let i = 0; i < episodes.length; i++) {
     const seed = episodes[i];
     // order = -number, zodat de nieuwste (hoogst genummerde) aflevering
     // altijd bovenaan staat — ongeacht in welke volgorde ze hier of via de
     // feed-sync (zie src/lib/podcastFeed.ts) binnenkomen.
     const episode = await prisma.podcastEpisode.upsert({
-      where: { number: seed.number },
+      where: { podcastId_number: { podcastId, number: seed.number } },
       update: { title: seed.title, summary: seed.summary, listenUrl: seed.listenUrl, order: -seed.number },
       create: {
+        podcastId,
         number: seed.number,
         title: seed.title,
         summary: seed.summary,

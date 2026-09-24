@@ -7,6 +7,7 @@ export interface PodcastEpisodeInfo {
   number: number;
   title: string;
   audioUrl: string;
+  podcastName: string;
 }
 
 interface PodcastPlayerContextValue {
@@ -181,7 +182,7 @@ export function PodcastPlayerProvider({ children }: { children: React.ReactNode 
     if ("mediaSession" in navigator) {
       navigator.mediaSession.metadata = new MediaMetadata({
         title: `Aflevering ${newEpisode.number} — ${newEpisode.title}`,
-        artist: "Geloof je dat ook?",
+        artist: newEpisode.podcastName,
       });
     }
 

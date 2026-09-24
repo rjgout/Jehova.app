@@ -1,4 +1,5 @@
 import type { PrismaClient } from "@prisma/client";
+import { ensurePodcasts, PODCASTS } from "./podcasts";
 
 export const FRONT_TO_BACK_SLUG = "voor-naar-achter";
 export const FREE_CHOICE_SLUG = "vrije-keuze";
@@ -230,21 +231,30 @@ export async function syncCourses(db: PrismaClient): Promise<void> {
     }
   }
 
-  // Singleton, net als vrije keuze: geen CourseChapter-rijen — de
-  // PodcastEpisode-rijen (zie prisma/importPodcast.ts) horen er impliciet
-  // allemaal bij.
-  await db.course.upsert({
-    where: { slug: PODCAST_SLUG },
-    update: { name: "Geloof je dat ook? podcast", order: 3 + books.length, contentCollectionId: defaultCollection.id },
-    create: {
-      slug: PODCAST_SLUG,
-      type: "PODCAST",
-      name: "Geloof je dat ook? podcast",
-      description: "Elke aflevering: vragen over de aflevering zelf, en de brug naar het Boek van Mormon.",
-      order: 2 + books.length,
-      contentCollectionId: defaultCollection.id,
-    },
-  });
+  // Per podcast één cursus, zonder CourseChapter-rijen: de PodcastEpisode-
+  // rijen van die podcast (zie prisma/importPodcast.ts en
+  // src/lib/podcastFeed.ts) horen er impliciet allemaal bij.
+  await ensurePodcasts(db);
+  for (const podcast of PODCASTS) {
+    await db.course.upsert({
+      where: { slug: podcast.courseSlug },
+      update: {
+        name: podcast.courseName,
+        order: podcast.courseOrderOffset + books.length,
+        contentCollectionId: defaultCollection.id,
+        podcastId: podcast.id,
+      },
+      create: {
+        slug: podcast.courseSlug,
+        type: "PODCAST",
+        name: podcast.courseName,
+        description: podcast.courseDescription,
+        order: podcast.courseOrderOffset + books.length,
+        contentCollectionId: defaultCollection.id,
+        podcastId: podcast.id,
+      },
+    });
+  }
 
   // Singleton, net als PODCAST: geen CourseChapter-rijen, alle KidsStory-
   // rijen (zie prisma/importKids.ts) horen er impliciet allemaal bij.

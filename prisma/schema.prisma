@@ -435,6 +435,8 @@ model Course {
   book        Book?      @relation(fields: [bookId], references: [id], onDelete: Cascade)
   contentCollectionId String
   contentCollection   ContentCollection @relation(fields: [contentCollectionId], references: [id], onDelete: Cascade)
+  podcastId   String? // alleen gezet voor PODCAST
+  podcast     Podcast?   @relation(fields: [podcastId], references: [id], onDelete: Cascade)
   // Door een admin uit te zetten via /adminbackend — verdwijnt dan uit ieders
   // cursussenoverzicht/toevoeg-catalogus (zie /api/courses en
   // /api/courses/catalog), maar bestaande voortgang blijft gewoon bestaan en
@@ -551,9 +553,27 @@ model UserCourseProgress {
 // hergebruiken — een aflevering heeft geen verzen, wel een titel/luisterlink,
 // en de twee modi hebben allebei hun eigen voortgang, als aparte "lessen".
 
+// Eén rij per podcast (bv. "Geloof je dat ook?", "De Kast van Mormon"). De
+// vaste lijst staat in src/lib/podcasts.ts en wordt door syncCourses
+// bijgewerkt; elke podcast krijgt een eigen PODCAST-cursus (Course.podcastId).
+model Podcast {
+  id       String  @id
+  slug     String  @unique
+  name     String
+  feedUrl  String?
+  order    Int     @default(0)
+
+  episodes PodcastEpisode[]
+  courses  Course[]
+}
+
 model PodcastEpisode {
   id          String    @id @default(cuid())
-  number      Int       @unique
+  podcastId   String
+  podcast     Podcast   @relation(fields: [podcastId], references: [id], onDelete: Cascade)
+  // Uniek per podcast, niet over alles heen: beide podcasts hebben een
+  // "aflevering 12".
+  number      Int
   title       String
   summary     String?
   // Link naar de afleveringspagina/website (RSS <link>) — voor de
@@ -563,12 +583,17 @@ model PodcastEpisode {
   // dezelfde waarde, een webpagina kan immers niet als <audio src> dienen.
   listenUrl   String?
   audioUrl    String?
+  // Uit <podcast:transcript> in de feed (meestal een .vtt), als de makers
+  // die meeleveren: de bron voor nieuwe oefeningen.
+  transcriptUrl String?
   publishedAt DateTime?
   order       Int       @default(0)
 
   exercises        PodcastExercise[]
   progress         PodcastEpisodeProgress[]
   playbackProgress PodcastPlaybackProgress[]
+
+  @@unique([podcastId, number])
 }
 
 // Onthoudt waar je gebleven was met luisteren (zie PodcastMiniPlayer.tsx) —

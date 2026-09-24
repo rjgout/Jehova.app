@@ -2,6 +2,8 @@ import { PrismaClient } from "@prisma/client";
 import { seedBooks } from "../../prisma/content";
 import { importBooks } from "../../prisma/importContent";
 import { podcastEpisodes } from "../../prisma/podcastContent";
+import { kastVanMormonEpisodes } from "../../prisma/kastVanMormonContent";
+import { GJDO_PODCAST_ID, KAST_PODCAST_ID } from "./podcasts";
 import { importPodcastEpisodes } from "../../prisma/importPodcast";
 import { syncPodcastFeed } from "./podcastFeed";
 import { syncFsyContent } from "./fsyContent";
@@ -60,7 +62,8 @@ export async function runSeed(client: PrismaClient, log: (msg: string) => void =
   await importBooks(client, seedBooks, log);
 
   log("Seeding podcastafleveringen...");
-  await importPodcastEpisodes(client, podcastEpisodes, log);
+  await importPodcastEpisodes(client, GJDO_PODCAST_ID, podcastEpisodes, log);
+  await importPodcastEpisodes(client, KAST_PODCAST_ID, kastVanMormonEpisodes, log);
 
   log("Podcastfeed ophalen voor titels/omschrijvingen en nieuwe afleveringen...");
   await syncPodcastFeed(client, log);
