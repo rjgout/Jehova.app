@@ -286,7 +286,7 @@ function resyncSocket(socket: Socket, room: RoomState) {
   } else {
     const q = room.cgQuestions[room.questionIndex];
     const options = q.optionIds?.map((id) => ({ id, label: room.cgChapterLabels.get(id)?.label ?? "?" }));
-    socket.emit("question", { mode: "CHAPTER_GUESS", index: room.questionIndex, total, timeLimitMs: remaining, introText: q.introText, options });
+    socket.emit("question", { mode: "CHAPTER_GUESS", index: room.questionIndex, total, timeLimitMs: remaining, introText: q.introText, introAudio: q.introAudio, options });
   }
 }
 
@@ -322,6 +322,7 @@ function askQuestion(room: RoomState) {
       total,
       timeLimitMs: room.timeLimitMs,
       introText: q.introText,
+      introAudio: q.introAudio,
       options,
     });
   }

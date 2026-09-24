@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/db";
 import { isExerciseCorrect } from "@/lib/exerciseGen";
-import { pickRandomChapterIds, getChapterIntro, labelsFor, type ChapterLabel } from "@/lib/chapterGuess";
+import { pickRandomChapterIds, getChapterIntro, getChapterIntroAudio, labelsFor, type ChapterLabel, type IntroAudio } from "@/lib/chapterGuess";
 
 // --- Het bord -----------------------------------------------------------
 //
@@ -113,6 +113,7 @@ export interface FamilyExerciseCard {
 export interface FamilyWhereInBookCard {
   tileKind: "WHERE_IN_BOOK";
   introText: string;
+  introAudio: IntroAudio | null;
   options: { chapterId: string; label: string }[];
 }
 
@@ -215,10 +216,11 @@ export async function pickWhereInBookCard(): Promise<{ card: FamilyWhereInBookCa
   const [correctChapterId, ...wrongIds] = await pickRandomChapterIds(4);
   if (!correctChapterId) return null;
   const introText = await getChapterIntro(correctChapterId);
+  const introAudio = await getChapterIntroAudio(correctChapterId);
   const labels = await labelsFor([correctChapterId, ...wrongIds]);
   const order = [correctChapterId, ...wrongIds].sort(() => Math.random() - 0.5);
   const options = order.map((id) => ({ chapterId: id, label: labels.get(id)?.label ?? "?" }));
-  return { card: { tileKind: "WHERE_IN_BOOK", introText, options }, correctChapterId };
+  return { card: { tileKind: "WHERE_IN_BOOK", introText, introAudio, options }, correctChapterId };
 }
 
 /** Het "leermoment": het echte vers erbij, nooit een zelfgeschreven verklaring (zie sessieafspraak). */

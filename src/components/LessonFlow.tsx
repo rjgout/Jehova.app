@@ -30,6 +30,13 @@ interface VerseView {
   bookmarked: boolean;
   highlighted: boolean;
   note: string;
+  audioStart?: number | null;
+}
+
+/** Voorgelezen audio van het hoofdstuk, zie ReadAloudSource.audio. */
+export interface ChapterAudio {
+  url: string;
+  end: number | null;
 }
 
 interface Props {
@@ -38,6 +45,7 @@ interface Props {
   chapterNumber: number;
   nextChapterId: string | null;
   verses: VerseView[];
+  audio?: ChapterAudio | null;
   exercises: Exercise[];
   // Gezet als deze les gespeeld wordt als iemands beurt in een uitdaging
   // (zie /challenges) — de score telt dan ook mee voor die uitdaging, zie
@@ -72,7 +80,7 @@ const FONT_SCALE_KEY = "bom-reader-font-scale";
 const MIN_SCALE = 0.85;
 const MAX_SCALE = 1.5;
 
-export default function LessonFlow({ chapterId, bookName, chapterNumber, nextChapterId, verses, exercises, challengeId }: Props) {
+export default function LessonFlow({ chapterId, bookName, chapterNumber, nextChapterId, verses, audio, exercises, challengeId }: Props) {
   const [phase, setPhase] = useState<Phase>("read");
   const [index, setIndex] = useState(0);
   const [answers, setAnswers] = useState<SubmittedAnswer[]>([]);
@@ -156,7 +164,7 @@ export default function LessonFlow({ chapterId, bookName, chapterNumber, nextCha
     return (
       <div className="max-w-2xl mx-auto flex flex-col gap-4">
         <Breadcrumb items={[{ label: bookName, href: "/dashboard" }, { label: `Hoofdstuk ${chapterNumber}` }]} />
-        <ReaderView chapterId={chapterId} bookName={bookName} chapterNumber={chapterNumber} verses={verses} />
+        <ReaderView chapterId={chapterId} bookName={bookName} chapterNumber={chapterNumber} verses={verses} audio={audio} />
         <button className="btn-primary self-start" onClick={() => setPhase("exercises")}>
           Begin oefeningen →
         </button>
@@ -219,11 +227,13 @@ export function ReaderView({
   bookName,
   chapterNumber,
   verses,
+  audio,
 }: {
   chapterId: string;
   bookName: string;
   chapterNumber: number;
   verses: VerseView[];
+  audio?: ChapterAudio | null;
 }) {
   const [scale, setScale] = useState(1);
   const [verseState, setVerseState] = useState(verses);
@@ -297,7 +307,8 @@ export function ReaderView({
       <ReadAloudPlayer
         sourceId={chapterId}
         title={`${bookName} ${chapterNumber}`}
-        verses={verseState.map((v) => ({ number: v.number, text: v.text }))}
+        verses={verseState.map((v) => ({ number: v.number, text: v.text, audioStart: v.audioStart }))}
+        audio={audio}
       />
 
       <div className="card flex flex-col gap-4" style={{ "--reader-font-scale": scale } as React.CSSProperties}>

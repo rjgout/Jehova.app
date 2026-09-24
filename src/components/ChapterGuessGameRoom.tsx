@@ -8,6 +8,7 @@ import LobbyClosedNotice from "@/components/LobbyClosedNotice";
 import { announceXpChanged } from "@/lib/xpBroadcast";
 import UserAvatar from "@/components/UserAvatar";
 import LobbyInviteCard from "@/components/LobbyInviteCard";
+import IntroAudioButton from "@/components/IntroAudioButton";
 
 interface LobbyPlayer {
   userId: string;
@@ -25,6 +26,7 @@ interface QuestionData {
   total: number;
   timeLimitMs: number;
   introText: string;
+  introAudio?: { url: string; start: number; end: number } | null;
   options?: ChapterOptionView[];
 }
 
@@ -307,6 +309,7 @@ export default function ChapterGuessGameRoom({ code, myUserId }: { code: string;
         <div className="card flex flex-col gap-5">
           <p className="text-xs font-bold uppercase text-slate-400 dark:text-slate-500">Lees deze hoofdstukkop — welk hoofdstuk is dit?</p>
           <p className="text-xl leading-relaxed italic">&ldquo;{question.introText}&rdquo;</p>
+          <IntroAudioButton audio={question.introAudio} />
 
           {hint?.bookName && !revealing && (
             <p className="text-sm bg-gold-50 dark:bg-slate-700 text-gold-600 dark:text-gold-400 rounded-xl px-3 py-2 font-bold">

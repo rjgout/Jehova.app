@@ -79,7 +79,9 @@ export default async function LessonPage({
         bookmarked: bookmarkedVerseIds.has(v.id),
         highlighted: highlightedVerseIds.has(v.id),
         note: notesByVerseId[v.id] ?? "",
+        audioStart: v.audioStart,
       }))}
+      audio={chapter.audioUrl ? { url: chapter.audioUrl, end: null } : null}
       exercises={exercises}
       challengeId={challengeId}
     />

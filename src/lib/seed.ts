@@ -1,6 +1,8 @@
 import { PrismaClient } from "@prisma/client";
 import { seedBooks } from "../../prisma/content";
 import { importBooks } from "../../prisma/importContent";
+import { importChapterAudio, type ChapterAudioSeed } from "../../prisma/importAudio";
+import bomAudio from "../../prisma/bomAudio.json";
 import { podcastEpisodes } from "../../prisma/podcastContent";
 import { kastVanMormonEpisodes } from "../../prisma/kastVanMormonContent";
 import { GJDO_PODCAST_ID, KAST_PODCAST_ID } from "./podcasts";
@@ -60,6 +62,7 @@ const achievementDefs = [
 export async function runSeed(client: PrismaClient, log: (msg: string) => void = console.log): Promise<void> {
   log("Seeding boeken, hoofdstukken, verzen en oefeningen...");
   await importBooks(client, seedBooks, log);
+  await importChapterAudio(client, bomAudio as ChapterAudioSeed[], log);
 
   log("Seeding podcastafleveringen...");
   await importPodcastEpisodes(client, GJDO_PODCAST_ID, podcastEpisodes, log);

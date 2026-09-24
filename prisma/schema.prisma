@@ -341,6 +341,14 @@ model Chapter {
   // gebruikt als introtekst bij "Raad het hoofdstuk" (zie
   // src/lib/chapterGuess.ts). Optioneel omdat niet elke seed-bron 'm heeft.
   heading              String?
+  // Voorgelezen hoofdstuk (Nederlandse audio van de kerk, per hoofdstuk één
+  // bestand; zie prisma/bomAudio.json en prisma/importAudio.ts). Null = geen
+  // audio, dan leest de computerstem voor. audioHeadingStart/End omsluiten de
+  // voorgelezen hoofdstukkop, zónder "Hoofdstuk N" ervoor (dat zou bij
+  // "Raad het hoofdstuk" het antwoord verklappen).
+  audioUrl             String?
+  audioHeadingStart    Float?
+  audioHeadingEnd      Float?
   verses               Verse[]
   exercises            Exercise[]
   progress             ChapterProgress[]
@@ -897,6 +905,9 @@ model Verse {
   chapter   Chapter @relation(fields: [chapterId], references: [id], onDelete: Cascade)
   number    Int
   text      String
+  // Waar dit vers begint in Chapter.audioUrl, in seconden; het vers loopt
+  // tot het begin van het volgende. Null = hoofdstuk zonder audio.
+  audioStart Float?
 
   people     VersePerson[]
   places     VersePlace[]

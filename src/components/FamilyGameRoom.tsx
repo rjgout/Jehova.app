@@ -7,6 +7,7 @@ import { useLobbyExit } from "@/lib/useLobbyExit";
 import LobbyClosedNotice from "@/components/LobbyClosedNotice";
 import UserAvatar from "@/components/UserAvatar";
 import LobbyInviteCard from "@/components/LobbyInviteCard";
+import IntroAudioButton from "@/components/IntroAudioButton";
 
 type Phase = "connecting" | "lobby" | "playing" | "finished" | "error";
 type Region = "JERUZALEM" | "WILDERNIS" | "ZEE" | "BELOOFDE_LAND" | "ZARAHEMLA";
@@ -33,7 +34,7 @@ interface Friend {
 
 type CardView =
   | { tileKind: "KNOWLEDGE" | "FILL_IN"; exerciseId: string; type: "FILL_BLANK" | "WORD_BANK" | "TRUE_FALSE"; verseRef: string; prompt: string; wordBank?: string[]; options?: string[] }
-  | { tileKind: "WHERE_IN_BOOK"; introText: string; options: { chapterId: string; label: string }[] }
+  | { tileKind: "WHERE_IN_BOOK"; introText: string; introAudio?: { url: string; start: number; end: number } | null; options: { chapterId: string; label: string }[] }
   | { tileKind: "EVENT"; slug: string; title: string; choices: string[] };
 
 const REGION_LABEL: Record<Region, string> = {
@@ -632,6 +633,7 @@ export default function FamilyGameRoom({ code, myUserId }: { code: string; myUse
               <>
                 <p className="text-xs font-bold uppercase text-slate-400 dark:text-slate-500">📍 Waar in het boek?</p>
                 <p className="text-lg italic leading-relaxed">&ldquo;{card.introText}&rdquo;</p>
+                <IntroAudioButton audio={card.introAudio} />
                 <div className="grid grid-cols-2 gap-3">
                   {card.options.map((opt) => (
                     <button

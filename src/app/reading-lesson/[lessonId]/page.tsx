@@ -66,6 +66,16 @@ export default async function ReadingLessonPage({
   const highlightedVerseIds = new Set(highlights.map((highlight) => highlight.verseId));
   const notesByVerseId = Object.fromEntries(notes.map((note) => [note.verseId, note.text]));
 
+  // Voorlezen stopt aan het eind van deze les: bij het begin van het vers
+  // ná de laatste, of pas aan het eind van het bestand als dat er niet is.
+  const verseAfter = lesson.chapter.audioUrl
+    ? await prisma.verse.findFirst({
+        where: { chapterId: lesson.chapterId, number: lesson.endVerse + 1 },
+        select: { audioStart: true },
+      })
+    : null;
+  const audio = lesson.chapter.audioUrl ? { url: lesson.chapter.audioUrl, end: verseAfter?.audioStart ?? null } : null;
+
   const [nextLesson, firstChapterLesson] = await Promise.all([
     prisma.courseLesson.findFirst({
       where: { courseId: lesson.courseId, order: lesson.order + 1 },
@@ -110,7 +120,9 @@ export default async function ReadingLessonPage({
         bookmarked: bookmarkedVerseIds.has(verse.id),
         highlighted: highlightedVerseIds.has(verse.id),
         note: notesByVerseId[verse.id] ?? "",
+        audioStart: verse.audioStart,
       }))}
+      audio={audio}
       exercises={exercises}
     />
   );

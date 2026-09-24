@@ -50,6 +50,24 @@ export async function getChapterIntro(chapterId: string): Promise<string> {
   return verse?.text ?? "";
 }
 
+export interface IntroAudio {
+  url: string;
+  start: number;
+  end: number;
+}
+
+// Hetzelfde intro, voorgelezen: het stuk van de hoofdstukaudio met alleen de
+// kop (zie Chapter.audioHeadingStart). Null als het hoofdstuk geen audio
+// heeft; dan blijft het bij de tekst.
+export async function getChapterIntroAudio(chapterId: string): Promise<IntroAudio | null> {
+  const chapter = await prisma.chapter.findUnique({
+    where: { id: chapterId },
+    select: { audioUrl: true, audioHeadingStart: true, audioHeadingEnd: true },
+  });
+  if (!chapter?.audioUrl || chapter.audioHeadingStart == null || chapter.audioHeadingEnd == null) return null;
+  return { url: chapter.audioUrl, start: chapter.audioHeadingStart, end: chapter.audioHeadingEnd };
+}
+
 export async function pickRandomChapterIds(count: number, excludeIds: string[] = []): Promise<string[]> {
   const all = await prisma.chapter.findMany({ where: { id: { notIn: excludeIds } }, select: { id: true } });
   return shuffle(all.map((c) => c.id)).slice(0, count);
@@ -64,6 +82,7 @@ export interface QuestionView {
   index: number;
   total: number;
   introText: string;
+  introAudio: IntroAudio | null;
   options: ChapterLabel[] | null; // alleen bij BEGINNER
   hintUsed: boolean;
 }
@@ -72,14 +91,17 @@ async function buildQuestionView(
   question: { order: number; chapterId: string; optionIds: string | null; hintUsed: boolean },
   total: number
 ): Promise<QuestionView> {
-  const introText = await getChapterIntro(question.chapterId);
+  const [introText, introAudio] = await Promise.all([
+    getChapterIntro(question.chapterId),
+    getChapterIntroAudio(question.chapterId),
+  ]);
   let options: ChapterLabel[] | null = null;
   if (question.optionIds) {
     const ids = JSON.parse(question.optionIds) as string[];
     const labels = await labelsFor(ids);
     options = ids.map((id) => labels.get(id)!).filter(Boolean);
   }
-  return { index: question.order, total, introText, options, hintUsed: question.hintUsed };
+  return { index: question.order, total, introText, introAudio, options, hintUsed: question.hintUsed };
 }
 
 export async function createChapterGuessGame(userId: string, level: ChapterGuessLevel, questionCount: number) {
@@ -355,6 +377,7 @@ export function computeHintEffect(
 export interface LiveQuestionSeed {
   chapterId: string;
   introText: string;
+  introAudio: IntroAudio | null;
   optionIds: string[] | null; // alleen bij BEGINNER
 }
 
@@ -363,8 +386,9 @@ export async function generateChapterGuessQuestions(level: ChapterGuessLevel, co
   const questions: LiveQuestionSeed[] = [];
   for (const chapterId of chapterIds) {
     const introText = await getChapterIntro(chapterId);
+    const introAudio = await getChapterIntroAudio(chapterId);
     const optionIds = level === "BEGINNER" ? await buildBeginnerOptionIds(chapterId) : null;
-    questions.push({ chapterId, introText, optionIds });
+    questions.push({ chapterId, introText, introAudio, optionIds });
   }
   return questions;
 }

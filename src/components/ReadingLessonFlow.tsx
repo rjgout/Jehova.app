@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { ACHIEVEMENT_DISPLAY } from "@/lib/achievementDisplay";
 import { announceXpChanged } from "@/lib/xpBroadcast";
-import { ExerciseCard, ReaderView, type Exercise } from "@/components/LessonFlow";
+import { ExerciseCard, ReaderView, type ChapterAudio, type Exercise } from "@/components/LessonFlow";
 
 interface VerseView {
   id: string;
@@ -13,6 +13,7 @@ interface VerseView {
   bookmarked: boolean;
   highlighted: boolean;
   note: string;
+  audioStart?: number | null;
 }
 
 interface Props {
@@ -26,6 +27,7 @@ interface Props {
   endVerse: number;
   nextLessonId: string | null;
   verses: VerseView[];
+  audio?: ChapterAudio | null;
   exercises: Exercise[];
 }
 
@@ -62,6 +64,7 @@ export default function ReadingLessonFlow({
   endVerse,
   nextLessonId,
   verses,
+  audio,
   exercises,
 }: Props) {
   const [phase, setPhase] = useState<Phase>("read");
@@ -117,6 +120,7 @@ export default function ReadingLessonFlow({
           bookName={bookName}
           chapterNumber={chapterNumber}
           verses={verses}
+          audio={audio}
         />
         <button
           className="btn-primary self-start"

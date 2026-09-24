@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { announceXpChanged } from "@/lib/xpBroadcast";
+import IntroAudioButton from "@/components/IntroAudioButton";
 
 type Level = "BEGINNER" | "ADVANCED" | "EXPERT";
 
@@ -18,6 +19,7 @@ interface QuestionView {
   index: number;
   total: number;
   introText: string;
+  introAudio?: { url: string; start: number; end: number } | null;
   options: ChapterLabel[] | null;
   hintUsed: boolean;
 }
@@ -276,6 +278,7 @@ export default function ChapterGuessSoloClient({ gameId }: { gameId: string }) {
       <div className="card flex flex-col gap-5">
         <p className="text-xs font-bold uppercase text-slate-400 dark:text-slate-500">Lees deze hoofdstukkop — welk hoofdstuk is dit?</p>
         <p className="text-xl leading-relaxed italic">&ldquo;{question.introText}&rdquo;</p>
+        <IntroAudioButton audio={question.introAudio} />
 
         {hint?.bookName && !answered && (
           <p className="text-sm bg-gold-50 dark:bg-slate-700 text-gold-600 dark:text-gold-400 rounded-xl px-3 py-2 font-bold">

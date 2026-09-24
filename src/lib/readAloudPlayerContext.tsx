@@ -7,12 +7,26 @@ import { beginSpeechPlayback, endSpeechPlayback } from "@/lib/speechAudioSession
 export interface ReadAloudVerse {
   number: number;
   text: string;
+  /** Begin van dit vers in `audio.url`, in seconden (zie Verse.audioStart). */
+  audioStart?: number | null;
 }
 
 export interface ReadAloudSource {
   id: string;
   title: string;
   verses: ReadAloudVerse[];
+  /**
+   * Voorgelezen audio van het hoofdstuk. `end` is waar het laatste vers van
+   * deze bron ophoudt (het begin van het vers erna), of null om tot het eind
+   * van het bestand door te spelen.
+   */
+  audio?: { url: string; end: number | null } | null;
+}
+
+// Echte audio alleen als élk vers een begintijd heeft; anders de computerstem,
+// zodat vorige/volgende vers altijd blijft kloppen.
+function hasRecordedAudio(source: ReadAloudSource | null): boolean {
+  return !!source?.audio && source.verses.every((v) => v.audioStart != null);
 }
 
 interface ReadAloudPlayerContextValue {
@@ -55,6 +69,7 @@ export function ReadAloudPlayerProvider({ children }: { children: React.ReactNod
   const playingRef = useRef(false);
   const utteranceIdRef = useRef(0);
   const speedRef = useRef(1);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
     speedRef.current = speed;
@@ -76,6 +91,70 @@ export function ReadAloudPlayerProvider({ children }: { children: React.ReactNod
     window.speechSynthesis.addEventListener?.("voiceschanged", onVoicesChanged);
     return () => window.speechSynthesis.removeEventListener?.("voiceschanged", onVoicesChanged);
   }, []);
+
+  const finishAudio = useCallback(() => {
+    audioRef.current?.pause();
+    playingRef.current = false;
+    setIsPlaying(false);
+    currentIndexRef.current = 0;
+    setCurrentIndex(0);
+  }, []);
+
+  const ensureAudio = useCallback((): HTMLAudioElement => {
+    if (audioRef.current) return audioRef.current;
+    const el = new Audio();
+    el.preload = "auto";
+    el.ontimeupdate = () => {
+      const current = sourceRef.current;
+      if (!playingRef.current || !current?.audio) return;
+      const t = el.currentTime;
+      if (current.audio.end != null && t >= current.audio.end - 0.05) {
+        finishAudio();
+        return;
+      }
+      let index = 0;
+      current.verses.forEach((v, i) => {
+        if ((v.audioStart ?? 0) <= t + 0.1) index = i;
+      });
+      if (index !== currentIndexRef.current) {
+        currentIndexRef.current = index;
+        setCurrentIndex(index);
+      }
+    };
+    el.onended = () => finishAudio();
+    el.onerror = () => {
+      playingRef.current = false;
+      setIsPlaying(false);
+    };
+    audioRef.current = el;
+    return el;
+  }, [finishAudio]);
+
+  const playAudioFrom = useCallback((index: number) => {
+    const current = sourceRef.current;
+    if (!current?.audio) return;
+    const el = ensureAudio();
+    const startAt = current.verses[index]?.audioStart ?? 0;
+    const go = () => {
+      el.playbackRate = speedRef.current;
+      el.currentTime = startAt;
+      el.play().catch(() => {
+        playingRef.current = false;
+        setIsPlaying(false);
+      });
+    };
+    if (el.src !== current.audio.url) {
+      el.src = current.audio.url;
+      // De starttijd kan pas gezet worden als de browser de duur kent.
+      el.onloadedmetadata = () => {
+        el.onloadedmetadata = null;
+        go();
+      };
+      el.load();
+    } else {
+      go();
+    }
+  }, [ensureAudio]);
 
   const speakFrom = useCallback((index: number) => {
     const currentSource = sourceRef.current;
@@ -118,24 +197,53 @@ export function ReadAloudPlayerProvider({ children }: { children: React.ReactNod
   }, []);
 
   const start = useCallback((newSource: ReadAloudSource, index = 0) => {
-    if (!("speechSynthesis" in window) || newSource.verses.length === 0) return;
+    const recorded = hasRecordedAudio(newSource);
+    if ((!recorded && !("speechSynthesis" in window)) || newSource.verses.length === 0) return;
     // Voorlezen en de podcast delen één audio-uitvoer: een nieuwe voorleesactie
     // stopt de podcast direct, zodat nooit twee audiostreams tegelijk klinken.
     window.dispatchEvent(new Event("jehovaapp:stop-podcast"));
-    beginSpeechPlayback();
     utteranceIdRef.current += 1;
-    window.speechSynthesis.cancel();
+    if ("speechSynthesis" in window) window.speechSynthesis.cancel();
+    audioRef.current?.pause();
+    // Echte audio speelt ook met de stille modus aan; alleen de computerstem
+    // heeft de truc uit speechAudioSession.ts nodig.
+    if (!recorded) beginSpeechPlayback();
+    else endSpeechPlayback();
     sourceRef.current = newSource;
     setSource(newSource);
     currentIndexRef.current = index;
     setCurrentIndex(index);
     playingRef.current = true;
     setIsPlaying(true);
-    speakFrom(index);
-  }, [speakFrom]);
+    if (recorded) playAudioFrom(index);
+    else speakFrom(index);
+  }, [speakFrom, playAudioFrom]);
 
   const togglePlay = useCallback(() => {
     const currentSource = sourceRef.current;
+    if (hasRecordedAudio(currentSource)) {
+      const el = audioRef.current;
+      if (isPlaying) {
+        el?.pause();
+        playingRef.current = false;
+        setIsPlaying(false);
+        return;
+      }
+      playingRef.current = true;
+      setIsPlaying(true);
+      // Hervatten waar gepauzeerd; na afloop (index terug op 0) opnieuw vanaf het begin.
+      const verseStart = currentSource!.verses[currentIndexRef.current]?.audioStart ?? 0;
+      if (el && el.src === currentSource!.audio!.url && el.currentTime >= verseStart) {
+        el.playbackRate = speedRef.current;
+        el.play().catch(() => {
+          playingRef.current = false;
+          setIsPlaying(false);
+        });
+      } else {
+        playAudioFrom(currentIndexRef.current);
+      }
+      return;
+    }
     if (!currentSource || !("speechSynthesis" in window)) return;
     if (isPlaying) {
       playingRef.current = false;
@@ -149,10 +257,18 @@ export function ReadAloudPlayerProvider({ children }: { children: React.ReactNod
     setIsPlaying(true);
     if (window.speechSynthesis.paused) window.speechSynthesis.resume();
     else speakFrom(currentIndexRef.current);
-  }, [isPlaying, speakFrom]);
+  }, [isPlaying, speakFrom, playAudioFrom]);
 
   const jumpTo = useCallback((index: number) => {
     const currentSource = sourceRef.current;
+    if (currentSource && hasRecordedAudio(currentSource)) {
+      const clamped = Math.max(0, Math.min(index, currentSource.verses.length - 1));
+      currentIndexRef.current = clamped;
+      setCurrentIndex(clamped);
+      if (playingRef.current) playAudioFrom(clamped);
+      else if (audioRef.current) audioRef.current.currentTime = currentSource.verses[clamped].audioStart ?? 0;
+      return;
+    }
     if (!currentSource || !("speechSynthesis" in window)) return;
     const clamped = Math.max(0, Math.min(index, currentSource.verses.length - 1));
     const wasPlaying = playingRef.current;
@@ -165,13 +281,14 @@ export function ReadAloudPlayerProvider({ children }: { children: React.ReactNod
       setIsPlaying(true);
       speakFrom(clamped);
     }
-  }, [speakFrom]);
+  }, [speakFrom, playAudioFrom]);
 
   const previousVerse = useCallback(() => jumpTo(currentIndexRef.current - 1), [jumpTo]);
   const nextVerse = useCallback(() => jumpTo(currentIndexRef.current + 1), [jumpTo]);
 
   const stop = useCallback(() => {
     if ("speechSynthesis" in window) window.speechSynthesis.cancel();
+    audioRef.current?.pause();
     endSpeechPlayback();
     utteranceIdRef.current += 1;
     playingRef.current = false;
@@ -183,8 +300,8 @@ export function ReadAloudPlayerProvider({ children }: { children: React.ReactNod
 
   useEffect(() => {
     const stopForPodcast = () => {
-      if (!("speechSynthesis" in window)) return;
-      window.speechSynthesis.cancel();
+      audioRef.current?.pause();
+      if ("speechSynthesis" in window) window.speechSynthesis.cancel();
       endSpeechPlayback();
       utteranceIdRef.current += 1;
       playingRef.current = false;
@@ -202,6 +319,10 @@ export function ReadAloudPlayerProvider({ children }: { children: React.ReactNod
     speedRef.current = nextSpeed;
     setSpeedState(nextSpeed);
     window.localStorage.setItem("jehovaapp-read-aloud-speed", String(nextSpeed));
+    if (hasRecordedAudio(sourceRef.current)) {
+      if (audioRef.current) audioRef.current.playbackRate = nextSpeed;
+      return;
+    }
     if (playingRef.current) {
       const index = currentIndexRef.current;
       utteranceIdRef.current += 1;
@@ -214,6 +335,7 @@ export function ReadAloudPlayerProvider({ children }: { children: React.ReactNod
 
   useEffect(() => () => {
     if ("speechSynthesis" in window) window.speechSynthesis.cancel();
+    audioRef.current?.pause();
     endSpeechPlayback();
   }, []);
 

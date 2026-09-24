@@ -294,6 +294,13 @@ verwerken". Fundamenteel anders dan de rest van de API:
   losstaand bestand/export met een instantie die die toestemming niet apart
   heeft. Een andere bron laden kan via `npm run db:import`. Er is geen
   demo-inhoud meer.
+- De voorgelezen hoofdstukken (Nederlandse audio van de kerk, dezelfde
+  uitgave als de tekst) worden niet gehost: de app speelt ze af vanaf de
+  server van de kerk (`Chapter.audioUrl`). De begintijd per vers en van de
+  hoofdstukkop staan in `prisma/bomAudio.json`, berekend met de scripts in
+  `scripts/bom-audio/` (zie de README daar). Verandert de tekst van een
+  hoofdstuk, draai die scripts dan opnieuw; `importChapterAudio` slaat een
+  hoofdstuk over als het aantal verzen niet meer klopt.
 - De kindercursus-tekst/illustraties ("Verhalen uit het Boek van Mormon")
   worden met toestemming gebruikt — deel dit dus niet als losstaand
   bestand/export met een instantie die die toestemming niet apart heeft.

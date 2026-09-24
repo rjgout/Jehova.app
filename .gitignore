@@ -9,3 +9,6 @@ npm-debug.log*
 next-env.d.ts
 *.tsbuildinfo
 backups/
+
+# Werkmap van scripts/bom-audio (pagina's, herkende woorden, tijden)
+.bom-audio-work/
