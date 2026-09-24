@@ -108,6 +108,11 @@ model User {
   // link voor het eerst opvraagt; "Nieuwe link maken" vervangt 'm, waarmee de
   // oude ongeldig wordt. Null = nog nooit opgevraagd, dus geen backfill nodig.
   inviteCode         String?   @unique
+  // Account aangemaakt via iemands uitnodigingslink (en daardoor bevriend).
+  // Alleen voor de teller in /adminbackend; bewust geen verwijzing naar de
+  // uitnodiger, zodat de telling niet zakt als die zijn account verwijdert.
+  // Accounts van vóór deze kolom: false, want dat is niet meer te herleiden.
+  registeredViaInvite Boolean  @default(false)
 
   // Changelog ("Wat is er nieuw?", zie /adminbackend en het profiel): staat
   // standaard AAN maar is door de gebruiker zelf uit/aan te zetten op het

@@ -91,7 +91,10 @@ export async function POST(req: NextRequest) {
       let inviterId: string | null = null;
       if (inviteCode) {
         const invite = await becomeFriendsViaInvite(inviteCode, user.id, { isNewAccount: true }).catch(() => null);
-        if (invite?.ok) inviterId = invite.inviterId;
+        if (invite?.ok) {
+          inviterId = invite.inviterId;
+          await prisma.user.update({ where: { id: user.id }, data: { registeredViaInvite: true } });
+        }
       }
 
       const token = await createSessionToken(user.id);

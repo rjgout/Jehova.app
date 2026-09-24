@@ -7,6 +7,8 @@ import { formatTag } from "@/lib/handle";
 import { findInviter, INVALID_INVITE_ERROR } from "@/lib/friendInvite";
 import UserAvatar from "@/components/UserAvatar";
 import InviteAcceptButton from "@/components/InviteAcceptButton";
+import HomeIntroSections from "@/components/HomeIntroSections";
+import Footer from "@/components/Footer";
 
 // Bewust ook zonder inlog bereikbaar: dit is de pagina die iemand via een
 // appje opent, vaak nog zonder account.
@@ -91,8 +93,8 @@ export default async function InvitePage({ params }: { params: Promise<{ code: s
     );
   }
 
-  return (
-    <div className="max-w-md mx-auto card flex flex-col items-center gap-4 text-center">
+  const hero = (
+    <div className="w-full max-w-md card flex flex-col items-center gap-4 text-center">
       <UserAvatar id={inviter.id} handle={inviter.handle} avatarEmoji={inviter.avatarEmoji} size="md" />
       <h1 className="text-xl font-extrabold text-brand-800 dark:text-brand-300">
         {inviterTag} nodigt je uit voor {appName}
@@ -100,5 +102,20 @@ export default async function InvitePage({ params }: { params: Promise<{ code: s
       <p className="text-sm text-slate-500 dark:text-slate-400">{APP_TAGLINE}</p>
       {action}
     </div>
+  );
+
+  // Wie al een account heeft, kent de app: dan alleen de uitnodiging zelf.
+  if (user) return <div className="flex justify-center">{hero}</div>;
+
+  // Zonder account dezelfde kennismaking als op de homepage, zodat de
+  // uitgenodigde ziet waar hij of zij voor gevraagd wordt.
+  return (
+    <>
+      <div className="flex flex-col items-center text-center gap-10">
+        {hero}
+        <HomeIntroSections displayName={appName} />
+      </div>
+      <Footer />
+    </>
   );
 }

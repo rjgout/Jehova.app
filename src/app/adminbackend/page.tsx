@@ -26,7 +26,7 @@ export default async function AdminBackendPage() {
   if (!user) redirect("/login");
   if (!user.isAdmin) redirect("/dashboard");
 
-  const [users, userCount, bookCount, chapterCount, exerciseCount, emailSettings, leagueSettings, onlineUserCount] = await Promise.all([
+  const [users, userCount, bookCount, chapterCount, exerciseCount, emailSettings, leagueSettings, onlineUserCount, invitedUserCount] = await Promise.all([
     prisma.user.findMany({
       orderBy: { createdAt: "asc" },
       select: {
@@ -55,6 +55,7 @@ export default async function AdminBackendPage() {
         onlineSocketCount: { gt: 0 },
       },
     }),
+    prisma.user.count({ where: { registeredViaInvite: true } }),
   ]);
 
   return (
@@ -72,11 +73,12 @@ export default async function AdminBackendPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
         <StatCard label="Gebruikers" value={userCount} />
+        <StatCard label="Via uitnodigingslink" value={invitedUserCount} />
         <StatCard label="Boeken" value={bookCount} />
         <StatCard label="Hoofdstukken" value={chapterCount} />
-        <StatCard label="Oefeningen" value={exerciseCount} />
+        <StatCard label="Oefeningen" value={exerciseCount} className="col-span-2 sm:col-span-1" />
       </div>
 
       <AdminDeployClient configured={isDeployAgentConfigured()} onlineUserCount={onlineUserCount} />
@@ -118,9 +120,9 @@ export default async function AdminBackendPage() {
   );
 }
 
-function StatCard({ label, value }: { label: string; value: number }) {
+function StatCard({ label, value, className = "" }: { label: string; value: number; className?: string }) {
   return (
-    <div className="card text-center py-4">
+    <div className={`card text-center py-4 ${className}`}>
       <div className="text-2xl font-extrabold text-brand-700 dark:text-brand-300">{value}</div>
       <div className="text-xs font-bold uppercase text-slate-400 dark:text-slate-500">{label}</div>
     </div>
