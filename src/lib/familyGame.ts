@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/db";
+import { BOM_COLLECTION_ID } from "@/lib/contentCollections";
 import { isExerciseCorrect } from "@/lib/exerciseGen";
 import { pickRandomChapterIds, getChapterIntro, getChapterIntroAudio, labelsFor, type ChapterLabel, type IntroAudio } from "@/lib/chapterGuess";
 
@@ -195,11 +196,13 @@ export async function pickExerciseCard(
   difficulty: FamilyDifficulty
 ): Promise<FamilyExerciseCard | null> {
   const types = tileKind === "FILL_IN" ? ["WORD_BANK" as const] : KNOWLEDGE_TYPES_BY_DIFFICULTY[difficulty];
-  const count = await prisma.exercise.count({ where: { status: "APPROVED", type: { in: types } } });
+  // Gezinsavond speelt met het Boek van Mormon, niet met de andere collecties.
+  const where = { status: "APPROVED" as const, type: { in: types }, chapter: { book: { contentCollectionId: BOM_COLLECTION_ID } } };
+  const count = await prisma.exercise.count({ where });
   if (count === 0) return null;
   const skip = Math.floor(Math.random() * count);
   const row = await prisma.exercise.findFirst({
-    where: { status: "APPROVED", type: { in: types } },
+    where,
     skip,
     include: { options: { orderBy: { order: "asc" } } },
   });

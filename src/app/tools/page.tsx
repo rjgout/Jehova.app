@@ -1,7 +1,8 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { getCurrentUser } from "@/lib/session";
-import { BOM_COLLECTION_ID, getContentContext } from "@/lib/contentCollections";
+import { BOM_COLLECTION_ID, DC_COLLECTION_ID, PGP_COLLECTION_ID, getContentContext } from "@/lib/contentCollections";
+import { DICTIONARY_COLLECTION_IDS } from "@/lib/dictionary";
 
 interface Tool {
   href: string;
@@ -12,23 +13,24 @@ interface Tool {
   collectionIds?: string[];
 }
 
-// Woordenboek, bladwijzers en personages halen hun inhoud uit de verzen van
-// het Boek van Mormon; bij andere content (podcasts, leerplan) slaan ze
-// nergens op. Net als de spellen horen ze daarom bij die ene collectie.
+// Woordenboek, bladwijzers en personages halen hun inhoud uit schriftverzen;
+// bij andere content (podcasts, leerplan) slaan ze nergens op. Woordenboek en
+// bladwijzers horen daarom bij de schriftcollecties, de personages (alleen
+// uit het Boek van Mormon) net als de spellen bij die ene collectie.
 const TOOLS: Tool[] = [
   {
     href: "/tools/dictionary",
     title: "Woordenboek",
-    description: "Alle woorden uit het Boek van Mormon, op letter of op lengte — ook handig bij woordspelletjes.",
+    description: "Alle woorden uit de tekst, op letter of op lengte — ook handig bij woordspelletjes.",
     icon: "📚",
-    collectionIds: [BOM_COLLECTION_ID],
+    collectionIds: DICTIONARY_COLLECTION_IDS,
   },
   {
     href: "/bookmarks",
     title: "Bladwijzers",
     description: "De verzen die je hebt opgeslagen tijdens het lezen.",
     icon: "🔖",
-    collectionIds: [BOM_COLLECTION_ID],
+    collectionIds: [BOM_COLLECTION_ID, DC_COLLECTION_ID, PGP_COLLECTION_ID],
   },
   {
     href: "/tools/xp-guide",

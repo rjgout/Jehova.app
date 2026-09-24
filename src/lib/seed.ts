@@ -3,6 +3,10 @@ import { seedBooks } from "../../prisma/content";
 import { importBooks } from "../../prisma/importContent";
 import { importChapterAudio, type ChapterAudioSeed } from "../../prisma/importAudio";
 import bomAudio from "../../prisma/bomAudio.json";
+import dcContent from "../../prisma/dcContent.json";
+import pgpContent from "../../prisma/pgpContent.json";
+import type { SeedBook } from "../../prisma/content";
+import { DC_COLLECTION_ID, PGP_COLLECTION_ID } from "./contentCollections";
 import { podcastEpisodes } from "../../prisma/podcastContent";
 import { kastVanMormonEpisodes } from "../../prisma/kastVanMormonContent";
 import { GJDO_PODCAST_ID, KAST_PODCAST_ID } from "./podcasts";
@@ -63,6 +67,19 @@ export async function runSeed(client: PrismaClient, log: (msg: string) => void =
   log("Seeding boeken, hoofdstukken, verzen en oefeningen...");
   await importBooks(client, seedBooks, log);
   await importChapterAudio(client, bomAudio as ChapterAudioSeed[], log);
+
+  // Leer en Verbonden en de Parel van Grote Waarde, elk in een eigen
+  // collectie. Alleen als die collectie bestaat (migratie
+  // 20260924200000_dc_pgp_collections), anders zou importBooks ze bij het
+  // Boek van Mormon zetten.
+  for (const [collectionId, books, label] of [
+    [DC_COLLECTION_ID, dcContent as SeedBook[], "Leer en Verbonden"],
+    [PGP_COLLECTION_ID, pgpContent as SeedBook[], "Parel van Grote Waarde"],
+  ] as const) {
+    if (!(await client.contentCollection.findUnique({ where: { id: collectionId }, select: { id: true } }))) continue;
+    log(`Seeding ${label}...`);
+    await importBooks(client, books, log, collectionId);
+  }
 
   log("Seeding podcastafleveringen...");
   await importPodcastEpisodes(client, GJDO_PODCAST_ID, podcastEpisodes, log);

@@ -1,5 +1,8 @@
 import bomWordCounts from "../../prisma/bomWordCounts.json";
+import dcWordCounts from "../../prisma/dcWordCounts.json";
+import pgpWordCounts from "../../prisma/pgpWordCounts.json";
 import { prisma } from "@/lib/db";
+import { BOM_COLLECTION_ID, DC_COLLECTION_ID, PGP_COLLECTION_ID } from "@/lib/contentCollections";
 
 export interface DictionaryEntry {
   word: string;
@@ -12,12 +15,25 @@ export interface DictionaryEntry {
 // src/lib/scrabble/dictionary.ts) — dit woordenboek is dus ook bruikbaar
 // als hulpmiddel bij woordspelletjes. Statisch gegenereerd i.p.v. live
 // opgeteld uit de database, om dezelfde reden dat bomWords.json dat ook is.
-const ENTRIES: DictionaryEntry[] = Object.entries(bomWordCounts as Record<string, number>)
-  .map(([word, count]) => ({ word, count }))
-  .sort((a, b) => a.word.localeCompare(b.word, "nl"));
+// Leer en Verbonden en de Parel van Grote Waarde hebben elk een eigen lijst
+// met dezelfde extractie (zie scripts/church-text/fetch_dc_pgp.py).
+function toEntries(counts: Record<string, number>): DictionaryEntry[] {
+  return Object.entries(counts)
+    .map(([word, count]) => ({ word, count }))
+    .sort((a, b) => a.word.localeCompare(b.word, "nl"));
+}
 
-export function getDictionaryEntries(): DictionaryEntry[] {
-  return ENTRIES;
+const ENTRIES_BY_COLLECTION: Record<string, DictionaryEntry[]> = {
+  [BOM_COLLECTION_ID]: toEntries(bomWordCounts as Record<string, number>),
+  [DC_COLLECTION_ID]: toEntries(dcWordCounts as Record<string, number>),
+  [PGP_COLLECTION_ID]: toEntries(pgpWordCounts as Record<string, number>),
+};
+
+/** Collecties met een woordenboek (zie src/app/tools/page.tsx). */
+export const DICTIONARY_COLLECTION_IDS = Object.keys(ENTRIES_BY_COLLECTION);
+
+export function getDictionaryEntries(collectionId: string = BOM_COLLECTION_ID): DictionaryEntry[] {
+  return ENTRIES_BY_COLLECTION[collectionId] ?? [];
 }
 
 export interface VerseMatch {
@@ -47,9 +63,10 @@ function normalizeToken(s: string): string {
  * dus prima snel genoeg voor deze niet-veelgevraagde actie) in plaats van
  * een aparte woord-naar-verzen-index bij te houden.
  */
-export async function findVersesContainingWord(word: string): Promise<VerseMatch[]> {
+export async function findVersesContainingWord(word: string, collectionId: string = BOM_COLLECTION_ID): Promise<VerseMatch[]> {
   const target = normalizeToken(word);
   const verses = await prisma.verse.findMany({
+    where: { chapter: { book: { contentCollectionId: collectionId } } },
     select: {
       number: true,
       text: true,

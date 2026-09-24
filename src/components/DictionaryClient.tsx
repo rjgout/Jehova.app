@@ -18,6 +18,7 @@ type FilterMode = "letter" | "length";
 
 export default function DictionaryClient() {
   const [entries, setEntries] = useState<DictionaryEntry[] | null>(null);
+  const [collectionName, setCollectionName] = useState("");
   const [loadError, setLoadError] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const [mode, setMode] = useState<FilterMode>("letter");
@@ -34,13 +35,16 @@ export default function DictionaryClient() {
         if (!r.ok) throw new Error(data?.error ?? `Er ging iets mis (${r.status}).`);
         return data;
       })
-      .then((d) => setEntries(d.entries ?? []))
+      .then((d) => {
+        setCollectionName(d.collectionName ?? "");
+        setEntries(d.entries ?? []);
+      })
       .catch((e) => setLoadError(e instanceof Error ? e.message : "Er ging iets mis."));
   }, []);
 
   // Alle beschikbare woordlengtes, aflopend uit de data i.p.v. een geraden
   // vaste reeks — zo klopt de chiprij vanzelf ongeacht welke woorden er in
-  // het Boek van Mormon voorkomen.
+  // de tekst voorkomen.
   const lengths = useMemo(() => {
     if (!entries) return [];
     return Array.from(new Set(entries.map((e) => e.word.length))).sort((a, b) => a - b);
@@ -122,8 +126,8 @@ export default function DictionaryClient() {
       <div>
         <h1 className="text-2xl font-extrabold text-brand-800 dark:text-brand-300">Woordenboek</h1>
         <p className="text-slate-500 dark:text-slate-400 text-sm">
-          Alle {entries.length.toLocaleString("nl")} woorden uit het Boek van Mormon. Het getal tussen haakjes is hoe
-          vaak het woord voorkomt — ook handig bij woordspelletjes.
+          Alle {entries.length.toLocaleString("nl")} woorden uit {collectionName || "de tekst"}. Het getal tussen
+          haakjes is hoe vaak het woord voorkomt — ook handig bij woordspelletjes.
         </p>
       </div>
 

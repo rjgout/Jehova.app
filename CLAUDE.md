@@ -301,6 +301,14 @@ verwerken". Fundamenteel anders dan de rest van de API:
   `scripts/bom-audio/` (zie de README daar). Verandert de tekst van een
   hoofdstuk, draai die scripts dan opnieuw; `importChapterAudio` slaat een
   hoofdstuk over als het aantal verzen niet meer klopt.
+- Leer en Verbonden (`prisma/dcContent.json`) en de Parel van Grote Waarde
+  (`prisma/pgpContent.json`) komen op dezelfde manier van de kerkwebsite
+  (`scripts/church-text/fetch_dc_pgp.py`, schrijft ook de woordenlijsten voor
+  het woordenboek). Elk een eigen contentcollectie (`content_dc`,
+  `content_pgp`, standaard verborgen voor gebruikers); alleen cursussen per
+  boek. Nederlandse audio is daar (nog) niet voor. Functies die bij het Boek
+  van Mormon horen (spellen, tekst van de dag, personages) filteren expliciet
+  op `BOM_COLLECTION_ID`: Book/Chapter/Verse bevatten nu meer dan één schrift.
 - De kindercursus-tekst/illustraties ("Verhalen uit het Boek van Mormon")
   worden met toestemming gebruikt — deel dit dus niet als losstaand
   bestand/export met een instantie die die toestemming niet apart heeft.

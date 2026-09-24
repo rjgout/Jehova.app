@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/db";
+import { BOM_COLLECTION_ID } from "@/lib/contentCollections";
 import { amsterdamNow } from "@/lib/dates";
 
 export interface DailyText {
@@ -20,7 +21,10 @@ export async function getTextOfTheDay(date = new Date()): Promise<DailyText | nu
   // Tellen en daarna met skip precies één vers ophalen, in plaats van elke
   // aanroep (dashboard én elke schedulertick) de volledige schrifttekst in
   // het geheugen te laden.
-  const total = await prisma.verse.count();
+  // De tekst van de dag komt uit het Boek van Mormon (zo staat hij ook in de
+  // meldingen), niet uit de andere collecties in dezelfde tabel.
+  const where = { chapter: { book: { contentCollectionId: BOM_COLLECTION_ID } } };
+  const total = await prisma.verse.count({ where });
   if (total === 0) return null;
 
   const amsterdam = amsterdamNow(date);
@@ -33,6 +37,7 @@ export async function getTextOfTheDay(date = new Date()): Promise<DailyText | nu
   const index = (hash >>> 0) % total;
 
   const verse = await prisma.verse.findFirst({
+    where,
     orderBy: [{ chapter: { book: { order: "asc" } } }, { chapter: { order: "asc" } }, { number: "asc" }],
     skip: index,
     select: {

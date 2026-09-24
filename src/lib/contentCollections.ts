@@ -24,6 +24,9 @@ export interface ContentContext {
 // onderdelen aan te wijzen die alleen bij het Boek van Mormon horen (zie
 // src/app/tools/page.tsx).
 export const BOM_COLLECTION_ID = "content_bom";
+// Zie migratie 20260924200000_dc_pgp_collections.
+export const DC_COLLECTION_ID = "content_dc";
+export const PGP_COLLECTION_ID = "content_pgp";
 
 const DEFAULT_COLLECTION: ContentCollectionView = {
   id: BOM_COLLECTION_ID,

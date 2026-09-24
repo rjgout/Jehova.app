@@ -231,6 +231,27 @@ export async function syncCourses(db: PrismaClient): Promise<void> {
     }
   }
 
+  // Boeken van de andere collecties (Leer en Verbonden, Parel van Grote
+  // Waarde): alleen een cursus per boek, niet de Boek van Mormon-cursussen
+  // hierboven (van voor naar achter, leeslessen, ...), die bij die collectie horen.
+  const otherBooks = await db.book.findMany({
+    where: { contentCollectionId: { not: defaultCollection.id } },
+    orderBy: [{ contentCollectionId: "asc" }, { order: "asc" }],
+    include: { chapters: { orderBy: { order: "asc" } } },
+  });
+  for (const book of otherBooks) {
+    const slug = `boek-${book.slug}`;
+    const data = { name: book.name, bookId: book.id, order: book.order, contentCollectionId: book.contentCollectionId };
+    const course = await db.course.upsert({
+      where: { slug },
+      update: data,
+      create: { slug, type: "BY_BOOK", ...data },
+    });
+    await db.courseChapter.deleteMany({ where: { courseId: course.id } });
+    const rows = book.chapters.map((chapter, order) => ({ courseId: course.id, chapterId: chapter.id, order }));
+    if (rows.length > 0) await db.courseChapter.createMany({ data: rows });
+  }
+
   // Per podcast één cursus, zonder CourseChapter-rijen: de PodcastEpisode-
   // rijen van die podcast (zie prisma/importPodcast.ts en
   // src/lib/podcastFeed.ts) horen er impliciet allemaal bij.

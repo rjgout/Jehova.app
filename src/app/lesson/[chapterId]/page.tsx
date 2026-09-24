@@ -41,7 +41,9 @@ export default async function LessonPage({
     prisma.bookmark.findMany({ where: { userId: user.id, verseId: { in: verseIds } } }),
     prisma.highlight.findMany({ where: { userId: user.id, verseId: { in: verseIds } } }),
     prisma.note.findMany({ where: { userId: user.id, verseId: { in: verseIds } } }),
+    // Volgend hoofdstuk binnen dezelfde collectie: de boekvolgorde telt per collectie.
     prisma.chapter.findMany({
+      where: { book: { contentCollectionId: chapter.book.contentCollectionId } },
       orderBy: [{ book: { order: "asc" } }, { order: "asc" }],
       select: { id: true },
     }),

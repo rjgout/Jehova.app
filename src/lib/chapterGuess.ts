@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/db";
+import { BOM_COLLECTION_ID } from "@/lib/contentCollections";
 import { shuffle } from "@/lib/scrabble/tiles";
 import { completeChapterGuess } from "@/lib/streak";
 import type { ChapterGuessLevel } from "@prisma/client";
@@ -69,7 +70,12 @@ export async function getChapterIntroAudio(chapterId: string): Promise<IntroAudi
 }
 
 export async function pickRandomChapterIds(count: number, excludeIds: string[] = []): Promise<string[]> {
-  const all = await prisma.chapter.findMany({ where: { id: { notIn: excludeIds } }, select: { id: true } });
+  // Alleen het Boek van Mormon: het spel hoort bij die collectie, ook nu er
+  // andere schriften in dezelfde tabellen staan.
+  const all = await prisma.chapter.findMany({
+    where: { id: { notIn: excludeIds }, book: { contentCollectionId: BOM_COLLECTION_ID } },
+    select: { id: true },
+  });
   return shuffle(all.map((c) => c.id)).slice(0, count);
 }
 
