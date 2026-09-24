@@ -8575,4 +8575,187 @@ export const podcastEpisodes: PodcastEpisodeSeed[] = [
       },
     ],
   },
+  {
+    number: 4,
+    title: "Aflevering 4",
+    summary: "Wordt bijgewerkt vanuit de podcastfeed.",
+    content: [
+      {
+        type: "MULTIPLE_CHOICE",
+        prompt: "Tot wie bidden we volgens Koos en Raphael, en in wiens naam?",
+        options: [
+          "Tot de Hemelse Vader, in de naam van Jezus Christus",
+          "Tot Jezus Christus, in de naam van de Hemelse Vader",
+          "Tot de Heilige Geest, in de naam van Jezus Christus",
+          "Tot Jezus Christus, in de naam van de Heilige Geest",
+        ],
+        correctIndex: 0,
+      },
+      {
+        type: "MULTIPLE_CHOICE",
+        prompt: "Via wie krijgen we volgens de aflevering normaal gesproken antwoord op ons gebed?",
+        options: ["Via de Heilige Geest", "Rechtstreeks van Jezus Christus", "Via de bisschop", "Via een engel"],
+        correctIndex: 0,
+      },
+      {
+        type: "TRUE_FALSE",
+        prompt:
+          "Koos en Raphael vinden dat een gebed voor een groep juist lang moet zijn en zoveel mogelijk onderwerpen moet noemen.",
+        answer: false,
+      },
+      {
+        type: "MULTIPLE_CHOICE",
+        prompt: "Hoe willen ze een gebed voor een groep afsluiten?",
+        options: [
+          "Met 'dit hebben wij gezegd in de naam van Jezus Christus'",
+          "Met 'dit heb ik gezegd in de naam van Jezus Christus'",
+          "Alleen met 'amen', zonder de naam van Jezus Christus",
+          "Met de naam van degene die bidt",
+        ],
+        correctIndex: 0,
+      },
+      {
+        type: "SEQUENCE",
+        prompt: "Zet deze onderwerpen in de volgorde waarin ze in de aflevering aan bod komen.",
+        items: [
+          "Tot wie we bidden en van wie we antwoord krijgen",
+          "Het verschil tussen een persoonlijk gebed en een gebed voor een groep",
+          "Stopwoordjes zoals steeds 'Hemelse Vader' zeggen in een gebed",
+          "Gebeden die niet worden beantwoord zoals we willen, zoals het kwijtgeraakte Lego-blokje",
+        ],
+      },
+    ],
+    bomConnection: [
+      {
+        type: "MULTIPLE_CHOICE",
+        prompt:
+          "Koos en Raphael zeggen dat Christus ons vraagt tot de Vader te bidden in zijn naam. Wat zegt Jezus daarover in 3 Nephi 18:19?",
+        options: [
+          "Daarom moet gij altijd tot de Vader bidden in mijn naam",
+          "Daarom moet gij altijd tot Mij bidden in de naam van de Vader",
+          "Daarom moet gij alleen op de sabbat tot de Vader bidden",
+          "Daarom moet gij bidden tot de engelen die over u waken",
+        ],
+        correctIndex: 0,
+      },
+      {
+        type: "MULTIPLE_CHOICE",
+        prompt:
+          "In de aflevering gaat het erover dat gebeden niet altijd worden beantwoord zoals wij willen. Welke voorwaarde noemt 3 Nephi 18:20 voor wat ons gegeven wordt?",
+        options: [
+          "Dat wat we vragen goed is, en dat we geloven dat we zullen ontvangen",
+          "Dat we minstens drie keer om hetzelfde vragen",
+          "Dat we hardop bidden in een grote groep",
+          "Dat we eerst een offer brengen",
+        ],
+        correctIndex: 0,
+      },
+      {
+        type: "TRUE_FALSE",
+        prompt:
+          "In 3 Nephi 18:21 vraagt Jezus de mensen om in hun gezin tot de Vader te bidden, zodat hun vrouw en kinderen gezegend worden.",
+        answer: true,
+      },
+      {
+        type: "SEQUENCE",
+        prompt: "Zet deze uitspraken uit 3 Nephi 18:18-21 in de juiste volgorde.",
+        items: [
+          "Gij moet altijd waken en bidden, opdat gij niet in verzoeking valt",
+          "Daarom moet gij altijd tot de Vader bidden in mijn naam",
+          "Wat gij de Vader in mijn naam vraagt dat goed is, zal u gegeven worden",
+          "Bidt in uw gezin tot de Vader, altijd in mijn naam",
+        ],
+      },
+    ],
+  },
+  {
+    number: 5,
+    title: "Aflevering 5",
+    summary: "Wordt bijgewerkt vanuit de podcastfeed.",
+    content: [
+      {
+        type: "MULTIPLE_CHOICE",
+        prompt: "Welk gebod noemen Koos en Raphael het tweede, dat gelijk is aan het eerste grote gebod?",
+        options: [
+          "Je naaste liefhebben zoals jezelf",
+          "De sabbat heiligen",
+          "Je vader en moeder eren",
+          "Niet stelen",
+        ],
+        correctIndex: 0,
+      },
+      {
+        type: "TRUE_FALSE",
+        prompt: "Koos en Raphael herkennen allebei dat ze een 'people pleaser' zijn.",
+        answer: true,
+      },
+      {
+        type: "MULTIPLE_CHOICE",
+        prompt: "Welk voorbeeld wordt gebruikt om uit te leggen dat je eerst goed voor jezelf moet zorgen?",
+        options: [
+          "Dat je in een vliegtuig eerst je eigen zuurstofmasker opzet",
+          "Dat je eerst zelf moet eten voordat je kookt voor een ander",
+          "Dat je in het verkeer eerst zelf moet stoppen",
+          "Dat je eerst je eigen huis moet schoonmaken",
+        ],
+        correctIndex: 0,
+      },
+      {
+        type: "MULTIPLE_CHOICE",
+        prompt: "Welke manier van helpen vinden ze beter dan iemand alleen geld geven?",
+        options: [
+          "Iemand leren vissen, zodat die zichzelf kan redden",
+          "Iemand elke week een vis geven",
+          "Alleen helpen als iemand erom vraagt",
+          "Helpen via een loterij",
+        ],
+        correctIndex: 0,
+      },
+      {
+        type: "SEQUENCE",
+        prompt: "Zet deze onderwerpen in de volgorde waarin ze in de aflevering aan bod komen.",
+        items: [
+          "Het eerste en tweede grote gebod",
+          "Een 'people pleaser' zijn tegenover de harde waarheid durven zeggen",
+          "Het verhaal van de barmhartige Samaritaan",
+          "Vastengaven en de vijf broden en twee vissen",
+        ],
+      },
+    ],
+    bomConnection: [
+      {
+        type: "MULTIPLE_CHOICE",
+        prompt:
+          "Koos en Raphael zeggen: als we onze naaste liefhebben, hebben we God lief. Wat leert koning Benjamin daarover in Mosiah 2:17?",
+        options: [
+          "Dat wanneer gij in dienst van uw medemensen zijt, gij louter in dienst van uw God zijt",
+          "Dat wie zijn medemensen dient, niet meer naar de tempel hoeft",
+          "Dat alleen een koning in dienst van God kan zijn",
+          "Dat men eerst God moet dienen en pas daarna zijn medemensen",
+        ],
+        correctIndex: 0,
+      },
+      {
+        type: "MULTIPLE_CHOICE",
+        prompt: "Wat wil koning Benjamin volgens Mosiah 2:17 dat zijn volk hierdoor leert?",
+        options: ["Wijsheid", "Geduld", "Gehoorzaamheid aan de wet van Mozes", "Hoe ze een koning moeten kiezen"],
+        correctIndex: 0,
+      },
+      {
+        type: "TRUE_FALSE",
+        prompt: "In Mosiah 2:16 zegt koning Benjamin dat hij graag wil roemen over zijn dienst aan het volk.",
+        answer: false,
+      },
+      {
+        type: "SEQUENCE",
+        prompt: "Zet deze uitspraken van koning Benjamin uit Mosiah 2:16-19 in de juiste volgorde.",
+        items: [
+          "Hij wil niet roemen, want hij is louter in dienst van God geweest",
+          "Wanneer gij in dienst van uw medemensen zijt, zijt gij louter in dienst van uw God",
+          "Als uw koning arbeidt om u te dienen, behoort gij dan niet te arbeiden om elkaar te dienen?",
+          "Hoezeer behoort gij dan uw hemelse Koning te danken",
+        ],
+      },
+    ],
+  },
 ];
