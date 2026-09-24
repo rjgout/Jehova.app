@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { getSocket } from "@/lib/socketClient";
+import { useLobbyExit } from "@/lib/useLobbyExit";
+import LobbyClosedNotice from "@/components/LobbyClosedNotice";
 import type { AkStateView } from "@/lib/alleskenner/types";
 import { AK_MAX_TEAMS, AK_MIN_PLAYERS, AK_MIN_TEAM_PLAYERS } from "@/lib/alleskenner/types";
 import AlleskennerGame, { TEAM_DOTS } from "@/components/alleskenner/AlleskennerGame";
@@ -21,7 +23,6 @@ interface Friend {
  * weergave, dus dit component beslist niets zelf over goed/fout of seconden.
  */
 export default function AlleskennerRoom({ code, soloRunId }: { code: string; soloRunId?: string }) {
-  const router = useRouter();
   const [state, setState] = useState<AkStateView | null>(null);
   const [receivedAt, setReceivedAt] = useState(0);
   const [error, setError] = useState<string | null>(null);
@@ -38,22 +39,21 @@ export default function AlleskennerRoom({ code, soloRunId }: { code: string; sol
     function onError({ message }: { message: string }) {
       setError(message);
     }
-    function onCancelled({ code: cancelled }: { code: string }) {
-      if (cancelled === code) router.push("/live");
-    }
     socket.on("ak:state", onState);
     socket.on("ak:error", onError);
-    socket.on("game_cancelled", onCancelled);
     // Na een herverbinding (bv. telefoon even in slaap) opnieuw aanmelden.
     socket.on("connect", join);
     if (socket.connected) join();
     return () => {
       socket.off("ak:state", onState);
       socket.off("ak:error", onError);
-      socket.off("game_cancelled", onCancelled);
       socket.off("connect", join);
     };
-  }, [code, soloRunId, router]);
+  }, [code, soloRunId]);
+
+  // Sluiten door de host en zelf vertrekken: zie useLobbyExit.
+  const { closedByHost, leave } = useLobbyExit(code, { isHost: state?.me.isHost ?? false, alleskenner: true });
+  if (closedByHost) return <LobbyClosedNotice />;
 
   if (!state) {
     return (
@@ -75,7 +75,7 @@ export default function AlleskennerRoom({ code, soloRunId }: { code: string; sol
   return (
     <div className="max-w-3xl mx-auto flex flex-col gap-4">
       {error && <p className="card !py-3 text-sm font-semibold text-red-600 dark:text-red-400">{error}</p>}
-      {state.phase === "LOBBY" && <Lobby state={state} />}
+      {state.phase === "LOBBY" && <Lobby state={state} onLeave={leave} />}
       {state.phase !== "LOBBY" && state.phase !== "FINISHED" && (
         <AlleskennerGame state={state} receivedAt={receivedAt} />
       )}
@@ -86,7 +86,7 @@ export default function AlleskennerRoom({ code, soloRunId }: { code: string; sol
 
 const ROLE_LABEL = { player: "Speler", spectator: "Toeschouwer", quizmaster: "Quizmaster" } as const;
 
-function Lobby({ state }: { state: AkStateView }) {
+function Lobby({ state, onLeave }: { state: AkStateView; onLeave: () => void }) {
   const socket = getSocket();
   const isHost = state.me.isHost;
   const [friends, setFriends] = useState<Friend[]>([]);
@@ -302,6 +302,12 @@ function Lobby({ state }: { state: AkStateView }) {
             Spel beëindigen
           </button>
         </div>
+      )}
+
+      {!isHost && (
+        <button className="self-center text-sm font-semibold text-slate-500 dark:text-slate-400 hover:underline" onClick={onLeave}>
+          Lobby verlaten
+        </button>
       )}
     </>
   );

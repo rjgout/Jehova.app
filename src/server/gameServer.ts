@@ -1122,12 +1122,54 @@ export function initGameServer(httpServer: HttpServer) {
         socket.emit("error_message", { message: "Kon dit spel niet beëindigen." });
         return;
       }
+      // Wie in de lobby zat, vóór het verwijderen ophalen (de spelersrijen
+      // gaan mee met het spel). Via ieders eigen user-room en niet via de
+      // spelcode: De Alleskenner zet spelers niet in die socket-room, en zo
+      // krijgen ook andere open tabbladen (bv. de actieve-spellenbanner) het
+      // mee.
+      const playerIds = (
+        await prisma.liveGamePlayer.findMany({ where: { gameId: game.id }, select: { userId: true } }).catch(() => [])
+      ).map((p) => p.userId);
       await revokeOpenInvites(upperCode).catch(() => {});
       await prisma.liveGame.delete({ where: { id: game.id } }).catch(() => {});
       rooms.delete(upperCode);
       forgetAlleskennerRoom(upperCode);
-      ioInstance?.to(upperCode).emit("error_message", { message: "Dit spel is beëindigd." });
-      socket.emit("game_cancelled", { code: upperCode });
+      for (const playerId of new Set([...playerIds, user.id])) {
+        ioInstance?.to(`user:${playerId}`).emit("game_cancelled", { code: upperCode });
+      }
+      ioInstance?.in(upperCode).socketsLeave(upperCode);
+    });
+
+    // Een speler (niet de host) verlaat zelf de lobby. Alleen vóór de start:
+    // tijdens een spel is er "opgeven" (forfeit). De uitnodiging blijft
+    // geldig, dus wie per ongeluk vertrekt, kan gewoon terugkomen.
+    socket.on("leave_game", async ({ code }: { code?: unknown }) => {
+      if (typeof code !== "string") return;
+      const upperCode = code.toUpperCase();
+      const room = rooms.get(upperCode);
+      let gameId = room?.id ?? null;
+      if (room) {
+        if (room.status !== "LOBBY" || room.hostId === user.id) return;
+        const player = room.players.get(user.id);
+        if (player) {
+          room.players.delete(user.id);
+          if (room.turnOrder) room.turnOrder = room.turnOrder.filter((id) => id !== user.id);
+          for (const socketId of player.socketIds) {
+            const playerSocket = ioInstance?.sockets.sockets.get(socketId);
+            if (!playerSocket) continue;
+            playerSocket.leave(upperCode);
+            if (playerSocket.data.gameCode === upperCode) playerSocket.data.gameCode = undefined;
+          }
+        }
+        broadcastLobby(room);
+      } else {
+        // Na een herstart van de server staat de lobby alleen nog in de database.
+        const game = await prisma.liveGame.findUnique({ where: { code: upperCode } });
+        if (!game || game.status !== "LOBBY" || game.hostId === user.id) return;
+        gameId = game.id;
+      }
+      if (gameId) await prisma.liveGamePlayer.deleteMany({ where: { gameId, userId: user.id } }).catch(() => {});
+      ioInstance?.to(`user:${user.id}`).emit("game_left", { code: upperCode });
     });
 
     socket.on("disconnect", () => {

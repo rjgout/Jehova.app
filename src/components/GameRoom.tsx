@@ -3,6 +3,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { getSocket } from "@/lib/socketClient";
+import { useLobbyExit } from "@/lib/useLobbyExit";
+import LobbyClosedNotice from "@/components/LobbyClosedNotice";
 import { normalizeAnswer } from "@/lib/exerciseGen";
 import { announceXpChanged } from "@/lib/xpBroadcast";
 import UserAvatar from "@/components/UserAvatar";
@@ -143,6 +145,10 @@ export default function GameRoom({ code, myUserId }: { code: string; myUserId: s
     .map((word, poolIndex) => ({ word, poolIndex }))
     .filter(({ poolIndex }) => !placed.some((p) => p.poolIndex === poolIndex));
 
+  const { closedByHost, leave: leaveLobby } = useLobbyExit(code, { isHost: hostId !== null && myUserId === hostId });
+
+  if (closedByHost) return <LobbyClosedNotice />;
+
   if (phase === "error") {
     return (
       <div className="max-w-md mx-auto card text-center flex flex-col gap-4">
@@ -192,7 +198,12 @@ export default function GameRoom({ code, myUserId }: { code: string; myUserId: s
             </button>
           </div>
         ) : (
-          <p className="text-center text-slate-400 dark:text-slate-500">Wachten tot de host het spel start...</p>
+          <div className="flex flex-col items-center gap-2">
+            <p className="text-center text-slate-400 dark:text-slate-500">Wachten tot de host het spel start...</p>
+            <button className="text-slate-500 dark:text-slate-400 text-sm font-semibold hover:underline" onClick={leaveLobby}>
+              Lobby verlaten
+            </button>
+          </div>
         )}
       </div>
     );

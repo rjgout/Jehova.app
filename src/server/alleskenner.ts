@@ -1847,6 +1847,26 @@ export function registerAlleskennerHandlers(server: SocketIOServer, socket: Sock
     broadcast(room);
   });
 
+  // Een deelnemer (niet de host) verlaat zelf de lobby; tegenhanger van
+  // leave_game in gameServer.ts, want deze kamers staan in een eigen map.
+  socket.on("ak:leave", async () => {
+    const room = current();
+    if (!room || room.solo || room.phase !== "LOBBY" || room.hostId === user.id) return;
+    if (room.quizmasterId === user.id) room.quizmasterId = null;
+    room.participants.delete(user.id);
+    for (const socketId of room.sockets.get(user.id) ?? []) {
+      const participantSocket = io?.sockets.sockets.get(socketId);
+      if (participantSocket?.data.akCode === room.code) participantSocket.data.akCode = undefined;
+    }
+    room.sockets.delete(user.id);
+    normalizeTeams(room);
+    await prisma.liveGamePlayer
+      .deleteMany({ where: { gameId: room.gameId, userId: user.id } })
+      .catch(() => {});
+    broadcast(room);
+    io?.to(`user:${user.id}`).emit("game_left", { code: room.code });
+  });
+
   socket.on("ak:stop", () => {
     const room = current();
     if (!room || room.hostId !== user.id || room.phase === "LOBBY" || room.phase === "FINISHED") return;

@@ -62,6 +62,7 @@ export default function ActiveGamesBanner() {
   useEffect(() => {
     const socket = getSocket();
     socket.on("game_cancelled", reload);
+    socket.on("game_left", reload);
     // Een nieuwe of vervallen live-uitnodiging meteen tonen/weghalen.
     socket.on("game_invite", reload);
     socket.on("game_invite_revoked", reload);
@@ -71,6 +72,7 @@ export default function ActiveGamesBanner() {
     document.addEventListener("visibilitychange", onVisible);
     return () => {
       socket.off("game_cancelled", reload);
+      socket.off("game_left", reload);
       socket.off("game_invite", reload);
       socket.off("game_invite_revoked", reload);
       document.removeEventListener("visibilitychange", onVisible);
