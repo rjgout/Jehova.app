@@ -9127,4 +9127,195 @@ export const podcastEpisodes: PodcastEpisodeSeed[] = [
       },
     ],
   },
+  {
+    number: 10,
+    title: "Aflevering 10",
+    summary: "Wordt bijgewerkt vanuit de podcastfeed.",
+    content: [
+      {
+        type: "MULTIPLE_CHOICE",
+        prompt: "Wie weet volgens Raphael wanneer Christus terugkomt?",
+        options: [
+          "Alleen de Hemelse Vader",
+          "De profeten die een jaartal noemen",
+          "Iedereen die het boek Openbaring goed bestudeert",
+          "Niemand, ook de Hemelse Vader niet",
+        ],
+        correctIndex: 0,
+      },
+      {
+        type: "MULTIPLE_CHOICE",
+        prompt: "Welke belofte staat er in de patriarchale zegen die Koos op zijn veertiende kreeg?",
+        options: [
+          "Dat hij Christus bij zijn wederkomst zal mogen ontmoeten",
+          "Dat hij een groot gezin met twaalf kinderen zal krijgen",
+          "Dat hij de datum van de wederkomst zal kennen",
+          "Dat hij nooit ziek zal worden",
+        ],
+        correctIndex: 0,
+      },
+      {
+        type: "MULTIPLE_CHOICE",
+        prompt: "Welk teken van de wederkomst vindt Raphael het interessantst?",
+        options: [
+          "Profeten die in Jeruzalem een aantal dagen dood op straat blijven liggen",
+          "Geruchten van oorlogen",
+          "Aardbevingen en natuurrampen",
+          "Een jaar zonder regenboog",
+        ],
+        correctIndex: 0,
+      },
+      {
+        type: "TRUE_FALSE",
+        prompt: "Koos is bang voor de tijd voor de wederkomst, omdat hij niet weet of hij er klaar voor is.",
+        answer: false,
+      },
+      {
+        type: "SEQUENCE",
+        prompt: "Zet deze onderwerpen in de volgorde waarin ze in de aflevering aan bod komen.",
+        items: [
+          "Wie weet wanneer Christus terugkomt, en mensen die een jaartal noemen",
+          "De belofte in Koos' patriarchale zegen",
+          "Christus die bij de Olijfberg komt en door het Joodse volk wordt herkend",
+          "Elke dag werken aan je relatie met Christus, zodat je niets hoeft te vrezen",
+        ],
+      },
+    ],
+    bomConnection: [
+      {
+        type: "MULTIPLE_CHOICE",
+        prompt:
+          "Koos noemt de profetie dat de onrechtvaardigen 'als stoppels' zullen verbranden. Jezus gaf die woorden van Maleachi ook aan de Nephieten. Wie zijn volgens 3 Nephi 25:1 de stoppels?",
+        options: [
+          "Alle hoogmoedigen en allen die goddeloosheid bedrijven",
+          "Allen die nog geen tiende hebben betaald",
+          "Alle mensen die niet in Jeruzalem wonen",
+          "Allen die nooit een profeet hebben gezien",
+        ],
+        correctIndex: 0,
+      },
+      {
+        type: "MULTIPLE_CHOICE",
+        prompt: "Wat belooft 3 Nephi 25:2 aan hen die de naam van de Heer vrezen?",
+        options: [
+          "De Zoon der gerechtigheid zal opgaan met genezing onder zijn vleugels",
+          "Ze zullen de datum van de wederkomst te horen krijgen",
+          "Ze zullen nooit meer hoeven te werken",
+          "Ze zullen koning worden over een eigen land",
+        ],
+        correctIndex: 0,
+      },
+      {
+        type: "TRUE_FALSE",
+        prompt:
+          "Volgens 3 Nephi 24:1 gebood Jezus de Nephieten de woorden van Maleachi op te schrijven, en legde Hij ze daarna uit.",
+        answer: true,
+      },
+      {
+        type: "SEQUENCE",
+        prompt: "Zet deze uitspraken uit 3 Nephi 25:1-6 in de juiste volgorde.",
+        items: [
+          "De dag komt, brandend als een oven, en de goddelozen zullen stoppels zijn",
+          "Voor wie mijn naam vreest, zal de Zoon der gerechtigheid opgaan met genezing",
+          "Gedenkt de wet van Mozes, mijn knecht",
+          "Ik zend u de profeet Elia, voordat de grote en geduchte dag des Heren komt",
+        ],
+      },
+    ],
+  },
+  {
+    number: 12,
+    title: "Aflevering 12",
+    summary: "Wordt bijgewerkt vanuit de podcastfeed.",
+    content: [
+      {
+        type: "MULTIPLE_CHOICE",
+        prompt: "Waarom is 'ik heb het druk' volgens Raphael vaak een excuus?",
+        options: [
+          "Omdat je altijd kunt plannen en prioriteiten kunt stellen; eigenlijk maak je er geen tijd voor",
+          "Omdat niemand ooit echt druk is",
+          "Omdat je het beter nooit tegen iemand kunt zeggen",
+          "Omdat druk zijn alleen voor mensen met een baan geldt",
+        ],
+        correctIndex: 0,
+      },
+      {
+        type: "MULTIPLE_CHOICE",
+        prompt: "Waarom kwam Koos vroeger vaak te laat?",
+        options: [
+          "Hij dacht in vijf minuten nog iets te kunnen doen, zoals zijn fietsband repareren",
+          "Hij had geen horloge",
+          "Hij woonde te ver van school",
+          "Hij versliep zich elke ochtend",
+        ],
+        correctIndex: 0,
+      },
+      {
+        type: "MULTIPLE_CHOICE",
+        prompt: "Wat bedoelt Raphael met zijn theorie van 'verticale tijd'?",
+        options: [
+          "Dat alles eigenlijk op hetzelfde moment, nu, gebeurt",
+          "Dat de tijd sneller gaat als je naar boven kijkt",
+          "Dat je 's nachts meer tijd hebt dan overdag",
+          "Dat verleden en toekomst niet bestaan",
+        ],
+        correctIndex: 0,
+      },
+      {
+        type: "TRUE_FALSE",
+        prompt: "Raphael zegt dat zijn idee over verticale tijd gebaseerd is op wat een profeet heeft geleerd.",
+        answer: false,
+      },
+      {
+        type: "SEQUENCE",
+        prompt: "Zet deze onderwerpen in de volgorde waarin ze in de aflevering aan bod komen.",
+        items: [
+          "Of 'ik heb het druk' een excuus is",
+          "Koos die vroeger altijd te laat kwam",
+          "Raphaels theorie over verticale tijd en het lijden van Christus",
+          "Hoe het leven hierna zal zijn zonder tijd, en dus nooit meer te laat komen",
+        ],
+      },
+    ],
+    bomConnection: [
+      {
+        type: "MULTIPLE_CHOICE",
+        prompt:
+          "Raphael vindt het moeilijk te begrijpen hoe Christus kon lijden voor zonden die nog niet waren begaan. Hoe spreekt Abinadi in Mosiah 16:6 over de komst van Christus?",
+        options: [
+          "Over toekomstige dingen alsof zij reeds hebben plaatsgevonden",
+          "Alsof het nog duizenden jaren zou duren",
+          "Alsof het nooit echt zou gebeuren",
+          "Alleen in raadsels die niemand begreep",
+        ],
+        correctIndex: 0,
+      },
+      {
+        type: "MULTIPLE_CHOICE",
+        prompt: "Wat zou er volgens Mosiah 16:6 zijn gebeurd als Christus niet in de wereld was gekomen?",
+        options: [
+          "Dan had er geen verlossing kunnen zijn",
+          "Dan was er nooit een profeet geweest",
+          "Dan had de wet van Mozes altijd gegolden zonder gevolgen",
+          "Dan waren alle mensen vanzelf gered",
+        ],
+        correctIndex: 0,
+      },
+      {
+        type: "TRUE_FALSE",
+        prompt: "Volgens Mosiah 16:8 is er wél een opstanding, en heeft het graf daarom geen overwinning.",
+        answer: true,
+      },
+      {
+        type: "SEQUENCE",
+        prompt: "Zet deze uitspraken van Abinadi uit Mosiah 16:5-8 in de juiste volgorde.",
+        items: [
+          "Wie in opstand tegen God blijft, voor hem is het alsof er geen verlossing was",
+          "Christus sprak over toekomstige dingen alsof zij reeds hebben plaatsgevonden",
+          "Als Christus niet uit de doden was opgestaan, had er geen opstanding kunnen zijn",
+          "De prikkel des doods is in Christus verzwolgen",
+        ],
+      },
+    ],
+  },
 ];
