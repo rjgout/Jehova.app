@@ -745,6 +745,34 @@ export function initGameServer(httpServer: HttpServer) {
       if (related) ioInstance?.to(`user:${otherUserId}`).emit("friends_changed");
     });
 
+    // Woordspel: de routes draaien in Next's eigen bundel en kunnen deze
+    // Socket.io-instantie niet bereiken (zelfde reden als hierboven). Na een
+    // geslaagde actie seint de client dit, en de tegenstander krijgt het
+    // meteen: een verse uitnodiging als melding bovenin (InviteListener), en
+    // anders een seintje om lijst en bord te verversen. Alleen voor wie echt
+    // in dit spel zit; wat er veranderde, leest de ander zelf uit de database.
+    socket.on("scrabble_changed", async (payload: { gameId?: unknown }) => {
+      const gameId = payload?.gameId;
+      if (typeof gameId !== "string" || gameId.length > 64) return;
+      const game = await prisma.scrabbleGame
+        .findUnique({ where: { id: gameId }, select: { player1Id: true, player2Id: true, status: true, createdAt: true } })
+        .catch(() => null);
+      if (!game || (game.player1Id !== user.id && game.player2Id !== user.id)) return;
+      const opponentId = game.player1Id === user.id ? game.player2Id : game.player1Id;
+      ioInstance?.to(`user:${opponentId}`).emit("scrabble_updated", { gameId });
+      // Een net verstuurde uitnodiging (alleen door de uitdager, alleen kort
+      // na het aanmaken): niet bij elke latere herhaling van het seintje.
+      if (game.status === "PENDING" && game.player1Id === user.id && Date.now() - game.createdAt.getTime() < 60_000) {
+        ioInstance?.to(`user:${opponentId}`).emit("game_invite", {
+          code: gameId,
+          fromDisplayName: user.handle,
+          fromUserId: user.id,
+          gameLabel: "het Woordspel",
+          href: "/scrabble",
+        });
+      }
+    });
+
     socket.on("join_game", async ({ code }: { code: string }) => {
       const upperCode = code.toUpperCase();
       let room = rooms.get(upperCode);

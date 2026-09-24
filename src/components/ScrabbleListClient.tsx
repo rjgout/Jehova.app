@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import UserAvatar from "@/components/UserAvatar";
+import { getSocket } from "@/lib/socketClient";
+import { formatTag } from "@/lib/handle";
 
 interface GameView {
   id: string;
@@ -19,6 +21,7 @@ interface GameView {
 interface FriendOption {
   id: string;
   handle: string;
+  discriminator: string;
 }
 
 export default function ScrabbleListClient() {
@@ -39,9 +42,18 @@ export default function ScrabbleListClient() {
     load();
     fetch("/api/friends")
       .then((r) => r.json())
-      .then((d) => setFriends(d.friends ?? []));
+      // /api/friends geeft per vriend { friendshipId, user } terug.
+      .then((d) => setFriends((d.friends ?? []).map((entry: { user: FriendOption }) => entry.user)));
     const friendParam = searchParams.get("friend");
     if (friendParam) setSelectedFriend(friendParam);
+    // De tegenstander nodigde uit, accepteerde, weigerde of speelde: meteen
+    // verversen in plaats van pas bij de volgende keer openen.
+    const socket = getSocket();
+    const onUpdated = () => load();
+    socket.on("scrabble_updated", onUpdated);
+    return () => {
+      socket.off("scrabble_updated", onUpdated);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -61,12 +73,16 @@ export default function ScrabbleListClient() {
       return;
     }
     setMessage("Uitnodiging verstuurd! 🔤");
+    // De route kan de socketserver niet bereiken: zelf seinen, zodat je
+    // vriend de uitnodiging meteen ziet (melding bovenin, lijst ververst).
+    if (body.id) getSocket().emit("scrabble_changed", { gameId: body.id });
     setSelectedFriend("");
     load();
   }
 
   async function respond(id: string, action: "accept" | "decline") {
     const res = await fetch(`/api/scrabble/${id}/${action}`, { method: "POST" });
+    if (res.ok) getSocket().emit("scrabble_changed", { gameId: id });
     if (res.ok && action === "accept") {
       router.push(`/scrabble/${id}`);
       return;
@@ -103,7 +119,7 @@ export default function ScrabbleListClient() {
               <option value="">Kies een vriend...</option>
               {friends.map((f) => (
                 <option key={f.id} value={f.id}>
-                  {f.handle}
+                  {formatTag(f.handle, f.discriminator)}
                 </option>
               ))}
             </select>

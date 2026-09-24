@@ -10,6 +10,13 @@ interface Invite {
   fromDisplayName: string;
   fromUserId?: string;
   gameLabel?: string;
+  // Waar tikken naartoe gaat; zonder = de lobby van een live spel (/live/<code>).
+  // Bv. een woordspeluitnodiging gaat naar /scrabble, geen live spel.
+  href?: string;
+}
+
+function inviteHref(invite: Invite): string {
+  return invite.href ?? `/live/${invite.code}`;
 }
 
 type Notice =
@@ -99,13 +106,13 @@ export default function InviteListener() {
     return clearHideTimer;
   }, [notice, startHideTimer]);
 
-  if (!notice || (notice.kind === "invite" && pathname === `/live/${notice.code}`)) return null;
+  if (!notice || (notice.kind === "invite" && pathname === inviteHref(notice))) return null;
 
   function open() {
     if (!notice) return;
     clearHideTimer();
     setNotice(null);
-    router.push(notice.kind === "invite" ? `/live/${notice.code}` : "/friends");
+    router.push(notice.kind === "invite" ? inviteHref(notice) : "/friends");
   }
 
   const names = notice.kind === "online" ? joinNames(notice.friends.map((f) => f.name)) : "";
@@ -115,9 +122,9 @@ export default function InviteListener() {
           person: notice.fromUserId ? { id: notice.fromUserId, name: notice.fromDisplayName } : null,
           icon: "🎮",
           iconClass: "from-brand-500 to-brand-700",
-          title: "Uitnodiging voor een live spel",
+          title: notice.href ? "Uitnodiging" : "Uitnodiging voor een live spel",
           text: `${notice.fromDisplayName} nodigt je uit${notice.gameLabel ? ` voor ${notice.gameLabel}` : ""}. Tik om mee te doen.`,
-          label: `${notice.fromDisplayName} nodigt je uit voor een live spel. Tik om mee te doen, veeg omhoog om te negeren.`,
+          label: `${notice.fromDisplayName} nodigt je uit${notice.gameLabel ? ` voor ${notice.gameLabel}` : ""}. Tik om mee te doen, veeg omhoog om te negeren.`,
         }
       : {
           // Bij meerdere vrienden tegelijk: de avatar van wie het laatst online kwam.

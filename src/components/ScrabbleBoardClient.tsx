@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import UserAvatar from "@/components/UserAvatar";
+import { getSocket } from "@/lib/socketClient";
 
 const BOARD_SIZE = 15;
 const CENTER = 7;
@@ -170,11 +171,19 @@ export default function ScrabbleBoardClient({ gameId }: { gameId: string }) {
     // handmatig verversen zien verschijnen. Laat je eigen, nog niet
     // ingediende plaatsing/selectie met rust (zie hierboven).
     const interval = setInterval(() => load(false), 8000);
+    // Zet van de tegenstander: meteen tonen (de polling is alleen nog een
+    // vangnet, bv. als de socket even weg was).
+    const socket = getSocket();
+    const onUpdated = (payload: { gameId?: string }) => {
+      if (payload?.gameId === gameId) load(false);
+    };
+    socket.on("scrabble_updated", onUpdated);
     return () => {
       clearInterval(interval);
+      socket.off("scrabble_updated", onUpdated);
       if (flashTimer.current) clearTimeout(flashTimer.current);
     };
-  }, [load]);
+  }, [load, gameId]);
 
   if (loadError) {
     return (
@@ -222,6 +231,12 @@ export default function ScrabbleBoardClient({ gameId }: { gameId: string }) {
     setPending((cur) => cur.filter((p) => !(p.row === row && p.col === col)));
   }
 
+  // De routes kunnen de socketserver niet bereiken: zelf seinen dat er iets
+  // veranderde, zodat de tegenstander het meteen ziet.
+  function signalOpponent() {
+    getSocket().emit("scrabble_changed", { gameId });
+  }
+
   async function submitMove() {
     if (pending.length === 0) return;
     setBusy(true);
@@ -240,6 +255,7 @@ export default function ScrabbleBoardClient({ gameId }: { gameId: string }) {
       return;
     }
     setMessage(`+${body.score} punten: ${body.wordsFormed.join(", ")}`);
+    signalOpponent();
     load();
   }
 
@@ -260,6 +276,7 @@ export default function ScrabbleBoardClient({ gameId }: { gameId: string }) {
       return;
     }
     setMessage("Letters gewisseld.");
+    signalOpponent();
     load();
   }
 
@@ -273,6 +290,7 @@ export default function ScrabbleBoardClient({ gameId }: { gameId: string }) {
       setMessage(body.error ?? "Kon niet passen.");
       return;
     }
+    signalOpponent();
     load();
   }
 
@@ -307,6 +325,7 @@ export default function ScrabbleBoardClient({ gameId }: { gameId: string }) {
       setMessage(body.error ?? "Kon niet opgeven.");
       return;
     }
+    signalOpponent();
     load();
   }
 

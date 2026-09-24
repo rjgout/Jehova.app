@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import UserAvatar from "@/components/UserAvatar";
+import { formatTag } from "@/lib/handle";
 
 interface ChallengeView {
   id: string;
@@ -23,6 +24,7 @@ interface ChallengeView {
 interface FriendOption {
   id: string;
   handle: string;
+  discriminator: string;
 }
 
 interface ChapterOption {
@@ -51,7 +53,8 @@ export default function ChallengesClient() {
     load();
     fetch("/api/friends")
       .then((r) => r.json())
-      .then((d) => setFriends(d.friends ?? []));
+      // /api/friends geeft per vriend { friendshipId, user } terug.
+      .then((d) => setFriends((d.friends ?? []).map((entry: { user: FriendOption }) => entry.user)));
     fetch("/api/chapters")
       .then((r) => r.json())
       .then((d) => setChapters(Array.isArray(d) ? d.filter((c: ChapterOption) => c.exerciseCount > 0) : []));
@@ -128,7 +131,7 @@ export default function ChallengesClient() {
               <option value="">Kies een vriend...</option>
               {friends.map((f) => (
                 <option key={f.id} value={f.id}>
-                  {f.handle}
+                  {formatTag(f.handle, f.discriminator)}
                 </option>
               ))}
             </select>
