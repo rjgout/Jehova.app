@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { formatTag } from "@/lib/handle";
 import { getSocket } from "@/lib/socketClient";
+import UserTag from "@/components/UserTag";
 
 interface FriendUser {
   id: string;
@@ -44,15 +45,6 @@ function avatarColorFor(id: string): string {
 }
 function initialsFor(handle: string): string {
   return handle.slice(0, 2).toUpperCase();
-}
-
-function FriendTag({ handle, discriminator }: { handle: string; discriminator: string }) {
-  return (
-    <span className="truncate">
-      {handle}
-      <span className="text-slate-400 dark:text-slate-500 font-normal">#{discriminator}</span>
-    </span>
-  );
 }
 
 function Avatar({
@@ -258,7 +250,7 @@ export default function FriendsClient() {
               >
                 <span className="flex items-center gap-2 dark:text-slate-100">
                   <Avatar id={r.id} handle={r.handle} size="sm" />
-                  {formatTag(r.handle, r.discriminator)}
+                  <UserTag handle={r.handle} discriminator={r.discriminator} />
                 </span>
                 <button
                   className="btn-secondary !px-3 !py-1.5"
@@ -303,7 +295,7 @@ export default function FriendsClient() {
               >
                 <span className="flex items-center gap-2 font-bold dark:text-slate-100">
                   <Avatar id={from.id} handle={from.handle} avatarEmoji={from.avatarEmoji} />
-                  {formatTag(from.handle, from.discriminator)}
+                  <UserTag handle={from.handle} discriminator={from.discriminator} />
                 </span>
                 <div className="flex gap-2">
                   <button className="btn-primary !px-3 !py-1.5" onClick={() => respond(friendshipId, "accept", from.id)}>
@@ -327,7 +319,7 @@ export default function FriendsClient() {
               <div key={friendshipId} className="card flex items-center gap-3 !py-3 text-slate-500 dark:text-slate-400">
                 <Avatar id={to.id} handle={to.handle} avatarEmoji={to.avatarEmoji} size="sm" />
                 <span aria-hidden>⏳</span>
-                <span className="min-w-0 flex-1">Wachten op {formatTag(to.handle, to.discriminator)}</span>
+                <span className="min-w-0 flex-1">Wachten op <UserTag handle={to.handle} discriminator={to.discriminator} /></span>
                 <button className="btn-secondary !px-3 !py-1.5 !text-xs" onClick={() => removeFriendship(friendshipId, "Vriendschapsverzoek")}>Annuleren</button>
               </div>
             ))}
@@ -353,7 +345,7 @@ export default function FriendsClient() {
                   </span>
                   <div className="min-w-0">
                     <div className="font-bold flex items-center gap-1.5 dark:text-slate-100">
-                      <FriendTag handle={f.handle} discriminator={f.discriminator} />
+                      <UserTag handle={f.handle} discriminator={f.discriminator} className="truncate" />
                       {status?.online && (
                         <span className="text-[10px] font-bold uppercase text-green-600 dark:text-green-400 shrink-0">Online</span>
                       )}
@@ -401,7 +393,7 @@ export default function FriendsClient() {
             </h2>
             <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
               Weet je zeker dat je een streak freeze wilt geven aan{" "}
-              <span className="font-bold">{formatTag(pendingFreeze.handle, pendingFreeze.discriminator)}</span>?
+              <UserTag handle={pendingFreeze.handle} discriminator={pendingFreeze.discriminator} className="font-bold" />?
             </p>
             <div className="mt-5 flex justify-end gap-2">
               <button className="btn-secondary !px-3 !py-2" onClick={() => setPendingFreeze(null)}>

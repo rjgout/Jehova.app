@@ -6,6 +6,7 @@ import { formatTag } from "@/lib/handle";
 import { enableBrowserPush, isPushSupported } from "@/lib/pushClient";
 import { isStandalone } from "@/lib/pwaInstall";
 import InstallAppCard from "@/components/InstallAppCard";
+import UserTag from "@/components/UserTag";
 
 interface OnboardingClientProps {
   email: string;
@@ -276,7 +277,7 @@ function VriendenStep({ email, initialSearchable, onNext }: { email: string; ini
           <div className="flex flex-col gap-2">
             {results.map((r) => (
               <div key={r.id} className="flex items-center justify-between !py-2">
-                <span className="dark:text-slate-100">{formatTag(r.handle, r.discriminator)}</span>
+                <UserTag handle={r.handle} discriminator={r.discriminator} className="dark:text-slate-100" />
                 <button className="btn-secondary !px-3 !py-1.5" disabled={sentTo.has(r.id)} onClick={() => sendRequest(r)}>
                   {sentTo.has(r.id) ? "Verstuurd" : "Toevoegen"}
                 </button>

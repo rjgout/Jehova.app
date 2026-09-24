@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { announceXpChanged } from "@/lib/xpBroadcast";
+import UserTag from "@/components/UserTag";
 
 type LetterState = "correct" | "present" | "absent";
 
@@ -264,7 +265,7 @@ export default function WordGameClient() {
                 </span>
                 <div className="min-w-0 flex-1">
                   <p className="font-bold truncate dark:text-slate-100">
-                    {entry.handle}#{entry.discriminator}
+                    <UserTag handle={entry.handle} discriminator={entry.discriminator} />
                   </p>
                 </div>
                 <time className="text-sm font-bold text-slate-500 dark:text-slate-400 shrink-0">

@@ -2,6 +2,7 @@
 
 import { Fragment, useState } from "react";
 import { formatTag } from "@/lib/handle";
+import UserTag from "@/components/UserTag";
 
 interface AdminUser {
   id: string;
@@ -114,7 +115,7 @@ export default function AdminUsersClient({
             <Fragment key={u.id}>
               <tr className="border-b border-slate-50 dark:border-slate-800">
                 <td className="py-2 pr-3 font-bold dark:text-slate-100">
-                  {formatTag(u.handle, u.discriminator)}
+                  <UserTag handle={u.handle} discriminator={u.discriminator} />
                   {u.id === currentUserId && <span className="text-brand-500 dark:text-brand-300 font-normal"> (jij)</span>}
                 </td>
                 <td className="py-2 pr-3 text-slate-500 dark:text-slate-400">{u.email}</td>

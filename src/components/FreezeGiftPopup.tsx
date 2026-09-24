@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { formatTag } from "@/lib/handle";
+import UserTag from "@/components/UserTag";
 
 interface Gift {
   id: string;
@@ -28,9 +28,11 @@ export default function FreezeGiftPopup() {
   }
 
   const first = gifts[0];
-  const sender = first.sender
-    ? formatTag(first.sender.handle, first.sender.discriminator)
-    : "Een vriend";
+  const sender = first.sender ? (
+    <UserTag handle={first.sender.handle} discriminator={first.sender.discriminator} className="font-bold" />
+  ) : (
+    "Een vriend"
+  );
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 p-4">

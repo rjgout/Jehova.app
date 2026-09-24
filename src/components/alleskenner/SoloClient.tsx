@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { SoloLeaderboardEntry, SoloOverview } from "@/lib/alleskenner/solo";
+import UserTag from "@/components/UserTag";
 
 type Board = "today" | "week" | "friends";
 
@@ -163,8 +164,7 @@ function LeaderboardRow({ entry, mine, board }: { entry: SoloLeaderboardEntry; m
     <li className={`flex items-center gap-3 py-2 ${mine ? "rounded-xl bg-brand-50 dark:bg-slate-700/60 px-2 -mx-2" : ""}`}>
       <span className="w-7 text-center font-extrabold text-slate-400">{medal ?? entry.rank}</span>
       <span className="flex-1 min-w-0 truncate font-semibold dark:text-slate-100">
-        {entry.handle}
-        <span className="text-xs font-normal text-slate-400">#{entry.discriminator}</span>
+        <UserTag handle={entry.handle} discriminator={entry.discriminator} />
         {mine && <span className="ml-1.5 text-xs font-bold text-brand-600 dark:text-brand-300">(jij)</span>}
       </span>
       {board === "week" && entry.days !== undefined && (

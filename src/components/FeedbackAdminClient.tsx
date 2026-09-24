@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import UserTag from "@/components/UserTag";
 
 const STATUS_OPTIONS = ["NEW", "IN_PROGRESS", "DONE", "WONT_DO"] as const;
 const STATUS_LABELS: Record<string, string> = {
@@ -69,7 +70,7 @@ export default function FeedbackAdminClient() {
               <div className="flex items-start justify-between gap-2 flex-wrap">
                 <div>
                   <p className="font-bold text-sm dark:text-slate-100">
-                    {r.user.handle}#{r.user.discriminator}{" "}
+                    <UserTag handle={r.user.handle} discriminator={r.user.discriminator} />{" "}
                     <span className="font-normal text-slate-400 dark:text-slate-500">({r.user.email})</span>
                   </p>
                   <p className="text-xs text-slate-400 dark:text-slate-500">
