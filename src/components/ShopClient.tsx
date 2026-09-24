@@ -85,6 +85,22 @@ export default function ShopClient() {
         <div className="text-brand-100 font-bold text-sm mt-1">XP beschikbaar</div>
       </div>
 
+      {/* Een aankoop telt ook in de wekelijkse competitie (zie src/lib/shop.ts):
+          dat moet vóór de aankoop duidelijk zijn, niet pas als je gedegradeerd bent. */}
+      <div className="card !py-4 flex flex-col gap-2 text-sm text-slate-600 dark:text-slate-300">
+        <h2 className="font-extrabold text-slate-800 dark:text-slate-100">ℹ️ Goed om te weten</h2>
+        <ul className="list-disc pl-5 flex flex-col gap-1">
+          <li>Wat je koopt, gaat van je XP af. Ook je plek op de Nederlandse ranglijst zakt daardoor.</li>
+          <li>
+            Het gaat ook van je XP van deze week in je divisie af. Je weekscore kan daardoor onder nul komen.
+          </li>
+          <li>
+            Koop je iets in een week waarin je nog niet geoefend hebt, dan doe je die week toch mee in je divisie,
+            met een negatieve score. Dan kun je degraderen.
+          </li>
+        </ul>
+      </div>
+
       <div className="grid grid-cols-2 gap-4 text-center">
         <div className="card !py-3 !px-5 !bg-brand-50 dark:!bg-slate-800 !border-brand-100 dark:!border-slate-700">
           <div className="text-xl font-extrabold text-brand-600 dark:text-brand-300">💡 {data.hintBalance}</div>
