@@ -115,6 +115,24 @@ export function activityRuleFor(settings: LeagueSettingsView, activityKey: strin
   return settings.activityRules[activityKey] ?? settings.activityRules.DEFAULT ?? DEFAULT_ACTIVITY_RULES.DEFAULT;
 }
 
+/**
+ * Hoeveel spelers promoveren/degraderen in een groep van `total` spelers
+ * (alleen wie die week XP verdiende telt). Een volle groep volgt de
+ * instellingen (standaard 3 op 30); een kleinere groep dezelfde verhouding,
+ * afgerond, met altijd minstens één promotie: anders komt bij weinig spelers
+ * nooit iemand vooruit. Voorbeelden bij 3 op 30: 1-4 spelers 1 omhoog en
+ * niemand omlaag, 5-14 spelers 1/1, 15-24 spelers 2/2, vanaf 25 spelers 3/3.
+ * Gedeeld door de wekelijkse plaatsing en het klassement, zodat wat je ziet
+ * altijd klopt met wat er gebeurt.
+ */
+export function movementCounts(total: number, settings: LeagueSettingsView): { promote: number; demote: number } {
+  if (total <= 0) return { promote: 0, demote: 0 };
+  if (total >= settings.groupSize) return { promote: settings.promoteCount, demote: settings.demoteCount };
+  const promote = Math.min(total, Math.max(1, Math.round((total * settings.promoteCount) / settings.groupSize)));
+  const demote = Math.min(total - promote, Math.round((total * settings.demoteCount) / settings.groupSize));
+  return { promote, demote };
+}
+
 function previousWeekStart(weekStart: string): string {
   const d = new Date(`${weekStart}T00:00:00Z`);
   d.setUTCDate(d.getUTCDate() - 7);
@@ -122,21 +140,32 @@ function previousWeekStart(weekStart: string): string {
 }
 
 /**
- * Zoekt een niet-volle groep voor (weekStart, tier) en claimt er atomisch een
- * plek in (zelfde updateMany-guard-patroon als de hint-tegoeden bij
- * ChapterGuessGame/ScrabbleGame — voorkomt dat een groep door een race
- * conditie voorbij `size` vol raakt), of maakt een nieuwe groep aan als ze
- * allemaal vol zijn. Bij een gelijktijdige aanmaak van dezelfde volgende
- * index (zeldzaam, en onschadelijk bij deze schaal) vangt de unieke index op
- * (weekStart, tier, index) dat af; we proberen dan gewoon opnieuw.
+ * Wijst een speler een groep toe voor (weekStart, tier). Het aantal groepen
+ * wordt bij de eerste speler van die week geschat op basis van hoeveel
+ * spelers vorige week in deze divisie zaten, en spelers worden daarover
+ * gelijk verdeeld (steeds de minst gevulde groep): 31 spelers worden dan 16
+ * en 15, niet 30 en één speler alleen. Zijn alle groepen toch vol (meer
+ * spelers dan geschat), dan komt er een groep bij.
+ *
+ * Een plek claimen gebeurt atomisch (updateMany met de grootte als
+ * voorwaarde), zodat een groep door een race conditie nooit voorbij `size`
+ * vol raakt; bij een gelijktijdige aanmaak van dezelfde index vangt de
+ * unieke index op (weekStart, tier, index) dat af en proberen we opnieuw.
  */
 async function assignToGroup(tx: Tx, weekStart: string, tier: LeagueTier, settings: LeagueSettingsView): Promise<string> {
-  const existingGroups = await tx.leagueGroup.findMany({
-    where: { weekStart, tier },
-    orderBy: { index: "asc" },
-  });
+  let groups = await tx.leagueGroup.findMany({ where: { weekStart, tier }, orderBy: { index: "asc" } });
 
-  for (const group of existingGroups) {
+  if (groups.length === 0) {
+    const expected = await tx.weeklyScore.count({ where: { weekStart: previousWeekStart(weekStart), tier } });
+    const count = Math.max(1, Math.ceil(expected / settings.groupSize));
+    await tx.leagueGroup.createMany({
+      data: Array.from({ length: count }, (_, index) => ({ weekStart, tier, index, size: settings.groupSize, memberCount: 0 })),
+      skipDuplicates: true,
+    });
+    groups = await tx.leagueGroup.findMany({ where: { weekStart, tier }, orderBy: { index: "asc" } });
+  }
+
+  for (const group of [...groups].sort((a, b) => a.memberCount - b.memberCount || a.index - b.index)) {
     const claimed = await tx.leagueGroup.updateMany({
       where: { id: group.id, memberCount: { lt: settings.groupSize } },
       data: { memberCount: { increment: 1 } },
@@ -146,7 +175,7 @@ async function assignToGroup(tx: Tx, weekStart: string, tier: LeagueTier, settin
 
   try {
     const created = await tx.leagueGroup.create({
-      data: { weekStart, tier, index: existingGroups.length, size: settings.groupSize, memberCount: 1 },
+      data: { weekStart, tier, index: groups.length, size: settings.groupSize, memberCount: 1 },
     });
     return created.id;
   } catch (e) {
@@ -173,13 +202,14 @@ async function resolveTierFromGroup(
   const rank = peers.findIndex((p) => p.userId === prevScore.userId); // 0-based
   const total = peers.length;
   const tierIndex = TIER_ORDER.indexOf(prevScore.tier);
+  const { promote, demote } = movementCounts(total, settings);
 
-  if (rank === -1 || total < settings.minGroupSizeForMovement) return prevScore.tier;
+  if (rank === -1) return prevScore.tier;
 
-  if (rank < settings.promoteCount && tierIndex < TIER_ORDER.length - 1) {
+  if (rank < promote && tierIndex < TIER_ORDER.length - 1) {
     return TIER_ORDER[tierIndex + 1];
   }
-  if (rank >= total - settings.demoteCount && tierIndex > 0) {
+  if (rank >= total - demote && tierIndex > 0) {
     return TIER_ORDER[tierIndex - 1];
   }
   return prevScore.tier;
@@ -191,38 +221,37 @@ export interface WeeklyPlacement {
 }
 
 /**
- * Bepaalt in welke divisie én groep een gebruiker deze week start, op basis
- * van hun positie in hun groep van vorige week (top `promoteCount` promoveert,
- * onderste `demoteCount` degradeert, Brons/Legende zijn vloer/plafond) en
- * wijst ze meteen in een groep voor de huidige week. Wordt "lazy" aangeroepen
- * zodra iemand voor het eerst deze week XP verdient (zie applyWeeklyXp in
- * streak.ts) in plaats van via een wekelijkse cron-taak — functioneel
- * gelijkwaardig, zonder extra infra.
+ * In welke divisie een gebruiker deze week hoort, op basis van zijn laatste
+ * week met XP: zijn positie in de groep van die week (zie movementCounts,
+ * Zaad/Eeuwigheid zijn vloer/plafond). Een week (of langer) niet oefenen
+ * verandert niets: je blijft waar je was. Alleen wie nog nooit XP verdiende,
+ * begint in Zaad.
  *
- * Als iemand exact vorige week geen rij heeft (nooit gespeeld, of een pauze
- * genomen) tellen we ze als nieuw en starten ze weer in Brons — dat was al
- * zo vóór groepen bestonden en blijft bewust ongewijzigd (een ander gedrag
- * hiervoor is een aparte productbeslissing, geen onderdeel van deze uitbreiding).
+ * Puur rekenen, raakt geen groepen aan: ook bruikbaar om te tonen welke
+ * divisie je krijgt (klassement) of om de weekuitslag te melden (scheduler).
+ */
+export async function tierForWeek(tx: Tx, userId: string, weekStart: string): Promise<LeagueTier> {
+  const lastScore = await tx.weeklyScore.findFirst({
+    where: { userId, weekStart: { lt: weekStart } },
+    orderBy: { weekStart: "desc" },
+  });
+  if (!lastScore) return "BRONZE";
+  // Zonder groep (oude rijen van vóór de groepen): gewoon in dezelfde divisie.
+  if (!lastScore.groupId) return lastScore.tier;
+  const settings = await getLeagueSettings(tx);
+  return resolveTierFromGroup(tx, { userId, tier: lastScore.tier, groupId: lastScore.groupId }, settings);
+}
+
+/**
+ * Divisie én groep voor deze week. Wordt "lazy" aangeroepen zodra iemand
+ * voor het eerst deze week XP verdient (zie applyWeeklyXp) in plaats van via
+ * een wekelijkse cron-taak — functioneel gelijkwaardig, zonder extra infra.
+ * Claimt een plek in een groep: dus alleen aanroepen als de speler deze week
+ * echt meedoet, nooit om alleen iets te tonen (daarvoor is tierForWeek).
  */
 export async function resolveWeeklyPlacement(tx: Tx, userId: string, weekStart: string): Promise<WeeklyPlacement> {
   const settings = await getLeagueSettings(tx);
-  const prevWeek = previousWeekStart(weekStart);
-  const prevScore = await tx.weeklyScore.findUnique({
-    where: { userId_weekStart: { userId, weekStart: prevWeek } },
-  });
-
-  let tier: LeagueTier;
-  if (!prevScore) {
-    tier = "BRONZE";
-  } else if (!prevScore.groupId) {
-    // Kan in theorie niet meer voorkomen na de backfill-migratie, maar geen
-    // enkele historische rij mag ooit een crash veroorzaken — gewoon in
-    // dezelfde divisie laten staan.
-    tier = prevScore.tier;
-  } else {
-    tier = await resolveTierFromGroup(tx, { userId, tier: prevScore.tier, groupId: prevScore.groupId }, settings);
-  }
-
+  const tier = await tierForWeek(tx, userId, weekStart);
   const groupId = await assignToGroup(tx, weekStart, tier, settings);
   return { tier, groupId };
 }

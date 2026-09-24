@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getCurrentUser } from "@/lib/session";
 import { weekStartKey } from "@/lib/dates";
-import { getLeagueSettings, TIER_ORDER } from "@/lib/leagues";
+import { getLeagueSettings, movementCounts, tierForWeek, TIER_ORDER } from "@/lib/leagues";
 
 type Zone = "PROMOTION" | "SAFE" | "RELEGATION";
 
@@ -84,7 +84,9 @@ export async function GET(req: NextRequest) {
   const myScore = await prisma.weeklyScore.findUnique({
     where: { userId_weekStart: { userId: user.id, weekStart } },
   });
-  const myTier = myScore?.tier ?? "BRONZE";
+  // Nog geen XP deze week: de divisie die je krijgt zodra je begint (zie
+  // tierForWeek), niet Zaad.
+  const myTier = myScore?.tier ?? (await tierForWeek(prisma, user.id, weekStart));
   // Hoogste divisie ooit (voor de divisiebalk in de hero): een seizoen zet
   // de divisies niet terug, dus dit telt over alle weken heen.
   const reachedTiers = await prisma.weeklyScore.findMany({
@@ -120,6 +122,11 @@ export async function GET(req: NextRequest) {
   });
 
   const total = scores.length;
+  // Zelfde aantallen als de wekelijkse plaatsing (movementCounts); in de
+  // laagste divisie degradeert niemand, in de hoogste promoveert niemand.
+  const counts = movementCounts(total, settings);
+  const promoteCount = myTier === TIER_ORDER[TIER_ORDER.length - 1] ? 0 : counts.promote;
+  const demoteCount = myTier === TIER_ORDER[0] ? 0 : counts.demote;
   const entries = scores.map((s, i) => {
     const rank = i + 1;
     return {
@@ -129,7 +136,7 @@ export async function GET(req: NextRequest) {
       xp: s.xp,
       tier: s.tier,
       isMe: s.user.id === user.id,
-      zone: scope === "league" ? zoneFor(rank, total, settings.promoteCount, settings.demoteCount) : null,
+      zone: scope === "league" ? zoneFor(rank, total, promoteCount, demoteCount) : null,
     };
   });
 
@@ -143,12 +150,12 @@ export async function GET(req: NextRequest) {
     if (meIndex !== -1) {
       const me = entries[meIndex];
       if (me.zone === "RELEGATION") {
-        const lastSafeIndex = total - settings.demoteCount - 1;
+        const lastSafeIndex = total - demoteCount - 1;
         if (lastSafeIndex >= 0) {
           xpGap = { toward: "SAFETY", xp: Math.max(0, scores[lastSafeIndex].xp - me.xp + 1) };
         }
-      } else if (me.zone === "SAFE") {
-        const lastPromotionIndex = settings.promoteCount - 1;
+      } else if (me.zone === "SAFE" && promoteCount > 0) {
+        const lastPromotionIndex = promoteCount - 1;
         xpGap = { toward: "PROMOTION", xp: Math.max(0, scores[lastPromotionIndex].xp - me.xp + 1) };
       } else if (me.zone === "PROMOTION" && meIndex > 0) {
         xpGap = { toward: "FIRST_PLACE", xp: Math.max(0, scores[0].xp - me.xp + 1) };
@@ -161,8 +168,8 @@ export async function GET(req: NextRequest) {
     scope,
     myTier,
     highestTier,
-    promoteCount: settings.promoteCount,
-    demoteCount: settings.demoteCount,
+    promoteCount,
+    demoteCount,
     hasActivityThisWeek: Boolean(myScore),
     xpGap,
     // Bewust de handle (gekozen gebruikersnaam) i.p.v. displayName (echte

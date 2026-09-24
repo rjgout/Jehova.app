@@ -9,7 +9,9 @@ const schema = z
     groupSize: z.number().int().min(2).max(500),
     promoteCount: z.number().int().min(0),
     demoteCount: z.number().int().min(0),
-    minGroupSizeForMovement: z.number().int().min(1),
+    // Niet meer gebruikt (kleinere groepen gaan naar verhouding, zie
+    // movementCounts); nog geaccepteerd zodat een oud formulier niet faalt.
+    minGroupSizeForMovement: z.number().int().min(1).optional(),
     seasonWeekCount: z.number().int().min(1).max(52),
     localeCode: z.string().trim().min(2).max(10),
     activityRules: z.string().trim().refine((s) => {

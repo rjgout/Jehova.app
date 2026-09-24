@@ -1352,8 +1352,9 @@ model LeagueSettings {
   groupSize               Int      @default(30)
   promoteCount            Int      @default(3)
   demoteCount             Int      @default(3)
-  // Onder deze groepsgrootte promoveert/degradeert niemand (generaliseert de
-  // vroegere vaste ondergrens van 5 in resolveStartingTier).
+  // Niet meer gebruikt: een kleinere groep volgt nu dezelfde verhouding als
+  // promoteCount/demoteCount op groupSize (zie movementCounts in
+  // src/lib/leagues.ts). Blijft staan om geen data te laten vallen.
   minGroupSizeForMovement Int      @default(10)
   seasonWeekCount         Int      @default(6)
   localeCode              String   @default("nl-NL")

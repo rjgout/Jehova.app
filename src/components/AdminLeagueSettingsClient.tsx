@@ -6,7 +6,7 @@ interface LeagueSettingsView {
   groupSize: number;
   promoteCount: number;
   demoteCount: number;
-  minGroupSizeForMovement: number;
+  minGroupSizeForMovement?: number; // niet meer gebruikt: kleinere groepen gaan naar verhouding
   seasonWeekCount: number;
   localeCode: string;
   activityRules: string; // pretty-printed JSON
@@ -29,7 +29,6 @@ export default function AdminLeagueSettingsClient({ initial }: { initial: League
         groupSize: Number(form.groupSize),
         promoteCount: Number(form.promoteCount),
         demoteCount: Number(form.demoteCount),
-        minGroupSizeForMovement: Number(form.minGroupSizeForMovement),
         seasonWeekCount: Number(form.seasonWeekCount),
       }),
     });
@@ -54,6 +53,10 @@ export default function AdminLeagueSettingsClient({ initial }: { initial: League
       <p className="text-sm text-slate-500 dark:text-slate-400">
         Alles hier geldt vanaf de eerstvolgende keer dat het uitgerekend wordt (nieuwe week/seizoen) — een lopende
         week of seizoen wordt niet met terugwerkende kracht aangepast.
+      </p>
+      <p className="text-sm text-slate-500 dark:text-slate-400">
+        Promotie- en degradatieplaatsen gelden voor een volle groep. Een kleinere groep volgt dezelfde verhouding,
+        afgerond, met altijd minstens één promotie.
       </p>
 
       <form onSubmit={onSubmit} className="flex flex-col gap-3">
@@ -86,16 +89,6 @@ export default function AdminLeagueSettingsClient({ initial }: { initial: League
               min={0}
               value={form.demoteCount}
               onChange={(e) => setForm({ ...form, demoteCount: Number(e.target.value) })}
-            />
-          </label>
-          <label className="flex flex-col gap-1 text-sm font-bold dark:text-slate-200">
-            Min. groepsgrootte voor promotie/degradatie
-            <input
-              type="number"
-              className="input"
-              min={1}
-              value={form.minGroupSizeForMovement}
-              onChange={(e) => setForm({ ...form, minGroupSizeForMovement: Number(e.target.value) })}
             />
           </label>
           <label className="flex flex-col gap-1 text-sm font-bold dark:text-slate-200">

@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/db";
 import { addDays, dayKey, weekStartKey, amsterdamNow, type AmsterdamTime } from "@/lib/dates";
-import { resolveWeeklyPlacement, getLeagueSettings, TIER_ORDER, TIER_LABELS } from "@/lib/leagues";
+import { tierForWeek, getLeagueSettings, TIER_ORDER, TIER_LABELS } from "@/lib/leagues";
 import { notifyDailyReminder, notifyDailyText, notifyWeeklyResult, notifySeasonResult, notifyWordGame } from "@/lib/notify";
 import { getTextOfTheDay } from "@/lib/dailyText";
 import { wordGameDayKey } from "@/lib/wordGame";
@@ -90,11 +90,8 @@ async function runDailyReminderTick(): Promise<void> {
 
 /**
  * Stuurt, één keer per week, de promotie/degradatie-uitslag van de zojuist
- * afgelopen week. Hergebruikt resolveWeeklyPlacement (dezelfde
- * groep-rangschikking die ook "lazy" de starttier/groep van de nieuwe week
- * bepaalt) puur lezend, dus zonder dat lopende hoofdstuk-flows moeten
- * wachten op een wekelijkse batchjob — die blijven de tier zelf lazy
- * toepassen zoals voorheen.
+ * afgelopen week. Hergebruikt tierForWeek (dezelfde groep-rangschikking die
+ * ook "lazy" de divisie van de nieuwe week bepaalt), puur lezend.
  */
 async function runWeeklyResultTick(): Promise<void> {
   const now = new Date();
@@ -116,7 +113,9 @@ async function runWeeklyResultTick(): Promise<void> {
   });
 
   for (const score of endedScores) {
-    const { tier: newTier } = await resolveWeeklyPlacement(prisma, score.userId, newWeek);
+    // Alleen rekenen, geen groepsplek claimen: dat gebeurt pas als de speler
+    // deze week echt XP verdient (anders tellen groepen vol met wie niet meedoet).
+    const newTier = await tierForWeek(prisma, score.userId, newWeek);
     const oldIdx = TIER_ORDER.indexOf(score.tier);
     const newIdx = TIER_ORDER.indexOf(newTier);
     const outcome = newIdx > oldIdx ? "promoted" : newIdx < oldIdx ? "demoted" : "stayed";

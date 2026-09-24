@@ -58,6 +58,29 @@ const ZONE_DOT: Record<Exclude<Zone, null>, string> = {
   RELEGATION: "🔴",
 };
 
+/**
+ * Uitleg van promotie/degradatie voor de huidige stand. De aantallen komen
+ * van de server en hangen af van hoeveel spelers er deze week meedoen.
+ */
+function movementText(data: LeagueData): string {
+  if (data.entries.length === 0) {
+    return "Wie deze week XP verdient, doet mee. Hoe meer spelers, hoe meer er promoveren en degraderen (tot 3 van de 30).";
+  }
+  const up =
+    data.promoteCount === 0
+      ? "Dit is de hoogste divisie"
+      : data.promoteCount === 1
+        ? "De bovenste speler promoveert aan het einde van de week"
+        : `De bovenste ${data.promoteCount} promoveren aan het einde van de week`;
+  const down =
+    data.demoteCount === 0
+      ? "niemand degradeert"
+      : data.demoteCount === 1
+        ? "de onderste degradeert"
+        : `de onderste ${data.demoteCount} degraderen`;
+  return `${up}, ${down}.`;
+}
+
 export default function LeaderboardClient() {
   const [scope, setScope] = useState<"league" | "friends" | "national">("league");
   const [data, setData] = useState<LeagueData | NationalData | null>(null);
@@ -135,10 +158,7 @@ export default function LeaderboardClient() {
       </div>
 
       {scope === "league" && leagueData && (
-        <p className="text-sm text-slate-400 dark:text-slate-500 text-center">
-          De bovenste {leagueData.promoteCount} promoveren aan het einde van de week, de onderste {leagueData.demoteCount}{" "}
-          degraderen.
-        </p>
+        <p className="text-sm text-slate-400 dark:text-slate-500 text-center">{movementText(leagueData)}</p>
       )}
 
       {scope === "league" && leagueData?.xpGap && (
