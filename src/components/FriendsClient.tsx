@@ -47,7 +47,11 @@ export default function FriendsClient() {
 
   async function load() {
     const res = await fetch("/api/friends");
-    if (res.ok) setData(await res.json());
+    if (!res.ok) return;
+    setData(await res.json());
+    // /api/friends kent de huidige activiteit van vrienden niet (die leeft
+    // alleen in de socketserver); die vult hem via friend_status_update aan.
+    getSocket().emit("friend_statuses_request");
   }
 
   useEffect(() => {

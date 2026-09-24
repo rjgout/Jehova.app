@@ -713,6 +713,14 @@ export function initGameServer(httpServer: HttpServer) {
       sendFriendStatusesToUser(ioInstance, user.id).catch(() => {});
     });
 
+    // De vriendenpagina haalt zijn lijst via /api/friends, maar die route
+    // draait in Next's eigen bundel en ziet de activiteiten niet (die leven
+    // in het geheugen van DEZE instantie, zie presence.ts). Na het laden
+    // vraagt de pagina daarom hier de actuele statussen op, mét activiteit.
+    socket.on("friend_statuses_request", () => {
+      sendFriendStatusesToUser(ioInstance, user.id).catch(() => {});
+    });
+
     // Zelfde reden als hierboven: de accept-/verzoekroutes draaien in Next's
     // eigen bundel en kunnen deze Socket.io-instantie niet bereiken. Na een
     // geslaagd verzoek of een acceptatie seint de client dit zelf, zodat een

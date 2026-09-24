@@ -15,8 +15,13 @@ export function useActivityStatus(icon: string, label: string | null): void {
   useEffect(() => {
     if (!label) return;
     const socket = getSocket();
-    socket.emit("activity_update", { icon, label });
+    const send = () => socket.emit("activity_update", { icon, label });
+    send();
+    // Na een herverbinding (telefoon even in slaap, netwerk weg) opnieuw
+    // melden: de server wist de activiteit zodra de laatste verbinding wegvalt.
+    socket.on("connect", send);
     return () => {
+      socket.off("connect", send);
       socket.emit("activity_update", null);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
