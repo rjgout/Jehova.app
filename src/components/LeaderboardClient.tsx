@@ -117,7 +117,7 @@ export default function LeaderboardClient() {
               🤝
             </span>
             <h1 className="text-2xl font-extrabold">Vrienden</h1>
-            <p className="text-brand-100 text-sm">Jij en je vrienden, deze week</p>
+            <p className="text-brand-100 text-sm text-center px-6">Jij en je vrienden, deze week</p>
           </>
         ) : (
           <>
@@ -125,7 +125,7 @@ export default function LeaderboardClient() {
               🇳🇱
             </span>
             <h1 className="text-2xl font-extrabold">Nederlandse ranglijst</h1>
-            <p className="text-brand-100 text-sm">Je huidige XP: alles wat je verdiende, min je aankopen in de winkel</p>
+            <p className="text-brand-100 text-sm text-center px-6">Je huidige XP: alles wat je verdiende, min je aankopen in de winkel</p>
           </>
         )}
       </div>
