@@ -9,6 +9,7 @@ import { useActivityStatus } from "@/lib/useActivity";
 import { announceXpChanged } from "@/lib/xpBroadcast";
 import ReadAloudPlayer from "@/components/ReadAloudPlayer";
 import { useReadAloudPlayer } from "@/lib/readAloudPlayerContext";
+import { capitalize, chapterTerm, type ChapterTerm } from "@/lib/chapterTerm";
 
 export type ExerciseType = "FILL_BLANK" | "WORD_BANK" | "TRUE_FALSE" | "MULTIPLE_CHOICE" | "SEQUENCE" | "IMAGE_CHOICE";
 
@@ -46,6 +47,8 @@ interface Props {
   nextChapterId: string | null;
   verses: VerseView[];
   audio?: ChapterAudio | null;
+  /** "hoofdstuk" of "afdeling" (Leer en Verbonden), zie src/lib/chapterTerm.ts. */
+  term?: ChapterTerm;
   exercises: Exercise[];
   // Gezet als deze les gespeeld wordt als iemands beurt in een uitdaging
   // (zie /challenges) — de score telt dan ook mee voor die uitdaging, zie
@@ -80,7 +83,7 @@ const FONT_SCALE_KEY = "bom-reader-font-scale";
 const MIN_SCALE = 0.85;
 const MAX_SCALE = 1.5;
 
-export default function LessonFlow({ chapterId, bookName, chapterNumber, nextChapterId, verses, audio, exercises, challengeId }: Props) {
+export default function LessonFlow({ chapterId, bookName, chapterNumber, nextChapterId, verses, audio, term = chapterTerm(null), exercises, challengeId }: Props) {
   const [phase, setPhase] = useState<Phase>("read");
   const [index, setIndex] = useState(0);
   const [answers, setAnswers] = useState<SubmittedAnswer[]>([]);
@@ -163,8 +166,8 @@ export default function LessonFlow({ chapterId, bookName, chapterNumber, nextCha
   if (phase === "read") {
     return (
       <div className="max-w-2xl mx-auto flex flex-col gap-4">
-        <Breadcrumb items={[{ label: bookName, href: "/dashboard" }, { label: `Hoofdstuk ${chapterNumber}` }]} />
-        <ReaderView chapterId={chapterId} bookName={bookName} chapterNumber={chapterNumber} verses={verses} audio={audio} />
+        <Breadcrumb items={[{ label: bookName, href: "/dashboard" }, { label: `${capitalize(term.singular)} ${chapterNumber}` }]} />
+        <ReaderView chapterId={chapterId} bookName={bookName} chapterNumber={chapterNumber} verses={verses} audio={audio} term={term} />
         <button className="btn-primary self-start" onClick={() => setPhase("exercises")}>
           Begin oefeningen →
         </button>
@@ -216,7 +219,7 @@ export default function LessonFlow({ chapterId, bookName, chapterNumber, nextCha
   }
 
   if (phase === "summary" && summary) {
-    return <SummaryScreen summary={summary} nextChapterId={nextChapterId} />;
+    return <SummaryScreen summary={summary} nextChapterId={nextChapterId} term={term} />;
   }
 
   return null;
@@ -228,12 +231,14 @@ export function ReaderView({
   chapterNumber,
   verses,
   audio,
+  term = chapterTerm(null),
 }: {
   chapterId: string;
   bookName: string;
   chapterNumber: number;
   verses: VerseView[];
   audio?: ChapterAudio | null;
+  term?: ChapterTerm;
 }) {
   const [scale, setScale] = useState(1);
   const [verseState, setVerseState] = useState(verses);
@@ -309,6 +314,7 @@ export function ReaderView({
         title={`${bookName} ${chapterNumber}`}
         verses={verseState.map((v) => ({ number: v.number, text: v.text, audioStart: v.audioStart }))}
         audio={audio}
+        subtitle={`Luister naar ${term.thisOne}`}
       />
 
       <div className="card flex flex-col gap-4" style={{ "--reader-font-scale": scale } as React.CSSProperties}>
@@ -859,7 +865,7 @@ function FooterControls({
   );
 }
 
-function SummaryScreen({ summary, nextChapterId }: { summary: SummaryResult; nextChapterId: string | null }) {
+function SummaryScreen({ summary, nextChapterId, term }: { summary: SummaryResult; nextChapterId: string | null; term: ChapterTerm }) {
   return (
     <div className="max-w-md mx-auto card flex flex-col items-center gap-4 text-center animate-pop">
       <div className="text-5xl">{summary.scorePercent >= 80 ? "🎉" : summary.scorePercent >= 50 ? "👍" : "💪"}</div>
@@ -921,7 +927,7 @@ function SummaryScreen({ summary, nextChapterId }: { summary: SummaryResult; nex
         </Link>
         {nextChapterId && (
           <Link href={`/lesson/${nextChapterId}`} className="btn-primary">
-            Volgend hoofdstuk →
+            Volgend{term.singular === "afdeling" ? "e" : ""} {term.singular} →
           </Link>
         )}
       </div>

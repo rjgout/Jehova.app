@@ -12,6 +12,7 @@ interface CourseView {
   name: string;
   description: string | null;
   totalChapters: number;
+  unitPlural?: string;
   completedCount: number;
   xpAvailable: number;
   isActive: boolean;
@@ -205,7 +206,7 @@ export default function CoursesClient() {
                         <div className="h-full bg-gold-400" style={{ width: `${pct}%` }} />
                       </div>
                       <p className="text-xs text-slate-400 dark:text-slate-500">
-                        {course.completedCount} / {course.totalChapters} hoofdstukken voltooid
+                        {course.completedCount} / {course.totalChapters} {course.unitPlural ?? "hoofdstukken"} voltooid
                         {course.currentChapter &&
                           ` — volgende: ${course.currentChapter.bookName} ${course.currentChapter.number}`}
                       </p>

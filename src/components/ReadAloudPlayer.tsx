@@ -8,9 +8,10 @@ interface Props {
   verses: ReadAloudVerse[];
   audio?: ReadAloudSource["audio"];
   startVerse?: number;
+  subtitle?: string;
 }
 
-export default function ReadAloudPlayer({ sourceId, title, verses, audio, startVerse = 0 }: Props) {
+export default function ReadAloudPlayer({ sourceId, title, verses, audio, startVerse = 0, subtitle = "Luister naar dit hoofdstuk" }: Props) {
   const { source, start } = useReadAloudPlayer();
 
   if (source?.id === sourceId) return null;
@@ -25,7 +26,7 @@ export default function ReadAloudPlayer({ sourceId, title, verses, audio, startV
       </span>
       <span className="min-w-0">
         <span className="block text-sm font-bold text-brand-700 dark:text-brand-300">Voorlezen</span>
-        <span className="block text-xs text-slate-400 dark:text-slate-500">Luister naar dit hoofdstuk</span>
+        <span className="block text-xs text-slate-400 dark:text-slate-500">{subtitle}</span>
       </span>
     </button>
   );

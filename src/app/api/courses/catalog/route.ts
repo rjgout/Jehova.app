@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getCurrentUser } from "@/lib/session";
 import { getContentContext } from "@/lib/contentCollections";
+import { chapterTerm } from "@/lib/chapterTerm";
 
 // Cursussen die nog NIET in de persoonlijke lijst staan — voor de "Voeg
 // nieuwe cursus toe"-catalogus op /courses (en /courses/per-boek, dat dit
@@ -17,7 +18,7 @@ export async function GET() {
     prisma.course.findMany({
       where: { enabled: true, contentCollectionId: contentContext.active.id },
       orderBy: { order: "asc" },
-      include: { _count: { select: { chapters: true } } },
+      include: { _count: { select: { chapters: true } }, book: { select: { slug: true } } },
     }),
     prisma.userCourseProgress.findMany({
       where: { userId: user.id, subscribed: true },
@@ -36,6 +37,7 @@ export async function GET() {
       name: c.name,
       description: c.description,
       totalChapters: c._count.chapters,
+      unitPlural: chapterTerm(c.book?.slug).plural,
     })),
   });
 }

@@ -21,6 +21,8 @@ interface Props {
   // vergrendeld tot het vorige is afgerond); Vrije keuze is expliciet
   // bedoeld om in elke volgorde te doen, dus daar mag nooit iets op slot.
   sequential?: boolean;
+  /** "hoofdstukken", of "afdelingen" bij Leer en Verbonden (zie src/lib/chapterTerm.ts). */
+  unitPlural?: string;
 }
 
 // Gedeelde weergave voor elk cursustype dat simpelweg een lijst hoofdstukken
@@ -30,7 +32,7 @@ interface Props {
 // en in welke volgorde/vergrendeling. Bij meerdere boeken (van-voor-naar-
 // achter, vrije keuze) wordt elk boek een inklapbare sectie — anders werd dit
 // bij het hele Boek van Mormon in één keer een erg lange pagina.
-export default function ChapterListCourseView({ courseName, currentChapterId, chapters, sequential = true }: Props) {
+export default function ChapterListCourseView({ courseName, currentChapterId, chapters, sequential = true, unitPlural = "hoofdstukken" }: Props) {
   const allDone = chapters.length > 0 && chapters.every((c) => c.completed);
   const todayChapter =
     (currentChapterId && chapters.find((c) => c.id === currentChapterId)) ||
@@ -96,7 +98,7 @@ export default function ChapterListCourseView({ courseName, currentChapterId, ch
           <div className="card flex flex-col gap-2">
             <div className="flex items-center justify-between text-xs font-bold text-slate-500 dark:text-slate-400">
               <span>Voortgang</span>
-              <span>{progressPosition} / {chapters.length} hoofdstukken · {progressPercent}%</span>
+              <span>{progressPosition} / {chapters.length} {unitPlural} · {progressPercent}%</span>
             </div>
             <div className="h-2 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
               <div className="h-full bg-brand-500 transition-all" style={{ width: progressPercent + "%" }} />

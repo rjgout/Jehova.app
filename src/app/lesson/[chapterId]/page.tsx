@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/session";
 import { prisma } from "@/lib/db";
 import LessonFlow from "@/components/LessonFlow";
+import { chapterTerm } from "@/lib/chapterTerm";
 
 // Een hoofdstuk kan (met de automatisch gegenereerde invuloefeningen erbij)
 // tientallen oefeningen hebben — veel te veel voor één les. Net als bij de
@@ -84,6 +85,7 @@ export default async function LessonPage({
         audioStart: v.audioStart,
       }))}
       audio={chapter.audioUrl ? { url: chapter.audioUrl, end: null } : null}
+      term={chapterTerm(chapter.book.slug)}
       exercises={exercises}
       challengeId={challengeId}
     />

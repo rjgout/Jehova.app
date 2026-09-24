@@ -10,6 +10,7 @@ import KidsCourseView from "@/components/KidsCourseView";
 import IntroCourseView from "@/components/IntroCourseView";
 import FsyCourseView from "@/components/FsyCourseView";
 import ReadingCourseView from "@/components/ReadingCourseView";
+import { chapterTerm } from "@/lib/chapterTerm";
 
 export default async function CourseDetailPage({ params }: { params: Promise<{ courseId: string }> }) {
   const user = await getCurrentUser();
@@ -284,6 +285,7 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ c
       courseName={course.name}
       currentChapterId={courseProgress?.currentChapterId ?? null}
       sequential={course.type !== "FREE_CHOICE"}
+      unitPlural={chapterTerm(chapters[0]?.book.slug).plural}
       chapters={chapters.map((chapter) => ({
         id: chapter.id,
         number: chapter.number,

@@ -7,6 +7,7 @@ interface BookCourseView {
   type: string;
   name: string;
   totalChapters: number;
+  unitPlural?: string;
 }
 
 export default function PerBookClient() {
@@ -77,7 +78,7 @@ export default function PerBookClient() {
               <div>
                 <h2 className="font-extrabold text-lg dark:text-slate-100">{course.name}</h2>
                 <p className="text-xs font-bold text-slate-400 dark:text-slate-500">
-                  {course.totalChapters} hoofdstukken
+                  {course.totalChapters} {course.unitPlural ?? "hoofdstukken"}
                 </p>
               </div>
               <button
