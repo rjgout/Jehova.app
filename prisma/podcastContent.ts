@@ -8758,4 +8758,187 @@ export const podcastEpisodes: PodcastEpisodeSeed[] = [
       },
     ],
   },
+  {
+    number: 6,
+    title: "Aflevering 6",
+    summary: "Wordt bijgewerkt vanuit de podcastfeed.",
+    content: [
+      {
+        type: "MULTIPLE_CHOICE",
+        prompt: "Wat is volgens Koos een kenmerk van de natuurlijke mens?",
+        options: [
+          "Hij is egoïstisch, ten koste van een ander, en heeft het niet op geestelijke zaken",
+          "Hij houdt vooral van de natuur en het buitenleven",
+          "Hij is altijd vriendelijk tegen iedereen",
+          "Hij bestaat alleen in de verhalen uit de schriften",
+        ],
+        correctIndex: 0,
+      },
+      {
+        type: "MULTIPLE_CHOICE",
+        prompt: "Raphael werkt in de IT. Hoe beschrijft hij de manier waarop Satan verleidingen op ons afstuurt?",
+        options: [
+          "Als een hacker die met hagel schiet en kijkt waar hij binnen kan komen",
+          "Als een virus dat je alleen via e-mail kunt krijgen",
+          "Als een computer die vanzelf vastloopt",
+          "Als een wachtwoord dat iedereen kent",
+        ],
+        correctIndex: 0,
+      },
+      {
+        type: "MULTIPLE_CHOICE",
+        prompt: "Met welke dagelijkse 'updates' houd je volgens de aflevering je geestelijke virusscanner bij?",
+        options: [
+          "Gebed, studie van de schriften en hedendaagse openbaring, en het avondmaal",
+          "Elke dag een nieuwe telefoon-app installeren",
+          "Eén keer per jaar naar de tempel gaan",
+          "Zo min mogelijk met anderen praten",
+        ],
+        correctIndex: 0,
+      },
+      {
+        type: "TRUE_FALSE",
+        prompt: "Koos heeft een plaatje van Christus in zijn kast, waar hij 's ochtends 'goeiemorgen' tegen zegt.",
+        answer: true,
+      },
+      {
+        type: "SEQUENCE",
+        prompt: "Zet deze onderwerpen in de volgorde waarin ze in de aflevering aan bod komen.",
+        items: [
+          "Het verschil tussen de natuurlijke mens en de invloeden van Satan",
+          "De vergelijking met een virusscanner die je moet bijwerken",
+          "Kijken waar je naartoe wilt, zoals bij autorijden: Christus als focuspunt",
+          "Verslavingen en het leven hierna",
+        ],
+      },
+    ],
+    bomConnection: [
+      {
+        type: "MULTIPLE_CHOICE",
+        prompt:
+          "Koos zegt dat we elke dag opnieuw 'in Christus voorwaarts streven'. Hoe moeten we volgens 2 Nephi 31:20 voorwaarts streven?",
+        options: [
+          "Standvastig in Christus, met volmaakt stralende hoop, en liefde voor God en voor alle mensen",
+          "Alleen op zondag, met de hulp van de bisschop",
+          "Zo snel mogelijk, zonder om te kijken naar anderen",
+          "Op eigen kracht, zonder hulp van anderen",
+        ],
+        correctIndex: 0,
+      },
+      {
+        type: "MULTIPLE_CHOICE",
+        prompt: "Waaraan moeten we ons volgens 2 Nephi 31:20 'vergasten' terwijl we voorwaarts streven?",
+        options: ["Aan het woord van Christus", "Aan de wet van Mozes", "Aan de rijkdom van de aarde", "Aan de wijsheid van de mensen"],
+        correctIndex: 0,
+      },
+      {
+        type: "TRUE_FALSE",
+        prompt:
+          "Volgens 2 Nephi 31:19 is alles gedaan zodra je het enge en smalle pad hebt betreden.",
+        answer: false,
+      },
+      {
+        type: "SEQUENCE",
+        prompt: "Zet deze uitspraken uit 2 Nephi 31:17-21 in de juiste volgorde.",
+        items: [
+          "De poort waardoor gij moet binnengaan is bekering en doop met water",
+          "Wanneer gij het enge en smalle pad hebt betreden, is daarmee niet alles gedaan",
+          "Gij moet standvastig in Christus voorwaarts streven en tot het einde volharden",
+          "Dit is de weg, en er is geen andere weg noch naam gegeven",
+        ],
+      },
+    ],
+  },
+  {
+    number: 7,
+    title: "Aflevering 7",
+    summary: "Wordt bijgewerkt vanuit de podcastfeed.",
+    content: [
+      {
+        type: "MULTIPLE_CHOICE",
+        prompt: "Wat gebeurde er volgens Koos met Pinksteren, tien dagen na Hemelvaart?",
+        options: [
+          "De discipelen werden vervuld met de Heilige Geest, de Trooster die Christus had beloofd",
+          "Christus werd geboren in Bethlehem",
+          "Christus stond op uit het graf",
+          "De eerste tempel werd ingewijd",
+        ],
+        correctIndex: 0,
+      },
+      {
+        type: "MULTIPLE_CHOICE",
+        prompt: "Hoe beschrijft Koos het licht van Christus?",
+        options: [
+          "Als een intern kompas waarmee je geboren wordt, om te voelen wat goed is",
+          "Als een gave die je pas krijgt na de doop",
+          "Als het licht in de kerkzaal tijdens het avondmaal",
+          "Als iets wat alleen profeten hebben",
+        ],
+        correctIndex: 0,
+      },
+      {
+        type: "MULTIPLE_CHOICE",
+        prompt: "Met welk voorbeeld laat Koos zien waarom je voor de gave van de Heilige Geest de juiste bevoegdheid nodig hebt?",
+        options: [
+          "Een zelfgeschreven motorrijbewijs is niet rechtsgeldig",
+          "Een zelfgebakken taart smaakt altijd beter",
+          "Een kopie van een schilderij is net zo mooi",
+          "Een oud paspoort werkt nog steeds op vakantie",
+        ],
+        correctIndex: 0,
+      },
+      {
+        type: "TRUE_FALSE",
+        prompt:
+          "Raphael kreeg bij zijn doop uitgelegd dat je met de gave van de Heilige Geest zelf ook een deurknop aan jouw kant van de deur hebt.",
+        answer: true,
+      },
+      {
+        type: "SEQUENCE",
+        prompt: "Zet deze onderwerpen in de volgorde waarin ze in de aflevering aan bod komen.",
+        items: [
+          "Wat Pinksteren is en waarom het tien dagen na Hemelvaart komt",
+          "Het verschil tussen het licht van Christus en de Heilige Geest",
+          "Bevoegdheid, uitgelegd met het voorbeeld van een motorrijbewijs",
+          "Doop met water en met vuur, en de deur met een deurknop",
+        ],
+      },
+    ],
+    bomConnection: [
+      {
+        type: "MULTIPLE_CHOICE",
+        prompt:
+          "Ook in het Boek van Mormon ontvangen de discipelen de Heilige Geest. Waarom baden de twaalf Nephitische discipelen volgens 3 Nephi 19:9?",
+        options: [
+          "Dat hun de Heilige Geest zou worden gegeven",
+          "Dat Jezus nog langer bij hen zou blijven",
+          "Dat hun vijanden zouden worden verslagen",
+          "Dat er regen zou komen voor hun oogst",
+        ],
+        correctIndex: 0,
+      },
+      {
+        type: "MULTIPLE_CHOICE",
+        prompt:
+          "Koos zegt dat je gedoopt wordt met water en met vuur. Waarmee werden de discipelen volgens 3 Nephi 19:13 vervuld, nadat ze gedoopt waren?",
+        options: ["Met de Heilige Geest en met vuur", "Met angst en beven", "Met wijn en brood", "Met kennis van de sterren"],
+        correctIndex: 0,
+      },
+      {
+        type: "TRUE_FALSE",
+        prompt: "Volgens 3 Nephi 19:14 was de menigte er ooggetuige van dat de discipelen als het ware door vuur werden omringd.",
+        answer: true,
+      },
+      {
+        type: "SEQUENCE",
+        prompt: "Zet deze gebeurtenissen uit 3 Nephi 19:9-14 in de juiste volgorde.",
+        items: [
+          "De discipelen bidden dat hun de Heilige Geest wordt gegeven",
+          "Nephi laat zich dopen en doopt daarna de anderen",
+          "De Heilige Geest valt op hen en ze worden vervuld met vuur",
+          "Engelen dalen neer uit de hemel en dienen hen",
+        ],
+      },
+    ],
+  },
 ];
