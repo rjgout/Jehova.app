@@ -11,7 +11,7 @@ export async function GET() {
   if (!user) return NextResponse.json({ error: "Niet ingelogd" }, { status: 401 });
 
   const games = await prisma.scrabbleGame.findMany({
-    where: { OR: [{ player1Id: user.id }, { player2Id: user.id }] },
+    where: { OR: [{ player1Id: user.id }, { player2Id: user.id }], status: { not: "CANCELLED" } },
     orderBy: { updatedAt: "desc" },
     include: {
       player1: { select: { id: true, handle: true } },

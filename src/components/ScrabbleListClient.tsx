@@ -8,7 +8,7 @@ import FriendPicker, { type PickerFriend } from "@/components/FriendPicker";
 
 interface GameView {
   id: string;
-  status: "PENDING" | "DECLINED" | "ACTIVE" | "FINISHED";
+  status: "PENDING" | "DECLINED" | "ACTIVE" | "FINISHED" | "CANCELLED";
   isSender: boolean;
   opponent: { id: string; displayName: string };
   myScore: number;
@@ -60,7 +60,7 @@ export default function ScrabbleListClient() {
     return null;
   }
 
-  async function respond(id: string, action: "accept" | "decline") {
+  async function respond(id: string, action: "accept" | "decline" | "cancel") {
     const res = await fetch(`/api/scrabble/${id}/${action}`, { method: "POST" });
     if (res.ok) getSocket().emit("scrabble_changed", { gameId: id });
     if (res.ok && action === "accept") {
@@ -168,9 +168,17 @@ export default function ScrabbleListClient() {
           <h2 className="font-extrabold mb-2 text-slate-700 dark:text-slate-200">Verstuurd, nog geen reactie</h2>
           <div className="flex flex-col gap-2">
             {outgoing.map((g) => (
-              <div key={g.id} className="card !py-3 text-slate-500 dark:text-slate-400 flex items-center gap-2">
-                <UserAvatar id={g.opponent.id} handle={g.opponent.displayName} size="xs" />
-                <span>Wachten op {g.opponent.displayName}</span>
+              <div
+                key={g.id}
+                className="card !py-3 text-slate-500 dark:text-slate-400 flex items-center justify-between flex-wrap gap-2"
+              >
+                <span className="flex items-center gap-2">
+                  <UserAvatar id={g.opponent.id} handle={g.opponent.displayName} size="xs" />
+                  <span>Wachten op {g.opponent.displayName}</span>
+                </span>
+                <button className="btn-secondary !px-3 !py-1.5" onClick={() => respond(g.id, "cancel")}>
+                  Annuleren
+                </button>
               </div>
             ))}
           </div>

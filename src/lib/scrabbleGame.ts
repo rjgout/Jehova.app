@@ -79,20 +79,25 @@ export async function createInvite(senderId: string, receiverId: string): Promis
   return { id: game.id };
 }
 
+const CANCELLED_ERROR = "Deze uitnodiging is ingetrokken.";
+
 export async function acceptInvite(gameId: string, userId: string): Promise<ActionResult> {
   const game = await prisma.scrabbleGame.findUnique({
     where: { id: gameId },
     include: { player1: true, player2: true },
   });
   if (!game || game.player2Id !== userId) return { ok: false, error: "Spel niet gevonden." };
+  if (game.status === "CANCELLED") return { ok: false, error: CANCELLED_ERROR };
   if (game.status !== "PENDING") return { ok: false, error: "Deze uitnodiging is al beantwoord." };
 
   const bag = createBag();
   const d1 = drawTiles(bag, RACK_SIZE);
   const d2 = drawTiles(d1.remaining, RACK_SIZE);
 
-  await prisma.scrabbleGame.update({
-    where: { id: gameId },
+  // Alleen zolang de uitnodiging nog openstaat: trekt de uitdager 'm net op
+  // hetzelfde moment in, dan mag accepteren dat niet ongedaan maken.
+  const accepted = await prisma.scrabbleGame.updateMany({
+    where: { id: gameId, status: "PENDING" },
     data: {
       status: "ACTIVE",
       bag: JSON.stringify(d2.remaining),
@@ -101,6 +106,7 @@ export async function acceptInvite(gameId: string, userId: string): Promise<Acti
       turnUserId: game.player1Id,
     },
   });
+  if (accepted.count === 0) return { ok: false, error: CANCELLED_ERROR };
 
   // Uitnodiger speelt als eerste, en krijgt dus nu meteen een "jij bent aan
   // de beurt"-melding — met de naam van de speler die zojuist accepteerde.
@@ -111,10 +117,22 @@ export async function acceptInvite(gameId: string, userId: string): Promise<Acti
 export async function declineInvite(gameId: string, userId: string): Promise<ActionResult> {
   const game = await prisma.scrabbleGame.findUnique({ where: { id: gameId }, include: { player2: true } });
   if (!game || game.player2Id !== userId) return { ok: false, error: "Spel niet gevonden." };
+  if (game.status === "CANCELLED") return { ok: false, error: CANCELLED_ERROR };
   if (game.status !== "PENDING") return { ok: false, error: "Deze uitnodiging is al beantwoord." };
 
   await prisma.scrabbleGame.update({ where: { id: gameId }, data: { status: "DECLINED" } });
   notifyScrabbleDeclined(game.player1Id, game.player2.handle).catch(() => {});
+  return { ok: true };
+}
+
+export async function cancelInvite(gameId: string, userId: string): Promise<ActionResult> {
+  // Voorwaardelijk bijwerken, zodat een uitnodiging die net geaccepteerd is
+  // niet alsnog ingetrokken wordt.
+  const result = await prisma.scrabbleGame.updateMany({
+    where: { id: gameId, player1Id: userId, status: "PENDING" },
+    data: { status: "CANCELLED" },
+  });
+  if (result.count === 0) return { ok: false, error: "Deze uitnodiging is al beantwoord." };
   return { ok: true };
 }
 

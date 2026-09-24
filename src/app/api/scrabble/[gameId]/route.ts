@@ -15,7 +15,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ gameId:
       moves: { orderBy: { createdAt: "asc" }, include: { user: { select: { handle: true } } } },
     },
   });
-  if (!game || (game.player1Id !== user.id && game.player2Id !== user.id)) {
+  if (!game || game.status === "CANCELLED" || (game.player1Id !== user.id && game.player2Id !== user.id)) {
     return NextResponse.json({ error: "Spel niet gevonden." }, { status: 404 });
   }
 

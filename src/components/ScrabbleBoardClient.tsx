@@ -85,7 +85,7 @@ interface MoveView {
 
 interface GameState {
   id: string;
-  status: "PENDING" | "DECLINED" | "ACTIVE" | "FINISHED";
+  status: "PENDING" | "DECLINED" | "ACTIVE" | "FINISHED" | "CANCELLED";
   board: ServerBoard;
   myRack: string[];
   opponentRackCount: number;

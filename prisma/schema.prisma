@@ -1682,6 +1682,10 @@ enum ScrabbleGameStatus {
   DECLINED
   ACTIVE
   FINISHED
+  // Uitnodiging ingetrokken door de uitdager voordat die beantwoord werd.
+  // Niet verwijderd: de socketserver zoekt het spel op om de tegenspeler te
+  // laten weten dat de uitnodiging weg is.
+  CANCELLED
 }
 
 model ScrabbleGame {
