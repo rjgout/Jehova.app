@@ -8,6 +8,7 @@ import type { AkStateView } from "@/lib/alleskenner/types";
 import { AK_MAX_TEAMS, AK_MIN_PLAYERS, AK_MIN_TEAM_PLAYERS } from "@/lib/alleskenner/types";
 import AlleskennerGame, { TEAM_DOTS } from "@/components/alleskenner/AlleskennerGame";
 import UserAvatar from "@/components/UserAvatar";
+import LobbyInviteCard from "@/components/LobbyInviteCard";
 
 interface Friend {
   id: string;
@@ -103,7 +104,6 @@ function Lobby({ state }: { state: AkStateView }) {
       .catch(() => {});
   }, [isHost]);
 
-  const invitable = friends.filter((f) => !state.participants.some((p) => p.userId === f.id));
 
   function invite(friendId: string) {
     socket.emit("invite_friend", { toUserId: friendId, code: state.code });
@@ -281,23 +281,13 @@ function Lobby({ state }: { state: AkStateView }) {
         </div>
       )}
 
-      {isHost && !season && invitable.length > 0 && (
-        <div className="card flex flex-col gap-2">
-          <h2 className="font-extrabold dark:text-slate-100">Vrienden uitnodigen</h2>
-          <ul className="flex flex-col gap-2">
-            {invitable.map((f) => (
-              <li key={f.id} className="flex items-center justify-between gap-3">
-                <span className="flex items-center gap-2 dark:text-slate-100">
-                  <UserAvatar id={f.id} handle={f.handle} size="xs" />
-                  {f.handle}
-                </span>
-                <button className="btn-secondary !px-3 !py-1.5 !text-sm" disabled={invited.has(f.id)} onClick={() => invite(f.id)}>
-                  {invited.has(f.id) ? "Uitgenodigd" : "Nodig uit"}
-                </button>
-              </li>
-            ))}
-          </ul>
-        </div>
+      {isHost && !season && (
+        <LobbyInviteCard
+          friends={friends}
+          invitedIds={invited}
+          joinedIds={state.participants.map((p) => p.userId)}
+          onInvite={invite}
+        />
       )}
 
       {isHost && (

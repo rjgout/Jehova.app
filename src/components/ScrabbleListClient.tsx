@@ -1,10 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import UserAvatar from "@/components/UserAvatar";
 import { getSocket } from "@/lib/socketClient";
-import { formatTag } from "@/lib/handle";
+import FriendPicker, { type PickerFriend } from "@/components/FriendPicker";
 
 interface GameView {
   id: string;
@@ -18,20 +18,11 @@ interface GameView {
   tied: boolean | null;
 }
 
-interface FriendOption {
-  id: string;
-  handle: string;
-  discriminator: string;
-}
-
 export default function ScrabbleListClient() {
   const [games, setGames] = useState<GameView[] | null>(null);
-  const [friends, setFriends] = useState<FriendOption[] | null>(null);
-  const [selectedFriend, setSelectedFriend] = useState("");
-  const [creating, setCreating] = useState(false);
+  const [pickerOpen, setPickerOpen] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const router = useRouter();
-  const searchParams = useSearchParams();
 
   async function load() {
     const res = await fetch("/api/scrabble");
@@ -40,12 +31,6 @@ export default function ScrabbleListClient() {
 
   useEffect(() => {
     load();
-    fetch("/api/friends")
-      .then((r) => r.json())
-      // /api/friends geeft per vriend { friendshipId, user } terug.
-      .then((d) => setFriends((d.friends ?? []).map((entry: { user: FriendOption }) => entry.user)));
-    const friendParam = searchParams.get("friend");
-    if (friendParam) setSelectedFriend(friendParam);
     // De tegenstander nodigde uit, accepteerde, weigerde of speelde: meteen
     // verversen in plaats van pas bij de volgende keer openen.
     const socket = getSocket();
@@ -57,27 +42,22 @@ export default function ScrabbleListClient() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  async function createGame() {
-    if (!selectedFriend) return;
-    setCreating(true);
+  /** Uit het vriendenpaneel; een foutmelding blijft in het paneel staan. */
+  async function createGame(friend: PickerFriend): Promise<string | null> {
     setMessage(null);
     const res = await fetch("/api/scrabble", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ friendUserId: selectedFriend }),
+      body: JSON.stringify({ friendUserId: friend.id }),
     });
     const body = await res.json().catch(() => ({}));
-    setCreating(false);
-    if (!res.ok) {
-      setMessage(body.error ?? "Kon het spel niet aanmaken.");
-      return;
-    }
-    setMessage("Uitnodiging verstuurd! 🔤");
+    if (!res.ok) return body.error ?? "Kon het spel niet aanmaken.";
+    setMessage(`Uitnodiging verstuurd naar ${friend.handle}! 🔤`);
     // De route kan de socketserver niet bereiken: zelf seinen, zodat je
     // vriend de uitnodiging meteen ziet (melding bovenin, lijst ververst).
     if (body.id) getSocket().emit("scrabble_changed", { gameId: body.id });
-    setSelectedFriend("");
     load();
+    return null;
   }
 
   async function respond(id: string, action: "accept" | "decline") {
@@ -90,7 +70,7 @@ export default function ScrabbleListClient() {
     load();
   }
 
-  if (!games || !friends) return <p className="text-slate-400 dark:text-slate-500">Laden...</p>;
+  if (!games) return <p className="text-slate-400 dark:text-slate-500">Laden...</p>;
 
   const incoming = games.filter((g) => g.status === "PENDING" && !g.isSender);
   const outgoing = games.filter((g) => g.status === "PENDING" && g.isSender);
@@ -109,26 +89,18 @@ export default function ScrabbleListClient() {
 
       <div className="card flex flex-col gap-3">
         <h2 className="font-extrabold dark:text-slate-100">Nieuw spel</h2>
-        {friends.length === 0 ? (
-          <p className="text-sm text-slate-400 dark:text-slate-500">
-            Je hebt nog geen vrienden om tegen te spelen — voeg er eerst een toe bij Vrienden.
-          </p>
-        ) : (
-          <>
-            <select className="input" value={selectedFriend} onChange={(e) => setSelectedFriend(e.target.value)}>
-              <option value="">Kies een vriend...</option>
-              {friends.map((f) => (
-                <option key={f.id} value={f.id}>
-                  {formatTag(f.handle, f.discriminator)}
-                </option>
-              ))}
-            </select>
-            <button className="btn-primary self-start" disabled={!selectedFriend || creating} onClick={createGame}>
-              {creating ? "Bezig..." : "Uitnodigen"}
-            </button>
-          </>
-        )}
+        <p className="text-sm text-slate-500 dark:text-slate-400">Kies een vriend; die krijgt meteen je uitnodiging.</p>
+        <button className="btn-primary self-start" onClick={() => setPickerOpen(true)}>
+          Kies een vriend
+        </button>
         {message && <p className="text-sm font-semibold text-brand-600 dark:text-brand-300">{message}</p>}
+        <FriendPicker
+          open={pickerOpen}
+          onClose={() => setPickerOpen(false)}
+          title="Woordspel met..."
+          subtitle="Tik op een vriend om uit te nodigen."
+          onPick={createGame}
+        />
       </div>
 
       {incoming.length > 0 && (

@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { getSocket } from "@/lib/socketClient";
 import UserAvatar from "@/components/UserAvatar";
+import LobbyInviteCard from "@/components/LobbyInviteCard";
 
 type Phase = "connecting" | "lobby" | "playing" | "finished" | "error";
 type Region = "JERUZALEM" | "WILDERNIS" | "ZEE" | "BELOOFDE_LAND" | "ZARAHEMLA";
@@ -385,7 +386,6 @@ export default function FamilyGameRoom({ code, myUserId }: { code: string; myUse
   }
 
   if (phase === "lobby") {
-    const nonPlayerFriends = friends.filter((f) => !players.some((p) => p.userId === f.id));
     return (
       <div className="max-w-xl mx-auto flex flex-col gap-6">
         <h1 className="text-2xl font-extrabold text-brand-800 dark:text-brand-300 text-center">🎉 Gezinsavond</h1>
@@ -436,27 +436,14 @@ export default function FamilyGameRoom({ code, myUserId }: { code: string; myUse
           </div>
         )}
 
-        {myUserId === hostId && nonPlayerFriends.length > 0 && (
-          <div className="card">
-            <h2 className="font-extrabold mb-3">Vriend uitnodigen (op hun eigen apparaat)</h2>
-            <ul className="flex flex-col gap-2">
-              {nonPlayerFriends.map((f) => (
-                <li key={f.id} className="flex items-center justify-between">
-                  <span className="flex items-center gap-2">
-                    <UserAvatar id={f.id} handle={f.handle} size="xs" />
-                    {f.handle}
-                  </span>
-                  <button
-                    className="btn-secondary !px-3 !py-1.5"
-                    disabled={invited.has(f.id)}
-                    onClick={() => inviteFriend(f.id)}
-                  >
-                    {invited.has(f.id) ? "Uitgenodigd" : "Nodig uit"}
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </div>
+        {myUserId === hostId && (
+          <LobbyInviteCard
+            title="Vriend uitnodigen (op hun eigen apparaat)"
+            friends={friends}
+            invitedIds={invited}
+            joinedIds={players.map((p) => p.userId)}
+            onInvite={inviteFriend}
+          />
         )}
 
         {myUserId === hostId ? (

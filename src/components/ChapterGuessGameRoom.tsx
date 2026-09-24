@@ -5,6 +5,7 @@ import Link from "next/link";
 import { getSocket } from "@/lib/socketClient";
 import { announceXpChanged } from "@/lib/xpBroadcast";
 import UserAvatar from "@/components/UserAvatar";
+import LobbyInviteCard from "@/components/LobbyInviteCard";
 
 interface LobbyPlayer {
   userId: string;
@@ -213,7 +214,6 @@ export default function ChapterGuessGameRoom({ code, myUserId }: { code: string;
   }
 
   if (phase === "lobby") {
-    const nonPlayerFriends = friends.filter((f) => !players.some((p) => p.userId === f.id));
     return (
       <div className="max-w-xl mx-auto flex flex-col gap-6">
         {level && (
@@ -236,24 +236,12 @@ export default function ChapterGuessGameRoom({ code, myUserId }: { code: string;
           </ul>
         </div>
 
-        {nonPlayerFriends.length > 0 && (
-          <div className="card">
-            <h2 className="font-extrabold mb-3">Vrienden uitnodigen</h2>
-            <ul className="flex flex-col gap-2">
-              {nonPlayerFriends.map((f) => (
-                <li key={f.id} className="flex items-center justify-between">
-                  <span className="flex items-center gap-2">
-                    <UserAvatar id={f.id} handle={f.handle} size="xs" />
-                    {f.handle}
-                  </span>
-                  <button className="btn-secondary !px-3 !py-1.5" disabled={invited.has(f.id)} onClick={() => inviteFriend(f.id)}>
-                    {invited.has(f.id) ? "Uitgenodigd" : "Nodig uit"}
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
+        <LobbyInviteCard
+          friends={friends}
+          invitedIds={invited}
+          joinedIds={players.map((p) => p.userId)}
+          onInvite={inviteFriend}
+        />
 
         {myUserId === hostId ? (
           <div className="flex flex-col items-center gap-2">

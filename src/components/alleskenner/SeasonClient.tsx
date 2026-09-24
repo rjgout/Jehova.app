@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { SEASON_STATUS_LABEL } from "@/components/alleskenner/SeasonListClient";
 import UserAvatar from "@/components/UserAvatar";
+import FriendPicker from "@/components/FriendPicker";
 
 type MemberStatus = "WAITING" | "ACTIVE" | "ELIMINATED" | "RETIRED";
 
@@ -44,11 +45,6 @@ interface Season {
   }[];
 }
 
-interface Friend {
-  id: string;
-  handle: string;
-}
-
 function statusLabel(m: Member, season: Season): { text: string; style: string } {
   const seasonStatus = season.status;
   if (season.champion?.id === m.userId) {
@@ -78,7 +74,7 @@ export default function SeasonClient({ id }: { id: string }) {
   const [season, setSeason] = useState<Season | null>(null);
   const [notFound, setNotFound] = useState(false);
   const [absent, setAbsent] = useState<string[]>([]);
-  const [friends, setFriends] = useState<Friend[]>([]);
+  const [pickerOpen, setPickerOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -94,14 +90,6 @@ export default function SeasonClient({ id }: { id: string }) {
   useEffect(() => {
     load();
   }, [load]);
-
-  useEffect(() => {
-    if (!season?.canManage) return;
-    fetch("/api/friends")
-      .then((r) => r.json())
-      .then((d) => setFriends((d.friends ?? []).map((entry: { user: Friend }) => entry.user)))
-      .catch(() => {});
-  }, [season?.canManage]);
 
   async function call(url: string, method: string, body?: unknown): Promise<Record<string, unknown> | null> {
     setBusy(true);
@@ -158,7 +146,6 @@ export default function SeasonClient({ id }: { id: string }) {
   const byId = new Map(season.members.map((m) => [m.userId, m]));
   const ranked = season.ranking.map((userId) => byId.get(userId)!).filter(Boolean);
   const queue = season.members.filter((m) => m.status === "WAITING");
-  const addable = friends.filter((f) => !byId.has(f.id));
   const managing = season.canManage && season.status !== "FINISHED";
   // Wie kan er vanavond afwezig zijn: iedereen die nog zou kunnen spelen.
   const absentCandidates = season.members.filter((m) =>
@@ -344,15 +331,20 @@ export default function SeasonClient({ id }: { id: string }) {
                         + Ikzelf
                       </button>
                     )}
-                    {addable.map((f) => (
-                      <button key={f.id} className="btn-secondary !px-3 !py-1 !text-sm" disabled={busy} onClick={() => addMember(f.id)}>
-                        + {f.handle}
-                      </button>
-                    ))}
-                    {addable.length === 0 && (
-                      <p className="text-xs text-slate-500 dark:text-slate-400">Al je vrienden zijn lid.</p>
-                    )}
+                    <button className="btn-secondary !px-3 !py-1 !text-sm" disabled={busy} onClick={() => setPickerOpen(true)}>
+                      + Vrienden toevoegen
+                    </button>
                   </div>
+                  <FriendPicker
+                    open={pickerOpen}
+                    onClose={() => setPickerOpen(false)}
+                    title="Leden toevoegen"
+                    subtitle={season.name}
+                    inviteLabel="Voeg toe"
+                    joinedLabel="Lid"
+                    onInvite={(friend) => addMember(friend.id)}
+                    stateFor={(id) => (byId.has(id) ? "joined" : "invite")}
+                  />
                 </>
               )}
             </div>

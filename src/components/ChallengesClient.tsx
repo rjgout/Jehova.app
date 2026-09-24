@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import UserAvatar from "@/components/UserAvatar";
-import { formatTag } from "@/lib/handle";
+import FriendPicker, { type PickerFriend } from "@/components/FriendPicker";
 
 interface ChallengeView {
   id: string;
@@ -21,12 +21,6 @@ interface ChallengeView {
   createdAt: string;
 }
 
-interface FriendOption {
-  id: string;
-  handle: string;
-  discriminator: string;
-}
-
 interface ChapterOption {
   id: string;
   label: string;
@@ -35,14 +29,11 @@ interface ChapterOption {
 
 export default function ChallengesClient() {
   const [challenges, setChallenges] = useState<ChallengeView[] | null>(null);
-  const [friends, setFriends] = useState<FriendOption[] | null>(null);
   const [chapters, setChapters] = useState<ChapterOption[] | null>(null);
-  const [selectedFriend, setSelectedFriend] = useState("");
   const [selectedChapter, setSelectedChapter] = useState("");
-  const [creating, setCreating] = useState(false);
+  const [pickerOpen, setPickerOpen] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const router = useRouter();
-  const searchParams = useSearchParams();
 
   async function load() {
     const res = await fetch("/api/challenges");
@@ -51,40 +42,27 @@ export default function ChallengesClient() {
 
   useEffect(() => {
     load();
-    fetch("/api/friends")
-      .then((r) => r.json())
-      // /api/friends geeft per vriend { friendshipId, user } terug.
-      .then((d) => setFriends((d.friends ?? []).map((entry: { user: FriendOption }) => entry.user)));
     fetch("/api/chapters")
       .then((r) => r.json())
       .then((d) => setChapters(Array.isArray(d) ? d.filter((c: ChapterOption) => c.exerciseCount > 0) : []));
-
-    // Vanaf de Vrienden-pagina kan je "Daag uit" bij een specifieke vriend
-    // klikken — die komt dan hier als voorinvulling binnen.
-    const friendParam = searchParams.get("friend");
-    if (friendParam) setSelectedFriend(friendParam);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  async function createChallenge() {
-    if (!selectedFriend || !selectedChapter) return;
-    setCreating(true);
+  /** Uit het vriendenpaneel; een foutmelding blijft in het paneel staan. */
+  async function createChallenge(friend: PickerFriend): Promise<string | null> {
+    if (!selectedChapter) return "Kies eerst een hoofdstuk.";
     setMessage(null);
     const res = await fetch("/api/challenges", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ friendUserId: selectedFriend, chapterId: selectedChapter }),
+      body: JSON.stringify({ friendUserId: friend.id, chapterId: selectedChapter }),
     });
     const body = await res.json().catch(() => ({}));
-    setCreating(false);
-    if (!res.ok) {
-      setMessage(body.error ?? "Kon de uitdaging niet versturen.");
-      return;
-    }
-    setMessage("Uitdaging verstuurd! ⚔️");
-    setSelectedFriend("");
+    if (!res.ok) return body.error ?? "Kon de uitdaging niet versturen.";
+    setMessage(`Uitdaging verstuurd naar ${friend.handle}! ⚔️`);
     setSelectedChapter("");
     load();
+    return null;
   }
 
   async function respond(id: string, action: "accept" | "decline") {
@@ -102,7 +80,7 @@ export default function ChallengesClient() {
     load();
   }
 
-  if (!challenges || !friends || !chapters) return <p className="text-slate-400 dark:text-slate-500">Laden...</p>;
+  if (!challenges || !chapters) return <p className="text-slate-400 dark:text-slate-500">Laden...</p>;
 
   const incoming = challenges.filter((c) => c.status === "PENDING" && !c.isSender);
   const outgoing = challenges.filter((c) => c.status === "PENDING" && c.isSender);
@@ -121,37 +99,24 @@ export default function ChallengesClient() {
 
       <div className="card flex flex-col gap-3">
         <h2 className="font-extrabold dark:text-slate-100">Nieuwe uitdaging</h2>
-        {friends.length === 0 ? (
-          <p className="text-sm text-slate-400 dark:text-slate-500">
-            Je hebt nog geen vrienden om uit te dagen — voeg er eerst een toe bij Vrienden.
-          </p>
-        ) : (
-          <>
-            <select className="input" value={selectedFriend} onChange={(e) => setSelectedFriend(e.target.value)}>
-              <option value="">Kies een vriend...</option>
-              {friends.map((f) => (
-                <option key={f.id} value={f.id}>
-                  {formatTag(f.handle, f.discriminator)}
-                </option>
-              ))}
-            </select>
-            <select className="input" value={selectedChapter} onChange={(e) => setSelectedChapter(e.target.value)}>
-              <option value="">Kies een hoofdstuk...</option>
-              {chapters.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.label}
-                </option>
-              ))}
-            </select>
-            <button
-              className="btn-primary self-start"
-              disabled={!selectedFriend || !selectedChapter || creating}
-              onClick={createChallenge}
-            >
-              {creating ? "Bezig..." : "Uitdagen"}
-            </button>
-          </>
-        )}
+        <select className="input" value={selectedChapter} onChange={(e) => setSelectedChapter(e.target.value)}>
+          <option value="">Kies een hoofdstuk...</option>
+          {chapters.map((c) => (
+            <option key={c.id} value={c.id}>
+              {c.label}
+            </option>
+          ))}
+        </select>
+        <button className="btn-primary self-start" disabled={!selectedChapter} onClick={() => setPickerOpen(true)}>
+          Daag een vriend uit
+        </button>
+        <FriendPicker
+          open={pickerOpen}
+          onClose={() => setPickerOpen(false)}
+          title="Uitdagen"
+          subtitle={chapters.find((c) => c.id === selectedChapter)?.label}
+          onPick={createChallenge}
+        />
         {message && <p className="text-sm font-semibold text-brand-600 dark:text-brand-300">{message}</p>}
       </div>
 
