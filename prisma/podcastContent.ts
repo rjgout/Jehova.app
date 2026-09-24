@@ -9503,4 +9503,191 @@ export const podcastEpisodes: PodcastEpisodeSeed[] = [
       },
     ],
   },
+  {
+    number: 34,
+    title: "Aflevering 34",
+    summary: "Wordt bijgewerkt vanuit de podcastfeed.",
+    content: [
+      {
+        type: "MULTIPLE_CHOICE",
+        prompt: "Met welk gezag voeren vrouwen volgens de gasten verordeningen uit in de tempel, of een roeping in de kerk?",
+        options: [
+          "Met priesterschapsgezag, omdat ze zijn aangesteld door iemand die priesterschapssleutels draagt",
+          "Zonder enig gezag, alleen als vrijwilliger",
+          "Met het gezag van hun echtgenoot",
+          "Alleen met toestemming van de gemeente",
+        ],
+        correctIndex: 0,
+      },
+      {
+        type: "MULTIPLE_CHOICE",
+        prompt: "Wat betekent het woord 'begiftiging' volgens de gasten?",
+        options: [
+          "Een gave, een gift die God ons geeft",
+          "Een geldelijke bijdrage aan de tempel",
+          "Een cadeau dat je aan de tempelpresident geeft",
+          "Een examen dat je moet halen",
+        ],
+        correctIndex: 0,
+      },
+      {
+        type: "TRUE_FALSE",
+        prompt: "Volgens de gasten kunnen procedures in de kerk veranderen, maar de beginselen niet.",
+        answer: true,
+      },
+      {
+        type: "MULTIPLE_CHOICE",
+        prompt: "Wat heb je als lid van de kerk nodig om naar de tempel te mogen?",
+        options: [
+          "Een gesprek met de bisschop, waarin je aangeeft dat je in Jezus Christus en zijn boodschap gelooft",
+          "Een diploma van een cursus over de tempel",
+          "Een uitnodiging van de profeet zelf",
+          "Minstens tien jaar lidmaatschap",
+        ],
+        correctIndex: 0,
+      },
+      {
+        type: "SEQUENCE",
+        prompt: "Zet deze onderwerpen in de volgorde waarin ze in de aflevering aan bod komen.",
+        items: [
+          "Vrouwen en priesterschapsgezag",
+          "Waarom je vaker naar de tempel gaat, en wat 'begiftiging' betekent",
+          "Het verschil tussen veranderende procedures en vaste beginselen",
+          "Wie de tempel mag bezoeken, en hoe ver niet-leden naar binnen kunnen",
+        ],
+      },
+    ],
+    bomConnection: [
+      {
+        type: "MULTIPLE_CHOICE",
+        prompt: "Ook de Nephieten hadden een tempel. Naar welk voorbeeld bouwde Nephi zijn tempel volgens 2 Nephi 5:16?",
+        options: [
+          "Naar het voorbeeld van de tempel van Salomo",
+          "Naar het voorbeeld van de toren van Babel",
+          "Naar het voorbeeld van de tabernakel van Mozes",
+          "Naar een ontwerp dat hij zelf bedacht",
+        ],
+        correctIndex: 0,
+      },
+      {
+        type: "MULTIPLE_CHOICE",
+        prompt:
+          "De gasten vertellen dat je gezag krijgt doordat je wordt aangesteld. Wat deed Nephi volgens 2 Nephi 5:26 met zijn broers Jakob en Jozef?",
+        options: [
+          "Hij wijdde hen tot priester en leraar over het land van zijn volk",
+          "Hij maakte hen koning over het volk",
+          "Hij stuurde hen terug naar Jeruzalem",
+          "Hij liet hen de tempel bewaken als soldaten",
+        ],
+        correctIndex: 0,
+      },
+      {
+        type: "TRUE_FALSE",
+        prompt: "Volgens 2 Nephi 5:16 werd Nephi's tempel van net zoveel kostbare materialen gebouwd als de tempel van Salomo.",
+        answer: false,
+      },
+      {
+        type: "SEQUENCE",
+        prompt: "Zet deze gebeurtenissen uit 2 Nephi 5:15-27 in de juiste volgorde.",
+        items: [
+          "Nephi leert zijn volk gebouwen te bouwen en metalen te bewerken",
+          "Nephi bouwt een tempel naar het voorbeeld van de tempel van Salomo",
+          "Nephi wijdt Jakob en Jozef tot priester en leraar",
+          "Het volk leidt een leven van geluk",
+        ],
+      },
+    ],
+  },
+  {
+    number: 54,
+    title: "Aflevering 54",
+    summary: "Wordt bijgewerkt vanuit de podcastfeed.",
+    content: [
+      {
+        type: "MULTIPLE_CHOICE",
+        prompt: "Waarom heeft de zondeval voor Koos een positieve lading?",
+        options: [
+          "Omdat Adam en Eva pas daarna kinderen konden krijgen, zodat wij op aarde konden komen",
+          "Omdat er daarna nooit meer iets fout ging",
+          "Omdat Adam en Eva daardoor in de hof mochten blijven",
+          "Omdat Satan daarmee zijn macht verloor",
+        ],
+        correctIndex: 0,
+      },
+      {
+        type: "MULTIPLE_CHOICE",
+        prompt: "Welke vraag blijft voor gast Dick lastig?",
+        options: [
+          "Waarom God een plan koos waarin zoveel pijn en ellende nodig was",
+          "Of Adam en Eva echt hebben bestaan",
+          "Hoe lang Adam en Eva in de hof woonden",
+          "Waarom er maar één verboden boom was",
+        ],
+        correctIndex: 0,
+      },
+      {
+        type: "MULTIPLE_CHOICE",
+        prompt: "Welk gevoel ontstond volgens gast Renco direct nadat de vrucht gegeten was?",
+        options: ["Schaamte", "Trots", "Honger", "Verveling"],
+        correctIndex: 0,
+      },
+      {
+        type: "TRUE_FALSE",
+        prompt:
+          "Koos noemt Pasen het grootste feest, omdat Christus zowel de lichamelijke als de geestelijke dood heeft overwonnen.",
+        answer: true,
+      },
+      {
+        type: "SEQUENCE",
+        prompt: "Zet deze onderwerpen in de volgorde waarin ze in de aflevering aan bod komen.",
+        items: [
+          "De gasten vertellen hoe hun eigen podcast is ontstaan",
+          "Koos legt uit waarom de zondeval voor hem een positieve lading heeft",
+          "Dick vraagt waarom Gods plan zoveel pijn en ellende nodig had",
+          "Wat Pasen betekent: de overwinning op de lichamelijke en geestelijke dood",
+        ],
+      },
+    ],
+    bomConnection: [
+      {
+        type: "MULTIPLE_CHOICE",
+        prompt:
+          "Dick vraagt waarom het leven na de val zo moest zijn. Wat werd dit leven volgens Alma 12:24?",
+        options: [
+          "Een proefstaat, een tijd om zich voor te bereiden om God te ontmoeten",
+          "Een straf die nooit meer zou eindigen",
+          "Een droom waaruit de mens zou ontwaken",
+          "Een korte pauze voordat de mens terug zou keren naar de hof van Eden",
+        ],
+        correctIndex: 0,
+      },
+      {
+        type: "MULTIPLE_CHOICE",
+        prompt:
+          "Wat zou er volgens Alma 12:26 zijn gebeurd als Adam en Eva meteen van de boom des levens hadden kunnen nemen?",
+        options: [
+          "Dan zouden zij voor eeuwig ellendig zijn geweest, door gebrek aan een voorbereidende staat",
+          "Dan zouden zij voor eeuwig gelukkig in de hof zijn gebleven",
+          "Dan zouden zij direct engelen zijn geworden",
+          "Dan zou er niets veranderd zijn",
+        ],
+        correctIndex: 0,
+      },
+      {
+        type: "TRUE_FALSE",
+        prompt: "Volgens Alma 12:25 had er zonder het verlossingsplan geen opstanding der doden kunnen zijn.",
+        answer: true,
+      },
+      {
+        type: "SEQUENCE",
+        prompt: "Zet deze uitspraken uit Alma 12:21-25 in de juiste volgorde.",
+        items: [
+          "God stelde cherubs met een vlammend zwaard bij de boom des levens",
+          "Adam viel door te nemen van de verboden vrucht",
+          "Dit leven werd een proefstaat, een tijd om zich voor te bereiden om God te ontmoeten",
+          "Zonder het verlossingsplan had er geen opstanding der doden kunnen zijn",
+        ],
+      },
+    ],
+  },
 ];
