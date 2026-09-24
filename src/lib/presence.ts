@@ -129,6 +129,42 @@ export async function broadcastPresenceUpdate(io: SocketIOServer | null, userId:
   }
 }
 
+// "X is nu online" alleen bij echt online komen, niet bij een korte
+// herverbinding (telefoon even in slaap, pagina herladen): wie minder dan dit
+// offline was, wordt niet opnieuw aangekondigd.
+const ONLINE_NOTICE_MIN_OFFLINE_MS = 2 * 60 * 1000;
+// Na een herstart van de server (nieuwe versie) verbindt iedereen tegelijk
+// opnieuw; zonder deze stilteperiode zou dat een golf meldingen geven.
+const ONLINE_NOTICE_QUIET_AFTER_START_MS = 90 * 1000;
+const presenceModuleLoadedAt = Date.now();
+
+/**
+ * Meldt vrienden die nu online zijn dat `userId` online is gekomen (eerste
+ * verbinding, na minstens een paar minuten offline). Zelfde privacyregels als
+ * broadcastPresenceUpdate: alleen als deze gebruiker zijn status deelt (en
+ * niet incognito is), en alleen aan vrienden die hun eigen status ook delen.
+ * Geen pushmelding: wie de app niet open heeft, krijgt niets.
+ */
+export async function announceCameOnline(
+  io: SocketIOServer | null,
+  userId: string,
+  previousSeenAt: Date | null
+): Promise<void> {
+  if (!io || Date.now() - presenceModuleLoadedAt < ONLINE_NOTICE_QUIET_AFTER_START_MS) return;
+  if (previousSeenAt && Date.now() - previousSeenAt.getTime() < ONLINE_NOTICE_MIN_OFFLINE_MS) return;
+  const user = await prisma.user.findUnique({ where: { id: userId }, select: { ...PRESENCE_SELECT, handle: true } });
+  if (!user || !computeFriendStatus(user)?.online) return;
+
+  const friendIds = await getAcceptedFriendIds(userId);
+  const viewers = await prisma.user.findMany({
+    where: { id: { in: friendIds }, shareOnlineStatus: true, onlineSocketCount: { gt: 0 } },
+    select: { id: true },
+  });
+  for (const viewer of viewers) {
+    io.to(`user:${viewer.id}`).emit("friend_online", { userId, name: user.handle });
+  }
+}
+
 /**
  * Stuurt alle actuele vriendstatussen naar één gebruiker. Dit wordt gebruikt
  * wanneer iemand zijn eigen online-status delen aanzet: pas dan mag diegene

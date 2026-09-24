@@ -10,21 +10,33 @@ interface Invite {
   gameLabel?: string;
 }
 
+type Notice =
+  | ({ kind: "invite" } & Invite)
+  // Vrienden die (vrijwel) tegelijk online kwamen, in één melding.
+  | { kind: "online"; friends: { userId: string; name: string }[] };
+
+function joinNames(names: string[]): string {
+  return names.length > 1 ? `${names.slice(0, -1).join(", ")} en ${names[names.length - 1]}` : (names[0] ?? "");
+}
+
 const AUTO_HIDE_MS = 8000;
 const DISMISS_DISTANCE_PX = 40;
 const TAP_TOLERANCE_PX = 6;
 
 /**
- * Melding binnen de app voor een live-uitnodiging, in de stijl van een
- * systeemmelding: schuift van boven in, omhoog vegen = negeren, tikken =
- * meedoen. Negeren is niet weigeren: de uitnodiging blijft bij Spelen staan
- * (ActiveGamesBanner) tot de host start of annuleert. Is de app dicht, dan
- * komt dezelfde uitnodiging als pushmelding binnen (zie gameServer.ts).
+ * Melding binnen de app in de stijl van een systeemmelding: schuift van boven
+ * in, omhoog vegen = negeren, tikken = openen. Voor een live-uitnodiging
+ * (tikken = meedoen; negeren is niet weigeren: de uitnodiging blijft bij
+ * Spelen staan tot de host start of annuleert, en is de app dicht dan komt
+ * hij als pushmelding binnen) en voor een vriend die online komt (zie
+ * announceCameOnline in src/lib/presence.ts; bewust zonder pushmelding). Een
+ * uitnodiging gaat altijd voor: die wordt nooit door een onlinemelding
+ * vervangen.
  */
 export default function InviteListener() {
   const router = useRouter();
   const pathname = usePathname();
-  const [invite, setInvite] = useState<Invite | null>(null);
+  const [notice, setNotice] = useState<Notice | null>(null);
   const [offsetY, setOffsetY] = useState(0);
   const [leaving, setLeaving] = useState(false);
   const drag = useRef<{ startY: number; moved: number } | null>(null);
@@ -39,7 +51,7 @@ export default function InviteListener() {
     clearHideTimer();
     setLeaving(true);
     setTimeout(() => {
-      setInvite(null);
+      setNotice(null);
       setLeaving(false);
       setOffsetY(0);
     }, 250);
@@ -55,34 +67,62 @@ export default function InviteListener() {
     function onInvite(data: Invite) {
       setLeaving(false);
       setOffsetY(0);
-      setInvite(data);
+      setNotice({ kind: "invite", ...data });
     }
     function onRevoked({ code }: { code: string }) {
-      setInvite((current) => (current?.code === code ? null : current));
+      setNotice((current) => (current?.kind === "invite" && current.code === code ? null : current));
+    }
+    function onFriendOnline(friend: { userId: string; name: string }) {
+      setNotice((current) => {
+        if (current?.kind === "invite") return current;
+        const others = current?.kind === "online" ? current.friends.filter((f) => f.userId !== friend.userId) : [];
+        return { kind: "online", friends: [...others, friend] };
+      });
+      setLeaving(false);
+      setOffsetY(0);
     }
     socket.on("game_invite", onInvite);
     socket.on("game_invite_revoked", onRevoked);
+    socket.on("friend_online", onFriendOnline);
     return () => {
       socket.off("game_invite", onInvite);
       socket.off("game_invite_revoked", onRevoked);
+      socket.off("friend_online", onFriendOnline);
     };
   }, []);
 
   useEffect(() => {
-    if (!invite) return;
+    if (!notice) return;
     startHideTimer();
     return clearHideTimer;
-  }, [invite, startHideTimer]);
+  }, [notice, startHideTimer]);
 
-  if (!invite || pathname === `/live/${invite.code}`) return null;
+  if (!notice || (notice.kind === "invite" && pathname === `/live/${notice.code}`)) return null;
 
   function open() {
-    if (!invite) return;
+    if (!notice) return;
     clearHideTimer();
-    const code = invite.code;
-    setInvite(null);
-    router.push(`/live/${code}`);
+    setNotice(null);
+    router.push(notice.kind === "invite" ? `/live/${notice.code}` : "/friends");
   }
+
+  const names = notice.kind === "online" ? joinNames(notice.friends.map((f) => f.name)) : "";
+  const content =
+    notice.kind === "invite"
+      ? {
+          icon: "🎮",
+          iconClass: "from-brand-500 to-brand-700",
+          title: "Uitnodiging voor een live spel",
+          text: `${notice.fromDisplayName} nodigt je uit${notice.gameLabel ? ` voor ${notice.gameLabel}` : ""}. Tik om mee te doen.`,
+          label: `${notice.fromDisplayName} nodigt je uit voor een live spel. Tik om mee te doen, veeg omhoog om te negeren.`,
+        }
+      : {
+          icon: "👋",
+          iconClass: "from-green-500 to-green-700",
+          title: notice.friends.length > 1 ? "Vrienden online" : "Vriend online",
+          text: `${names} ${notice.friends.length > 1 ? "zijn" : "is"} nu online. Tik om naar je vrienden te gaan.`,
+          label: `${names} ${notice.friends.length > 1 ? "zijn" : "is"} nu online. Tik om naar je vrienden te gaan, veeg omhoog om te negeren.`,
+        };
 
   function onPointerDown(e: React.PointerEvent<HTMLDivElement>) {
     e.currentTarget.setPointerCapture(e.pointerId);
@@ -124,7 +164,7 @@ export default function InviteListener() {
         <div
           role="button"
           tabIndex={0}
-          aria-label={`${invite.fromDisplayName} nodigt je uit voor een live spel. Tik om mee te doen, veeg omhoog om te negeren.`}
+          aria-label={content.label}
           onPointerDown={onPointerDown}
           onPointerMove={onPointerMove}
           onPointerUp={onPointerUp}
@@ -145,17 +185,17 @@ export default function InviteListener() {
           }}
         >
           <div className="flex items-start gap-3">
-            <div className="h-10 w-10 shrink-0 rounded-xl bg-gradient-to-br from-brand-500 to-brand-700 flex items-center justify-center text-xl shadow-sm">
-              🎮
+            <div
+              className={`h-10 w-10 shrink-0 rounded-xl bg-gradient-to-br ${content.iconClass} flex items-center justify-center text-xl shadow-sm`}
+            >
+              {content.icon}
             </div>
             <div className="min-w-0 flex-1">
               <div className="flex items-center justify-between gap-2">
-                <p className="text-sm font-extrabold text-slate-900 dark:text-slate-100 truncate">Uitnodiging voor een live spel</p>
+                <p className="text-sm font-extrabold text-slate-900 dark:text-slate-100 truncate">{content.title}</p>
                 <span className="text-[11px] text-slate-400 dark:text-slate-500 shrink-0">nu</span>
               </div>
-              <p className="text-sm text-slate-600 dark:text-slate-300 leading-snug">
-                {invite.fromDisplayName} nodigt je uit{invite.gameLabel ? ` voor ${invite.gameLabel}` : ""}. Tik om mee te doen.
-              </p>
+              <p className="text-sm text-slate-600 dark:text-slate-300 leading-snug">{content.text}</p>
             </div>
           </div>
           <div className="mx-auto mt-2 h-1 w-9 rounded-full bg-slate-300 dark:bg-slate-600" aria-hidden />

@@ -11,7 +11,13 @@ import { isExerciseCorrect } from "@/lib/exerciseGen";
 import { completeLesson, completeChapterGuess } from "@/lib/streak";
 import { checkAndAwardAchievements } from "@/lib/achievements";
 import { notifyGameInvite, notifyNewAchievements } from "@/lib/notify";
-import { broadcastPresenceUpdate, sendFriendStatusesToUser, setCurrentActivity, clearCurrentActivity } from "@/lib/presence";
+import {
+  announceCameOnline,
+  broadcastPresenceUpdate,
+  sendFriendStatusesToUser,
+  setCurrentActivity,
+  clearCurrentActivity,
+} from "@/lib/presence";
 import { generateChapterGuessQuestions, labelsFor, computeHintEffect, type LiveQuestionSeed, type ChapterLabel } from "@/lib/chapterGuess";
 import {
   BOARD,
@@ -661,11 +667,26 @@ export function initGameServer(httpServer: HttpServer) {
     // reden als hierboven: de handlers hieronder moeten meteen klaarstaan. De
     // disconnect-handler wacht wel op deze ophoging, zodat een heel snelle
     // disconnect nooit vóór de ophoging telt.
-    const presenceCounted = prisma.user
-      .update({ where: { id: user.id }, data: { onlineSocketCount: { increment: 1 }, lastSeenAt: new Date() } })
-      .then(() => {})
+    // lastSeenAt vóór de ophoging = het moment van de vorige disconnect, zodat
+    // announceCameOnline een korte herverbinding kan herkennen.
+    const counted = prisma.user
+      .findUnique({ where: { id: user.id }, select: { lastSeenAt: true } })
+      .then(async (before) => {
+        const updated = await prisma.user.update({
+          where: { id: user.id },
+          data: { onlineSocketCount: { increment: 1 }, lastSeenAt: new Date() },
+          select: { onlineSocketCount: true },
+        });
+        return { previousSeenAt: before?.lastSeenAt ?? null, firstSocket: updated.onlineSocketCount === 1 };
+      })
+      .catch(() => null);
+    const presenceCounted = counted.then(() => {});
+    counted
+      .then(async (result) => {
+        await broadcastPresenceUpdate(ioInstance!, user.id);
+        if (result?.firstSocket) await announceCameOnline(ioInstance, user.id, result.previousSeenAt);
+      })
       .catch(() => {});
-    presenceCounted.then(() => broadcastPresenceUpdate(ioInstance!, user.id)).catch(() => {});
 
     // Vrienden-activiteit (zie src/lib/presence.ts): de client stuurt zelf al
     // een herkenbaar label mee (bv. "Leest Alma 32"), nooit een technisch ID

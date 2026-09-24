@@ -43,7 +43,9 @@ van een specifieke cloud-hostingprovider.
   halen (een 7-daagse streak, of elke 10 voltooide hoofdstukken), ze
   beschermen automatisch je streak als je een dag mist, en je kan ze
   weggeven aan vrienden.
-- **Vrienden**: verzoeken sturen/accepteren, elkaars streak en XP zien.
+- **Vrienden**: verzoeken sturen/accepteren, elkaars streak en XP zien. Wie
+  zijn online-status deelt, krijgt een melding bovenin als een vriend (die dat
+  ook deelt) online komt, zolang de app open staat; geen pushmelding.
 - **Wekelijkse competitie met divisies**: Bronze/Silver/Gold/Platinum/Diamond;
   de top promoveert, de onderkant degradeert aan het einde van de week
   (berekend zodra je voor het eerst die week actief wordt — geen aparte
