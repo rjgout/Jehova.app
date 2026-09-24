@@ -2,6 +2,7 @@
 
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import { getDutchVoices, getSelectedDutchVoice } from "@/lib/readAloud";
+import { beginSpeechPlayback, endSpeechPlayback } from "@/lib/speechAudioSession";
 
 export interface ReadAloudVerse {
   number: number;
@@ -100,6 +101,7 @@ export function ReadAloudPlayerProvider({ children }: { children: React.ReactNod
       utterance.onend = () => {
         if (!playingRef.current || utteranceId !== utteranceIdRef.current) return;
         if (verseIndex === currentSource.verses.length - 1) {
+          endSpeechPlayback();
           playingRef.current = false;
           setIsPlaying(false);
           setCurrentIndex(0);
@@ -107,6 +109,7 @@ export function ReadAloudPlayerProvider({ children }: { children: React.ReactNod
       };
       utterance.onerror = () => {
         if (utteranceId !== utteranceIdRef.current) return;
+        endSpeechPlayback();
         playingRef.current = false;
         setIsPlaying(false);
       };
@@ -119,6 +122,7 @@ export function ReadAloudPlayerProvider({ children }: { children: React.ReactNod
     // Voorlezen en de podcast delen één audio-uitvoer: een nieuwe voorleesactie
     // stopt de podcast direct, zodat nooit twee audiostreams tegelijk klinken.
     window.dispatchEvent(new Event("jehovaapp:stop-podcast"));
+    beginSpeechPlayback();
     utteranceIdRef.current += 1;
     window.speechSynthesis.cancel();
     sourceRef.current = newSource;
@@ -137,8 +141,10 @@ export function ReadAloudPlayerProvider({ children }: { children: React.ReactNod
       playingRef.current = false;
       setIsPlaying(false);
       window.speechSynthesis.pause();
+      endSpeechPlayback();
       return;
     }
+    beginSpeechPlayback();
     playingRef.current = true;
     setIsPlaying(true);
     if (window.speechSynthesis.paused) window.speechSynthesis.resume();
@@ -166,6 +172,7 @@ export function ReadAloudPlayerProvider({ children }: { children: React.ReactNod
 
   const stop = useCallback(() => {
     if ("speechSynthesis" in window) window.speechSynthesis.cancel();
+    endSpeechPlayback();
     utteranceIdRef.current += 1;
     playingRef.current = false;
     setIsPlaying(false);
@@ -178,6 +185,7 @@ export function ReadAloudPlayerProvider({ children }: { children: React.ReactNod
     const stopForPodcast = () => {
       if (!("speechSynthesis" in window)) return;
       window.speechSynthesis.cancel();
+      endSpeechPlayback();
       utteranceIdRef.current += 1;
       playingRef.current = false;
       setIsPlaying(false);
@@ -206,6 +214,7 @@ export function ReadAloudPlayerProvider({ children }: { children: React.ReactNod
 
   useEffect(() => () => {
     if ("speechSynthesis" in window) window.speechSynthesis.cancel();
+    endSpeechPlayback();
   }, []);
 
   return (

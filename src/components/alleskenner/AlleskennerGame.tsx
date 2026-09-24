@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
 import { getSocket } from "@/lib/socketClient";
 import { getDutchVoices, getSelectedDutchVoice } from "@/lib/readAloud";
+import { beginSpeechPlayback, endSpeechPlayback } from "@/lib/speechAudioSession";
 import { AK_ROUND_TITLES, type AkGridCell, type AkStateView } from "@/lib/alleskenner/types";
 
 const GROUP_STYLES = [
@@ -25,6 +26,8 @@ function useNow(active: boolean) {
   return now;
 }
 
+let speechId = 0;
+
 /** Leest een vers voor met een Nederlandse stem (alleen op één apparaat, zie hieronder). */
 function speak(text: string, onDone?: () => void) {
   if (typeof window === "undefined" || !("speechSynthesis" in window)) {
@@ -38,9 +41,20 @@ function speak(text: string, onDone?: () => void) {
   const voice = getSelectedDutchVoice() ?? getDutchVoices()[0];
   if (voice) utterance.voice = voice;
   utterance.rate = 0.95;
+  // cancel() hierboven kan het vorige vers pas later laten afbreken: alleen
+  // het laatste vers mag de afspeelsessie weer loslaten.
+  const id = ++speechId;
+  const release = () => {
+    if (id === speechId) endSpeechPlayback();
+  };
   // Alleen bij echt uitgesproken: een geblokkeerde automatische start (iOS
   // zonder tik) meldt geen einde; dan gebruikt de speler de knop Voorlezen.
-  if (onDone) utterance.onend = onDone;
+  utterance.onend = () => {
+    release();
+    onDone?.();
+  };
+  utterance.onerror = release;
+  beginSpeechPlayback();
   window.speechSynthesis.speak(utterance);
 }
 
