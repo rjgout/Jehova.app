@@ -19,15 +19,38 @@ const TOOL_SUBPAGES: Record<string, { title: string; icon: string }> = {
   "/tools/persons": { title: "Personages", icon: "👤" },
 };
 
+// De spellen op Spelen (/live, zie LiveLobbyForm.tsx): de eigen pagina van
+// een spel gaat terug naar Spelen. Een lopend spel (/live/<code>) bewust niet:
+// daar leidt een terugbalk alleen af.
+const GAME_PAGES: Record<string, { title: string; icon: string }> = {
+  "/word-game": { title: "Woord van de dag", icon: "🟩" },
+  "/scrabble": { title: "Woordspel", icon: "🔤" },
+  "/alleskenner": { title: "De Alleskenner", icon: "🧠" },
+  "/gezinsavond": { title: "Gezinsavond", icon: "🎉" },
+  "/chapter-guess": { title: "Raad het hoofdstuk", icon: "🔎" },
+  "/challenges": { title: "Uitdagingen", icon: "⚔️" },
+};
+
 function backTargetFor(pathname: string): BackTarget | null {
   const tool = TOOL_SUBPAGES[pathname];
   if (tool) return { href: "/tools", parent: "Hulpmiddelen", ...tool };
   if (pathname === "/feedback") return { href: "/profile", parent: "Profiel", title: "Feedback", icon: "💬" };
+  const game = GAME_PAGES[pathname];
+  if (game) return { href: "/live", parent: "Spelen", ...game };
   if (pathname === "/alleskenner/alleen") return { href: "/alleskenner", parent: "De Alleskenner", title: "Alleen spelen", icon: "🧠" };
+  if (pathname === "/alleskenner/seizoen") return { href: "/alleskenner", parent: "De Alleskenner", title: "Seizoenen", icon: "📅" };
+  if (/^\/alleskenner\/seizoen\/[^/]+$/.test(pathname)) {
+    return { href: "/alleskenner/seizoen", parent: "Seizoenen", title: "Seizoen", icon: "📅" };
+  }
+  if (/^\/chapter-guess\/solo\/[^/]+$/.test(pathname)) {
+    return { href: "/chapter-guess", parent: "Raad het hoofdstuk", title: "Alleen spelen", icon: "🔎" };
+  }
   if (/^\/scrabble\/[^/]+$/.test(pathname)) return { href: "/scrabble", parent: "Woordspellen", title: "Woordspel", icon: "🔤" };
   if (/^\/fsy\/[^/]+$/.test(pathname)) return { href: "/courses", parent: "Cursussen", title: "Les", icon: "📘" };
   const chapter = /^\/courses\/([^/]+)\/chapter\/[^/]+$/.exec(pathname);
   if (chapter) return { href: `/courses/${chapter[1]}`, parent: "Cursus", title: "Hoofdstuk", icon: "📖" };
+  if (pathname === "/courses/per-boek") return { href: "/courses", parent: "Cursussen", title: "Per boek", icon: "📚" };
+  if (/^\/courses\/[^/]+$/.test(pathname)) return { href: "/courses", parent: "Cursussen", title: "Cursus", icon: "📚" };
   return null;
 }
 
