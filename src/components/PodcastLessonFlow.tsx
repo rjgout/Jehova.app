@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { ExerciseCard, type Exercise } from "@/components/LessonFlow";
 import { ACHIEVEMENT_DISPLAY } from "@/lib/achievementDisplay";
 import { announceXpChanged } from "@/lib/xpBroadcast";
@@ -27,10 +28,15 @@ export default function PodcastLessonFlow({
   episodeId,
   mode,
   exercises,
+  courseHref,
+  nextRound,
 }: {
   episodeId: string;
   mode: "CONTENT" | "BOM_CONNECTION";
   exercises: Exercise[];
+  courseHref: string;
+  /** De andere ronde van deze aflevering, als die bestaat en nog niet af is. */
+  nextRound: { href: string; label: string } | null;
 }) {
   const [index, setIndex] = useState(0);
   const [answers, setAnswers] = useState<Answer[]>([]);
@@ -105,6 +111,16 @@ export default function PodcastLessonFlow({
           </div>
         )}
 
+        <div className="flex gap-3 flex-wrap justify-center">
+          <Link href={courseHref} className={nextRound ? "btn-secondary" : "btn-primary"}>
+            Naar de afleveringen
+          </Link>
+          {nextRound && (
+            <Link href={nextRound.href} className="btn-primary">
+              {nextRound.label} →
+            </Link>
+          )}
+        </div>
       </div>
     );
   }

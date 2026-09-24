@@ -39,7 +39,26 @@ export default async function KidsStoryPage({ params }: { params: Promise<{ stor
     options: e.options.length > 0 ? shuffleForDisplay(e.options.map((o) => o.imageUrl ?? o.label)) : undefined,
   }));
 
+  // Voor de knoppen op het afrondscherm: terug naar de kindercursus zelf (niet
+  // de algemene cursuslijst) en door naar het volgende verhaal.
+  const [course, nextStory] = await Promise.all([
+    prisma.course.findFirst({ where: { type: "KIDS" }, select: { id: true } }),
+    prisma.kidsStory.findFirst({
+      where: { order: { gt: story.order } },
+      orderBy: { order: "asc" },
+      select: { id: true },
+    }),
+  ]);
+
   return (
-    <KidsLessonFlow storyId={story.id} title={story.title} text={story.text} images={images} exercises={exercises} />
+    <KidsLessonFlow
+      storyId={story.id}
+      title={story.title}
+      text={story.text}
+      images={images}
+      exercises={exercises}
+      courseHref={course ? `/courses/${course.id}` : "/courses"}
+      nextStoryHref={nextStory ? `/kids/${nextStory.id}` : null}
+    />
   );
 }

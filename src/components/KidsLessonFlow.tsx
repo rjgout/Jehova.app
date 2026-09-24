@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { ExerciseCard, type Exercise } from "@/components/LessonFlow";
 import { ACHIEVEMENT_DISPLAY } from "@/lib/achievementDisplay";
 import { announceXpChanged } from "@/lib/xpBroadcast";
@@ -31,12 +32,16 @@ export default function KidsLessonFlow({
   text,
   images,
   exercises,
+  courseHref,
+  nextStoryHref,
 }: {
   storyId: string;
   title: string;
   text: string;
   images: string[];
   exercises: Exercise[];
+  courseHref: string;
+  nextStoryHref: string | null;
 }) {
   const [phase, setPhase] = useState<Phase>("read");
   const [index, setIndex] = useState(0);
@@ -135,6 +140,16 @@ export default function KidsLessonFlow({
           </div>
         )}
 
+        <div className="flex gap-3 flex-wrap justify-center">
+          <Link href={courseHref} className={nextStoryHref ? "btn-secondary" : "btn-primary"}>
+            Naar de verhalen
+          </Link>
+          {nextStoryHref && (
+            <Link href={nextStoryHref} className="btn-primary">
+              Volgend verhaal →
+            </Link>
+          )}
+        </div>
       </div>
     );
   }

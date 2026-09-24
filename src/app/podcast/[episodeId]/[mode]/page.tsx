@@ -44,6 +44,27 @@ export default async function PodcastLessonPage({
     options: e.options.length > 0 ? shuffleForDisplay(e.options.map((o) => o.label)) : undefined,
   }));
 
+  // Voor de knoppen op het afrondscherm: terug naar de eigen podcastcursus (niet
+  // de algemene cursuslijst), en door naar de andere ronde van deze aflevering
+  // zolang die nog niet af is.
+  const otherMode = mode === "CONTENT" ? "BOM_CONNECTION" : "CONTENT";
+  const [course, otherExerciseCount, otherProgress] = await Promise.all([
+    prisma.course.findFirst({ where: { podcastId: episode.podcastId }, select: { id: true } }),
+    prisma.podcastExercise.count({ where: { episodeId, mode: otherMode } }),
+    prisma.podcastEpisodeProgress.findUnique({
+      where: { userId_episodeId_mode: { userId: user.id, episodeId, mode: otherMode } },
+      select: { completed: true },
+    }),
+  ]);
+  const courseHref = course ? `/courses/${course.id}` : "/courses";
+  const nextRound =
+    otherExerciseCount > 0 && !otherProgress?.completed
+      ? {
+          href: `/podcast/${episode.id}/${otherMode}`,
+          label: otherMode === "CONTENT" ? "Inhoud van de aflevering" : "Verband met het Boek van Mormon",
+        }
+      : null;
+
   return (
     <div className="flex flex-col gap-6">
       <div className="max-w-2xl mx-auto w-full">
@@ -54,7 +75,13 @@ export default async function PodcastLessonPage({
           {mode === "CONTENT" ? "Inhoud van de aflevering" : "Verband met het Boek van Mormon"}
         </p>
       </div>
-      <PodcastLessonFlow episodeId={episode.id} mode={mode} exercises={exercises} />
+      <PodcastLessonFlow
+        episodeId={episode.id}
+        mode={mode}
+        exercises={exercises}
+        courseHref={courseHref}
+        nextRound={nextRound}
+      />
     </div>
   );
 }
