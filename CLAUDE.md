@@ -301,7 +301,9 @@ verwerken". Fundamenteel anders dan de rest van de API:
 ## Podcastafleveringen verwerken (`prisma/podcastContent.ts`)
 
 De app kent meerdere podcasts (vaste lijst in `src/lib/podcasts.ts`, elk met
-een eigen PODCAST-cursus). Afleveringen (titel, omschrijving, audio en, als
+een eigen PODCAST-cursus, samen in de eigen contentcollectie "Podcasts"
+(`content_podcasts`), los van het Boek van Mormon; die collectie heeft bewust
+geen spellen). Afleveringen (titel, omschrijving, audio en, als
 de feed die meegeeft, `transcriptUrl` uit `<podcast:transcript>`) komen per
 podcast uit de feed via `syncPodcastFeed()`; alleen de oefeningen zijn
 handwerk, in één contentbestand per podcast: `prisma/podcastContent.ts`

@@ -1,5 +1,5 @@
 import type { PrismaClient } from "@prisma/client";
-import { ensurePodcasts, PODCASTS } from "./podcasts";
+import { ensurePodcasts, PODCASTS, PODCASTS_COLLECTION_ID } from "./podcasts";
 
 export const FRONT_TO_BACK_SLUG = "voor-naar-achter";
 export const FREE_CHOICE_SLUG = "vrije-keuze";
@@ -235,13 +235,20 @@ export async function syncCourses(db: PrismaClient): Promise<void> {
   // rijen van die podcast (zie prisma/importPodcast.ts en
   // src/lib/podcastFeed.ts) horen er impliciet allemaal bij.
   await ensurePodcasts(db);
+  // Zonder de migratie van de Podcasts-collectie (oudere installatie) blijven
+  // de podcastcursussen bij de standaardcollectie, zoals voorheen.
+  const podcastsCollection = await db.contentCollection.findUnique({
+    where: { id: PODCASTS_COLLECTION_ID },
+    select: { id: true },
+  });
+  const podcastsCollectionId = podcastsCollection?.id ?? defaultCollection.id;
   for (const podcast of PODCASTS) {
     await db.course.upsert({
       where: { slug: podcast.courseSlug },
       update: {
         name: podcast.courseName,
         order: podcast.courseOrderOffset + books.length,
-        contentCollectionId: defaultCollection.id,
+        contentCollectionId: podcastsCollectionId,
         podcastId: podcast.id,
       },
       create: {
@@ -250,7 +257,7 @@ export async function syncCourses(db: PrismaClient): Promise<void> {
         name: podcast.courseName,
         description: podcast.courseDescription,
         order: podcast.courseOrderOffset + books.length,
-        contentCollectionId: defaultCollection.id,
+        contentCollectionId: podcastsCollectionId,
         podcastId: podcast.id,
       },
     });

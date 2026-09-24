@@ -8,5 +8,12 @@ export default async function LivePage() {
   const user = await getCurrentUser();
   if (!user) redirect("/login");
   const [settings, contentContext] = await Promise.all([getGameSettings(), getContentContext(user.id)]);
-  return <LiveLobbyForm settings={settings} isAdmin={user.isAdmin} allowedGameKeys={contentContext.gameKeys} />;
+  return (
+    <LiveLobbyForm
+      settings={settings}
+      isAdmin={user.isAdmin}
+      allowedGameKeys={contentContext.gameKeys}
+      contentName={contentContext.active.name}
+    />
+  );
 }

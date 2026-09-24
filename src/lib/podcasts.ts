@@ -22,6 +22,9 @@ export interface PodcastDefinition {
   courseOrderOffset: number;
 }
 
+// Eigen contentcollectie (migratie 20260924150000_podcasts_collection), los
+// van het Boek van Mormon.
+export const PODCASTS_COLLECTION_ID = "content_podcasts";
 export const GJDO_PODCAST_ID = "podcast_gjdo";
 export const KAST_PODCAST_ID = "podcast_kast";
 

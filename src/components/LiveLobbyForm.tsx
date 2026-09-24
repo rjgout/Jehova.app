@@ -27,6 +27,8 @@ interface Props {
   settings: GameSettings;
   isAdmin: boolean;
   allowedGameKeys: string[];
+  /** Naam van de actieve content, voor de melding als daar geen spellen bij horen. */
+  contentName: string;
 }
 
 interface GameEntry {
@@ -110,7 +112,7 @@ const GAMES: GameEntry[] = [
   },
 ];
 
-export default function LiveLobbyForm({ settings, isAdmin, allowedGameKeys }: Props) {
+export default function LiveLobbyForm({ settings, isAdmin, allowedGameKeys, contentName }: Props) {
   const router = useRouter();
   const [chapters, setChapters] = useState<ChapterOption[]>([]);
   const [chapterId, setChapterId] = useState("");
@@ -196,6 +198,18 @@ export default function LiveLobbyForm({ settings, isAdmin, allowedGameKeys }: Pr
             </button>
             {error && <p className="text-red-100 text-sm font-semibold">{error}</p>}
           </form>
+        </div>
+      )}
+
+      {/* Sommige content (zoals podcasts) heeft bewust geen spellen: die
+          halen hun hoofdstukken uit een boek. Zonder deze melding bleef de
+          pagina leeg zonder uitleg. */}
+      {games.length === 0 && (
+        <div className="card text-center flex flex-col gap-1">
+          <p className="font-bold dark:text-slate-100">Bij {contentName} horen (nog) geen spellen.</p>
+          <p className="text-sm text-slate-500 dark:text-slate-400">
+            Wissel bovenaan naar andere content om te spelen.
+          </p>
         </div>
       )}
 
