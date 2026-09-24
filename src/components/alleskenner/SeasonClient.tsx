@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { SEASON_STATUS_LABEL } from "@/components/alleskenner/SeasonListClient";
+import UserAvatar from "@/components/UserAvatar";
 
 type MemberStatus = "WAITING" | "ACTIVE" | "ELIMINATED" | "RETIRED";
 
@@ -219,7 +220,12 @@ export default function SeasonClient({ id }: { id: string }) {
                   return (
                     <tr key={m.userId} className="dark:text-slate-100">
                       <td className="py-2 pr-2 font-extrabold text-slate-400">{i + 1}</td>
-                      <td className="py-2 pr-2 font-semibold">{m.name}</td>
+                      <td className="py-2 pr-2 font-semibold">
+                        <span className="flex items-center gap-2">
+                          <UserAvatar id={m.userId} handle={m.name} size="xs" />
+                          {m.name}
+                        </span>
+                      </td>
                       <td className="py-2 pr-2">
                         <span className={`rounded-full px-2 py-0.5 text-xs font-bold whitespace-nowrap ${label.style}`}>{label.text}</span>
                       </td>
@@ -315,8 +321,10 @@ export default function SeasonClient({ id }: { id: string }) {
                 <ol className="flex flex-col gap-1 text-sm dark:text-slate-100">
                   {queue.map((m, i) => (
                     <li key={m.userId} className="flex items-center justify-between gap-2">
-                      <span>
-                        {i + 1}. {m.name}
+                      <span className="flex items-center gap-2">
+                        {i + 1}.
+                        <UserAvatar id={m.userId} handle={m.name} size="xs" />
+                        {m.name}
                       </span>
                       {managing && m.userId !== season.host.id && m.userId !== season.deputyHost?.id && (
                         <button className="text-xs text-red-500 hover:underline" disabled={busy} onClick={() => removeMember(m.userId)}>

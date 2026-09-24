@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import UserAvatar from "@/components/UserAvatar";
 
 const BOARD_SIZE = 15;
 const CENTER = 7;
@@ -313,7 +314,8 @@ export default function ScrabbleBoardClient({ gameId }: { gameId: string }) {
     <div className="max-w-3xl mx-auto flex flex-col gap-4">
       <div className="flex items-center justify-between flex-wrap gap-2">
         <div>
-          <h1 className="text-xl font-extrabold text-brand-800 dark:text-brand-300">
+          <h1 className="flex items-center gap-2 text-xl font-extrabold text-brand-800 dark:text-brand-300">
+            <UserAvatar id={game.opponent.id} handle={game.opponent.displayName} />
             Tegen {game.opponent.displayName}
           </h1>
         </div>

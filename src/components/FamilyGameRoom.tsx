@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { getSocket } from "@/lib/socketClient";
+import UserAvatar from "@/components/UserAvatar";
 
 type Phase = "connecting" | "lobby" | "playing" | "finished" | "error";
 type Region = "JERUZALEM" | "WILDERNIS" | "ZEE" | "BELOOFDE_LAND" | "ZARAHEMLA";
@@ -394,8 +395,10 @@ export default function FamilyGameRoom({ code, myUserId }: { code: string; myUse
           <ul className="flex flex-col gap-2">
             {players.map((p) => (
               <li key={p.userId} className="flex items-center gap-2">
-                <span>{p.userId === hostId ? "👑" : p.isGuest ? "🙂" : "🙋"}</span>
+                {/* Een gast heeft geen account (en dus geen eigen avatar-emoji). */}
+                <UserAvatar id={p.userId} handle={p.displayName} avatarEmoji={p.isGuest ? null : undefined} size="xs" />
                 <span className="font-bold">{p.displayName}</span>
+                {p.userId === hostId && <span title="Host">👑</span>}
                 {p.userId === myUserId && <span className="text-brand-500 dark:text-brand-300 text-sm">(jij)</span>}
                 {p.isGuest && <span className="text-slate-400 dark:text-slate-500 text-xs">gast</span>}
                 {p.isGuest && myUserId === hostId && (
@@ -439,7 +442,10 @@ export default function FamilyGameRoom({ code, myUserId }: { code: string; myUse
             <ul className="flex flex-col gap-2">
               {nonPlayerFriends.map((f) => (
                 <li key={f.id} className="flex items-center justify-between">
-                  <span>{f.handle}</span>
+                  <span className="flex items-center gap-2">
+                    <UserAvatar id={f.id} handle={f.handle} size="xs" />
+                    {f.handle}
+                  </span>
                   <button
                     className="btn-secondary !px-3 !py-1.5"
                     disabled={invited.has(f.id)}
@@ -805,8 +811,10 @@ function FamilyScoreboard({ players, myUserId, showMedals }: { players: FamilyPl
     <div className="card flex flex-col divide-y divide-slate-100 dark:divide-slate-700 w-full">
       {sorted.map((p, i) => (
         <div key={p.userId} className={`flex items-center justify-between py-2 ${p.userId === myUserId ? "font-extrabold" : ""}`}>
-          <span>
-            {showMedals ? (medals[i] ?? i + 1) : i + 1}. {p.displayName} {p.userId === myUserId && "(jij)"}
+          <span className="flex items-center gap-2">
+            {showMedals ? (medals[i] ?? i + 1) : i + 1}.
+            <UserAvatar id={p.userId} handle={p.displayName} avatarEmoji={p.isGuest ? null : undefined} size="xs" />
+            {p.displayName} {p.userId === myUserId && "(jij)"}
           </span>
           <span className="text-gold-600 font-bold">{p.score}</span>
         </div>

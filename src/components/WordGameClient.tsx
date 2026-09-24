@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { announceXpChanged } from "@/lib/xpBroadcast";
 import UserTag from "@/components/UserTag";
+import UserAvatar from "@/components/UserAvatar";
 
 type LetterState = "correct" | "present" | "absent";
 
@@ -23,6 +24,7 @@ interface LeaderboardEntry {
   rank: number;
   handle: string;
   discriminator: string;
+  userId: string;
   finishedAt: string;
 }
 
@@ -263,6 +265,7 @@ export default function WordGameClient() {
                 <span className="w-7 text-center font-extrabold text-slate-500 dark:text-slate-400">
                   {entry.rank <= 3 ? ["🥇", "🥈", "🥉"][entry.rank - 1] : entry.rank}
                 </span>
+                <UserAvatar id={entry.userId} handle={entry.handle} />
                 <div className="min-w-0 flex-1">
                   <p className="font-bold truncate dark:text-slate-100">
                     <UserTag handle={entry.handle} discriminator={entry.discriminator} />

@@ -1640,7 +1640,12 @@ async function inviteSeasonMembers(room: Room, hostName: string) {
     await prisma.liveGameInvite
       .upsert({ where: { gameId_userId: { gameId: room.gameId, userId } }, create: { gameId: room.gameId, userId }, update: {} })
       .catch(() => {});
-    io?.to(`user:${userId}`).emit("game_invite", { code: room.code, fromDisplayName: hostName, gameLabel: "De Alleskenner" });
+    io?.to(`user:${userId}`).emit("game_invite", {
+      code: room.code,
+      fromDisplayName: hostName,
+      fromUserId: room.hostId,
+      gameLabel: "De Alleskenner",
+    });
     const open = (await io?.in(`user:${userId}`).fetchSockets().catch(() => [])) ?? [];
     if (open.length === 0) notifyGameInvite(userId, hostName, "De Alleskenner", room.code).catch(() => {});
   }

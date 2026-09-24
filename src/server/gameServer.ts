@@ -1053,6 +1053,7 @@ export function initGameServer(httpServer: HttpServer) {
       ioInstance?.to(`user:${toUserId}`).emit("game_invite", {
         code: game.code,
         fromDisplayName: user.handle,
+        fromUserId: user.id,
         gameLabel,
       });
 

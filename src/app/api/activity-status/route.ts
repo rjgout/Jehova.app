@@ -7,6 +7,7 @@ interface ActivityItem {
   kind: "challenge" | "scrabble" | "live" | "chapter-guess-solo";
   id: string;
   opponentName: string | null;
+  opponentId: string | null;
   label: string;
   link: string;
   myTurn: boolean | null;
@@ -81,7 +82,7 @@ export async function GET() {
             id: true,
             code: true,
             mode: true,
-            host: { select: { handle: true } },
+            host: { select: { id: true, handle: true } },
             chapter: { select: { number: true, book: { select: { name: true, contentCollectionId: true } } } },
           },
         },
@@ -122,6 +123,7 @@ export async function GET() {
         kind: "challenge",
         id: c.id,
         opponentName: opponent.handle,
+        opponentId: opponent.id,
         label,
         link: "/challenges",
         myTurn: null,
@@ -133,6 +135,7 @@ export async function GET() {
         kind: "challenge",
         id: c.id,
         opponentName: opponent.handle,
+        opponentId: opponent.id,
         label,
         link: "/challenges",
         myTurn: myCompletedAt === null,
@@ -150,6 +153,7 @@ export async function GET() {
         kind: "scrabble",
         id: g.id,
         opponentName: opponent.handle,
+        opponentId: opponent.id,
         label: "Woordspel",
         link: "/scrabble",
         myTurn: null,
@@ -160,6 +164,7 @@ export async function GET() {
         kind: "scrabble",
         id: g.id,
         opponentName: opponent.handle,
+        opponentId: opponent.id,
         label: "Woordspel",
         link: `/scrabble/${g.id}`,
         myTurn: g.turnUserId === user.id,
@@ -197,6 +202,7 @@ export async function GET() {
           kind: "live",
           id: lg.id,
           opponentName: invite.user.handle,
+          opponentId: invite.userId,
           label,
           link: `/live/${lg.code}`,
           myTurn: null,
@@ -211,6 +217,7 @@ export async function GET() {
       kind: "live",
       id: lg.id,
       opponentName: null,
+      opponentId: null,
       label,
       link: `/live/${lg.code}`,
       myTurn: null,
@@ -225,6 +232,7 @@ export async function GET() {
       kind: "chapter-guess-solo",
       id: g.id,
       opponentName: null,
+      opponentId: null,
       label: `Raad het hoofdstuk (${LEVEL_LABELS[g.level]}) — vraag ${g.currentIndex + 1}/${g.questionCount}`,
       link: `/chapter-guess/solo/${g.id}`,
       myTurn: null,
@@ -238,6 +246,7 @@ export async function GET() {
     kind: "live",
     id: game.id,
     opponentName: game.host.handle,
+    opponentId: game.host.id,
     label:
       game.mode === "CHAPTER_GUESS"
         ? "Raad het hoofdstuk"

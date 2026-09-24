@@ -7,6 +7,7 @@ import { getSocket } from "@/lib/socketClient";
 import type { AkStateView } from "@/lib/alleskenner/types";
 import { AK_MAX_TEAMS, AK_MIN_PLAYERS, AK_MIN_TEAM_PLAYERS } from "@/lib/alleskenner/types";
 import AlleskennerGame, { TEAM_DOTS } from "@/components/alleskenner/AlleskennerGame";
+import UserAvatar from "@/components/UserAvatar";
 
 interface Friend {
   id: string;
@@ -145,7 +146,13 @@ function Lobby({ state }: { state: AkStateView }) {
             const isLeader = team?.leaderId === p.userId;
             return (
               <li key={p.userId} className="flex flex-wrap items-center gap-x-3 gap-y-1.5 py-2">
-                <span className={`h-2.5 w-2.5 rounded-full ${p.online ? "bg-green-500" : "bg-slate-300 dark:bg-slate-600"}`} aria-hidden />
+                {/* Groene rand = online; wie (nog) niet verbonden is, staat vager. */}
+                <UserAvatar
+                  id={p.userId}
+                  handle={p.name}
+                  size="xs"
+                  className={p.online ? "ring-2 ring-green-500 ring-offset-2 ring-offset-white dark:ring-offset-slate-800" : "opacity-50"}
+                />
                 <span className="flex-1 min-w-[8rem] truncate font-semibold dark:text-slate-100">
                   {p.name}
                   {p.userId === state.hostId && <span className="ml-1.5 text-xs text-slate-400">(host)</span>}
@@ -280,7 +287,10 @@ function Lobby({ state }: { state: AkStateView }) {
           <ul className="flex flex-col gap-2">
             {invitable.map((f) => (
               <li key={f.id} className="flex items-center justify-between gap-3">
-                <span className="dark:text-slate-100">{f.handle}</span>
+                <span className="flex items-center gap-2 dark:text-slate-100">
+                  <UserAvatar id={f.id} handle={f.handle} size="xs" />
+                  {f.handle}
+                </span>
                 <button className="btn-secondary !px-3 !py-1.5 !text-sm" disabled={invited.has(f.id)} onClick={() => invite(f.id)}>
                   {invited.has(f.id) ? "Uitgenodigd" : "Nodig uit"}
                 </button>
@@ -341,6 +351,8 @@ function Finished({ state }: { state: AkStateView }) {
           {standings.map((c, i) => (
             <li key={c.id} className="flex items-center gap-3 py-2">
               <span className="w-6 text-center font-extrabold text-slate-400">{i + 1}</span>
+              {/* Bij teams is een deelnemer een team, geen gebruiker. */}
+              {!state.teamMode && <UserAvatar id={c.id} handle={c.name} size="xs" />}
               <span className="flex-1 font-semibold dark:text-slate-100">
                 {c.name}
                 {state.teamMode && (
@@ -359,6 +371,7 @@ function Finished({ state }: { state: AkStateView }) {
             {state.personal.ranking.map((p, i) => (
               <li key={p.userId} className="flex items-center gap-3 py-1.5">
                 <span className="w-6 text-center font-extrabold text-slate-400">{i + 1}</span>
+                <UserAvatar id={p.userId} handle={p.name} size="xs" />
                 <span className="flex-1 font-semibold dark:text-slate-100">{p.name}</span>
                 <span className="font-extrabold tabular-nums dark:text-slate-100">{p.points}</span>
               </li>
@@ -406,6 +419,7 @@ function SeasonFinished({ state }: { state: AkStateView }) {
           {standings.map((c, i) => (
             <li key={c.id} className="flex items-center gap-3 py-2">
               <span className="w-6 text-center font-extrabold text-slate-400">{i + 1}</span>
+              <UserAvatar id={c.id} handle={c.name} size="xs" />
               <span className="flex-1 font-semibold dark:text-slate-100">{c.name}</span>
               <span className="font-extrabold tabular-nums dark:text-slate-100">{Math.round(c.seconds)} s</span>
             </li>

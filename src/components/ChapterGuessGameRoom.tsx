@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { getSocket } from "@/lib/socketClient";
 import { announceXpChanged } from "@/lib/xpBroadcast";
+import UserAvatar from "@/components/UserAvatar";
 
 interface LobbyPlayer {
   userId: string;
@@ -226,8 +227,9 @@ export default function ChapterGuessGameRoom({ code, myUserId }: { code: string;
           <ul className="flex flex-col gap-2">
             {players.map((p) => (
               <li key={p.userId} className="flex items-center gap-2">
-                <span>{p.userId === hostId ? "👑" : "🙋"}</span>
+                <UserAvatar id={p.userId} handle={p.displayName} size="xs" />
                 <span className="font-bold">{p.displayName}</span>
+                {p.userId === hostId && <span title="Host">👑</span>}
                 {p.userId === myUserId && <span className="text-brand-500 dark:text-brand-300 text-sm">(jij)</span>}
               </li>
             ))}
@@ -240,7 +242,10 @@ export default function ChapterGuessGameRoom({ code, myUserId }: { code: string;
             <ul className="flex flex-col gap-2">
               {nonPlayerFriends.map((f) => (
                 <li key={f.id} className="flex items-center justify-between">
-                  <span>{f.handle}</span>
+                  <span className="flex items-center gap-2">
+                    <UserAvatar id={f.id} handle={f.handle} size="xs" />
+                    {f.handle}
+                  </span>
                   <button className="btn-secondary !px-3 !py-1.5" disabled={invited.has(f.id)} onClick={() => inviteFriend(f.id)}>
                     {invited.has(f.id) ? "Uitgenodigd" : "Nodig uit"}
                   </button>
@@ -441,8 +446,10 @@ function Scoreboard({ players, myUserId, showMedals }: { players: LobbyPlayer[];
     <div className="card flex flex-col divide-y divide-slate-100 w-full">
       {players.map((p, i) => (
         <div key={p.userId} className={`flex items-center justify-between py-2 ${p.userId === myUserId ? "font-extrabold" : ""}`}>
-          <span>
-            {showMedals ? medals[i] ?? i + 1 : i + 1}. {p.displayName} {p.userId === myUserId && "(jij)"}
+          <span className="flex items-center gap-2">
+            {showMedals ? medals[i] ?? i + 1 : i + 1}.
+            <UserAvatar id={p.userId} handle={p.displayName} size="xs" />
+            {p.displayName} {p.userId === myUserId && "(jij)"}
           </span>
           <span className="text-gold-600 font-bold">{p.score}</span>
         </div>

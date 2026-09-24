@@ -122,6 +122,7 @@ function leaderboardXpBonusForRank(rank: number): number {
 
 export interface WordGameLeaderboardEntry {
   rank: number;
+  userId: string;
   handle: string;
   discriminator: string;
   finishedAt: string;
@@ -155,6 +156,7 @@ async function getTodayLeaderboard(dayKey: string): Promise<WordGameLeaderboardE
       finishedAt: true,
       user: {
         select: {
+          id: true,
           handle: true,
           discriminator: true,
         },
@@ -164,6 +166,7 @@ async function getTodayLeaderboard(dayKey: string): Promise<WordGameLeaderboardE
 
   return games.map((game, index) => ({
     rank: index + 1,
+    userId: game.user.id,
     handle: game.user.handle,
     discriminator: game.user.discriminator,
     finishedAt: game.finishedAt!.toISOString(),

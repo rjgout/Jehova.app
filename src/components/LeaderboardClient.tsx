@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import type { LeagueTier } from "@prisma/client";
 import { TIER_LABELS, TIER_ICONS } from "@/lib/leagues";
+import UserAvatar from "@/components/UserAvatar";
 
 type Zone = "PROMOTION" | "SAFE" | "RELEGATION" | null;
 
@@ -160,6 +161,7 @@ export default function LeaderboardClient() {
                     {ZONE_DOT[e.zone]}
                   </span>
                 )}
+                <UserAvatar id={e.userId} handle={e.handle} />
                 <span className="min-w-0 truncate dark:text-slate-100" title={e.handle}>
                   {e.handle} {e.isMe && <span className="text-brand-500 dark:text-brand-300">(jij)</span>}
                 </span>
@@ -197,6 +199,7 @@ function NationalRow({ e }: { e: NationalEntry }) {
     }`}>
       <div className="flex items-center gap-2 min-w-0 flex-1">
         <span className="w-8 shrink-0 text-center text-lg">{MEDALS[e.rank - 1] ?? `#${e.rank}`}</span>
+        <UserAvatar id={e.userId} handle={e.handle} />
         <span className="min-w-0 truncate dark:text-slate-100" title={e.handle}>
           {e.handle} {e.isMe && <span className="text-brand-500 dark:text-brand-300">(jij)</span>}
         </span>

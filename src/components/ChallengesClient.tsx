@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import UserAvatar from "@/components/UserAvatar";
 
 interface ChallengeView {
   id: string;
@@ -160,8 +161,11 @@ export default function ChallengesClient() {
                 key={c.id}
                 className="card !bg-gold-50 dark:!bg-slate-800 !border-gold-400/30 dark:!border-slate-700 flex items-center justify-between !py-3 flex-wrap gap-2"
               >
-                <span className="dark:text-slate-100">
-                  <strong>{c.opponent.displayName}</strong> daagt je uit op {c.bookName} {c.chapterNumber}
+                <span className="flex items-center gap-2 dark:text-slate-100">
+                  <UserAvatar id={c.opponent.id} handle={c.opponent.displayName} size="xs" />
+                  <span>
+                    <strong>{c.opponent.displayName}</strong> daagt je uit op {c.bookName} {c.chapterNumber}
+                  </span>
                 </span>
                 <div className="flex gap-2">
                   <button className="btn-primary !px-3 !py-1.5" onClick={() => respond(c.id, "accept")}>
@@ -183,8 +187,11 @@ export default function ChallengesClient() {
           <div className="flex flex-col gap-2">
             {active.map((c) => (
               <div key={c.id} className="card flex items-center justify-between !py-3 flex-wrap gap-2">
-                <span className="dark:text-slate-100">
-                  Tegen <strong>{c.opponent.displayName}</strong> op {c.bookName} {c.chapterNumber}
+                <span className="flex items-center gap-2 dark:text-slate-100">
+                  <UserAvatar id={c.opponent.id} handle={c.opponent.displayName} size="xs" />
+                  <span>
+                    Tegen <strong>{c.opponent.displayName}</strong> op {c.bookName} {c.chapterNumber}
+                  </span>
                 </span>
                 <div className="flex items-center gap-2">
                   {c.hasPlayed ? (
@@ -209,8 +216,11 @@ export default function ChallengesClient() {
           <h2 className="font-extrabold mb-2 text-slate-700 dark:text-slate-200">Verstuurd, nog geen reactie</h2>
           <div className="flex flex-col gap-2">
             {outgoing.map((c) => (
-              <div key={c.id} className="card !py-3 text-slate-500 dark:text-slate-400">
-                Wachten op {c.opponent.displayName} — {c.bookName} {c.chapterNumber}
+              <div key={c.id} className="card !py-3 text-slate-500 dark:text-slate-400 flex items-center gap-2">
+                <UserAvatar id={c.opponent.id} handle={c.opponent.displayName} size="xs" />
+                <span>
+                  Wachten op {c.opponent.displayName} — {c.bookName} {c.chapterNumber}
+                </span>
               </div>
             ))}
           </div>
@@ -222,7 +232,8 @@ export default function ChallengesClient() {
           <h2 className="font-extrabold mb-2 text-slate-700 dark:text-slate-200">Afgerond</h2>
           <div className="flex flex-col gap-2">
             {finished.map((c) => (
-              <div key={c.id} className="card !py-3 text-sm dark:text-slate-200">
+              <div key={c.id} className="card !py-3 text-sm dark:text-slate-200 flex items-center gap-2">
+                <UserAvatar id={c.opponent.id} handle={c.opponent.displayName} size="xs" />
                 {c.status === "DECLINED" ? (
                   <span className="text-slate-400 dark:text-slate-500">
                     {c.bookName} {c.chapterNumber} tegen {c.opponent.displayName} — geweigerd

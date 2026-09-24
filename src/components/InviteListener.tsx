@@ -3,10 +3,12 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { getSocket } from "@/lib/socketClient";
+import UserAvatar from "@/components/UserAvatar";
 
 interface Invite {
   code: string;
   fromDisplayName: string;
+  fromUserId?: string;
   gameLabel?: string;
 }
 
@@ -110,6 +112,7 @@ export default function InviteListener() {
   const content =
     notice.kind === "invite"
       ? {
+          person: notice.fromUserId ? { id: notice.fromUserId, name: notice.fromDisplayName } : null,
           icon: "🎮",
           iconClass: "from-brand-500 to-brand-700",
           title: "Uitnodiging voor een live spel",
@@ -117,6 +120,8 @@ export default function InviteListener() {
           label: `${notice.fromDisplayName} nodigt je uit voor een live spel. Tik om mee te doen, veeg omhoog om te negeren.`,
         }
       : {
+          // Bij meerdere vrienden tegelijk: de avatar van wie het laatst online kwam.
+          person: { id: notice.friends[notice.friends.length - 1].userId, name: notice.friends[notice.friends.length - 1].name },
           icon: "👋",
           iconClass: "from-green-500 to-green-700",
           title: notice.friends.length > 1 ? "Vrienden online" : "Vriend online",
@@ -185,11 +190,15 @@ export default function InviteListener() {
           }}
         >
           <div className="flex items-start gap-3">
-            <div
-              className={`h-10 w-10 shrink-0 rounded-xl bg-gradient-to-br ${content.iconClass} flex items-center justify-center text-xl shadow-sm`}
-            >
-              {content.icon}
-            </div>
+            {content.person ? (
+              <UserAvatar id={content.person.id} handle={content.person.name} size="md" className="shadow-sm" />
+            ) : (
+              <div
+                className={`h-10 w-10 shrink-0 rounded-xl bg-gradient-to-br ${content.iconClass} flex items-center justify-center text-xl shadow-sm`}
+              >
+                {content.icon}
+              </div>
+            )}
             <div className="min-w-0 flex-1">
               <div className="flex items-center justify-between gap-2">
                 <p className="text-sm font-extrabold text-slate-900 dark:text-slate-100 truncate">{content.title}</p>

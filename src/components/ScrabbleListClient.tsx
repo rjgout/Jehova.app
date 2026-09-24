@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import UserAvatar from "@/components/UserAvatar";
 
 interface GameView {
   id: string;
@@ -123,8 +124,11 @@ export default function ScrabbleListClient() {
                 key={g.id}
                 className="card !bg-gold-50 dark:!bg-slate-800 !border-gold-400/30 dark:!border-slate-700 flex items-center justify-between !py-3 flex-wrap gap-2"
               >
-                <span className="dark:text-slate-100">
-                  <strong>{g.opponent.displayName}</strong> daagt je uit voor een woordspel
+                <span className="flex items-center gap-2 dark:text-slate-100">
+                  <UserAvatar id={g.opponent.id} handle={g.opponent.displayName} size="xs" />
+                  <span>
+                    <strong>{g.opponent.displayName}</strong> daagt je uit voor een woordspel
+                  </span>
                 </span>
                 <div className="flex gap-2">
                   <button className="btn-primary !px-3 !py-1.5" onClick={() => respond(g.id, "accept")}>
@@ -152,8 +156,11 @@ export default function ScrabbleListClient() {
                 }`}
                 onClick={() => router.push(`/scrabble/${g.id}`)}
               >
-                <span className="dark:text-slate-100">
-                  Tegen <strong>{g.opponent.displayName}</strong> — {g.myScore} - {g.opponentScore}
+                <span className="flex items-center gap-2 dark:text-slate-100">
+                  <UserAvatar id={g.opponent.id} handle={g.opponent.displayName} size="xs" />
+                  <span>
+                    Tegen <strong>{g.opponent.displayName}</strong> — {g.myScore} - {g.opponentScore}
+                  </span>
                 </span>
                 {g.isMyTurn ? (
                   <span className="text-xs font-extrabold uppercase text-gold-700 dark:text-gold-400 bg-gold-50 dark:bg-slate-700 rounded-full px-3 py-1">
@@ -173,8 +180,9 @@ export default function ScrabbleListClient() {
           <h2 className="font-extrabold mb-2 text-slate-700 dark:text-slate-200">Verstuurd, nog geen reactie</h2>
           <div className="flex flex-col gap-2">
             {outgoing.map((g) => (
-              <div key={g.id} className="card !py-3 text-slate-500 dark:text-slate-400">
-                Wachten op {g.opponent.displayName}
+              <div key={g.id} className="card !py-3 text-slate-500 dark:text-slate-400 flex items-center gap-2">
+                <UserAvatar id={g.opponent.id} handle={g.opponent.displayName} size="xs" />
+                <span>Wachten op {g.opponent.displayName}</span>
               </div>
             ))}
           </div>
@@ -186,7 +194,8 @@ export default function ScrabbleListClient() {
           <h2 className="font-extrabold mb-2 text-slate-700 dark:text-slate-200">Afgerond</h2>
           <div className="flex flex-col gap-2">
             {finished.map((g) => (
-              <div key={g.id} className="card !py-3 text-sm dark:text-slate-200">
+              <div key={g.id} className="card !py-3 text-sm dark:text-slate-200 flex items-center gap-2">
+                <UserAvatar id={g.opponent.id} handle={g.opponent.displayName} size="xs" />
                 {g.status === "DECLINED" ? (
                   <span className="text-slate-400 dark:text-slate-500">Tegen {g.opponent.displayName} — geweigerd</span>
                 ) : (

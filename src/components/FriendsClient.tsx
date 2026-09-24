@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { formatTag } from "@/lib/handle";
 import { getSocket } from "@/lib/socketClient";
 import UserTag from "@/components/UserTag";
+import UserAvatar from "@/components/UserAvatar";
 
 interface FriendUser {
   id: string;
@@ -32,41 +33,6 @@ interface SearchResult {
   handle: string;
   discriminator: string;
   friendshipStatus: "PENDING" | "ACCEPTED" | "DECLINED" | null;
-}
-
-// Puur decoratief: elke gebruiker krijgt een stabiele (niet-willekeurige,
-// dus niet bij elke render andere) avatarkleur uit het bestaande
-// merkkleurenpalet, afgeleid van hun id.
-const AVATAR_COLORS = ["bg-brand-500", "bg-brand-600", "bg-ice-500", "bg-gold-500"];
-function avatarColorFor(id: string): string {
-  let hash = 0;
-  for (let i = 0; i < id.length; i++) hash = (hash * 31 + id.charCodeAt(i)) >>> 0;
-  return AVATAR_COLORS[hash % AVATAR_COLORS.length];
-}
-function initialsFor(handle: string): string {
-  return handle.slice(0, 2).toUpperCase();
-}
-
-function Avatar({
-  id,
-  handle,
-  avatarEmoji,
-  size = "md",
-}: {
-  id: string;
-  handle: string;
-  avatarEmoji?: string | null;
-  size?: "sm" | "md";
-}) {
-  const dims = size === "sm" ? "w-9 h-9 text-xs" : "w-11 h-11 text-sm";
-  return (
-    <span
-      className={`shrink-0 ${dims} rounded-full ${avatarColorFor(id)} text-white font-extrabold flex items-center justify-center`}
-      aria-hidden
-    >
-      {avatarEmoji || initialsFor(handle)}
-    </span>
-  );
 }
 
 export default function FriendsClient() {
@@ -249,7 +215,7 @@ export default function FriendsClient() {
                 className="flex items-center justify-between gap-3 rounded-xl px-2 !py-2 hover:bg-brand-50 dark:hover:bg-slate-700"
               >
                 <span className="flex items-center gap-2 dark:text-slate-100">
-                  <Avatar id={r.id} handle={r.handle} size="sm" />
+                  <UserAvatar id={r.id} handle={r.handle} size="sm" />
                   <UserTag handle={r.handle} discriminator={r.discriminator} />
                 </span>
                 <button
@@ -294,7 +260,7 @@ export default function FriendsClient() {
                 className="card !py-3 !bg-gold-50 dark:!bg-slate-800 !border-gold-400/30 dark:!border-slate-700 flex items-center justify-between gap-3 flex-wrap"
               >
                 <span className="flex items-center gap-2 font-bold dark:text-slate-100">
-                  <Avatar id={from.id} handle={from.handle} avatarEmoji={from.avatarEmoji} />
+                  <UserAvatar id={from.id} handle={from.handle} avatarEmoji={from.avatarEmoji} size="md" />
                   <UserTag handle={from.handle} discriminator={from.discriminator} />
                 </span>
                 <div className="flex gap-2">
@@ -317,7 +283,7 @@ export default function FriendsClient() {
           <div className="flex flex-col gap-2">
             {data.outgoing.map(({ friendshipId, to }) => (
               <div key={friendshipId} className="card flex items-center gap-3 !py-3 text-slate-500 dark:text-slate-400">
-                <Avatar id={to.id} handle={to.handle} avatarEmoji={to.avatarEmoji} size="sm" />
+                <UserAvatar id={to.id} handle={to.handle} avatarEmoji={to.avatarEmoji} size="sm" />
                 <span aria-hidden>⏳</span>
                 <span className="min-w-0 flex-1">Wachten op <UserTag handle={to.handle} discriminator={to.discriminator} /></span>
                 <button className="btn-secondary !px-3 !py-1.5 !text-xs" onClick={() => removeFriendship(friendshipId, "Vriendschapsverzoek")}>Annuleren</button>
@@ -341,7 +307,7 @@ export default function FriendsClient() {
                   <span
                     className={`shrink-0 rounded-full ${status?.online ? "ring-2 ring-green-400 ring-offset-2 dark:ring-offset-slate-800" : ""}`}
                   >
-                    <Avatar id={f.id} handle={f.handle} avatarEmoji={f.avatarEmoji} />
+                    <UserAvatar id={f.id} handle={f.handle} avatarEmoji={f.avatarEmoji} size="md" />
                   </span>
                   <div className="min-w-0">
                     <div className="font-bold flex items-center gap-1.5 dark:text-slate-100">

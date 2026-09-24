@@ -3,11 +3,13 @@
 import { useEffect, useState, type MouseEvent } from "react";
 import Link from "next/link";
 import { getSocket } from "@/lib/socketClient";
+import UserAvatar from "@/components/UserAvatar";
 
 interface ActivityItem {
   kind: "challenge" | "scrabble" | "live" | "chapter-guess-solo";
   id: string;
   opponentName: string | null;
+  opponentId: string | null;
   label: string;
   link: string;
   myTurn: boolean | null;
@@ -152,7 +154,11 @@ export default function ActiveGamesBanner() {
               onClick={(event) => openGame(item, event)}
               className="animate-invite-glow flex items-center gap-3 rounded-2xl border-2 border-brand-400 bg-gradient-to-r from-brand-50 to-gold-50 dark:from-slate-800 dark:to-slate-800 dark:border-brand-500 px-3 py-2.5 transition active:scale-[0.98]"
             >
-              <span className="text-2xl" aria-hidden>🎮</span>
+              {item.opponentId ? (
+                <UserAvatar id={item.opponentId} handle={item.opponentName ?? ""} />
+              ) : (
+                <span className="text-2xl" aria-hidden>🎮</span>
+              )}
               <span className="min-w-0 flex-1">
                 <span className="block text-sm font-extrabold text-brand-800 dark:text-brand-200 leading-snug">
                   {item.opponentName} nodigt je uit!
@@ -174,7 +180,11 @@ export default function ActiveGamesBanner() {
               onClick={(event) => openGame(item, event)}
               className="flex items-center gap-2 text-sm font-semibold text-brand-700 dark:text-brand-300 hover:underline"
             >
-              <span>{KIND_ICON[item.kind]}</span>
+              {item.opponentId ? (
+                <UserAvatar id={item.opponentId} handle={item.opponentName ?? ""} size="xs" />
+              ) : (
+                <span>{KIND_ICON[item.kind]}</span>
+              )}
               <span>
                 {item.opponentName} nodigt je uit — {item.label}
               </span>
@@ -187,7 +197,11 @@ export default function ActiveGamesBanner() {
         <div className="flex flex-wrap gap-2">
           {activeGames.map((item) => (
             <Link key={`${item.kind}-${item.id}`} href={item.link} className={item.myTurn ? "btn-primary" : "btn-secondary"}>
-              <span className="mr-1.5">{KIND_ICON[item.kind]}</span>
+              {item.opponentId ? (
+                <UserAvatar id={item.opponentId} handle={item.opponentName ?? ""} size="xs" className="mr-1.5 -my-1" />
+              ) : (
+                <span className="mr-1.5">{KIND_ICON[item.kind]}</span>
+              )}
               {item.opponentName ? `${item.opponentName} — ` : ""}
               {item.label}
               {item.myTurn ? " · jouw beurt!" : ""}
@@ -200,7 +214,8 @@ export default function ActiveGamesBanner() {
         <div className="flex flex-col gap-1">
           {liveInvitesSent.map((item) => (
             <div key={`live-${item.id}-${item.opponentName}`} className="flex items-center justify-between gap-2 text-xs text-slate-400 dark:text-slate-500">
-              <span>
+              <span className="flex items-center gap-1.5">
+                {item.opponentId && <UserAvatar id={item.opponentId} handle={item.opponentName ?? ""} size="xs" />}
                 Wachten op {item.opponentName} — {item.label}
               </span>
               <button className="text-red-500 dark:text-red-400 font-semibold hover:underline" onClick={() => cancelGame(item.code!)}>
