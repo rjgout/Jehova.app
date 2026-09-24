@@ -125,7 +125,7 @@ export default function LeaderboardClient() {
               🇳🇱
             </span>
             <h1 className="text-2xl font-extrabold">Nederlandse ranglijst</h1>
-            <p className="text-brand-100 text-sm">Alle XP die je ooit verdiende</p>
+            <p className="text-brand-100 text-sm">Je huidige XP: alles wat je verdiende, min je aankopen in de winkel</p>
           </>
         )}
       </div>

@@ -23,8 +23,9 @@ export async function GET(req: NextRequest) {
   const weekStart = weekStartKey();
 
   if (scope === "national") {
-    // De permanente Nederlandse ranglijst: op levenslange XP (User.xpTotal,
-    // dezelfde cache als overal elders in de app), dus bewust een ander
+    // De permanente Nederlandse ranglijst: op User.xpTotal, dezelfde cache als
+    // overal elders in de app. Dat is het XP-saldo, geen levenslange som:
+    // aankopen in de winkel gaan er vanaf (zie src/lib/shop.ts). Bewust een ander
     // getal/mechanisme dan de wekelijkse, gelimiteerde competitie-XP
     // hieronder — dit is geen kopie van de wekelijkse competitie, maar een
     // apart, langetermijn antwoord op "hoe doe ik het over lange tijd".
