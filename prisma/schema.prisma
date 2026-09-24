@@ -102,6 +102,13 @@ model User {
   // i.p.v. een emoji (het gedrag van vóór deze kolom, dus geen backfill nodig).
   avatarEmoji        String?
 
+  // Persoonlijke uitnodigingslink (/uitnodiging/<code>, zie
+  // src/lib/friendInvite.ts): wie via die link een account maakt of op
+  // "Word vrienden" tikt, is meteen bevriend. Pas aangemaakt als iemand de
+  // link voor het eerst opvraagt; "Nieuwe link maken" vervangt 'm, waarmee de
+  // oude ongeldig wordt. Null = nog nooit opgevraagd, dus geen backfill nodig.
+  inviteCode         String?   @unique
+
   // Changelog ("Wat is er nieuw?", zie /adminbackend en het profiel): staat
   // standaard AAN maar is door de gebruiker zelf uit/aan te zetten op het
   // profiel — staat 'm uit, dan verschijnt de pop-up bij het inloggen (zie

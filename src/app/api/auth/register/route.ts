@@ -9,6 +9,7 @@ import { isEmailConfigured, sendMail } from "@/lib/email";
 import { verifyEmailTemplate } from "@/lib/emailTemplates";
 import { getBaseUrl } from "@/lib/baseUrl";
 import { FRONT_TO_BACK_SLUG, subscribeUserToCourse } from "@/lib/courses";
+import { becomeFriendsViaInvite } from "@/lib/friendInvite";
 
 const schema = z.object({
   email: z.string().trim().toLowerCase().email("Vul een geldig e-mailadres in."),
@@ -20,6 +21,8 @@ const schema = z.object({
     .regex(HANDLE_REGEX, "Alleen letters, cijfers, spaties, -, _ en emoji toegestaan.")
     .refine((v) => !containsForbiddenEmoji(v), "Deze emoji is niet toegestaan in een gebruikersnaam."),
   password: z.string().min(8, "Wachtwoord moet minstens 8 tekens zijn."),
+  // Code uit een uitnodigingslink (zie src/lib/friendInvite.ts), optioneel.
+  inviteCode: z.string().trim().max(32).optional(),
 });
 
 const MAX_DISCRIMINATOR_ATTEMPTS = 25;
@@ -30,7 +33,7 @@ export async function POST(req: NextRequest) {
   if (!parsed.success) {
     return NextResponse.json({ error: parsed.error.issues[0].message }, { status: 400 });
   }
-  const { email, handle, password } = parsed.data;
+  const { email, handle, password, inviteCode } = parsed.data;
 
   const existingEmail = await prisma.user.findUnique({ where: { email } });
   if (existingEmail) {
@@ -83,8 +86,16 @@ export async function POST(req: NextRequest) {
         await sendMail({ to: user.email, subject, html, text });
       }
 
+      // Een ongeldige of vervangen link mag de registratie nooit laten mislukken:
+      // dan wordt het gewoon een account zonder vriend.
+      let inviterId: string | null = null;
+      if (inviteCode) {
+        const invite = await becomeFriendsViaInvite(inviteCode, user.id, { isNewAccount: true }).catch(() => null);
+        if (invite?.ok) inviterId = invite.inviterId;
+      }
+
       const token = await createSessionToken(user.id);
-      const res = NextResponse.json({ id: user.id, tag: formatTag(user.handle, user.discriminator) });
+      const res = NextResponse.json({ id: user.id, tag: formatTag(user.handle, user.discriminator), inviterId });
       res.cookies.set(SESSION_COOKIE, token, sessionCookieOptions);
       return res;
     } catch (e) {

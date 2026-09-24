@@ -5,6 +5,7 @@ import { formatTag } from "@/lib/handle";
 import { getSocket } from "@/lib/socketClient";
 import UserTag from "@/components/UserTag";
 import UserAvatar from "@/components/UserAvatar";
+import FriendInviteCard from "@/components/FriendInviteCard";
 
 interface FriendUser {
   id: string;
@@ -35,7 +36,7 @@ interface SearchResult {
   friendshipStatus: "PENDING" | "ACCEPTED" | "DECLINED" | null;
 }
 
-export default function FriendsClient() {
+export default function FriendsClient({ appName }: { appName: string }) {
   const [data, setData] = useState<FriendsData | null>(null);
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SearchResult[] | null>(null);
@@ -248,6 +249,8 @@ export default function FriendsClient() {
         )}
       </div>
       {message && <p className="text-sm font-semibold text-brand-600">{message}</p>}
+
+      <FriendInviteCard appName={appName} />
 
       {data.incoming.length > 0 && (
         <section className="flex flex-col gap-2">

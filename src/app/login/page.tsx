@@ -4,6 +4,15 @@ import { useState, FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
+// Terug naar waar je vandaan kwam (bv. een uitnodigingslink). Alleen een pad
+// binnen de app: "//" of "/\\" zou de browser als ander domein lezen, en dan
+// kan een link je na het inloggen naar een nagemaakte site sturen.
+function nextPath(): string {
+  const next = new URLSearchParams(window.location.search).get("next");
+  if (!next || !next.startsWith("/") || next.startsWith("//") || next.startsWith("/\\")) return "/dashboard";
+  return next;
+}
+
 export default function LoginPage() {
   const router = useRouter();
   const [form, setForm] = useState({ identifier: "", password: "" });
@@ -29,7 +38,7 @@ export default function LoginPage() {
         setError(data.error ?? "De verificatiecode klopt niet.");
         return;
       }
-      router.push("/dashboard");
+      router.push(nextPath());
       router.refresh();
       return;
     }
@@ -50,7 +59,7 @@ export default function LoginPage() {
       setTwoFactorCode("");
       return;
     }
-    router.push(data.mustSetupTwoFactor ? "/profile" : "/dashboard");
+    router.push(data.mustSetupTwoFactor ? "/profile" : nextPath());
     router.refresh();
   }
 

@@ -1,8 +1,15 @@
 "use client";
 
-import { useState, FormEvent } from "react";
+import { useEffect, useState, FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { getSocket } from "@/lib/socketClient";
+
+interface Inviter {
+  id: string;
+  handle: string;
+  tag: string;
+}
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -10,6 +17,24 @@ export default function RegisterPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [createdTag, setCreatedTag] = useState<string | null>(null);
+  // Via een uitnodigingslink (/uitnodiging/<code>) binnengekomen. Uit de URL
+  // gelezen na het laden in plaats van met useSearchParams, dat voor deze
+  // statische pagina een Suspense-grens zou vereisen.
+  const [inviteCode, setInviteCode] = useState<string | null>(null);
+  const [inviter, setInviter] = useState<Inviter | null>(null);
+  const [befriended, setBefriended] = useState(false);
+
+  useEffect(() => {
+    const code = new URLSearchParams(window.location.search).get("invite");
+    if (!code) return;
+    fetch(`/api/invite/${encodeURIComponent(code)}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (!d?.inviter) return;
+        setInviteCode(code);
+        setInviter(d.inviter);
+      });
+  }, []);
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
@@ -18,13 +43,19 @@ export default function RegisterPage() {
     const res = await fetch("/api/auth/register", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(form),
+      body: JSON.stringify(inviteCode ? { ...form, inviteCode } : form),
     });
     const data = await res.json().catch(() => ({}));
     setLoading(false);
     if (!res.ok) {
       setError(data.error ?? "Er ging iets mis.");
       return;
+    }
+    if (data.inviterId) {
+      setBefriended(true);
+      // De route kan de socketserver niet bereiken: zelf seinen, zodat een
+      // openstaande vriendenpagina van de uitnodiger meteen ververst.
+      getSocket().emit("friendship_changed", { otherUserId: data.inviterId });
     }
     setCreatedTag(data.tag);
   }
@@ -38,6 +69,11 @@ export default function RegisterPage() {
         <p className="text-2xl font-extrabold tracking-wide bg-brand-50 dark:bg-slate-700 text-brand-700 dark:text-brand-300 rounded-2xl px-4 py-2">
           {createdTag}
         </p>
+        {befriended && inviter && (
+          <p className="text-sm font-semibold bg-brand-50 dark:bg-slate-700 text-brand-700 dark:text-brand-300 rounded-xl px-3 py-2">
+            Je bent nu vrienden met {inviter.tag}. 🎉
+          </p>
+        )}
         <p className="text-sm text-slate-500 dark:text-slate-400">
           Bevestig eerst je e-mailadres. Daarna helpen we je stap voor stap op weg.
         </p>
@@ -51,6 +87,11 @@ export default function RegisterPage() {
   return (
     <div className="max-w-md mx-auto card">
       <h1 className="text-2xl font-extrabold mb-6 text-brand-800 dark:text-brand-300">Account maken</h1>
+      {inviter && (
+        <p className="text-sm font-semibold bg-brand-50 dark:bg-slate-700 text-brand-700 dark:text-brand-300 rounded-xl px-3 py-2 mb-4">
+          💌 Uitgenodigd door {inviter.tag}. Na het aanmaken zijn jullie meteen vrienden.
+        </p>
+      )}
       <form onSubmit={onSubmit} className="flex flex-col gap-4">
         <div>
           <input className="input" placeholder="Gebruikersnaam" required value={form.handle} onChange={(e) => setForm({ ...form, handle: e.target.value })} />
@@ -64,7 +105,13 @@ export default function RegisterPage() {
         <button type="submit" disabled={loading} className="btn-primary mt-2">{loading ? "Bezig..." : "Account maken"}</button>
       </form>
       <p className="text-sm text-slate-500 dark:text-slate-400 mt-4">
-        Heb je al een account?{" "}<Link href="/login" className="text-brand-600 font-bold">Log in</Link>
+        Heb je al een account?{" "}
+        <Link
+          href={inviteCode ? `/login?next=${encodeURIComponent(`/uitnodiging/${inviteCode}`)}` : "/login"}
+          className="text-brand-600 font-bold"
+        >
+          Log in
+        </Link>
       </p>
     </div>
   );

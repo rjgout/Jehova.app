@@ -173,6 +173,28 @@ export async function notifyFriendRequest(receiverUserId: string, senderDisplayN
   });
 }
 
+export async function notifyInviteAccepted(
+  inviterUserId: string,
+  friendDisplayName: string,
+  isNewAccount: boolean
+): Promise<void> {
+  const url = `${await getAppUrl()}/friends`;
+  const text = isNewAccount
+    ? `${friendDisplayName} heeft een account gemaakt via jouw uitnodigingslink en is nu je vriend.`
+    : `${friendDisplayName} is via jouw uitnodigingslink je vriend geworden.`;
+  await notifyUser({
+    userId: inviterUserId,
+    category: "social",
+    kind: "friends",
+    subject: `${friendDisplayName} is nu je vriend`,
+    emailHtml: emailWrap(text, url, "Bekijk je vrienden"),
+    emailText: `${text} ${url}`,
+    pushTitle: "Nieuwe vriend 🎉",
+    pushBody: text,
+    url: "/friends",
+  });
+}
+
 export async function notifyAchievement(userId: string, achievementName: string, achievementIcon: string): Promise<void> {
   const url = `${await getAppUrl()}/profile`;
   await notifyUser({
