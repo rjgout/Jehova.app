@@ -20,8 +20,13 @@ export interface ContentContext {
   gameKeys: string[];
 }
 
+// Vaste id uit migratie 20260922120000_content_collections; ook gebruikt om
+// onderdelen aan te wijzen die alleen bij het Boek van Mormon horen (zie
+// src/app/tools/page.tsx).
+export const BOM_COLLECTION_ID = "content_bom";
+
 const DEFAULT_COLLECTION: ContentCollectionView = {
-  id: "content_bom",
+  id: BOM_COLLECTION_ID,
   slug: "boek-van-mormon",
   name: "Boek van Mormon",
   icon: "📖",
