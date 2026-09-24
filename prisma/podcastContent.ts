@@ -9318,4 +9318,189 @@ export const podcastEpisodes: PodcastEpisodeSeed[] = [
       },
     ],
   },
+  {
+    number: 32,
+    title: "Aflevering 32",
+    summary: "Wordt bijgewerkt vanuit de podcastfeed.",
+    content: [
+      {
+        type: "MULTIPLE_CHOICE",
+        prompt: "Wat raden Koos en Raphael luisteraars aan als ze twijfelen of iets uit de podcast klopt?",
+        options: [
+          "Erover nadenken, het onderzoeken en het aan de Hemelse Vader vragen",
+          "Het gewoon aannemen, omdat het in de podcast gezegd is",
+          "Het alleen navragen bij een andere podcast",
+          "Er niet meer over nadenken",
+        ],
+        correctIndex: 0,
+      },
+      {
+        type: "MULTIPLE_CHOICE",
+        prompt: "Met welk voorbeeld legde Raphael het tiende uit aan zijn middelste zoon?",
+        options: [
+          "Een boerderij die je cadeau krijgt, waarbij je alleen 10% van de opbrengst teruggeeft",
+          "Een spaarpot met tien vakjes",
+          "Een taart die je in tien stukken snijdt",
+          "Tien procent van je zakgeld bewaren voor later",
+        ],
+        correctIndex: 0,
+      },
+      {
+        type: "MULTIPLE_CHOICE",
+        prompt: "Welke zegen kreeg Koos tijdens het bouwen van zijn huis, na het betalen van zijn tiende?",
+        options: [
+          "Een korting op zijn keukenblad, meer dan hij die maand aan tiende had betaald",
+          "Een gratis nieuwe auto",
+          "Een erfenis van een verre oom",
+          "Een loterijprijs",
+        ],
+        correctIndex: 0,
+      },
+      {
+        type: "TRUE_FALSE",
+        prompt: "Raphael en Linda betalen hun tiende één keer per jaar, en zetten het geld tot die tijd op een spaarrekening.",
+        answer: true,
+      },
+      {
+        type: "SEQUENCE",
+        prompt: "Zet deze onderwerpen in de volgorde waarin ze in de aflevering aan bod komen.",
+        items: [
+          "Reacties van luisteraars over het weinig gebruiken van teksten uit de schriften",
+          "Het voorbeeld van de boerderij waarvan je 10% van de opbrengst teruggeeft",
+          "De vraag of je tiende betaalt over netto of bruto inkomen",
+          "Een verhaal uit Utah over iemand die eerst tiende betaalde en dezelfde dag geld terugkreeg",
+        ],
+      },
+    ],
+    bomConnection: [
+      {
+        type: "MULTIPLE_CHOICE",
+        prompt:
+          "Koos probeert zich te herinneren wie in de schriften tiende betaalde. Wat staat daarover in Alma 13:15?",
+        options: [
+          "Abraham betaalde tiende aan Melchizedek, een tiende deel van alles wat hij bezat",
+          "Henoch betaalde tiende aan Abraham",
+          "Mozes betaalde tiende aan de farao",
+          "Nephi betaalde tiende aan koning Benjamin",
+        ],
+        correctIndex: 0,
+      },
+      {
+        type: "MULTIPLE_CHOICE",
+        prompt: "Waarom werd Melchizedek volgens Alma 13:18 'de vredevorst' genoemd?",
+        options: [
+          "Hij predikte bekering, zijn volk bekeerde zich en hij stichtte vrede in het land",
+          "Hij won elke oorlog die hij voerde",
+          "Hij had het grootste leger van zijn tijd",
+          "Hij verbood iedereen om te spreken",
+        ],
+        correctIndex: 0,
+      },
+      {
+        type: "TRUE_FALSE",
+        prompt: "Volgens Alma 13:17 was het volk van Melchizedek vóór zijn prediking al heel rechtvaardig.",
+        answer: false,
+      },
+      {
+        type: "SEQUENCE",
+        prompt: "Zet deze uitspraken uit Alma 13:14-19 in de juiste volgorde.",
+        items: [
+          "Verootmoedigt u zoals het volk in de dagen van Melchizedek",
+          "Abraham betaalde tiende aan Melchizedek",
+          "Melchizedek predikte bekering en stichtte vrede in het land Salem",
+          "Er waren velen vóór en na hem, maar niet één was groter",
+        ],
+      },
+    ],
+  },
+  {
+    number: 33,
+    title: "Aflevering 33",
+    summary: "Wordt bijgewerkt vanuit de podcastfeed.",
+    content: [
+      {
+        type: "MULTIPLE_CHOICE",
+        prompt: "Welke taak hadden de gasten Fred en Yvonne de afgelopen drie jaar?",
+        options: [
+          "Tempelpresident en tempelmatrone van de tempel in Den Haag",
+          "Zendingspresident en -matrone in Utah",
+          "Bisschop en ZHV-presidente van hun wijk",
+          "Beheerders van het kerkgebouw in Zoetermeer",
+        ],
+        correctIndex: 0,
+      },
+      {
+        type: "MULTIPLE_CHOICE",
+        prompt: "Waar staat de tempel die 'de Den Haag tempel' heet eigenlijk?",
+        options: ["In Zoetermeer", "In het centrum van Den Haag", "In Rotterdam", "In Leiden"],
+        correctIndex: 0,
+      },
+      {
+        type: "TRUE_FALSE",
+        prompt: "Fred en Yvonne werden betaald voor hun werk als tempelpresident en tempelmatrone.",
+        answer: false,
+      },
+      {
+        type: "MULTIPLE_CHOICE",
+        prompt: "Waarom wordt er volgens Yvonne weinig gesproken over sommige dingen die in de tempel gebeuren?",
+        options: [
+          "Niet omdat ze geheim zijn, maar omdat ze heilig zijn",
+          "Omdat het verboden is om over de tempel te praten",
+          "Omdat niemand precies weet wat er gebeurt",
+          "Omdat het alleen voor leiders van de kerk bedoeld is",
+        ],
+        correctIndex: 0,
+      },
+      {
+        type: "SEQUENCE",
+        prompt: "Zet deze onderwerpen in de volgorde waarin ze in de aflevering aan bod komen.",
+        items: [
+          "Fred en Yvonne vertellen over hun drie jaar in de tempel",
+          "Waarom er geen dierenoffers meer worden gebracht",
+          "Het plaatsvervangende werk voor overledenen",
+          "Of je de tempel nodig hebt om ook na dit leven getrouwd te blijven",
+        ],
+      },
+    ],
+    bomConnection: [
+      {
+        type: "MULTIPLE_CHOICE",
+        prompt:
+          "Fred legt uit dat er na de komst van Christus geen dierenoffers meer nodig zijn. Wat zegt Christus zelf daarover in 3 Nephi 9:19?",
+        options: [
+          "Gij zult Mij geen bloedvergieten meer offeren; uw brandoffers moeten worden afgeschaft",
+          "Gij zult Mij voortaan tweemaal zoveel brandoffers brengen",
+          "Gij zult alleen nog in de tempel van Jeruzalem offeren",
+          "Gij zult uw offers voortaan aan de priesters geven",
+        ],
+        correctIndex: 0,
+      },
+      {
+        type: "MULTIPLE_CHOICE",
+        prompt: "Welk offer vraagt Christus in plaats daarvan, volgens 3 Nephi 9:20?",
+        options: [
+          "Een gebroken hart en een verslagen geest",
+          "Het eerstgeboren lam van de kudde",
+          "Een tiende deel van alle oogst",
+          "Goud en zilver voor de tempel",
+        ],
+        correctIndex: 0,
+      },
+      {
+        type: "TRUE_FALSE",
+        prompt: "Volgens 3 Nephi 9:17 is de wet van Mozes in Christus vervuld.",
+        answer: true,
+      },
+      {
+        type: "SEQUENCE",
+        prompt: "Zet deze uitspraken van Christus uit 3 Nephi 9:15-22 in de juiste volgorde.",
+        items: [
+          "Ik ben Jezus Christus, de Zoon van God",
+          "In Mij is de wet van Mozes vervuld",
+          "Gij zult Mij als offer een gebroken hart en een verslagen geest brengen",
+          "Wie zich bekeert en als een klein kind tot Mij komt, die zal Ik aannemen",
+        ],
+      },
+    ],
+  },
 ];
