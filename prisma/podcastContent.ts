@@ -9690,4 +9690,95 @@ export const podcastEpisodes: PodcastEpisodeSeed[] = [
       },
     ],
   },
+  {
+    number: 129,
+    title: "Aflevering 129",
+    summary: "Wordt bijgewerkt vanuit de podcastfeed.",
+    content: [
+      {
+        type: "MULTIPLE_CHOICE",
+        prompt: "Waarom vindt Raphael het belangrijk dat je weet waaróm je iets gelooft?",
+        options: [
+          "Omdat je getuigenis anders niet echt van jezelf wordt",
+          "Omdat je het anders niet mag vertellen aan anderen",
+          "Omdat je anders niet naar de kerk mag",
+          "Omdat je het anders vergeet",
+        ],
+        correctIndex: 0,
+      },
+      {
+        type: "MULTIPLE_CHOICE",
+        prompt: "Met welke vergelijking laat Raphael zien dat geboden je keuzevrijheid niet wegnemen?",
+        options: [
+          "Verkeersregels: je kiest nog steeds zelf, maar elke keuze heeft gevolgen",
+          "De regels van een bordspel",
+          "De huisregels van een hotel",
+          "De spelregels van voetbal",
+        ],
+        correctIndex: 0,
+      },
+      {
+        type: "MULTIPLE_CHOICE",
+        prompt: "Over welk gebod zegt Raphael dat het ooit gegeven werd als advies 'voor de zwakke'?",
+        options: ["Het woord van wijsheid", "Het tiende", "De sabbat heiligen", "De wet van kuisheid"],
+        correctIndex: 0,
+      },
+      {
+        type: "TRUE_FALSE",
+        prompt:
+          "Volgens Raphael houdt de Hemelse Vader minder van je als je voor een ander koninkrijk kiest dan het hoogste.",
+        answer: false,
+      },
+      {
+        type: "SEQUENCE",
+        prompt: "Zet deze onderwerpen in de volgorde waarin ze in de aflevering aan bod komen.",
+        items: [
+          "Waarom het belangrijk is te weten waarom je iets gelooft",
+          "Geboden vergeleken met verkeersregels",
+          "Het woord van wijsheid, en of je na je doop nog kunt kiezen",
+          "Of iedereen in de kerk naar het hoogste moet streven, zoals universiteit tegenover vmbo",
+        ],
+      },
+    ],
+    bomConnection: [
+      {
+        type: "MULTIPLE_CHOICE",
+        prompt:
+          "Koos en Raphael zeggen dat je altijd een keuze hebt, met gevolgen. Wat zegt Samuel de Lamaniet daarover in Helaman 14:30?",
+        options: [
+          "Gij zijt vrij; het wordt u toegestaan zelfstandig te handelen",
+          "Gij zijt niet vrij; alles is al voor u bepaald",
+          "Alleen de profeten mogen voor zichzelf kiezen",
+          "Wie gedoopt is, heeft geen keuze meer",
+        ],
+        correctIndex: 0,
+      },
+      {
+        type: "MULTIPLE_CHOICE",
+        prompt: "Wat heeft God ons volgens Helaman 14:31 gegeven?",
+        options: [
+          "Goed van kwaad te kunnen onderscheiden, en het leven of de dood te kunnen kiezen",
+          "Een leven zonder tegenslagen",
+          "Een lijst met alle antwoorden",
+          "De macht om over anderen te beslissen",
+        ],
+        correctIndex: 0,
+      },
+      {
+        type: "TRUE_FALSE",
+        prompt: "Volgens Helaman 14:30 doet wie verloren gaat, zichzelf verloren gaan.",
+        answer: true,
+      },
+      {
+        type: "SEQUENCE",
+        prompt: "Zet deze uitspraken van Samuel uit Helaman 14:28-31 in de juiste volgorde.",
+        items: [
+          "Velen zullen grotere tekenen zien, zodat er geen reden voor ongeloof is",
+          "Wie gelooft, zal worden gered",
+          "Gij zijt vrij; het wordt u toegestaan zelfstandig te handelen",
+          "Wie het goede doet, krijgt het goede aan zich hersteld",
+        ],
+      },
+    ],
+  },
 ];
