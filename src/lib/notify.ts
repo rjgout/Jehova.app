@@ -3,6 +3,8 @@ import { sendMail } from "@/lib/email";
 import { sendPushToUser } from "@/lib/push";
 import { getAppUrl } from "@/lib/baseUrl";
 import { APP_NAME } from "@/lib/brand";
+import { emitToUser } from "@/lib/realtime";
+import type { NotificationKind } from "@/lib/notificationGroups";
 
 // Elke gebeurtenis valt in één categorie, die de gebruiker in zijn profiel
 // apart aan/uit kan zetten (zie User.notify* in schema.prisma) — bovenop,
@@ -29,14 +31,49 @@ interface NotifyInput {
   // Voor meldingen die alleen op dat moment zin hebben (bv. een live-
   // uitnodiging): geen e-mail, die komt pas binnen als het spel al voorbij is.
   pushOnly?: boolean;
+  // Groep in het meldingencentrum; weglaten = niet in het meldingencentrum
+  // (herinneringen zoals "je hebt vandaag nog niet geoefend": die zijn er
+  // juist voor als je de app niet open hebt).
+  kind?: NotificationKind;
+}
+
+const NOTIFICATION_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000;
+
+/** Aantal meldingen in het meldingencentrum = het getal op het app-icoon. */
+export async function notificationCount(userId: string): Promise<number> {
+  return prisma.notification.count({ where: { userId } });
+}
+
+async function storeNotification(userId: string, kind: NotificationKind, title: string, body: string, url: string) {
+  await prisma.$transaction([
+    // Dezelfde melding nog eens (bv. twee keer "Bram heeft gespeeld — jij bent
+    // aan de beurt!") vervangt de oude, in plaats van zich op te stapelen.
+    prisma.notification.deleteMany({ where: { userId, kind, title, body } }),
+    prisma.notification.deleteMany({ where: { userId, createdAt: { lt: new Date(Date.now() - NOTIFICATION_MAX_AGE_MS) } } }),
+    prisma.notification.create({ data: { userId, kind, title, body, url } }),
+  ]);
 }
 
 /**
- * Centrale dispatcher: stuurt alleen via de kanalen die deze gebruiker zelf
- * heeft aangezet (zie User.emailNotificationsEnabled/pushNotificationsEnabled
- * in schema.prisma — beide standaard uit) én voor categorieën die niet
- * expliciet zijn uitgezet (User.notify*, standaard allemaal aan). Faalt
- * bewust stil per kanaal (bv. e-mail niet geconfigureerd, of geen
+ * Meldingen met deze link weghalen, bv. een live-uitnodiging zodra het spel
+ * begint of wordt geannuleerd: dan valt er niets meer te doen.
+ */
+export async function removeNotificationsByUrl(userIds: string[], url: string): Promise<void> {
+  if (userIds.length === 0) return;
+  await prisma.notification.deleteMany({ where: { userId: { in: userIds }, url } });
+  for (const userId of userIds) emitToUser(userId, "notifications_changed");
+}
+
+/**
+ * Centrale dispatcher. Alleen voor categorieën die niet expliciet zijn
+ * uitgezet (User.notify*, standaard allemaal aan):
+ * - de melding komt in het meldingencentrum (als hij een `kind` heeft);
+ * - push en e-mail alleen als de app nergens open staat (onlineSocketCount,
+ *   bijgehouden door de socketserver): wie de app open heeft, ziet de bel,
+ *   en krijgt dus niet dubbel een melding;
+ * - en dan alleen via de kanalen die de gebruiker zelf heeft aangezet (zie
+ *   User.emailNotificationsEnabled/pushNotificationsEnabled, beide standaard uit).
+ * Faalt bewust stil per kanaal (bv. e-mail niet geconfigureerd, of geen
  * pushsubscripties) — een notificatie is nooit kritiek voor de aanroepende
  * flow (les afronden, vriendschapsverzoek versturen, ...).
  */
@@ -52,30 +89,33 @@ async function notifyUser(input: NotifyInput): Promise<void> {
       notifySocial: true,
       notifyAchievements: true,
       notifyWordGame: true,
+      onlineSocketCount: true,
     },
   });
   if (!user) return;
   if (!user[CATEGORY_FIELD[input.category]]) return;
+
+  if (input.kind) {
+    await storeNotification(input.userId, input.kind, input.pushTitle, input.pushBody, input.url).catch(() => {});
+    // Werkt alleen vanuit de socketserver zelf; vanuit een API-route haalt de
+    // client het meldingencentrum zelf op (zie NotificationCenter.tsx).
+    emitToUser(input.userId, "notifications_changed");
+  }
+  if (user.onlineSocketCount > 0) return;
 
   const jobs: Promise<unknown>[] = [];
   if (user.emailNotificationsEnabled && !input.pushOnly) {
     jobs.push(sendMail({ to: user.email, subject: input.subject, html: input.emailHtml, text: input.emailText }));
   }
   if (user.pushNotificationsEnabled) {
-    // De badge telt één keer per in-app notificatie, niet één keer per
-    // kanaal. Alleen gebruikers die push hebben ingeschakeld krijgen een
-    // badge, zodat er geen onzichtbare teller ontstaat als alle kanalen uitstaan.
-    const updated = await prisma.user.update({
-      where: { id: input.userId },
-      data: { notificationBadgeCount: { increment: 1 } },
-      select: { notificationBadgeCount: true },
-    });
+    // Het getal op het app-icoon is het aantal meldingen in het
+    // meldingencentrum: het verdwijnt pas als je ze afhandelt of wist.
     jobs.push(
       sendPushToUser(input.userId, {
         title: input.pushTitle,
         body: input.pushBody,
         url: input.url,
-        badge: updated.notificationBadgeCount,
+        badge: await notificationCount(input.userId),
       })
     );
   }
@@ -92,6 +132,7 @@ export async function notifyFreezeReceived(userId: string, senderDisplayName: st
   await notifyUser({
     userId,
     category: "social",
+    kind: "friends",
     subject: "Je hebt een streak freeze gekregen! 🧊",
     emailHtml: emailWrap(text, url, "Bekijk je vrienden"),
     emailText: `${text} Bekijk je vrienden: ${url}`,
@@ -106,6 +147,7 @@ export async function notifyGameInvite(userId: string, hostName: string, gameLab
   await notifyUser({
     userId,
     category: "social",
+    kind: "games",
     subject: "Uitnodiging voor een live spel 🎮",
     emailHtml: "",
     emailText: "",
@@ -121,6 +163,7 @@ export async function notifyFriendRequest(receiverUserId: string, senderDisplayN
   await notifyUser({
     userId: receiverUserId,
     category: "social",
+    kind: "friends",
     subject: `${senderDisplayName} stuurde je een vriendschapsverzoek`,
     emailHtml: emailWrap(`<strong>${senderDisplayName}</strong> wil vrienden met je worden op ${APP_NAME}.`, url, "Bekijk verzoek"),
     emailText: `${senderDisplayName} wil vrienden met je worden op ${APP_NAME}. Bekijk het verzoek: ${url}`,
@@ -135,6 +178,7 @@ export async function notifyAchievement(userId: string, achievementName: string,
   await notifyUser({
     userId,
     category: "achievements",
+    kind: "achievements",
     subject: `Nieuwe prestatie behaald: ${achievementName}`,
     emailHtml: emailWrap(`${achievementIcon} Je hebt de prestatie <strong>${achievementName}</strong> behaald!`, url, "Bekijk je profiel"),
     emailText: `${achievementIcon} Je hebt de prestatie "${achievementName}" behaald! Bekijk je profiel: ${url}`,
@@ -155,6 +199,7 @@ export async function notifyWeeklyResult(userId: string, outcome: "promoted" | "
   await notifyUser({
     userId,
     category: "achievements",
+    kind: "competition",
     subject: "Je wekelijkse competitie-uitslag",
     emailHtml: emailWrap(text, url, "Bekijk de competitie"),
     emailText: `${text} Bekijk de competitie: ${url}`,
@@ -177,6 +222,7 @@ export async function notifySeasonResult(
   await notifyUser({
     userId,
     category: "achievements",
+    kind: "competition",
     subject: `Seizoen ${seasonIndex} is afgelopen`,
     emailHtml: emailWrap(text, url, "Bekijk je profiel"),
     emailText: `${text} Bekijk je profiel: ${url}`,
@@ -221,6 +267,7 @@ export async function notifyChallengeReceived(receiverUserId: string, senderDisp
   await notifyUser({
     userId: receiverUserId,
     category: "social",
+    kind: "challenges",
     subject: text,
     emailHtml: emailWrap(text, url, "Bekijk de uitdaging"),
     emailText: `${text} Bekijk de uitdaging: ${url}`,
@@ -236,6 +283,7 @@ export async function notifyChallengeDeclined(senderUserId: string, receiverDisp
   await notifyUser({
     userId: senderUserId,
     category: "social",
+    kind: "challenges",
     subject: "Je uitdaging is geweigerd",
     emailHtml: emailWrap(text, url, "Bekijk uitdagingen"),
     emailText: `${text} ${url}`,
@@ -251,6 +299,7 @@ export async function notifyChallengeYourTurn(userId: string, opponentDisplayNam
   await notifyUser({
     userId,
     category: "social",
+    kind: "challenges",
     subject: text,
     emailHtml: emailWrap(text, url, "Speel je beurt"),
     emailText: `${text} ${url}`,
@@ -266,6 +315,7 @@ export async function notifyScrabbleInvite(receiverUserId: string, senderDisplay
   await notifyUser({
     userId: receiverUserId,
     category: "social",
+    kind: "wordgame",
     subject: text,
     emailHtml: emailWrap(text, url, "Bekijk het woordspel"),
     emailText: `${text} ${url}`,
@@ -281,6 +331,7 @@ export async function notifyScrabbleDeclined(senderUserId: string, receiverDispl
   await notifyUser({
     userId: senderUserId,
     category: "social",
+    kind: "wordgame",
     subject: "Je woordspel-uitdaging is geweigerd",
     emailHtml: emailWrap(text, url, "Bekijk woordspellen"),
     emailText: `${text} ${url}`,
@@ -296,6 +347,7 @@ export async function notifyScrabbleYourTurn(userId: string, opponentDisplayName
   await notifyUser({
     userId,
     category: "social",
+    kind: "wordgame",
     subject: text,
     emailHtml: emailWrap(text, url, "Speel je beurt"),
     emailText: `${text} ${url}`,
@@ -315,6 +367,7 @@ export async function notifyScrabbleFinished(userId: string, opponentDisplayName
   await notifyUser({
     userId,
     category: "social",
+    kind: "wordgame",
     subject: `Woordspel afgerond: ${text}`,
     emailHtml: emailWrap(text, url, "Bekijk het resultaat"),
     emailText: `${text} ${url}`,
@@ -341,6 +394,7 @@ export async function notifyChallengeFinished(userId: string, opponentDisplayNam
   await notifyUser({
     userId,
     category: "social",
+    kind: "challenges",
     subject: `Uitdaging afgerond: ${text}`,
     emailHtml: emailWrap(text, url, "Bekijk het resultaat"),
     emailText: `${text} ${url}`,

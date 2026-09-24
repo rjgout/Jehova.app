@@ -112,6 +112,16 @@ export default function InviteListener() {
     if (!notice) return;
     clearHideTimer();
     setNotice(null);
+    if (notice.kind === "invite") {
+      // Dezelfde uitnodiging staat ook in het meldingencentrum: die is nu afgehandeld.
+      fetch("/api/notifications", {
+        method: "DELETE",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ url: inviteHref(notice) }),
+      })
+        .then(() => window.dispatchEvent(new Event("jehova:notifications-changed")))
+        .catch(() => {});
+    }
     router.push(notice.kind === "invite" ? inviteHref(notice) : "/friends");
   }
 

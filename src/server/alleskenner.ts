@@ -1,6 +1,6 @@
 import type { Server as SocketIOServer, Socket } from "socket.io";
 import { prisma } from "@/lib/db";
-import { notifyGameInvite } from "@/lib/notify";
+import { notifyGameInvite, removeNotificationsByUrl } from "@/lib/notify";
 import { cancelSeasonEvening, recordSeasonEvening } from "@/lib/alleskenner/season";
 import { recordSoloRun, type SoloItems, type SoloResult } from "@/lib/alleskenner/solo";
 import {
@@ -856,6 +856,8 @@ async function revokeOpenInvites(room: Room) {
   for (const invite of invites) {
     if (!room.participants.has(invite.userId)) io?.to(`user:${invite.userId}`).emit("game_invite_revoked", { code: room.code });
   }
+  // Gestart: de uitnodiging in het meldingencentrum is niet meer te gebruiken.
+  await removeNotificationsByUrl(invites.map((i) => i.userId), `/live/${room.code}`).catch(() => {});
 }
 
 const ROUND_SUBTITLES: Partial<Record<AkPhase, string>> = {
@@ -1646,8 +1648,8 @@ async function inviteSeasonMembers(room: Room, hostName: string) {
       fromUserId: room.hostId,
       gameLabel: "De Alleskenner",
     });
-    const open = (await io?.in(`user:${userId}`).fetchSockets().catch(() => [])) ?? [];
-    if (open.length === 0) notifyGameInvite(userId, hostName, "De Alleskenner", room.code).catch(() => {});
+    // Altijd in het meldingencentrum; een push alleen als de app nergens open staat (zie notifyUser).
+    notifyGameInvite(userId, hostName, "De Alleskenner", room.code).catch(() => {});
   }
 }
 

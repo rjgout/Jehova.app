@@ -47,6 +47,11 @@ van een specifieke cloud-hostingprovider.
   zijn online-status deelt, krijgt een melding bovenin als een vriend (die dat
   ook deelt) online komt, zolang de app open staat; geen pushmelding. Uit te
   zetten bij de meldingen op het profiel.
+- **Meldingencentrum**: een bel in de header met alle uitnodigingen, beurten,
+  verzoeken en uitslagen, per groep en uitklapbaar. Tikken opent de melding
+  en haalt hem weg; vegen of ✕ wist hem. Push en e-mail gaan alleen als de
+  app nergens open staat; het getal op het app-icoon is het aantal meldingen
+  in de bel.
 - **Wekelijkse competitie met divisies**: acht divisies, van Zaad tot
   Eeuwigheid, in groepen van maximaal 30 spelers. In een volle groep
   promoveren de bovenste 3 en degraderen de onderste 3; een kleinere groep

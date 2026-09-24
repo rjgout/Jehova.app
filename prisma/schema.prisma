@@ -133,8 +133,8 @@ model User {
   // ander getal te zien, dus vervangen door dit ene gedeelde tegoed.
   hintBalance   Int     @default(0)
 
-  // Teller voor de badge van de webapp: één stap per verstuurde pushnotificatie,
-  // teruggezet zodra de gebruiker de app weer opent.
+  // Niet meer gebruikt: de badge van de webapp is nu het aantal meldingen in
+  // het meldingencentrum (Notification). Blijft staan om geen data te laten vallen.
   notificationBadgeCount Int @default(0)
 
   // Notificaties: allebei standaard UIT (zelfde privacy-by-default-principe
@@ -175,6 +175,7 @@ model User {
   notifyFriendOnline  Boolean @default(true)
 
   pushSubscriptions  PushSubscription[]
+  notifications      Notification[]
   challengesSent     Challenge[]        @relation("ChallengeSender")
   challengesReceived Challenge[]        @relation("ChallengeReceiver")
 
@@ -1554,6 +1555,24 @@ enum WordGameStatus {
 }
 
 // --- Notificaties (e-mail + browser push) ----------------------------------
+
+// Meldingencentrum (de bel in de header, zie NotificationCenter.tsx): elke
+// melding die ook als push/e-mail kan gaan, blijft hier staan tot de
+// gebruiker erop tikt of hem wist. Push en e-mail gaan alleen als de app
+// nergens open staat (zie notifyUser in src/lib/notify.ts); wie de app open
+// heeft maar er niet naar kijkt, vindt de melding hier terug.
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  kind      String // groep in het meldingencentrum, zie src/lib/notificationGroups.ts
+  title     String
+  body      String
+  url       String // waar tikken naartoe gaat
+  createdAt DateTime @default(now())
+
+  @@index([userId, createdAt])
+}
 
 // Eén rij per browser/apparaat waarop een gebruiker pushnotificaties heeft
 // toegestaan (de Web Push-standaard: elk apparaat/browser krijgt zijn eigen

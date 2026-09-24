@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getCurrentUser } from "@/lib/session";
 import { sendPushToUser } from "@/lib/push";
+import { notificationCount } from "@/lib/notify";
 
 // Laat iemand direct checken of pushmeldingen op dit apparaat aankomen,
 // zonder te moeten wachten op een echte gebeurtenis (vriendschapsverzoek,
@@ -22,8 +23,8 @@ export async function POST() {
   // Bewust met vertraging en vanaf de server: zo kun je de app sluiten en
   // zien of de melding én de badge op het beginschermicoon verschijnen. Een
   // gesloten iOS-app voert zelf geen JavaScript meer uit, dus een timer in de
-  // browser zou nooit afgaan. De badge telt net als bij echte meldingen mee
-  // en wordt weer gewist zodra je de app opent (NotificationBadgeClear).
+  // browser zou nooit afgaan. De badge toont het aantal meldingen in het
+  // meldingencentrum (minstens 1); de app zet hem weer goed zodra je hem opent.
   setTimeout(() => {
     sendDelayedTestPush(user.id).catch((e) => console.error("Testmelding versturen mislukt:", e));
   }, TEST_PUSH_DELAY_SECONDS * 1000);
@@ -34,15 +35,13 @@ export async function POST() {
 const TEST_PUSH_DELAY_SECONDS = 5;
 
 async function sendDelayedTestPush(userId: string): Promise<void> {
-  const updated = await prisma.user.update({
-    where: { id: userId },
-    data: { notificationBadgeCount: { increment: 1 } },
-    select: { notificationBadgeCount: true },
-  });
+  // Minstens 1, zodat je ook de badge op het app-icoon kunt testen; de
+  // testmelding zelf komt niet in het meldingencentrum.
+  const badge = Math.max(1, await notificationCount(userId));
   await sendPushToUser(userId, {
     title: "Testmelding 🔔",
     body: "Als je dit ziet, werken pushmeldingen op dit apparaat! Staat er ook een badge op het app-icoon?",
     url: "/profile",
-    badge: updated.notificationBadgeCount,
+    badge,
   });
 }

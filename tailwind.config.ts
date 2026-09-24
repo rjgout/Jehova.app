@@ -66,6 +66,11 @@ const config: Config = {
           "0%": { transform: "translateY(-120%)", opacity: "0" },
           "100%": { transform: "translateY(0)", opacity: "1" },
         },
+        // Meldingencentrum dat van boven over het scherm zakt.
+        "sheet-down": {
+          "0%": { transform: "translateY(-6%)", opacity: "0" },
+          "100%": { transform: "translateY(0)", opacity: "1" },
+        },
         indeterminate: {
           "0%": { transform: "translateX(-60%) scaleX(0.4)" },
           "50%": { transform: "translateX(20%) scaleX(0.6)" },
@@ -79,6 +84,7 @@ const config: Config = {
         "invite-glow": "invite-glow 1.8s ease-in-out infinite",
         "tile-flash": "tile-flash 0.9s ease-in-out 3",
         "slide-down": "slide-down 0.35s cubic-bezier(0.2, 0.9, 0.3, 1.2)",
+        "sheet-down": "sheet-down 0.25s ease-out",
       },
     },
   },

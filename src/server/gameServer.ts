@@ -10,7 +10,8 @@ import { parseCookieHeader } from "@/lib/parseCookieHeader";
 import { isExerciseCorrect } from "@/lib/exerciseGen";
 import { completeLesson, completeChapterGuess } from "@/lib/streak";
 import { checkAndAwardAchievements } from "@/lib/achievements";
-import { notifyGameInvite, notifyNewAchievements } from "@/lib/notify";
+import { notifyGameInvite, notifyNewAchievements, removeNotificationsByUrl } from "@/lib/notify";
+import { setRealtimeServer } from "@/lib/realtime";
 import {
   announceCameOnline,
   broadcastPresenceUpdate,
@@ -218,6 +219,8 @@ async function revokeOpenInvites(code: string): Promise<void> {
   for (const invite of game.invites) {
     if (!joined.has(invite.userId)) ioInstance?.to(`user:${invite.userId}`).emit("game_invite_revoked", { code });
   }
+  // Gestart of geannuleerd: de uitnodiging in het meldingencentrum is niet meer te gebruiken.
+  await removeNotificationsByUrl(game.invites.map((i) => i.userId), `/live/${code}`).catch(() => {});
 }
 
 function lobbyPayload(room: RoomState) {
@@ -612,6 +615,7 @@ function handleFamilyEventChoice(room: RoomState, socket: Socket, choiceIndex: n
 
 export function initGameServer(httpServer: HttpServer) {
   ioInstance = new SocketIOServer(httpServer, { path: "/socket.io" });
+  setRealtimeServer(ioInstance);
 
   // Een net gestarte instantie heeft per definitie nog geen enkele
   // socket-verbinding, dus elke oude telling hier is die van vóór een
@@ -742,7 +746,12 @@ export function initGameServer(httpServer: HttpServer) {
           select: { id: true },
         })
         .catch(() => null);
-      if (related) ioInstance?.to(`user:${otherUserId}`).emit("friends_changed");
+      if (related) {
+        ioInstance?.to(`user:${otherUserId}`).emit("friends_changed");
+        // De route die het verzoek opsloeg, kon het meldingencentrum van de
+        // ander niet live bijwerken; dat gebeurt hier.
+        ioInstance?.to(`user:${otherUserId}`).emit("notifications_changed");
+      }
     });
 
     // Woordspel: de routes draaien in Next's eigen bundel en kunnen deze
@@ -760,6 +769,7 @@ export function initGameServer(httpServer: HttpServer) {
       if (!game || (game.player1Id !== user.id && game.player2Id !== user.id)) return;
       const opponentId = game.player1Id === user.id ? game.player2Id : game.player1Id;
       ioInstance?.to(`user:${opponentId}`).emit("scrabble_updated", { gameId });
+      ioInstance?.to(`user:${opponentId}`).emit("notifications_changed");
       // Een net verstuurde uitnodiging (alleen door de uitdager, alleen kort
       // na het aanmaken): niet bij elke latere herhaling van het seintje.
       if (game.status === "PENDING" && game.player1Id === user.id && Date.now() - game.createdAt.getTime() < 60_000) {
@@ -1093,13 +1103,10 @@ export function initGameServer(httpServer: HttpServer) {
         gameLabel,
       });
 
-      // Staat de app bij de ander open, dan verschijnt de melding in de app
-      // zelf (InviteListener); anders een pushmelding, zodat hij of zij het
-      // ook ziet met de app dicht.
-      const openSockets = (await ioInstance?.in(`user:${toUserId}`).fetchSockets().catch(() => [])) ?? [];
-      if (openSockets.length === 0) {
-        notifyGameInvite(toUserId, user.handle, gameLabel, game.code).catch(() => {});
-      }
+      // Altijd in het meldingencentrum; notifyUser stuurt alleen een push als
+      // de app bij de ander nergens open staat (anders zag hij net de melding
+      // bovenin al).
+      notifyGameInvite(toUserId, user.handle, gameLabel, game.code).catch(() => {});
     });
 
     // Alleen de host kan een spel dat nog niet gestart is beëindigen — nodig

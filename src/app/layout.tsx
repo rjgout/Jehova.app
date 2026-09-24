@@ -12,7 +12,7 @@ import ChangelogPopup from "@/components/ChangelogPopup";
 import ThemeScript from "@/components/ThemeScript";
 import BottomNav from "@/components/BottomNav";
 import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
-import NotificationBadgeClear from "@/components/NotificationBadgeClear";
+import NotificationCenter from "@/components/NotificationCenter";
 import EdgeSwipeGuard from "@/components/EdgeSwipeGuard";
 import SubpageBackBar from "@/components/SubpageBackBar";
 import PodcastMiniPlayer from "@/components/PodcastMiniPlayer";
@@ -168,6 +168,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             {user ? (
               <nav className="ml-auto flex items-center gap-4">
                 <div className="hidden lg:block"><HeaderInstallHint /></div>
+                <NotificationCenter />
                 <NavUserBadges streak={user.currentStreak} xp={user.xpTotal} />
               </nav>
             ) : null}
@@ -185,7 +186,6 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         {user && <InviteListener />}
         {user && <ChangelogPopup />}
       {user && <FreezeGiftPopup />}
-        {user && <NotificationBadgeClear />}
         <ServiceWorkerRegister />
         <EdgeSwipeGuard />
         </ReadAloudPlayerProvider>
