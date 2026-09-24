@@ -17,7 +17,7 @@ export async function PUT(req: NextRequest) {
   if (!collectionId) return NextResponse.json({ error: "Geen contentcollectie gekozen" }, { status: 400 });
 
   try {
-    const active = await setActiveContentCollection(user.id, collectionId);
+    const active = await setActiveContentCollection(user.id, user.isAdmin, collectionId);
     return NextResponse.json({ active });
   } catch {
     return NextResponse.json({ error: "Deze contentcollectie is niet beschikbaar." }, { status: 404 });

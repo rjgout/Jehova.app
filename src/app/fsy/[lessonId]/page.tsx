@@ -3,6 +3,7 @@ import { getCurrentUser } from "@/lib/session";
 import { prisma } from "@/lib/db";
 import FsyLessonView from "@/components/FsyLessonView";
 import type { FsyContentBlock } from "@/lib/fsyContent";
+import { isContentCollectionSelectable } from "@/lib/contentCollections";
 
 export default async function FsyLessonPage({ params }: { params: Promise<{ lessonId: string }> }) {
   const user = await getCurrentUser();
@@ -20,10 +21,12 @@ export default async function FsyLessonPage({ params }: { params: Promise<{ less
       publishedContent: true,
       sourceUrl: true,
       status: true,
+      contentCollectionId: true,
     },
   });
 
   if (!lesson || !lesson.publishedContent) notFound();
+  if (!(await isContentCollectionSelectable(lesson.contentCollectionId, user.isAdmin))) notFound();
 
   return (
     <FsyLessonView

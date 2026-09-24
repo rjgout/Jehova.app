@@ -8,6 +8,7 @@ interface Collection {
   name: string;
   icon: string;
   order: number;
+  visibleToUsers: boolean;
 }
 
 export default function ContentSwitcher({
@@ -97,6 +98,12 @@ export default function ContentSwitcher({
                   <span className="w-7 shrink-0 text-center" aria-hidden>{selected ? "✓" : ""}</span>
                   <span className="text-xl shrink-0" aria-hidden>{collection.icon}</span>
                   <span className="min-w-0 truncate">{collection.name}</span>
+                  {/* Alleen beheerders krijgen verborgen content in dit menu. */}
+                  {!collection.visibleToUsers && (
+                    <span className="ml-auto shrink-0 text-[10px] font-bold uppercase text-slate-500 bg-slate-100 dark:bg-slate-800 dark:text-slate-400 rounded-full px-2 py-0.5">
+                      Verborgen
+                    </span>
+                  )}
                 </button>
               );
             })}

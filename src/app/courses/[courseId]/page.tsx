@@ -3,6 +3,7 @@ import { getCurrentUser } from "@/lib/session";
 import { prisma } from "@/lib/db";
 import { isEmailConfigured } from "@/lib/email";
 import { advanceCourseProgress, syncCourses } from "@/lib/courses";
+import { isContentCollectionSelectable } from "@/lib/contentCollections";
 import ChapterListCourseView from "@/components/ChapterListCourseView";
 import PodcastCourseView from "@/components/PodcastCourseView";
 import KidsCourseView from "@/components/KidsCourseView";
@@ -38,6 +39,7 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ c
     },
   });
   if (!course) redirect("/courses");
+  if (!(await isContentCollectionSelectable(course.contentCollectionId, user.isAdmin))) redirect("/courses");
 
   if (course.type === "PODCAST") {
     const episodes = await prisma.podcastEpisode.findMany({

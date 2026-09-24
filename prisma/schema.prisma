@@ -353,7 +353,13 @@ model ContentCollection {
   name      String
   icon      String
   order     Int      @default(0)
+  // Interne vlag: de seed en syncCourses kiezen hiermee de standaardcollectie.
+  // Wat gewone gebruikers in het contentmenu zien, is bewust een apart veld,
+  // zodat een collectie verbergen nooit de cursusopbouw verandert.
   enabled   Boolean  @default(true)
+  // Beheerders zien altijd alle collecties, zodat ze nieuwe content kunnen
+  // bekijken voordat die voor iedereen beschikbaar is.
+  visibleToUsers Boolean @default(true)
   books     Book[]
   courses   Course[]
   gameScopes GameContentScope[]
