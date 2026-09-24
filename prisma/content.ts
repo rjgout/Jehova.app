@@ -1,9 +1,12 @@
 // LET OP — auteursrecht:
 // De verzen hieronder zijn de letterlijke, officiële Nederlandse tekst van
-// het Boek van Mormon (bron: 34404_nld.pdf, met toestemming van de
-// gebruiker gebruikt — zie de commitgeschiedenis). Voetnoten zijn bewust
-// weggelaten. De brontekst zelf staat in prisma/bomContent.json (te groot
-// om als TS-array te onderhouden); dit bestand voegt daar alleen de
+// het Boek van Mormon, in de huidige uitgave zoals die op de website van de
+// kerk staat (churchofjesuschrist.org, lang=nld), met toestemming van de
+// gebruiker gebruikt. Dat is ook de uitgave die de Nederlandse audio
+// voorleest; de eerdere tekst (34404_nld.pdf) was een oudere vertaling met
+// o.a. "gij" en "zeide". Voetnoten zijn bewust weggelaten. De brontekst
+// zelf staat in prisma/bomContent.json (te groot om als TS-array te
+// onderhouden); dit bestand voegt daar alleen de
 // handmatig geschreven begrijpend-lezen-oefeningen aan toe voor de paar
 // hoofdstukken die die al hadden.
 

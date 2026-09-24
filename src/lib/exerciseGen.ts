@@ -63,7 +63,7 @@ export function shuffleForDisplay<T>(items: T[]): T[] {
 const KNOWN_NAMES = [
   "Nephi", "Laman", "Lemuel", "Lemuël", "Sam", "Lehi", "Alma", "Zarahemla", "Jeruzalem", "Laban",
   "Mosiah", "Benjamin", "Zeniff", "Abinadi", "Noach", "Limhi", "Ammon", "Lamoni", "Aäron", "Korihor",
-  "Moroni", "Helaman", "Pahoran", "Hagoth", "Samuël", "Mormon", "Ether", "Jared", "Sariah", "Jakob",
+  "Moroni", "Helaman", "Pahoran", "Hagoth", "Samuel", "Samuël", "Mormon", "Ether", "Jared", "Sariah", "Jakob",
   "Enos", "Sherem", "Zerahemnah", "Shiblon", "Corianton", "Joseph",
 ];
 

@@ -1068,7 +1068,7 @@ export const podcastEpisodes: PodcastEpisodeSeed[] = [
     bomConnection: [
       {
         type: "MULTIPLE_CHOICE",
-        prompt: "In Alma 13 wordt uitgelegd dat hogepriesters al \"sedert de grondlegging der wereld\" geroepen en voorbereid waren, wegens hun...",
+        prompt: "In Alma 13 wordt uitgelegd dat hogepriesters al \"sedert de grondlegging van de wereld\" geroepen en voorbereid waren, wegens hun...",
         options: [
           "Buitengewone geloof en goede werken",
           "Afkomst en familienaam",
@@ -1099,7 +1099,7 @@ export const podcastEpisodes: PodcastEpisodeSeed[] = [
         items: [
           "Aanvankelijk waren alle mensen gelijk, met dezelfde vrije keuze",
           "Sommigen oefenden buitengewoon geloof en goede werken uit",
-          "Zij werden, naar Gods voorkennis, al vanaf de grondlegging der wereld voorbereid",
+          "Zij werden, naar Gods voorkennis, al sedert de grondlegging van de wereld voorbereid",
           "Zij werden geroepen en geordend tot het heilige priesterschap",
         ],
       },
@@ -1180,7 +1180,7 @@ export const podcastEpisodes: PodcastEpisodeSeed[] = [
         type: "MULTIPLE_CHOICE",
         prompt: "Wat is er nodig, volgens 2 Nephi 2, om de mensenkinderen van de val te verlossen?",
         options: [
-          "De komst van de Messias in de volheid der tijden",
+          "De komst van de Messias in de volheid des tijds",
           "Het bouwen van tempels",
           "Het houden van de wet van Mozes",
           "Het bereiken van rijkdom en aanzien",
@@ -1797,7 +1797,7 @@ export const podcastEpisodes: PodcastEpisodeSeed[] = [
         type: "MULTIPLE_CHOICE",
         prompt: "In Jakob 2 waarschuwt Jakob het volk streng tegen onkuisheid. Wat zegt de Heer daar via Jakob over de kuisheid van vrouwen?",
         options: [
-          "Ik, de Heer God, schep behagen in de kuisheid der vrouwen",
+          "Ik, de Here God, schep behagen in de kuisheid van vrouwen",
           "Kuisheid is alleen belangrijk voor priesters",
           "Kuisheid is een menselijke uitvinding, geen goddelijk gebod",
           "Alleen mannen hoeven kuis te zijn",
@@ -1820,7 +1820,7 @@ export const podcastEpisodes: PodcastEpisodeSeed[] = [
         prompt: "Zet deze gedachtestappen van Jakob over kuisheid in Jakob 2 in de juiste volgorde.",
         items: [
           "Jakob spreekt het volk streng toe over hun zonden",
-          "Hij zegt dat de Heer behagen schept in de kuisheid der vrouwen",
+          "Hij zegt dat de Heer behagen schept in de kuisheid van vrouwen",
           "Hij noemt hoererij een gruwel in Gods ogen",
           "Hij waarschuwt dat het land vervloekt wordt als de geboden niet onderhouden worden",
         ],
@@ -1887,7 +1887,7 @@ export const podcastEpisodes: PodcastEpisodeSeed[] = [
         type: "MULTIPLE_CHOICE",
         prompt: "Hoe stelt Christus zichzelf voor aan het volk in 3 Nephi 11?",
         options: [
-          "Ik ben Jezus Christus, die volgens het getuigenis der profeten in de wereld zou komen",
+          "Ik ben Jezus Christus, die volgens het getuigenis van de profeten in de wereld zou komen",
           "Ik ben een engel, gezonden om jullie te waarschuwen",
           "Ik ben Mozes, teruggekeerd om de wet te herhalen",
           "Ik ben een van de twaalf apostelen",
@@ -2345,7 +2345,7 @@ export const podcastEpisodes: PodcastEpisodeSeed[] = [
       },
       {
         type: "TRUE_FALSE",
-        prompt: "Moroni schrijft in Mormon 8 dat hij spreekt \"alsof gij aanwezig zijt\", ook al is de lezer er op het moment van schrijven niet.",
+        prompt: "Moroni schrijft in Mormon 8 dat hij spreekt \"alsof u aanwezig bent\", ook al is de lezer er op het moment van schrijven niet.",
         answer: true,
       },
       {
@@ -2363,7 +2363,7 @@ export const podcastEpisodes: PodcastEpisodeSeed[] = [
         type: "SEQUENCE",
         prompt: "Zet deze tekenen uit Mormon 8 in de volgorde waarin Moroni ze noemt.",
         items: [
-          "Het bloed der heiligen roept tot de Heer wegens geheime verenigingen",
+          "Het bloed van de heiligen roept tot de Heer wegens geheime verenigingen",
           "Kerkleiders verheffen zich in de hoogmoed van hun hart",
           "Er wordt gehoord van branden, orkanen en rook in vreemde landen",
           "Er wordt gehoord van oorlogen, geruchten van oorlogen en aardbevingen",
@@ -2457,7 +2457,7 @@ export const podcastEpisodes: PodcastEpisodeSeed[] = [
         type: "SEQUENCE",
         prompt: "Zet deze stappen uit Alma's uitleg in Alma 42 in de juiste volgorde.",
         items: [
-          "De hele mensheid is gevallen en bevindt zich in de greep der gerechtigheid",
+          "De hele mensheid is gevallen en bevindt zich in de greep van de gerechtigheid",
           "Het plan van barmhartigheid kan alleen worden verwezenlijkt door een verzoening",
           "God verzoent zelf de zonden van de wereld om aan beide eisen te voldoen",
           "Alleen de werkelijk boetvaardigen worden uiteindelijk gered",
@@ -2553,7 +2553,7 @@ export const podcastEpisodes: PodcastEpisodeSeed[] = [
         items: [
           "Alma herinnert aan hoe de vaderen door hun geloof een machtige verandering ondergingen",
           "Hij vraagt of de leden zelf die machtige verandering in hun hart hebben ondervonden",
-          "Hij vraagt of zij gestemd zijn het lied der verlossende liefde te zingen",
+          "Hij vraagt of zij gestemd zijn het lied van de verlossende liefde te zingen",
           "Hij vraagt of zij dat gevoel op dit moment nog steeds bij zich dragen",
         ],
       },
@@ -2632,7 +2632,7 @@ export const podcastEpisodes: PodcastEpisodeSeed[] = [
       },
       {
         type: "MULTIPLE_CHOICE",
-        prompt: "Wat noemt Mormon in Moroni 8:16 als het lot van wie de wegen des Heren verdraaien, als zij zich niet bekeren?",
+        prompt: "Wat noemt Mormon in Moroni 8:16 als het lot van wie de wegen van de Heer verdraaien, als zij zich niet bekeren?",
         options: [
           "Zij zullen verloren gaan",
           "Zij worden meteen vergeven zonder gevolgen",
@@ -2645,7 +2645,7 @@ export const podcastEpisodes: PodcastEpisodeSeed[] = [
         type: "SEQUENCE",
         prompt: "Zet deze uitspraken uit Moroni 8 in de juiste volgorde.",
         items: [
-          "Wee hun die de wegen des Heren verdraaien, tenzij zij zich bekeren",
+          "Wee hun die de wegen van de Heer op die wijze verdraaien, want tenzij zij zich bekeren",
           "Mormon spreekt met vrijmoedigheid en gezag van God",
           "De volmaakte liefde drijft alle vrees uit",
           "Mormon is vervuld met naastenliefde voor alle kinderen gelijk",
@@ -3024,7 +3024,7 @@ export const podcastEpisodes: PodcastEpisodeSeed[] = [
           "Wijd is de poort en breed is de weg die tot vernietiging leidt",
           "Smal is de weg die tot het leven leidt, en weinigen vinden hem",
           "Wacht u voor valse profeten in schaapsklederen",
-          "Gij zult hen kennen aan hun vruchten",
+          "U zult hen kennen aan hun vruchten",
         ],
       },
     ],
@@ -3212,7 +3212,7 @@ export const podcastEpisodes: PodcastEpisodeSeed[] = [
           "Goddeloosheid heeft nooit geluk betekend",
           "Wie in een vleselijke staat verkeert, is in strijd met de aard van het geluk",
           "Herstelling betekent goed voor goed, kwaad voor kwaad teruggeven",
-          "Wat gij van u laat uitgaan, zal weer tot u terugkeren",
+          "Hetgeen je van je doet uitgaan, zal wederom tot je terugkeren",
         ],
       },
     ],
@@ -3305,7 +3305,7 @@ export const podcastEpisodes: PodcastEpisodeSeed[] = [
         items: [
           "God is dezelfde gisteren, heden en voor eeuwig, zonder zweem van ommekeer",
           "Een god die verandert, is geen god van wonderen",
-          "Mormon toont de God van Abraham, Isaak en Jakob als God van wonderen",
+          "Mormon toont de God van Abraham, Izak en Jakob als God van wonderen",
           "God verandert niet, anders zou Hij ophouden God te zijn",
         ],
       },
@@ -3696,10 +3696,10 @@ export const podcastEpisodes: PodcastEpisodeSeed[] = [
         type: "MULTIPLE_CHOICE",
         prompt: "Welk gebod staat centraal in het gesprek van Koos en Raphael in deze aflevering?",
         options: [
-          "Gij zult niet doden",
-          "Gij zult de sabbatdag heiligen",
-          "Gij zult niet stelen",
-          "Gij zult geen andere goden voor mijn aangezicht hebben",
+          "U zult niet doden",
+          "U zult de sabbatdag heiligen",
+          "U zult niet stelen",
+          "U zult geen andere god voor mijn aangezicht hebben",
         ],
         correctIndex: 0,
       },
@@ -3856,7 +3856,7 @@ export const podcastEpisodes: PodcastEpisodeSeed[] = [
         type: "MULTIPLE_CHOICE",
         prompt: "Hoe noemt Christus zichzelf in Ether 4:12?",
         options: [
-          "Het licht en het leven en de waarheid der wereld",
+          "Het licht en het leven en de waarheid van de wereld",
           "Alleen een boodschapper van de Vader, zonder eigen gezag",
           "Een gewone profeet zoals andere profeten",
           "Een engel die de Vader dient",
@@ -3962,7 +3962,7 @@ export const podcastEpisodes: PodcastEpisodeSeed[] = [
         prompt: "Zet deze uitspraken uit Jakob 2 in de juiste volgorde.",
         items: [
           "Acht uw broeders als uzelf en wees vrijgevig met uw bezit",
-          "Zoek het koninkrijk Gods voordat gij naar rijkdom streeft",
+          "Zoek het koninkrijk van God voordat u naar rijkdom streeft",
           "Verkrijg eerst hoop in Christus",
           "Streef daarna naar rijkdom met de bedoeling goed te doen",
         ],
@@ -4433,7 +4433,7 @@ export const podcastEpisodes: PodcastEpisodeSeed[] = [
         items: [
           "Een engel Gods was uit de hemel gevallen en werd een duivel",
           "Hij zocht ook de ellende van het gehele mensdom",
-          "Hij zeide tot Eva dat zij van de verboden vrucht zou eten",
+          "Hij zei tot Eva dat zij van de verboden vrucht zou eten",
           "Mensen zijn vrij om vrijheid te kiezen, of gevangenschap naar de macht van de duivel",
         ],
       },
@@ -4619,9 +4619,9 @@ export const podcastEpisodes: PodcastEpisodeSeed[] = [
         type: "SEQUENCE",
         prompt: "Zet deze uitspraken uit 2 Nephi 10 in de juiste volgorde.",
         items: [
-          "Wees goedsmoeds, want gij zijt vrij om naar eigen inzicht te handelen",
+          "Wees welgemoed en bedenk dat u vrij bent om naar eigen inzicht te handelen",
           "Verzoen u met de wil van God, niet met de wil van de duivel",
-          "Alleen door de genade Gods wordt gij behouden",
+          "Alleen in en door de genade van God wordt u behouden",
           "Moge God u opwekken door de kracht van de opstanding en de verzoening",
         ],
       },
@@ -4713,7 +4713,7 @@ export const podcastEpisodes: PodcastEpisodeSeed[] = [
         type: "SEQUENCE",
         prompt: "Zet deze uitspraken uit Alma 7 in de juiste volgorde.",
         items: [
-          "Bekeer u en word wedergeboren om het koninkrijk der hemelen te beërven",
+          "Bekeer u en word wedergeboren om het koninkrijk van de hemel te beërven",
           "Niets onreins kan in het koninkrijk van God worden ontvangen",
           "Alma wil hen wakker schudden tot een besef van hun plicht jegens God",
           "Wees ootmoedig, onderworpen en dankbaar in alle dingen",
@@ -4808,8 +4808,8 @@ export const podcastEpisodes: PodcastEpisodeSeed[] = [
         prompt: "Zet deze raadgevingen uit Alma 38 in de juiste volgorde.",
         items: [
           "Wees in alle dingen ijverig en matig",
-          "Zie toe dat gij niet tot hoogmoed verheven wordt",
-          "Beteugel al uw hartstochten, opdat gij met liefde vervuld zult zijn",
+          "Zie toe dat je niet tot hoogmoed verheven wordt",
+          "Beteugel al je hartstochten, opdat je met liefde vervuld zult zijn",
           "Bid niet zoals de Zoramieten, om door mensen geprezen te worden",
         ],
       },
@@ -5089,10 +5089,10 @@ export const podcastEpisodes: PodcastEpisodeSeed[] = [
         type: "SEQUENCE",
         prompt: "Zet deze instructies van Christus uit 3 Nephi 11 in de juiste volgorde.",
         items: [
-          "Wie zich bekeert en zich wil laten dopen, zult gij in het water afdalen en dopen",
-          "Gij zult de exacte woorden van het doopgebed uitspreken",
-          "Gij zult hen in het water onderdompelen",
-          "Gij zult hen wederom uit het water laten komen",
+          "Wie zich bekeert en zich wil laten dopen, zult u in het water afdalen en dopen",
+          "U zult de exacte woorden van het doopgebed uitspreken",
+          "U zult hen in het water onderdompelen",
+          "U zult hen wederom uit het water laten komen",
         ],
       },
     ],
@@ -5250,7 +5250,7 @@ export const podcastEpisodes: PodcastEpisodeSeed[] = [
         type: "MULTIPLE_CHOICE",
         prompt: "In Alma 37 geeft Alma raad aan zijn zoon Helaman. Wat zegt hij in vers 37 over hoe je moet handelen?",
         options: [
-          "Raadpleeg de Heer bij al uw handelingen, en Hij zal u ten goede leiden",
+          "Raadpleeg de Heer bij al je handelingen, en Hij zal je ten goede leiden",
           "Vraag nooit om raad, maar los alles zelf op",
           "Handel altijd zonder ooit stil te staan bij de gevolgen",
           "Vertrouw uitsluitend op je eigen wijsheid",
@@ -5277,10 +5277,10 @@ export const podcastEpisodes: PodcastEpisodeSeed[] = [
         type: "SEQUENCE",
         prompt: "Zet deze raadgevingen uit Alma 37 in de juiste volgorde.",
         items: [
-          "Roep God aan voor al uw onderhoud en laat al uw handelingen tot de Heer zijn",
-          "Raadpleeg de Heer bij al uw handelingen",
-          "Leg u des nachts neer in de hoede des Heren",
-          "Laat uw hart des ochtends vol dankbaarheid zijn jegens God",
+          "Roep God aan voor al je onderhoud en laat al je handelingen tot de Heer zijn",
+          "Raadpleeg de Heer bij al je handelingen",
+          "Leg je ’s nachts neer in de hoede van de Heer",
+          "Laat je hart ’s ochtends vol dankbaarheid zijn jegens God",
         ],
       },
     ],
@@ -5438,7 +5438,7 @@ export const podcastEpisodes: PodcastEpisodeSeed[] = [
         type: "MULTIPLE_CHOICE",
         prompt: "In 1 Nephi 22 profeteert Nephi over de tijd dat de Heilige Israëls zal regeren. Waarom heeft Satan dan geen macht, volgens vers 26?",
         options: [
-          "Wegens de rechtvaardigheid van het volk, waardoor hij geen macht over het hart der mensen heeft",
+          "Wegens de rechtvaardigheid van het volk, waardoor hij geen macht over het hart van de mensen heeft",
           "Omdat hij voorgoed vernietigd is",
           "Omdat hij nooit meer heeft bestaan",
           "Omdat er dan helemaal geen mensen meer op aarde zijn",
@@ -5447,7 +5447,7 @@ export const podcastEpisodes: PodcastEpisodeSeed[] = [
       },
       {
         type: "TRUE_FALSE",
-        prompt: "Volgens 1 Nephi 22:24-25 zal de Heilige Israëls regeren met heerschappij en macht, en zijn kinderen vergaderen uit de vier hoeken der aarde als één kudde met één Herder.",
+        prompt: "Volgens 1 Nephi 22:24-25 zal de Heilige van Israël regeren met heerschappij en macht, en zijn kinderen vergaderen uit de vier hoeken van de aarde als één kudde met één Herder.",
         answer: true,
       },
       {
@@ -5466,7 +5466,7 @@ export const podcastEpisodes: PodcastEpisodeSeed[] = [
         prompt: "Zet deze profetische uitspraken uit 1 Nephi 22 in de juiste volgorde.",
         items: [
           "De rechtvaardigen worden weggeleid en de Heilige Israëls zal regeren",
-          "Hij vergadert zijn kinderen uit de vier hoeken der aarde",
+          "Hij vergadert zijn kinderen uit de vier hoeken van de aarde",
           "Er zal één kudde zijn en één Herder",
           "Wegens de rechtvaardigheid van het volk heeft Satan geen macht",
         ],
@@ -5530,7 +5530,7 @@ export const podcastEpisodes: PodcastEpisodeSeed[] = [
     bomConnection: [
       {
         type: "MULTIPLE_CHOICE",
-        prompt: "In Mosiah 24 spreekt de stem des Heren tot Alma en zijn volk, die in knechtschap leefden. Wat belooft Hij hun in vers 14?",
+        prompt: "In Mosiah 24 spreekt de stem van de Heer tot Alma en zijn volk, die in knechtschap leefden. Wat belooft Hij hun in vers 14?",
         options: [
           "Dat Hij hun lasten zo zal verlichten dat zij die zelfs niet meer op hun rug kunnen voelen",
           "Dat Hij hen onmiddellijk fysiek zal bevrijden zonder verdere beproeving",
@@ -5548,7 +5548,7 @@ export const podcastEpisodes: PodcastEpisodeSeed[] = [
         type: "MULTIPLE_CHOICE",
         prompt: "Wat zegt de Heer in Mosiah 24:13 tegen het volk in hun ellende?",
         options: [
-          "Heft uw hoofd op en weest welgemoed, want Ik ben mij bewust van het verbond dat gij met Mij hebt gesloten",
+          "Hef uw hoofd op en wees welgemoed, want Ik ben mij bewust van het verbond dat u met Mij hebt gesloten",
           "Jullie ellende is verdiend en er komt geen verlossing",
           "Jullie moeten het probleem helemaal zelf oplossen",
           "Er wordt niets tegen hen gezegd",
@@ -5559,7 +5559,7 @@ export const podcastEpisodes: PodcastEpisodeSeed[] = [
         type: "SEQUENCE",
         prompt: "Zet deze gebeurtenissen uit Mosiah 24 in de juiste volgorde.",
         items: [
-          "De stem des Heren komt tot het volk in hun ellende",
+          "De stem van de Heer komt tot het volk in hun ellende",
           "Hij belooft zich aan hen te verbinden en hen te bevrijden",
           "Hij verlicht de lasten die op hun schouders zijn gelegd",
           "Zij onderwerpen zich welgemoed en met geduld aan Gods wil",
@@ -5653,8 +5653,8 @@ export const podcastEpisodes: PodcastEpisodeSeed[] = [
         type: "SEQUENCE",
         prompt: "Zet deze uitspraken uit Moroni 7 in de juiste volgorde.",
         items: [
-          "Gij kent het licht waarmee gij kunt oordelen, namelijk het licht van Christus",
-          "Ziet toe dat gij niet verkeerd oordeelt",
+          "U kent het licht waarmee u kunt oordelen, namelijk het licht van Christus",
+          "Zie toe dat u niet verkeerd oordeelt",
           "Doe zorgvuldig onderzoek in het licht van Christus om goed van kwaad te onderscheiden",
           "Wie al het goede aangrijpt zonder het te veroordelen, is zeker een kind van Christus",
         ],
@@ -5736,7 +5736,7 @@ export const podcastEpisodes: PodcastEpisodeSeed[] = [
         type: "MULTIPLE_CHOICE",
         prompt: "Wat verwijt Nephi de verdorven kerken in vers 13?",
         options: [
-          "Dat zij de armen beroven ter wille van hun fraaie heiligdommen en kledij, en de zachtmoedigen vervolgen",
+          "Dat zij de armen beroven omwille van hun fraaie heiligdommen en kledij, en de zachtmoedigen vervolgen",
           "Dat zij te veel aan liefdadigheid doen",
           "Dat zij te weinig aandacht besteden aan gebouwen",
           "Dat zij te bescheiden zijn in hun optreden",
@@ -5749,7 +5749,7 @@ export const podcastEpisodes: PodcastEpisodeSeed[] = [
         items: [
           "Zij zijn allen van de weg afgeweken en verdorven geworden",
           "Wegens hoogmoed en valse leer zijn hun kerken verdorven",
-          "Zij beroven de armen ter wille van hun fraaie heiligdommen",
+          "Zij beroven de armen omwille van hun fraaie heiligdommen",
           "Slechts enkelen blijven ootmoedige volgelingen van Christus",
         ],
       },
@@ -6029,9 +6029,9 @@ export const podcastEpisodes: PodcastEpisodeSeed[] = [
         type: "SEQUENCE",
         prompt: "Zet deze uitspraken uit Jakob 2 in de juiste volgorde.",
         items: [
-          "Jakob roept het volk op te luisteren naar het woord des Heren",
+          "Jakob roept het volk op te luisteren naar het woord van de Heer",
           "Geen enkele man zal meer dan één vrouw hebben",
-          "De Heer schept behagen in de kuisheid der vrouwen",
+          "De Heer schept behagen in de kuisheid van vrouwen",
           "Als de Heer voor zichzelf nageslacht wil doen opstaan, zal Hij zijn volk apart gebieden",
         ],
       },
@@ -6344,7 +6344,7 @@ export const podcastEpisodes: PodcastEpisodeSeed[] = [
         type: "MULTIPLE_CHOICE",
         prompt: "Welke schrifttekst haalt Koos aan over het profetische belang van familiegeschiedenis in de laatste dagen?",
         options: [
-          "De profetie dat de harten van de vaderen tot de kinderen worden teruggevoerd en omgekeerd, voordat de grote dag des Heren komt",
+          "De profetie dat de harten van de vaderen tot de kinderen worden teruggevoerd en omgekeerd, voordat de grote dag van de Heer komt",
           "De profetie over het bouwen van de ark van Noach",
           "De profetie over de torenbouw van Babel",
           "De profetie over de doortocht door de Rode Zee",
@@ -6378,7 +6378,7 @@ export const podcastEpisodes: PodcastEpisodeSeed[] = [
         type: "MULTIPLE_CHOICE",
         prompt: "In 3 Nephi 25 citeert Christus zelf de profetie over Elia aan het volk in Amerika. Wat zal Elia doen, volgens vers 6?",
         options: [
-          "Het hart der vaderen terugvoeren tot de kinderen en het hart der kinderen tot hun vaderen",
+          "Het hart van de vaders tot de kinderen terugbrengen, en het hart van de kinderen tot hun vaders",
           "Alleen de koningen van de aarde onderwijzen",
           "De aarde onmiddellijk vernietigen",
           "Alleen profetieën over oorlogen uitspreken",
@@ -6387,7 +6387,7 @@ export const podcastEpisodes: PodcastEpisodeSeed[] = [
       },
       {
         type: "TRUE_FALSE",
-        prompt: "Volgens 3 Nephi 25:5 zendt de Heer de profeet Elia vóórdat de grote en geduchte dag des Heren komt.",
+        prompt: "Volgens 3 Nephi 25:5 zendt de Heer de profeet Elia vóórdat de grote en geduchte dag van de Heer komt.",
         answer: true,
       },
       {
@@ -6406,8 +6406,8 @@ export const podcastEpisodes: PodcastEpisodeSeed[] = [
         prompt: "Zet deze uitspraken uit 3 Nephi 25 in de juiste volgorde.",
         items: [
           "De Heer zal de profeet Elia zenden",
-          "Dit gebeurt vóórdat de grote en geduchte dag des Heren komt",
-          "Elia zal het hart der vaderen terugvoeren tot de kinderen",
+          "Dit gebeurt vóórdat de grote en geduchte dag van de Heer komt",
+          "Elia zal het hart van de vaders tot de kinderen terugbrengen",
           "Anders zou de Heer de aarde treffen met een banvloek",
         ],
       },
@@ -6595,8 +6595,8 @@ export const podcastEpisodes: PodcastEpisodeSeed[] = [
         items: [
           "Kom tot Christus en wordt vervolmaakt in Hem",
           "Onthoud u van alle goddeloosheid en heb God lief met al uw macht, verstand en kracht",
-          "Door Gods genade kunt gij volmaakt zijn in Christus",
-          "Dan zijt gij geheiligd in Christus door het vergieten van zijn bloed",
+          "Door zijn genade kunt u volmaakt zijn in Christus",
+          "Dan bent u geheiligd in Christus door de genade van God, wegens het vergieten van het bloed van Christus",
         ],
       },
     ],
@@ -7428,7 +7428,7 @@ export const podcastEpisodes: PodcastEpisodeSeed[] = [
         type: "MULTIPLE_CHOICE",
         prompt: "Wat bracht Enos ertoe om voor zijn Maker te knielen en zo vurig te bidden, volgens Enos 1:3?",
         options: [
-          "De woorden over het eeuwige leven en de vreugde der heiligen die hij zijn vader vaak had horen zeggen, drongen diep tot zijn hart door",
+          "De woorden over het eeuwige leven en de vreugde van de heiligen die hij zijn vader vaak had horen zeggen, drongen diep tot zijn hart door",
           "Een droom die hij die nacht had gehad",
           "Een gesprek met vreemden die hij tegenkwam",
           "Er wordt in dit vers geen reden gegeven",
@@ -8004,9 +8004,9 @@ export const podcastEpisodes: PodcastEpisodeSeed[] = [
         prompt: "Zet deze uitspraken uit Moroni 7:48 in de juiste volgorde.",
         items: [
           "Bid tot de Vader met alle kracht van uw hart",
-          "Dat gij vervuld zult zijn met de liefde die Hij aan ware volgelingen schenkt",
-          "Opdat gij zonen van God zult worden en Hem gelijk zult zijn",
-          "Opdat gij gereinigd zult worden zoals Hij rein is",
+          "Dat u vervuld zult zijn met de liefde die Hij aan ware volgelingen schenkt",
+          "Opdat u zonen van God zult worden en wij Hem gelijk zullen zijn",
+          "Opdat wij gereinigd zullen worden zoals Hij rein is",
         ],
       },
     ],
@@ -8070,7 +8070,7 @@ export const podcastEpisodes: PodcastEpisodeSeed[] = [
         type: "MULTIPLE_CHOICE",
         prompt: "In Alma 18 legt Ammon aan koning Lamoni uit waarnaar de mens geschapen is. Wat zegt hij in vers 34?",
         options: [
-          "Dat de mens in het begin geschapen is naar het beeld Gods",
+          "Dat de mens in het begin geschapen is naar het beeld van God",
           "Dat de mens toevallig is ontstaan zonder enig doel",
           "Dat alleen koningen naar Gods beeld geschapen zijn",
           "Er wordt in dit vers niets over de schepping van de mens gezegd",
@@ -8098,7 +8098,7 @@ export const podcastEpisodes: PodcastEpisodeSeed[] = [
         prompt: "Zet deze uitspraken uit Alma 18:32-36 in de juiste volgorde.",
         items: [
           "God kent de gedachten van elk mensenhart, want Hij heeft hen allen geschapen",
-          "De mens is in het begin geschapen naar het beeld Gods",
+          "De mens is in het begin geschapen naar het beeld van God",
           "Ammon is door de Heilige Geest geroepen om dit volk te onderwijzen",
           "Hij begint bij de schepping van de wereld en de val van de mens",
         ],
@@ -8286,7 +8286,7 @@ export const podcastEpisodes: PodcastEpisodeSeed[] = [
         prompt: "Zet deze uitspraken uit 3 Nephi 12:44-48 in de juiste volgorde.",
         items: [
           "Heb uw vijanden lief en bid voor wie u vervolgen",
-          "Opdat gij kinderen zult zijn van uw Vader in de hemel",
+          "Opdat u kinderen zult zijn van uw Vader die in de hemel is",
           "Oude dingen zijn weggedaan en alle dingen zijn nieuw geworden",
           "Wees volmaakt, zoals uw Vader in de hemel volmaakt is",
         ],
@@ -8631,10 +8631,10 @@ export const podcastEpisodes: PodcastEpisodeSeed[] = [
         prompt:
           "Koos en Raphael zeggen dat Christus ons vraagt tot de Vader te bidden in zijn naam. Wat zegt Jezus daarover in 3 Nephi 18:19?",
         options: [
-          "Daarom moet gij altijd tot de Vader bidden in mijn naam",
-          "Daarom moet gij altijd tot Mij bidden in de naam van de Vader",
-          "Daarom moet gij alleen op de sabbat tot de Vader bidden",
-          "Daarom moet gij bidden tot de engelen die over u waken",
+          "Daarom moet u altijd tot de Vader bidden in mijn naam",
+          "Daarom moet u altijd tot Mij bidden in de naam van de Vader",
+          "Daarom moet u alleen op de sabbat tot de Vader bidden",
+          "Daarom moet u bidden tot de engelen die over u waken",
         ],
         correctIndex: 0,
       },
@@ -8660,10 +8660,10 @@ export const podcastEpisodes: PodcastEpisodeSeed[] = [
         type: "SEQUENCE",
         prompt: "Zet deze uitspraken uit 3 Nephi 18:18-21 in de juiste volgorde.",
         items: [
-          "Gij moet altijd waken en bidden, opdat gij niet in verzoeking valt",
-          "Daarom moet gij altijd tot de Vader bidden in mijn naam",
-          "Wat gij de Vader in mijn naam vraagt dat goed is, zal u gegeven worden",
-          "Bidt in uw gezin tot de Vader, altijd in mijn naam",
+          "U moet altijd waken en bidden, opdat u niet in verzoeking valt",
+          "Daarom moet u altijd tot de Vader bidden in mijn naam",
+          "Wat u de Vader ook in mijn naam vraagt dat goed is, zal u gegeven worden",
+          "Bid in uw gezin tot de Vader, altijd in mijn naam",
         ],
       },
     ],
@@ -8728,7 +8728,7 @@ export const podcastEpisodes: PodcastEpisodeSeed[] = [
         prompt:
           "Koos en Raphael zeggen: als we onze naaste liefhebben, hebben we God lief. Wat leert koning Benjamin daarover in Mosiah 2:17?",
         options: [
-          "Dat wanneer gij in dienst van uw medemensen zijt, gij louter in dienst van uw God zijt",
+          "Dat wanneer u in dienst van uw medemensen bent, u louter in dienst van uw God bent",
           "Dat wie zijn medemensen dient, niet meer naar de tempel hoeft",
           "Dat alleen een koning in dienst van God kan zijn",
           "Dat men eerst God moet dienen en pas daarna zijn medemensen",
@@ -8751,9 +8751,9 @@ export const podcastEpisodes: PodcastEpisodeSeed[] = [
         prompt: "Zet deze uitspraken van koning Benjamin uit Mosiah 2:16-19 in de juiste volgorde.",
         items: [
           "Hij wil niet roemen, want hij is louter in dienst van God geweest",
-          "Wanneer gij in dienst van uw medemensen zijt, zijt gij louter in dienst van uw God",
-          "Als uw koning arbeidt om u te dienen, behoort gij dan niet te arbeiden om elkaar te dienen?",
-          "Hoezeer behoort gij dan uw hemelse Koning te danken",
+          "Wanneer u in dienst van uw medemensen bent, bent u louter in dienst van uw God",
+          "Als uw koning arbeidt om u te dienen, behoort u dan niet te arbeiden om elkaar te dienen?",
+          "Hoezeer behoort u dan uw hemelse Koning te danken",
         ],
       },
     ],
@@ -8841,9 +8841,9 @@ export const podcastEpisodes: PodcastEpisodeSeed[] = [
         type: "SEQUENCE",
         prompt: "Zet deze uitspraken uit 2 Nephi 31:17-21 in de juiste volgorde.",
         items: [
-          "De poort waardoor gij moet binnengaan is bekering en doop met water",
-          "Wanneer gij het enge en smalle pad hebt betreden, is daarmee niet alles gedaan",
-          "Gij moet standvastig in Christus voorwaarts streven en tot het einde volharden",
+          "De poort waardoor u moet binnengaan, is bekering en doop met water",
+          "Wanneer u het nauwe en smalle pad hebt betreden, is daarmee niet alles gedaan",
+          "U moet standvastig in Christus voorwaarts streven en tot het einde volharden",
           "Dit is de weg, en er is geen andere weg noch naam gegeven",
         ],
       },
@@ -9092,7 +9092,7 @@ export const podcastEpisodes: PodcastEpisodeSeed[] = [
         prompt:
           "Koos wil dat we iets van Gods liefde mogen voelen en die verder kunnen geven. Wat betekent de boom uit Lehi's droom volgens Nephi in 1 Nephi 11:22?",
         options: [
-          "De liefde Gods, die zich alom uitstort in het hart der mensenkinderen",
+          "De liefde van God, die zich alom uitstort in het hart van de mensenkinderen",
           "De wet van Mozes",
           "De tempel in Jeruzalem",
           "De rijkdom van de wereld",
@@ -9198,7 +9198,7 @@ export const podcastEpisodes: PodcastEpisodeSeed[] = [
         type: "MULTIPLE_CHOICE",
         prompt: "Wat belooft 3 Nephi 25:2 aan hen die de naam van de Heer vrezen?",
         options: [
-          "De Zoon der gerechtigheid zal opgaan met genezing onder zijn vleugels",
+          "De Zoon van gerechtigheid zal opgaan met genezing onder zijn vleugels",
           "Ze zullen de datum van de wederkomst te horen krijgen",
           "Ze zullen nooit meer hoeven te werken",
           "Ze zullen koning worden over een eigen land",
@@ -9216,9 +9216,9 @@ export const podcastEpisodes: PodcastEpisodeSeed[] = [
         prompt: "Zet deze uitspraken uit 3 Nephi 25:1-6 in de juiste volgorde.",
         items: [
           "De dag komt, brandend als een oven, en de goddelozen zullen stoppels zijn",
-          "Voor wie mijn naam vreest, zal de Zoon der gerechtigheid opgaan met genezing",
-          "Gedenkt de wet van Mozes, mijn knecht",
-          "Ik zend u de profeet Elia, voordat de grote en geduchte dag des Heren komt",
+          "Voor wie mijn naam vreest, zal de Zoon van gerechtigheid opgaan met genezing",
+          "Gedenk de wet van Mozes, mijn knecht",
+          "Ik zend u de profeet Elia, voordat de grote en geduchte dag van de Heer komt",
         ],
       },
     ],
@@ -9405,7 +9405,7 @@ export const podcastEpisodes: PodcastEpisodeSeed[] = [
         type: "SEQUENCE",
         prompt: "Zet deze uitspraken uit Alma 13:14-19 in de juiste volgorde.",
         items: [
-          "Verootmoedigt u zoals het volk in de dagen van Melchizedek",
+          "Verootmoedig u zoals het volk in de dagen van Melchizedek",
           "Abraham betaalde tiende aan Melchizedek",
           "Melchizedek predikte bekering en stichtte vrede in het land Salem",
           "Er waren velen vóór en na hem, maar niet één was groter",
@@ -9468,10 +9468,10 @@ export const podcastEpisodes: PodcastEpisodeSeed[] = [
         prompt:
           "Fred legt uit dat er na de komst van Christus geen dierenoffers meer nodig zijn. Wat zegt Christus zelf daarover in 3 Nephi 9:19?",
         options: [
-          "Gij zult Mij geen bloedvergieten meer offeren; uw brandoffers moeten worden afgeschaft",
-          "Gij zult Mij voortaan tweemaal zoveel brandoffers brengen",
-          "Gij zult alleen nog in de tempel van Jeruzalem offeren",
-          "Gij zult uw offers voortaan aan de priesters geven",
+          "U zult Mij geen bloedvergieten meer offeren; uw brandoffers moeten worden afgeschaft",
+          "U zult Mij voortaan tweemaal zoveel brandoffers brengen",
+          "U zult alleen nog in de tempel van Jeruzalem offeren",
+          "U zult uw offers voortaan aan de priesters geven",
         ],
         correctIndex: 0,
       },
@@ -9497,7 +9497,7 @@ export const podcastEpisodes: PodcastEpisodeSeed[] = [
         items: [
           "Ik ben Jezus Christus, de Zoon van God",
           "In Mij is de wet van Mozes vervuld",
-          "Gij zult Mij als offer een gebroken hart en een verslagen geest brengen",
+          "U zult Mij als offer een gebroken hart en een verslagen geest brengen",
           "Wie zich bekeert en als een klein kind tot Mij komt, die zal Ik aannemen",
         ],
       },
@@ -9675,7 +9675,7 @@ export const podcastEpisodes: PodcastEpisodeSeed[] = [
       },
       {
         type: "TRUE_FALSE",
-        prompt: "Volgens Alma 12:25 had er zonder het verlossingsplan geen opstanding der doden kunnen zijn.",
+        prompt: "Volgens Alma 12:25 had er zonder het verlossingsplan geen opstanding van de doden kunnen zijn.",
         answer: true,
       },
       {
@@ -9685,7 +9685,7 @@ export const podcastEpisodes: PodcastEpisodeSeed[] = [
           "God stelde cherubs met een vlammend zwaard bij de boom des levens",
           "Adam viel door te nemen van de verboden vrucht",
           "Dit leven werd een proefstaat, een tijd om zich voor te bereiden om God te ontmoeten",
-          "Zonder het verlossingsplan had er geen opstanding der doden kunnen zijn",
+          "Zonder het verlossingsplan had er geen opstanding van de doden kunnen zijn",
         ],
       },
     ],
@@ -9746,8 +9746,8 @@ export const podcastEpisodes: PodcastEpisodeSeed[] = [
         prompt:
           "Koos en Raphael zeggen dat je altijd een keuze hebt, met gevolgen. Wat zegt Samuel de Lamaniet daarover in Helaman 14:30?",
         options: [
-          "Gij zijt vrij; het wordt u toegestaan zelfstandig te handelen",
-          "Gij zijt niet vrij; alles is al voor u bepaald",
+          "U bent vrij; het wordt u toegestaan zelfstandig te handelen",
+          "U bent niet vrij; alles is al voor u bepaald",
           "Alleen de profeten mogen voor zichzelf kiezen",
           "Wie gedoopt is, heeft geen keuze meer",
         ],
@@ -9775,7 +9775,7 @@ export const podcastEpisodes: PodcastEpisodeSeed[] = [
         items: [
           "Velen zullen grotere tekenen zien, zodat er geen reden voor ongeloof is",
           "Wie gelooft, zal worden gered",
-          "Gij zijt vrij; het wordt u toegestaan zelfstandig te handelen",
+          "U bent vrij; het wordt u toegestaan zelfstandig te handelen",
           "Wie het goede doet, krijgt het goede aan zich hersteld",
         ],
       },

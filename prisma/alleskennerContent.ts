@@ -17,7 +17,7 @@ export const alleskennerItems: AlleskennerSeedItem[] = [
       answer: "Nephi",
       evidence: [
         { ref: "1 Nephi 17:7", quote: "ik, Nephi, vele dagen in het land Overvloed was geweest" },
-        { ref: "1 Nephi 17:8", quote: "Gij zult een schip bouwen op de wijze die Ik u zal tonen" },
+        { ref: "1 Nephi 17:8", quote: "U zult een schip bouwen op de wijze die Ik u zal tonen" },
       ],
     },
   },
@@ -26,7 +26,7 @@ export const alleskennerItems: AlleskennerSeedItem[] = [
     kind: "QUESTION",
     data: {
       prompt: "Wat betekent de naam Liahona vertaald?",
-      options: ["Kompas", "Licht", "Belofte", "Wegwijzer der vaderen"],
+      options: ["Kompas", "Licht", "Belofte", "Wegwijzer van de vaderen"],
       answer: "Kompas",
       evidence: [{ ref: "Alma 37:38", quote: "de Liahona, hetgeen vertaald kompas betekent" }],
     },
@@ -62,7 +62,7 @@ export const alleskennerItems: AlleskennerSeedItem[] = [
     id: "vraag-0005",
     kind: "QUESTION",
     data: {
-      prompt: "Hoeveel kleine stenen smolt de broeder van Jared uit een rots?",
+      prompt: "Hoeveel kleine stenen smolt de broer van Jared uit een rots?",
       options: ["Zestien", "Twaalf", "Acht", "Vierentwintig"],
       answer: "Zestien",
       evidence: [{ ref: "Ether 3:1", quote: "uit een rots zestien kleine stenen smolt" }],
@@ -95,11 +95,11 @@ export const alleskennerItems: AlleskennerSeedItem[] = [
     kind: "QUESTION",
     data: {
       prompt: "Hoe noemde Moroni de staak met zijn verscheurde mantel?",
-      options: ["Het vaandel der vrijheid", "De banier des Heren", "Het teken van Nephi", "De standaard van Zarahemla"],
-      answer: "Het vaandel der vrijheid",
+      options: ["Het vrijheidsvaandel", "De banier van de Heer", "Het teken van Nephi", "De standaard van Zarahemla"],
+      answer: "Het vrijheidsvaandel",
       evidence: [
-        { ref: "Alma 46:11", quote: "Moroni, die de oppercommandant van de legers der Nephieten was" },
-        { ref: "Alma 46:13", quote: "met aan het uiteinde zijn verscheurde mantel — en hij noemde die het vaandel der vrijheid" },
+        { ref: "Alma 46:11", quote: "Moroni, die de oppercommandant van de legers van de Nephieten was" },
+        { ref: "Alma 46:13", quote: "met aan het uiteinde zijn verscheurde mantel – en hij noemde die het vrijheidsvaandel" },
       ],
     },
   },
@@ -107,11 +107,11 @@ export const alleskennerItems: AlleskennerSeedItem[] = [
     id: "vraag-0009",
     kind: "QUESTION",
     data: {
-      prompt: "Waar stond Samuël de Lamaniet toen hij tot het volk van Zarahemla profeteerde?",
+      prompt: "Waar stond Samuel de Lamaniet toen hij tot het volk van Zarahemla profeteerde?",
       options: ["Op de muur van de stad", "Op een toren", "In de tempel", "Op de heuvel Cumorah"],
       answer: "Op de muur van de stad",
       evidence: [
-        { ref: "Helaman 13:2", quote: "een zekere Samuël, een Lamaniet, het land Zarahemla binnenkwam" },
+        { ref: "Helaman 13:2", quote: "een zekere Samuel, een Lamaniet, het land Zarahemla binnenkwam" },
         { ref: "Helaman 13:4", quote: "klom hij boven op de muur" },
       ],
     },
@@ -147,7 +147,7 @@ export const alleskennerItems: AlleskennerSeedItem[] = [
       options: ["Cumorah", "Shelem", "Riplah", "Onidah"],
       answer: "Cumorah",
       evidence: [
-        { ref: "Mormon 6:6", quote: "door de hand des Heren waren toevertrouwd, verborgen in de heuvel Cumorah" },
+        { ref: "Mormon 6:6", quote: "door de hand van de Heer waren toevertrouwd, verborgen in de heuvel Cumorah" },
       ],
     },
   },
@@ -157,14 +157,14 @@ export const alleskennerItems: AlleskennerSeedItem[] = [
     data: {
       prompt: "Wat stond er op de koperen platen die Laban bezat?",
       options: [
-        "De kroniek der Joden en een geslachtsregister",
-        "De wetten van koning Sedekia",
-        "De profetieën van Samuël",
+        "De kroniek van de Joden en een geslachtsregister",
+        "De wetten van koning Zedekia",
+        "De profetieën van Samuel",
         "Een kaart van het beloofde land",
       ],
-      answer: "De kroniek der Joden en een geslachtsregister",
+      answer: "De kroniek van de Joden en een geslachtsregister",
       evidence: [
-        { ref: "1 Nephi 3:3", quote: "Laban heeft de kroniek der Joden en ook een geslachtsregister van mijn voorvaderen" },
+        { ref: "1 Nephi 3:3", quote: "Laban heeft de kroniek van de Joden en ook een geslachtsregister van mijn voorvaderen" },
       ],
     },
   },
@@ -201,7 +201,7 @@ export const alleskennerItems: AlleskennerSeedItem[] = [
       options: ["Met een zaadje", "Met een lamp", "Met een rivier", "Met een zwaard"],
       answer: "Met een zaadje",
       evidence: [
-        { ref: "Alma 31:1", quote: "Alma berichten ontving dat de Zoramieten de wegen des Heren verdraaiden" },
+        { ref: "Alma 31:1", quote: "Alma berichten ontving dat de Zoramieten de wegen van de Heer verdraaiden" },
         { ref: "Alma 32:28", quote: "Nu zullen wij het woord vergelijken met een zaadje" },
       ],
     },
@@ -248,7 +248,7 @@ export const alleskennerItems: AlleskennerSeedItem[] = [
       listen: { ref: "Mosiah 2:17" },
       evidence: [
         { ref: "Mosiah 2:7", quote: "koning Benjamin hen niet allen binnen de muren van de tempel kon leren" },
-        { ref: "Mosiah 2:17", quote: "wanneer gij in dienst van uw medemensen zijt, gij louter in dienst van uw God zijt" },
+        { ref: "Mosiah 2:17", quote: "wanneer u in dienst van uw medemensen bent, u louter in dienst van uw God bent" },
       ],
     },
   },
@@ -290,7 +290,7 @@ export const alleskennerItems: AlleskennerSeedItem[] = [
           clues: ["Koning Benjamin liet er een bouwen", "Jared en zijn broeder kwamen er vandaan", "De taal werd er verward", "Gebouwd in de wijngaard"],
           evidence: [
             { ref: "Mosiah 2:7", quote: "daarom liet hij een toren bouwen" },
-            { ref: "Ether 1:33", quote: "welke Jared, met zijn broeder en hun gezinnen" },
+            { ref: "Ether 1:33", quote: "welke Jared, met zijn broer en hun gezinnen" },
             { ref: "Omni 1:22", quote: "vanaf de toren in de tijd dat de Heer de taal van het volk had verward" },
             { ref: "2 Nephi 15:2", quote: "bouwde daarin een toren" },
           ],
@@ -298,9 +298,9 @@ export const alleskennerItems: AlleskennerSeedItem[] = [
         {
           answer: "Schip",
           accept: ["schepen", "boot", "boten", "vaartuig", "vaartuigen"],
-          clues: ["Nephi moest er een bouwen", "Hagoth bouwde een buitengewoon grote", "Zo licht als een vogel op het water", "De broeder van Jared had er acht"],
+          clues: ["Nephi moest er een bouwen", "Hagoth bouwde een buitengewoon grote", "Zo licht als een vogel op het water", "De broer van Jared had er acht"],
           evidence: [
-            { ref: "1 Nephi 17:8", quote: "Gij zult een schip bouwen" },
+            { ref: "1 Nephi 17:8", quote: "U zult een schip bouwen" },
             { ref: "Alma 63:5", quote: "een buitengewoon groot schip bouwde" },
             { ref: "Ether 2:16", quote: "zo licht als een vogel op het water" },
             { ref: "Ether 3:1", quote: "het aantal vaartuigen nu dat bereid was, was acht" },
@@ -317,7 +317,7 @@ export const alleskennerItems: AlleskennerSeedItem[] = [
         {
           answer: "Muur",
           accept: ["muren", "de muur", "stadsmuur"],
-          clues: ["Samuël de Lamaniet klom erop", "Aminadi legde het schrift erop uit", "Moroni klom er in het duister op", "Stenen en pijlen raakten hem er niet"],
+          clues: ["Samuel de Lamaniet klom erop", "Aminadi legde het schrift erop uit", "Moroni klom er in het duister op", "Stenen en pijlen raakten hem er niet"],
           evidence: [
             { ref: "Helaman 13:4", quote: "klom hij boven op de muur" },
             { ref: "Alma 10:2", quote: "Aminadi die het schrift uitlegde dat zich op de muur van de tempel bevond" },
@@ -343,7 +343,7 @@ export const alleskennerItems: AlleskennerSeedItem[] = [
           evidence: [
             { ref: "Alma 32:28", quote: "het woord vergelijken met een zaadje" },
             { ref: "Alma 32:28", quote: "in uw boezem gaan zwellen" },
-            { ref: "Alma 32:28", quote: "indien gij het niet uitwerpt door uw ongeloof" },
+            { ref: "Alma 32:28", quote: "indien u het niet uitwerpt door uw ongeloof" },
             { ref: "Alma 32:28", quote: "het begint mijn ziel te verruimen" },
           ],
         },
@@ -369,7 +369,7 @@ export const alleskennerItems: AlleskennerSeedItem[] = [
         {
           answer: "Stenen",
           accept: ["steen", "de stenen"],
-          clues: ["De broeder van Jared smolt er zestien", "Gazelem kreeg er een die in de duisternis schijnt", "Naar Samuël op de muur geworpen", "Wit en helder als doorschijnend glas"],
+          clues: ["De broer van Jared smolt er zestien", "Gazelem kreeg er een die in de duisternis schijnt", "Naar Samuel op de muur geworpen", "Wit en helder als doorschijnend glas"],
           evidence: [
             { ref: "Ether 3:1", quote: "zestien kleine stenen smolt" },
             { ref: "Alma 37:23", quote: "Ik zal voor mijn dienstknecht Gazelem een steen bereiden, die in de duisternis zal schijnen" },
@@ -380,12 +380,12 @@ export const alleskennerItems: AlleskennerSeedItem[] = [
         {
           answer: "Dopen",
           accept: ["doop", "gedoopt", "doopsel", "de doop"],
-          clues: ["De wateren van Mormon", "Getuigenis van een verbond", "Ongeveer tweehonderdvier zielen", "In de naam des Heren"],
+          clues: ["De wateren van Mormon", "Getuigenis van een verbond", "Ongeveer tweehonderdvier zielen", "In de naam van de Heer"],
           evidence: [
             { ref: "Mosiah 18:16", quote: "zij werden gedoopt in de wateren van Mormon" },
-            { ref: "Mosiah 18:10", quote: "als getuigenis voor Hem dat gij een verbond met Hem hebt aangegaan" },
+            { ref: "Mosiah 18:10", quote: "als getuigenis voor Hem dat u een verbond met Hem hebt aangegaan" },
             { ref: "Mosiah 18:16", quote: "zij waren in aantal ongeveer tweehonderdvier zielen" },
-            { ref: "Mosiah 18:10", quote: "in de naam des Heren te worden gedoopt" },
+            { ref: "Mosiah 18:10", quote: "in de naam van de Heer te worden gedoopt" },
           ],
         },
       ],
@@ -400,9 +400,9 @@ export const alleskennerItems: AlleskennerSeedItem[] = [
       subject: "Nephi",
       answers: [
         { text: "Zoon van Lehi", accept: ["lehi", "vader lehi"], evidence: { ref: "1 Nephi 1:5", quote: "mijn vader Lehi" } },
-        { text: "Moest een schip bouwen", accept: ["schip", "bouwde een schip"], evidence: { ref: "1 Nephi 17:8", quote: "Gij zult een schip bouwen" } },
+        { text: "Moest een schip bouwen", accept: ["schip", "bouwde een schip"], evidence: { ref: "1 Nephi 17:8", quote: "U zult een schip bouwen" } },
         { text: "Brak zijn stalen boog", accept: ["boog", "gebroken boog"], evidence: { ref: "1 Nephi 16:18", quote: "mijn boog, die van zuiver staal was gemaakt, brak" } },
-        { text: "Broer van Laman, Lemuël en Sam", accept: ["laman", "lemuel", "sam", "broers"], evidence: { ref: "1 Nephi 2:5", quote: "mijn oudere broeders, namelijk Laman, Lemuël en Sam" } },
+        { text: "Broer van Laman, Lemuel en Sam", accept: ["laman", "lemuel", "sam", "broers"], evidence: { ref: "1 Nephi 2:5", quote: "mijn oudere broers, namelijk Laman, Lemuel en Sam" } },
         { text: "Zei: Ik zal heengaan en doen wat de Heer gebiedt", accept: ["ik zal heengaan en doen", "heengaan en doen"], evidence: { ref: "1 Nephi 3:7", quote: "Ik zal heengaan en de dingen doen die de Heer heeft geboden" } },
       ],
       distractors: [
@@ -447,10 +447,10 @@ export const alleskennerItems: AlleskennerSeedItem[] = [
     data: {
       subject: "Moroni, de oppercommandant",
       answers: [
-        { text: "Oppercommandant van de Nephitische legers", accept: ["opperbevelhebber", "legeraanvoerder", "commandant"], evidence: { ref: "Alma 46:11", quote: "Moroni, die de oppercommandant van de legers der Nephieten was" } },
+        { text: "Oppercommandant van de Nephitische legers", accept: ["opperbevelhebber", "legeraanvoerder", "commandant"], evidence: { ref: "Alma 46:11", quote: "Moroni, die de oppercommandant van de legers van de Nephieten was" } },
         { text: "Was vertoornd op Amalickiah", accept: ["amalickiah"], evidence: { ref: "Alma 46:11", quote: "dat hij vertoornd was op Amalickiah" } },
         { text: "Scheurde zijn mantel", accept: ["mantel", "gescheurde mantel"], evidence: { ref: "Alma 46:12", quote: "hij zijn mantel scheurde" } },
-        { text: "Het vaandel der vrijheid", accept: ["vaandel", "vaandel der vrijheid", "vrijheid"], evidence: { ref: "Alma 46:13", quote: "hij noemde die het vaandel der vrijheid" } },
+        { text: "Het vrijheidsvaandel", accept: ["vaandel", "vrijheidsvaandel", "vaandel der vrijheid", "vrijheid"], evidence: { ref: "Alma 46:13", quote: "hij noemde die het vrijheidsvaandel" } },
         { text: "Klom 's nachts op de muur", accept: ["muur", "op de muur"], evidence: { ref: "Alma 62:20", quote: "ging Moroni in het duister van de nacht uit en klom bovenop de muur" } },
       ],
       distractors: [
@@ -473,7 +473,7 @@ export const alleskennerItems: AlleskennerSeedItem[] = [
       answers: [
         { text: "Liet een toren bouwen", accept: ["toren"], evidence: { ref: "Mosiah 2:7", quote: "liet hij een toren bouwen" } },
         { text: "Werkte met zijn eigen handen", accept: ["eigen handen", "handen"], evidence: { ref: "Mosiah 2:14", quote: "ik heb zelfs met mijn eigen handen gewerkt om u te kunnen dienen" } },
-        { text: "In dienst van je medemensen ben je in dienst van God", accept: ["medemensen", "dienst van god"], evidence: { ref: "Mosiah 2:17", quote: "wanneer gij in dienst van uw medemensen zijt, gij louter in dienst van uw God zijt" } },
+        { text: "In dienst van je medemensen ben je in dienst van God", accept: ["medemensen", "dienst van god"], evidence: { ref: "Mosiah 2:17", quote: "wanneer u in dienst van uw medemensen bent, u louter in dienst van uw God bent" } },
         { text: "De natuurlijke mens is een vijand van God", accept: ["natuurlijke mens"], evidence: { ref: "Mosiah 3:19", quote: "de natuurlijke mens is een vijand van God" } },
         { text: "Zijn zoon heette Mosiah", accept: ["mosiah", "vader van mosiah"], evidence: { ref: "Mosiah 1:10", quote: "liet hij Mosiah bij zich brengen" } },
       ],
@@ -496,7 +496,7 @@ export const alleskennerItems: AlleskennerSeedItem[] = [
       subject: "Alma, de zoon van Alma",
       answers: [
         { text: "Zoon van Alma", accept: ["alma de oudere", "vader alma"], evidence: { ref: "Mosiah 27:14", quote: "zijn dienstknecht Alma, die uw vader is" } },
-        { text: "Een engel verscheen aan hem", accept: ["engel"], evidence: { ref: "Mosiah 27:11", quote: "verscheen hun de engel des Heren" } },
+        { text: "Een engel verscheen aan hem", accept: ["engel"], evidence: { ref: "Mosiah 27:11", quote: "verscheen hun de engel van de Heer" } },
         { text: "Korihor werd met stomheid geslagen", accept: ["korihor", "stomheid"], evidence: { ref: "Alma 30:50", quote: "werd Korihor met stomheid geslagen" } },
         { text: "Vergeleek het woord met een zaadje", accept: ["zaadje", "zaad"], evidence: { ref: "Alma 32:28", quote: "het woord vergelijken met een zaadje" } },
         { text: "Werd samen met Amulek aangeklaagd door Zeëzrom", accept: ["zeezrom", "amulek"], evidence: { ref: "Alma 10:31", quote: "Zeëzrom was. Nu was hij de belangrijkste die Amulek en Alma aanklaagde" } },
@@ -527,7 +527,7 @@ export const alleskennerItems: AlleskennerSeedItem[] = [
       ],
       distractors: [
         "Stierf de vuurdood",
-        "Zag de vinger des Heren",
+        "Zag de vinger van de Heer",
         "Klom op de muur van Zarahemla",
         "Liet een toren bouwen",
         "Leidde tweeduizend jonge soldaten",
@@ -552,7 +552,7 @@ export const alleskennerItems: AlleskennerSeedItem[] = [
       distractors: [
         "Vader van Nephi",
         "Liet een toren bouwen",
-        "Zag de vinger des Heren",
+        "Zag de vinger van de Heer",
         "Hoedde de kudden van Lamoni",
         "Voorspelde een nieuwe ster",
         "Bouwde een schip",
@@ -565,9 +565,9 @@ export const alleskennerItems: AlleskennerSeedItem[] = [
     id: "onderwerp-0008",
     kind: "TOPIC",
     data: {
-      subject: "Samuël de Lamaniet",
+      subject: "Samuel de Lamaniet",
       answers: [
-        { text: "Was een Lamaniet", accept: ["lamaniet"], evidence: { ref: "Helaman 13:2", quote: "een zekere Samuël, een Lamaniet" } },
+        { text: "Was een Lamaniet", accept: ["lamaniet"], evidence: { ref: "Helaman 13:2", quote: "een zekere Samuel, een Lamaniet" } },
         { text: "Stond op de muur", accept: ["muur", "op de muur"], evidence: { ref: "Helaman 13:4", quote: "klom hij boven op de muur" } },
         { text: "Stenen en pijlen konden hem niet raken", accept: ["stenen", "pijlen"], evidence: { ref: "Helaman 16:2", quote: "zij hem niet konden raken met hun stenen, noch met hun pijlen" } },
         { text: "Voorspelde een dag en een nacht en een dag zonder duisternis", accept: ["dag en nacht", "geen nacht", "twee dagen en een nacht"], evidence: { ref: "Helaman 14:4", quote: "een dag en een nacht en een dag zijn alsof ze één dag zijn en er geen nacht is" } },
@@ -589,11 +589,11 @@ export const alleskennerItems: AlleskennerSeedItem[] = [
     id: "onderwerp-0009",
     kind: "TOPIC",
     data: {
-      subject: "De broeder van Jared",
+      subject: "De broer van Jared",
       answers: [
         { text: "Smolt zestien kleine stenen", accept: ["zestien stenen", "stenen"], evidence: { ref: "Ether 3:1", quote: "zestien kleine stenen smolt" } },
         { text: "Ging naar de berg Shelem", accept: ["shelem", "berg"], evidence: { ref: "Ether 3:1", quote: "naar de berg ging die zij de berg Shelem noemden" } },
-        { text: "Zag de vinger des Heren", accept: ["vinger", "vinger des heren"], evidence: { ref: "Ether 3:6", quote: "hij zag de vinger des Heren" } },
+        { text: "Zag de vinger van de Heer", accept: ["vinger", "vinger van de heer", "vinger des heren"], evidence: { ref: "Ether 3:6", quote: "hij zag de vinger van de Heer" } },
         { text: "Had acht vaartuigen", accept: ["acht", "vaartuigen", "boten"], evidence: { ref: "Ether 3:1", quote: "het aantal vaartuigen nu dat bereid was, was acht" } },
         { text: "Bouwde boten zo licht als een vogel op het water", accept: ["licht als een vogel", "boten bouwen"], evidence: { ref: "Ether 2:16", quote: "zo licht als een vogel op het water" } },
       ],
@@ -626,7 +626,7 @@ export const alleskennerItems: AlleskennerSeedItem[] = [
         "Scheurde zijn mantel",
         "Liet een toren bouwen",
         "Stierf de vuurdood",
-        "Zag de vinger des Heren",
+        "Zag de vinger van de Heer",
         "Hoedde de kudden van Lamoni",
         "Voorspelde een nieuwe ster",
         "Brak zijn stalen boog",
@@ -641,7 +641,7 @@ export const alleskennerItems: AlleskennerSeedItem[] = [
       answers: [
         { text: "Was een antichrist", accept: ["antichrist"], evidence: { ref: "Alma 30:12", quote: "deze antichrist, wiens naam Korihor was" } },
         { text: "Predikte dat er geen Christus zou zijn", accept: ["geen christus"], evidence: { ref: "Alma 30:12", quote: "tot het volk te prediken dat er geen Christus zou zijn" } },
-        { text: "Vroeg Alma om een teken", accept: ["teken"], evidence: { ref: "Alma 30:43", quote: "Indien gij mij een teken wilt tonen" } },
+        { text: "Vroeg Alma om een teken", accept: ["teken"], evidence: { ref: "Alma 30:43", quote: "Indien u mij een teken wilt tonen" } },
         { text: "Werd met stomheid geslagen", accept: ["stom", "stomheid", "kon niet spreken"], evidence: { ref: "Alma 30:50", quote: "werd Korihor met stomheid geslagen" } },
         { text: "Werd vertrapt onder de Zoramieten", accept: ["vertrapt", "zoramieten"], evidence: { ref: "Alma 30:59", quote: "werd hij omvergelopen en vertrapt" } },
       ],
@@ -652,7 +652,7 @@ export const alleskennerItems: AlleskennerSeedItem[] = [
         "Werd dienstknecht van koning Lamoni",
         "Liet een toren bouwen",
         "Verborg de platen in Cumorah",
-        "Zag de vinger des Heren",
+        "Zag de vinger van de Heer",
         "Brak zijn stalen boog",
       ],
     },
@@ -687,14 +687,14 @@ export const alleskennerItems: AlleskennerSeedItem[] = [
     id: "geheugen-0002",
     kind: "MEMORY",
     data: {
-      title: "De stenen van de broeder van Jared",
+      title: "De stenen van de broer van Jared",
       passage: "Ether 3:1-6",
       answers: [
         { text: "Er waren acht vaartuigen", accept: ["acht"], evidence: { ref: "Ether 3:1", quote: "het aantal vaartuigen nu dat bereid was, was acht" } },
         { text: "De berg Shelem", accept: ["shelem"], evidence: { ref: "Ether 3:1", quote: "de berg Shelem noemden" } },
         { text: "Zestien kleine stenen", accept: ["zestien", "stenen"], evidence: { ref: "Ether 3:1", quote: "zestien kleine stenen smolt" } },
         { text: "De stenen moesten schijnen in het duister", accept: ["licht", "schijnen"], evidence: { ref: "Ether 3:4", quote: "zodat ze in het duister zullen schijnen" } },
-        { text: "Hij zag de vinger des Heren", accept: ["vinger"], evidence: { ref: "Ether 3:6", quote: "hij zag de vinger des Heren" } },
+        { text: "Hij zag de vinger van de Heer", accept: ["vinger"], evidence: { ref: "Ether 3:6", quote: "hij zag de vinger van de Heer" } },
       ],
       distractors: [
         "Er waren twaalf vaartuigen",
@@ -711,17 +711,17 @@ export const alleskennerItems: AlleskennerSeedItem[] = [
     id: "geheugen-0003",
     kind: "MEMORY",
     data: {
-      title: "Samuël komt naar Zarahemla",
+      title: "Samuel komt naar Zarahemla",
       passage: "Helaman 13:2-4",
       answers: [
-        { text: "Samuël was een Lamaniet", accept: ["lamaniet"], evidence: { ref: "Helaman 13:2", quote: "een zekere Samuël, een Lamaniet" } },
+        { text: "Samuel was een Lamaniet", accept: ["lamaniet"], evidence: { ref: "Helaman 13:2", quote: "een zekere Samuel, een Lamaniet" } },
         { text: "Hij kwam in het land Zarahemla", accept: ["zarahemla"], evidence: { ref: "Helaman 13:2", quote: "het land Zarahemla binnenkwam" } },
         { text: "Het volk wierp hem uit", accept: ["uitgeworpen", "weggestuurd"], evidence: { ref: "Helaman 13:2", quote: "zij wierpen hem uit" } },
-        { text: "De stem des Heren zei dat hij moest terugkeren", accept: ["terugkeren", "stem des heren"], evidence: { ref: "Helaman 13:3", quote: "de stem des Heren kwam tot hem dat hij wederom moest terugkeren" } },
+        { text: "De stem van de Heer zei dat hij moest terugkeren", accept: ["terugkeren", "stem van de heer", "stem des heren"], evidence: { ref: "Helaman 13:3", quote: "de stem van de Heer kwam tot hem dat hij wederom moest terugkeren" } },
         { text: "Hij klom op de muur", accept: ["muur"], evidence: { ref: "Helaman 13:4", quote: "klom hij boven op de muur" } },
       ],
       distractors: [
-        "Samuël was een Nephiet",
+        "Samuel was een Nephiet",
         "Hij kwam in het land Overvloed",
         "Het volk doopte hem",
         "Hij klom op een toren",
@@ -739,15 +739,15 @@ export const alleskennerItems: AlleskennerSeedItem[] = [
       passage: "Mosiah 18:8-10",
       answers: [
         { text: "De wateren van Mormon", accept: ["mormon", "wateren"], evidence: { ref: "Mosiah 18:8", quote: "Zie, hier zijn de wateren van Mormon" } },
-        { text: "Elkaars lasten dragen", accept: ["lasten dragen", "lasten"], evidence: { ref: "Mosiah 18:8", quote: "gewillig zijt elkaars lasten te dragen" } },
-        { text: "Treuren met hen die treuren", accept: ["treuren"], evidence: { ref: "Mosiah 18:9", quote: "gewillig zijt te treuren met hen die treuren" } },
+        { text: "Elkaars lasten dragen", accept: ["lasten dragen", "lasten"], evidence: { ref: "Mosiah 18:8", quote: "gewillig bent elkaars lasten te dragen" } },
+        { text: "Treuren met hen die treuren", accept: ["treuren"], evidence: { ref: "Mosiah 18:9", quote: "gewillig bent te treuren met hen die treuren" } },
         { text: "Als getuige van God optreden", accept: ["getuige", "getuige van god"], evidence: { ref: "Mosiah 18:9", quote: "als getuige van God op te treden" } },
-        { text: "Gedoopt worden in de naam des Heren", accept: ["dopen", "doop", "gedoopt"], evidence: { ref: "Mosiah 18:10", quote: "in de naam des Heren te worden gedoopt" } },
+        { text: "Gedoopt worden in de naam van de Heer", accept: ["dopen", "doop", "gedoopt"], evidence: { ref: "Mosiah 18:10", quote: "in de naam van de Heer te worden gedoopt" } },
       ],
       distractors: [
         "Het water van Sebus",
         "Een toren bouwen",
-        "Het vaandel der vrijheid",
+        "Het vrijheidsvaandel",
         "De rivier Sidon",
         "Zestien kleine stenen",
         "Tienden betalen",

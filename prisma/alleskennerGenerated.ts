@@ -89,12 +89,13 @@ function containsWord(text: string, word: string): boolean {
 
 /**
  * Onderdelen van een hoofdstukkop: de kop bestaat uit delen gescheiden door
- * " — ", met aan het eind een jaartal ("Ongeveer 76–74 v.C.", soms per vers).
+ * een gedachtestreep (" – " in de huidige uitgave, " — " in de oudere), met
+ * aan het eind een jaartal ("Ongeveer 76–74 v.C.", soms per vers).
  */
 function headingParts(text: string): string[] {
   const withoutDate = text.replace(/\s+(Ongeveer|Vers(zen)? \d|De verzen)\b[\s\S]*$/, "");
   return withoutDate
-    .split(/\s+—\s+/)
+    .split(/\s+[—–]\s+/)
     .map((part) => part.trim().replace(/[.;:]$/, "").trim())
     .filter((part) => part.length > 0);
 }
@@ -335,7 +336,7 @@ function headingMemories(): AlleskennerSeedItem[] {
       data: {
         title: `${book} ${chapter}`,
         passage: "hoofdstukkop",
-        readText: parts.join(" — "),
+        readText: parts.join(" – "),
         answers,
         distractors: pick(pool, 7, random),
         source: SOURCE_HEADINGS,
