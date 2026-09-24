@@ -8941,4 +8941,190 @@ export const podcastEpisodes: PodcastEpisodeSeed[] = [
       },
     ],
   },
+  {
+    number: 8,
+    title: "Aflevering 8",
+    summary: "Wordt bijgewerkt vanuit de podcastfeed.",
+    content: [
+      {
+        type: "MULTIPLE_CHOICE",
+        prompt: "Welke uitspraak over hardlopen uit de toespraak vindt Raphael mooi?",
+        options: [
+          "Als je alleen loopt, kun je sneller; als je samen loopt, kom je verder",
+          "Wie het hardst loopt, wint altijd",
+          "Hardlopen is alleen goed voor je lichaam",
+          "Je moet altijd alleen trainen",
+        ],
+        correctIndex: 0,
+      },
+      {
+        type: "MULTIPLE_CHOICE",
+        prompt: "Waar komt het 'overzichtseffect' vandaan, waarover de toespraak gaat?",
+        options: [
+          "Van astronauten die de aarde vanuit de ruimte zien",
+          "Van piloten die boven de wolken vliegen",
+          "Van bergbeklimmers op de top van een berg",
+          "Van kapiteins op volle zee",
+        ],
+        correctIndex: 0,
+      },
+      {
+        type: "MULTIPLE_CHOICE",
+        prompt: "Welke ruzie noemt Raphael als voorbeeld van iets wat er in eeuwig perspectief niet toe doet?",
+        options: ["Wie de afwas doet", "Wie de auto mag gebruiken", "Welke film jullie kijken", "Waar jullie op vakantie gaan"],
+        correctIndex: 0,
+      },
+      {
+        type: "TRUE_FALSE",
+        prompt: "Koos heeft ooit op slippers de Ben Nevis beklommen, de hoogste berg in de Schotse Hooglanden.",
+        answer: true,
+      },
+      {
+        type: "SEQUENCE",
+        prompt: "Zet deze onderwerpen in de volgorde waarin ze in de aflevering aan bod komen.",
+        items: [
+          "Het overzichtseffect van astronauten",
+          "Ruzie over de afwas, bekeken vanuit een eeuwig perspectief",
+          "Je leven als een film die je later terugkijkt",
+          "Koos' tocht op slippers naar de top van de Ben Nevis",
+        ],
+      },
+    ],
+    bomConnection: [
+      {
+        type: "MULTIPLE_CHOICE",
+        prompt:
+          "Koos zegt dat God het hele al overziet, terwijl wij ons druk maken om kleine dingen. Wat zegt Jakob 4:8 over de wegen van de Heer?",
+        options: [
+          "Dat niemand zijn wegen kent, tenzij die hem worden geopenbaard",
+          "Dat iedereen zijn wegen vanzelf kan begrijpen",
+          "Dat alleen koningen zijn wegen mogen kennen",
+          "Dat zijn wegen in de sterren te lezen zijn",
+        ],
+        correctIndex: 0,
+      },
+      {
+        type: "MULTIPLE_CHOICE",
+        prompt: "Welke raad geeft Jakob in Jakob 4:10?",
+        options: [
+          "Tracht niet de Heer raad te geven, maar tracht raad uit zijn hand te aanvaarden",
+          "Geef de Heer raad over wat Hij moet doen",
+          "Vraag alleen raad aan je naaste familie",
+          "Neem alleen raad aan als je die zelf begrijpt",
+        ],
+        correctIndex: 0,
+      },
+      {
+        type: "TRUE_FALSE",
+        prompt:
+          "Volgens Jakob 4:13 spreekt de Geest van de dingen zoals ze werkelijk zijn en van de dingen zoals ze werkelijk zullen zijn.",
+        answer: true,
+      },
+      {
+        type: "SEQUENCE",
+        prompt: "Zet deze uitspraken uit Jakob 4:7-13 in de juiste volgorde.",
+        items: [
+          "De Here God toont ons onze zwakheid, zodat we weten dat we het door zijn genade kunnen",
+          "Hoe ondoorgrondelijk zijn de diepten van zijn verborgenheden",
+          "Tracht niet de Heer raad te geven, maar raad uit zijn hand te aanvaarden",
+          "De Geest spreekt van de dingen zoals ze werkelijk zijn en zullen zijn",
+        ],
+      },
+    ],
+  },
+  {
+    number: 9,
+    title: "Aflevering 9",
+    summary: "Wordt bijgewerkt vanuit de podcastfeed.",
+    content: [
+      {
+        type: "MULTIPLE_CHOICE",
+        prompt: "Wat is volgens Raphael het idee achter 'liefdestalen'?",
+        options: [
+          "Dat mensen liefde op verschillende manieren ervaren, en dat je de taal van de ander moet leren spreken",
+          "Dat iedereen dezelfde vreemde taal moet leren om elkaar lief te hebben",
+          "Dat je liefde alleen met woorden kunt laten zien",
+          "Dat liefde alleen in de kerk kan worden geleerd",
+        ],
+        correctIndex: 0,
+      },
+      {
+        type: "MULTIPLE_CHOICE",
+        prompt: "Waarin groeit God volgens Koos, ook al is Hij alwetend?",
+        options: [
+          "In heerlijkheid, doordat wij groeien in licht en waarheid",
+          "In kennis over de sterren",
+          "In het aantal kerkgebouwen op aarde",
+          "Hij groeit helemaal niet meer",
+        ],
+        correctIndex: 0,
+      },
+      {
+        type: "MULTIPLE_CHOICE",
+        prompt: "Welke tip uit de toespraak wil Raphael zelf uitproberen?",
+        options: [
+          "Zijn kinderen vragen waaraan zij merken dat hij van ze houdt",
+          "Elke dag een cadeautje voor zijn kinderen kopen",
+          "Een nieuwe taal leren",
+          "Minder vaak voorlezen",
+        ],
+        correctIndex: 0,
+      },
+      {
+        type: "TRUE_FALSE",
+        prompt: "Koos vertelt dat hij tot nu toe altijd ja heeft gezegd op een roeping.",
+        answer: true,
+      },
+      {
+        type: "SEQUENCE",
+        prompt: "Zet deze onderwerpen in de volgorde waarin ze in de aflevering aan bod komen.",
+        items: [
+          "Liefdestalen en de vele talen die er in de wereld worden gesproken",
+          "Hoe God groeit in heerlijkheid, uitgelegd met een piramide",
+          "Hoe kinderen in verschillende landen de liefde van hun ouders ervaren",
+          "Dienen en offeren, en of je altijd ja zegt op een roeping",
+        ],
+      },
+    ],
+    bomConnection: [
+      {
+        type: "MULTIPLE_CHOICE",
+        prompt:
+          "Koos wil dat we iets van Gods liefde mogen voelen en die verder kunnen geven. Wat betekent de boom uit Lehi's droom volgens Nephi in 1 Nephi 11:22?",
+        options: [
+          "De liefde Gods, die zich alom uitstort in het hart der mensenkinderen",
+          "De wet van Mozes",
+          "De tempel in Jeruzalem",
+          "De rijkdom van de wereld",
+        ],
+        correctIndex: 0,
+      },
+      {
+        type: "MULTIPLE_CHOICE",
+        prompt: "Hoe beschrijft de engel Gods liefde verder in 1 Nephi 11:22-23?",
+        options: [
+          "Boven alles het begerenswaardigst, en het vreugdevolst voor de ziel",
+          "Moeilijk te vinden en alleen voor weinigen",
+          "Iets wat je moet verdienen met rijkdom",
+          "Alleen bedoeld voor profeten",
+        ],
+        correctIndex: 0,
+      },
+      {
+        type: "TRUE_FALSE",
+        prompt: "Vlak voordat de engel naar de betekenis van de boom vraagt, laat hij Nephi het Lam Gods zien, de Zoon van de eeuwige Vader.",
+        answer: true,
+      },
+      {
+        type: "SEQUENCE",
+        prompt: "Zet deze gebeurtenissen uit 1 Nephi 11:20-24 in de juiste volgorde.",
+        items: [
+          "Nephi ziet de maagd met een kind in haar armen",
+          "De engel vraagt of Nephi de betekenis van de boom kent",
+          "Nephi antwoordt dat de boom de liefde Gods is",
+          "Nephi ziet de Zoon Gods uitgaan onder de mensenkinderen",
+        ],
+      },
+    ],
+  },
 ];
