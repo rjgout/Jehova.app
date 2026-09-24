@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getCurrentUser } from "@/lib/session";
 import { weekStartKey } from "@/lib/dates";
-import { getLeagueSettings } from "@/lib/leagues";
+import { getLeagueSettings, TIER_ORDER } from "@/lib/leagues";
 
 type Zone = "PROMOTION" | "SAFE" | "RELEGATION";
 
@@ -85,6 +85,16 @@ export async function GET(req: NextRequest) {
     where: { userId_weekStart: { userId: user.id, weekStart } },
   });
   const myTier = myScore?.tier ?? "BRONZE";
+  // Hoogste divisie ooit (voor de divisiebalk in de hero): een seizoen zet
+  // de divisies niet terug, dus dit telt over alle weken heen.
+  const reachedTiers = await prisma.weeklyScore.findMany({
+    where: { userId: user.id },
+    select: { tier: true },
+    distinct: ["tier"],
+  });
+  const highestTier = [myTier, ...reachedTiers.map((r) => r.tier)].reduce((best, tier) =>
+    TIER_ORDER.indexOf(tier) > TIER_ORDER.indexOf(best) ? tier : best
+  );
 
   let userIds: string[] | undefined;
   if (scope === "friends") {
@@ -150,6 +160,7 @@ export async function GET(req: NextRequest) {
     weekStart,
     scope,
     myTier,
+    highestTier,
     promoteCount: settings.promoteCount,
     demoteCount: settings.demoteCount,
     hasActivityThisWeek: Boolean(myScore),

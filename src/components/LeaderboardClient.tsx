@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import type { LeagueTier } from "@prisma/client";
 import { TIER_LABELS, TIER_ICONS } from "@/lib/leagues";
 import UserAvatar from "@/components/UserAvatar";
+import DivisionScroller from "@/components/DivisionScroller";
 
 type Zone = "PROMOTION" | "SAFE" | "RELEGATION" | null;
 
@@ -25,6 +26,7 @@ interface XpGap {
 interface LeagueData {
   scope: "league" | "friends";
   myTier: LeagueTier;
+  highestTier: LeagueTier;
   promoteCount: number;
   demoteCount: number;
   hasActivityThisWeek: boolean;
@@ -59,12 +61,18 @@ const ZONE_DOT: Record<Exclude<Zone, null>, string> = {
 export default function LeaderboardClient() {
   const [scope, setScope] = useState<"league" | "friends" | "national">("league");
   const [data, setData] = useState<LeagueData | NationalData | null>(null);
+  // Blijft staan bij het wisselen van tabblad, zodat de divisiebalk niet
+  // leeg wordt terwijl de nieuwe lijst laadt.
+  const [tiers, setTiers] = useState<{ current: LeagueTier; highest: LeagueTier } | null>(null);
 
   useEffect(() => {
     setData(null);
     fetch(`/api/leaderboard?scope=${scope}`)
       .then((r) => r.json())
-      .then(setData);
+      .then((next: LeagueData | NationalData) => {
+        setData(next);
+        if (next.scope !== "national") setTiers({ current: next.myTier, highest: next.highestTier });
+      });
   }, [scope]);
 
   const leagueData = data && data.scope !== "national" ? (data as LeagueData) : null;
@@ -72,19 +80,32 @@ export default function LeaderboardClient() {
 
   return (
     <div className="max-w-2xl mx-auto flex flex-col gap-6">
-      {scope === "league" && leagueData ? (
-        <div className="card bg-gradient-to-br from-brand-500 to-brand-700 dark:from-brand-600 dark:to-brand-900 text-white flex flex-col items-center gap-1 !py-8">
-          <span className="text-5xl" aria-hidden>
-            {TIER_ICONS[leagueData.myTier]}
-          </span>
-          <h1 className="text-2xl font-extrabold">{TIER_LABELS[leagueData.myTier]}</h1>
-          <p className="text-brand-100 text-sm">Deze week</p>
-        </div>
-      ) : (
-        <h1 className="text-2xl font-extrabold text-brand-800 dark:text-brand-300">
-          {scope === "national" ? "🇳🇱 Nederlandse ranglijst" : "Competitie"}
-        </h1>
-      )}
+      {/* Elk tabblad een hero van dezelfde vaste hoogte: anders verspringt
+          het tabbladmenu eronder bij elke wissel. */}
+      <div className="card bg-gradient-to-br from-brand-500 to-brand-700 dark:from-brand-600 dark:to-brand-900 text-white !border-0 !px-0 !py-5 h-48 flex flex-col items-center justify-center gap-1 overflow-hidden">
+        {scope === "league" ? (
+          <>
+            <h1 className="sr-only">Competitie — {tiers ? TIER_LABELS[tiers.current] : "divisie"}</h1>
+            {tiers && <DivisionScroller current={tiers.current} highest={tiers.highest} />}
+          </>
+        ) : scope === "friends" ? (
+          <>
+            <span className="text-5xl" aria-hidden>
+              🤝
+            </span>
+            <h1 className="text-2xl font-extrabold">Vrienden</h1>
+            <p className="text-brand-100 text-sm">Jij en je vrienden, deze week</p>
+          </>
+        ) : (
+          <>
+            <span className="text-5xl" aria-hidden>
+              🇳🇱
+            </span>
+            <h1 className="text-2xl font-extrabold">Nederlandse ranglijst</h1>
+            <p className="text-brand-100 text-sm">Alle XP die je ooit verdiende</p>
+          </>
+        )}
+      </div>
 
       <div className="flex bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-1 flex-wrap justify-center">
         <button
