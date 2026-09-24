@@ -22,6 +22,10 @@ interface FriendStatus {
 type FriendState = "invite" | "invited" | "joined";
 
 const RECENT_LIMIT = 5;
+// Omlaag vegen sluit het paneel (zoals een paneel op een telefoon): verder dan
+// dit, of een snelle veeg, sluit; minder veert terug.
+const CLOSE_DISTANCE_PX = 110;
+const CLOSE_VELOCITY = 0.6; // px per ms
 const RECENT_WINDOW_MS = 30 * 24 * 60 * 60 * 1000;
 
 function sinceLabel(iso: string): string {
@@ -70,6 +74,11 @@ export default function FriendPicker({
   const [busyId, setBusyId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
+  const [dragY, setDragY] = useState(0);
+  const [closing, setClosing] = useState(false);
+  const sheetRef = useRef<HTMLDivElement>(null);
+  const listRef = useRef<HTMLDivElement>(null);
+  const backdropRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => setMounted(true), []);
   // Via een ref: een nieuwe onClose bij elke render van de ouder mag het
@@ -109,14 +118,87 @@ export default function FriendPicker({
       if (e.key === "Escape") onCloseRef.current();
     };
     document.addEventListener("keydown", onKey);
-    const previous = document.body.style.overflow;
+    // Ook <html>: alleen <body> vastzetten houdt de pagina op iOS niet stil.
+    const previous = { body: document.body.style.overflow, html: document.documentElement.style.overflow };
     document.body.style.overflow = "hidden";
+    document.documentElement.style.overflow = "hidden";
     return () => {
       socket.off("friend_status_update", onStatus);
       document.removeEventListener("keydown", onKey);
-      document.body.style.overflow = previous;
+      document.body.style.overflow = previous.body;
+      document.documentElement.style.overflow = previous.html;
     };
   }, [open]);
+
+  useEffect(() => {
+    if (open) {
+      setDragY(0);
+      setClosing(false);
+    }
+  }, [open]);
+
+  // Omlaag vegen om te sluiten. Met native listeners (niet passief), zodat
+  // preventDefault de pagina eronder echt stil houdt. Vanuit de lijst alleen
+  // als die al helemaal bovenaan staat: anders is het gewoon scrollen.
+  useEffect(() => {
+    const sheet = sheetRef.current;
+    const backdrop = backdropRef.current;
+    if (!open || !mounted || !sheet || !backdrop) return;
+    let start: { y: number; t: number; fromList: boolean } | null = null;
+    let dragging = false;
+    let distance = 0;
+
+    const onStart = (e: TouchEvent) => {
+      const list = listRef.current;
+      start = { y: e.touches[0].clientY, t: Date.now(), fromList: !!list && list.contains(e.target as Node) };
+      dragging = false;
+      distance = 0;
+    };
+    const onMove = (e: TouchEvent) => {
+      if (!start) return;
+      // Buiten de lijst (greep, titel, zoekveld) valt er niets te scrollen:
+      // nooit de pagina eronder laten bewegen.
+      if (!start.fromList) e.preventDefault();
+      const dy = e.touches[0].clientY - start.y;
+      if (!dragging) {
+        const listAtTop = (listRef.current?.scrollTop ?? 0) <= 0;
+        if (dy > 6 && (!start.fromList || listAtTop)) dragging = true;
+        else return;
+      }
+      e.preventDefault();
+      distance = Math.max(0, dy);
+      setDragY(distance);
+    };
+    const onEnd = () => {
+      if (!start) return;
+      const velocity = distance / Math.max(1, Date.now() - start.t);
+      if (dragging && (distance > CLOSE_DISTANCE_PX || velocity > CLOSE_VELOCITY)) {
+        setClosing(true);
+        setTimeout(() => onCloseRef.current(), 200);
+      } else {
+        setDragY(0);
+      }
+      start = null;
+      dragging = false;
+    };
+    // Vegen op de donkere achtergrond mag de pagina eronder niet laten scrollen.
+    const onBackdropMove = (e: TouchEvent) => {
+      if (e.target === backdrop) e.preventDefault();
+    };
+
+    sheet.addEventListener("touchstart", onStart, { passive: true });
+    sheet.addEventListener("touchmove", onMove, { passive: false });
+    sheet.addEventListener("touchend", onEnd);
+    sheet.addEventListener("touchcancel", onEnd);
+    backdrop.addEventListener("touchmove", onBackdropMove, { passive: false });
+    return () => {
+      sheet.removeEventListener("touchstart", onStart);
+      sheet.removeEventListener("touchmove", onMove);
+      sheet.removeEventListener("touchend", onEnd);
+      sheet.removeEventListener("touchcancel", onEnd);
+      backdrop.removeEventListener("touchmove", onBackdropMove);
+    };
+  }, [open, mounted]);
 
   const sections = useMemo(() => {
     if (!friends) return [];
@@ -161,18 +243,28 @@ export default function FriendPicker({
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[75] flex items-end sm:items-center justify-center bg-slate-900/50 backdrop-blur-sm animate-sheet-down"
+      ref={backdropRef}
+      className="fixed inset-0 z-[75] flex items-end sm:items-center justify-center bg-slate-900/50 backdrop-blur-sm animate-sheet-down overscroll-none"
+      style={{ opacity: closing ? 0 : 1, transition: "opacity 0.2s ease-out" }}
       role="dialog"
       aria-modal="true"
       aria-label={title}
       onClick={onClose}
     >
       <div
+        ref={sheetRef}
         className="flex w-full max-h-[85vh] sm:max-w-md flex-col rounded-t-3xl sm:rounded-3xl bg-white dark:bg-slate-900 shadow-2xl"
-        style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
+        style={{
+          paddingBottom: "env(safe-area-inset-bottom)",
+          transform: closing ? "translateY(100%)" : `translateY(${dragY}px)`,
+          transition: dragY > 0 && !closing ? "none" : "transform 0.2s ease-out",
+        }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="mx-auto mt-2 h-1 w-10 rounded-full bg-slate-300 dark:bg-slate-600 sm:hidden" aria-hidden />
+        {/* Greep: laat zien dat je het paneel omlaag kunt vegen om te sluiten. */}
+        <div className="flex justify-center pt-2 pb-1 sm:hidden" aria-hidden>
+          <div className="h-1.5 w-10 rounded-full bg-slate-300 dark:bg-slate-600" />
+        </div>
         <div className="flex items-start justify-between gap-3 px-5 pt-4">
           <div className="min-w-0">
             <h2 className="text-xl font-extrabold dark:text-slate-100">{title}</h2>
@@ -200,7 +292,7 @@ export default function FriendPicker({
           {error && <p className="mt-2 text-sm font-semibold text-red-600 dark:text-red-400">{error}</p>}
         </div>
 
-        <div className="flex-1 overflow-y-auto overscroll-contain px-3 pb-4 pt-2">
+        <div ref={listRef} className="flex-1 overflow-y-auto overscroll-contain px-3 pb-4 pt-2" style={{ touchAction: "pan-y" }}>
           {friends === null ? (
             <p className="px-2 py-6 text-center text-sm text-slate-400">Laden...</p>
           ) : friends.length === 0 ? (
