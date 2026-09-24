@@ -49,7 +49,6 @@ function backTargetFor(pathname: string): BackTarget | null {
   if (/^\/fsy\/[^/]+$/.test(pathname)) return { href: "/courses", parent: "Cursussen", title: "Les", icon: "📘" };
   const chapter = /^\/courses\/([^/]+)\/chapter\/[^/]+$/.exec(pathname);
   if (chapter) return { href: `/courses/${chapter[1]}`, parent: "Cursus", title: "Hoofdstuk", icon: "📖" };
-  if (pathname === "/courses/per-boek") return { href: "/courses", parent: "Cursussen", title: "Per boek", icon: "📚" };
   if (/^\/courses\/[^/]+$/.test(pathname)) return { href: "/courses", parent: "Cursussen", title: "Cursus", icon: "📚" };
   return null;
 }

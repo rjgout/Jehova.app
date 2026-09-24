@@ -37,7 +37,7 @@ export async function GET() {
       name: c.name,
       description: c.description,
       totalChapters: c._count.chapters,
-      unitPlural: chapterTerm(c.book?.slug).plural,
+      unitPlural: chapterTerm(c.book?.slug, c.contentCollectionId).plural,
     })),
   });
 }

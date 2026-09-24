@@ -3,6 +3,7 @@ import { getCurrentUser } from "@/lib/session";
 import { prisma } from "@/lib/db";
 import { advanceCourseProgress } from "@/lib/courses";
 import ReadingLessonFlow from "@/components/ReadingLessonFlow";
+import { chapterTerm } from "@/lib/chapterTerm";
 
 export default async function ReadingLessonPage({
   params,
@@ -123,6 +124,7 @@ export default async function ReadingLessonPage({
         audioStart: verse.audioStart,
       }))}
       audio={audio}
+      term={chapterTerm(lesson.chapter.book.slug)}
       exercises={exercises}
     />
   );

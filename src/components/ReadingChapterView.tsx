@@ -16,9 +16,11 @@ interface Props {
   bookName: string;
   chapterNumber: number;
   lessons: LessonView[];
+  /** "dit hoofdstuk" of "deze afdeling" (zie src/lib/chapterTerm.ts). */
+  thisOne?: string;
 }
 
-export default function ReadingChapterView({ courseId, bookName, chapterNumber, lessons }: Props) {
+export default function ReadingChapterView({ courseId, bookName, chapterNumber, lessons, thisOne = "dit hoofdstuk" }: Props) {
   const completedCount = lessons.filter((lesson) => lesson.completed).length;
 
   return (
@@ -31,7 +33,7 @@ export default function ReadingChapterView({ courseId, bookName, chapterNumber, 
           {bookName} {chapterNumber}
         </h1>
         <p className="text-slate-500 dark:text-slate-400 mt-1">
-          Lees dit hoofdstuk in kleine stukken. Je kunt alleen in de juiste volgorde verder.
+          Lees {thisOne} in kleine stukken. Je kunt alleen in de juiste volgorde verder.
         </p>
       </div>
 

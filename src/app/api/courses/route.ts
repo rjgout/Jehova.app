@@ -85,7 +85,7 @@ export async function GET() {
         name: course.name,
         description: course.description,
         totalChapters,
-        unitPlural: chapterTerm(course.book?.slug).plural,
+        unitPlural: chapterTerm(course.book?.slug, course.contentCollectionId).plural,
         completedCount,
         xpAvailable,
         isActive: user.activeCourseId === course.id,

@@ -8,9 +8,13 @@ export async function GET() {
   if (!user.isAdmin) return NextResponse.json({ error: "Geen toegang" }, { status: 403 });
 
   const courses = await prisma.course.findMany({
-    orderBy: { order: "asc" },
-    select: { id: true, slug: true, type: true, name: true, enabled: true },
+    orderBy: [{ contentCollection: { order: "asc" } }, { order: "asc" }],
+    select: { id: true, slug: true, type: true, name: true, enabled: true, contentCollection: { select: { name: true } } },
   });
 
-  return NextResponse.json({ courses });
+  // Per collectie gegroepeerd in de beheerlijst: elke schriftcollectie heeft
+  // een eigen "Van voor naar achter" enz., met dezelfde naam.
+  return NextResponse.json({
+    courses: courses.map(({ contentCollection, ...course }) => ({ ...course, collectionName: contentCollection.name })),
+  });
 }

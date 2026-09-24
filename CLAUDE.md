@@ -305,8 +305,11 @@ verwerken". Fundamenteel anders dan de rest van de API:
   (`prisma/pgpContent.json`) komen op dezelfde manier van de kerkwebsite
   (`scripts/church-text/fetch_dc_pgp.py`, schrijft ook de woordenlijsten voor
   het woordenboek). Elk een eigen contentcollectie (`content_dc`,
-  `content_pgp`, standaard verborgen voor gebruikers); alleen cursussen per
-  boek. Nederlandse audio is daar (nog) niet voor. Functies die bij het Boek
+  `content_pgp`, standaard verborgen voor gebruikers) met dezelfde cursussen
+  als het Boek van Mormon: vrije keuze, van voor naar achter en leeslessen
+  (`syncCourses`); cursussen per boek bestaan niet meer. Leer en Verbonden
+  heeft afdelingen i.p.v. hoofdstukken (`src/lib/chapterTerm.ts`).
+  Nederlandse audio is daar (nog) niet voor. Functies die bij het Boek
   van Mormon horen (spellen, tekst van de dag, personages) filteren expliciet
   op `BOM_COLLECTION_ID`: Book/Chapter/Verse bevatten nu meer dan één schrift.
 - De kindercursus-tekst/illustraties ("Verhalen uit het Boek van Mormon")

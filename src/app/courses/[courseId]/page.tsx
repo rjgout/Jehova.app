@@ -238,6 +238,7 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ c
       <ReadingCourseView
         courseId={course.id}
         courseName={course.name}
+        unitPlural={chapterTerm(null, course.contentCollectionId).plural}
         today={
           currentLesson
             ? {
@@ -262,8 +263,8 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ c
     );
   }
 
-  // De resterende cursustypes (van voor naar achter, vrije keuze, elke
-  // per-boek-cursus) zijn alledrie simpelweg "een lijst hoofdstukken" (zie
+  // De resterende cursustypes (van voor naar achter, vrije keuze) zijn
+  // allebei simpelweg "een lijst hoofdstukken" (zie
   // ChapterListCourseView) — elk met hun eigen pagina, hun eigen "Vandaag"-
   // hoofdstuk en (bij meerdere boeken) hun eigen inklapbare secties, ook al
   // deelt een los hoofdstuk zijn afrondingsstatus (ChapterProgress) altijd

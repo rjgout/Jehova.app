@@ -5,17 +5,20 @@ import { useEffect, useState } from "react";
 interface CourseView {
   id: string;
   slug: string;
-  type: "FRONT_TO_BACK" | "FREE_CHOICE" | "BY_BOOK" | "PODCAST" | "KIDS";
+  type: string;
   name: string;
   enabled: boolean;
+  collectionName: string;
 }
 
-const TYPE_LABELS: Record<CourseView["type"], string> = {
+const TYPE_LABELS: Record<string, string> = {
   FRONT_TO_BACK: "Van voor naar achter",
   FREE_CHOICE: "Vrije keuze",
-  BY_BOOK: "Per boek",
+  READING_LESSONS: "Leeslessen",
   PODCAST: "Podcast",
   KIDS: "Voor kinderen",
+  INTRO: "Introductie",
+  FSY: "Leerplan",
 };
 
 function CourseRow({ course, onToggle, saving }: { course: CourseView; onToggle: () => void; saving: boolean }) {
@@ -29,7 +32,7 @@ function CourseRow({ course, onToggle, saving }: { course: CourseView; onToggle:
     >
       <input type="checkbox" className="h-5 w-5 accent-brand-500" checked={course.enabled} onChange={onToggle} disabled={saving} />
       <div className="flex-1">
-        <p className="text-xs font-bold uppercase text-slate-400 dark:text-slate-500">{TYPE_LABELS[course.type]}</p>
+        <p className="text-xs font-bold uppercase text-slate-400 dark:text-slate-500">{TYPE_LABELS[course.type] ?? course.type}</p>
         <p className="font-bold dark:text-slate-100">{course.name}</p>
       </div>
       {!course.enabled && (
@@ -78,30 +81,18 @@ export default function AdminCoursesClient() {
       {!courses ? (
         <p className="text-slate-400 dark:text-slate-500">Laden...</p>
       ) : (
-        <div className="flex flex-col gap-2">
-          {courses
-            .filter((c) => c.type !== "BY_BOOK")
-            .map((course) => (
-              <CourseRow key={course.id} course={course} saving={savingId === course.id} onToggle={() => toggle(course)} />
-            ))}
-
-          {courses.some((c) => c.type === "BY_BOOK") && (
-            <details className="group/books">
-              <summary className="text-sm font-bold text-slate-500 dark:text-slate-400 cursor-pointer select-none list-none [&::-webkit-details-marker]:hidden flex items-center gap-2 py-2">
-                Per boek ({courses.filter((c) => c.type === "BY_BOOK").length})
-                <span className="text-slate-400 transition-transform group-open/books:rotate-180" aria-hidden>
-                  ▾
-                </span>
-              </summary>
-              <div className="flex flex-col gap-2 pt-2">
-                {courses
-                  .filter((c) => c.type === "BY_BOOK")
-                  .map((course) => (
-                    <CourseRow key={course.id} course={course} saving={savingId === course.id} onToggle={() => toggle(course)} />
-                  ))}
-              </div>
-            </details>
-          )}
+        <div className="flex flex-col gap-4">
+          {/* Per collectie: elke schriftcollectie heeft cursussen met dezelfde naam. */}
+          {Array.from(new Set(courses.map((c) => c.collectionName))).map((collectionName) => (
+            <div key={collectionName} className="flex flex-col gap-2">
+              <h3 className="text-sm font-extrabold text-slate-500 dark:text-slate-400">{collectionName}</h3>
+              {courses
+                .filter((c) => c.collectionName === collectionName)
+                .map((course) => (
+                  <CourseRow key={course.id} course={course} saving={savingId === course.id} onToggle={() => toggle(course)} />
+                ))}
+            </div>
+          ))}
         </div>
       )}
     </details>

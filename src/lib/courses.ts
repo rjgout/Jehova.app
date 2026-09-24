@@ -1,4 +1,5 @@
 import type { PrismaClient } from "@prisma/client";
+import { chapterTerm } from "./chapterTerm";
 import { ensurePodcasts, PODCASTS, PODCASTS_COLLECTION_ID } from "./podcasts";
 
 export const FRONT_TO_BACK_SLUG = "voor-naar-achter";
@@ -98,29 +99,78 @@ async function syncReadingLessons(
   });
 }
 
+interface ScriptureCollection {
+  id: string;
+  slug: string;
+  name: string;
+}
+
+type SyncBook = { slug: string; chapters: { id: string; number: number; order: number; bookId: string }[] };
+
 /**
- * Bouwt de structurele cursussen (van-voor-naar-achter, vrije keuze, en één
- * per boek) opnieuw op vanuit de huidige boeken/hoofdstukken. Bewust
- * idempotent: opnieuw draaien na een content-import zet alles weer in sync.
- * Gebruikersvoortgang (UserCourseProgress) blijft intact, want Chapter-ID's
- * blijven stabiel over een re-import heen — alleen de CourseChapter-
- * koppelrijen worden hier weggegooid en herbouwd.
- *
- * Let op voor later: "van voor naar achter" en "vrije keuze" spannen hier
- * bewust over ALLE Book-rijen heen, in `order` — correct zolang er maar één
- * schriftwerk (nu: het Boek van Mormon) in de database staat. Komt er ooit
- * een tweede schriftwerk bij (bv. de Leer en Verbonden, als eigen Book-rijen
- * of via een nieuw "collectie"-veld op Book), dan moet deze functie die twee
- * cursussen per schriftwerk gaan bouwen in plaats van over alles heen —
- * anders vloeien ze door elkaar in één opeenvolging. Book/Chapter/Verse en
- * de Course-typen zelf hebben daar geen wijziging voor nodig, alleen deze
- * functie.
+ * De cursussen die bij een schriftcollectie horen: vrije keuze, van voor naar
+ * achter en de leeslessen, over alle boeken van die collectie in volgorde.
+ * Het Boek van Mormon houdt zijn oorspronkelijke slugs (abonnementen en
+ * voortgang hangen aan die cursussen); andere collecties krijgen de slug met
+ * hun collectienaam erachter. `enabled` wordt bewust niet aangeraakt: dat zet
+ * een beheerder zelf aan of uit.
+ */
+async function syncScriptureCourses(
+  db: PrismaClient,
+  collection: ScriptureCollection,
+  books: SyncBook[],
+  isDefault: boolean,
+  texts: { freeChoice: string; frontToBack: string; readingLessons: string }
+): Promise<void> {
+  const slugFor = (base: string) => (isDefault ? base : `${base}-${collection.slug}`);
+  const chapters = books.flatMap((book) => book.chapters);
+
+  async function upsertCourse(base: string, type: "FREE_CHOICE" | "FRONT_TO_BACK" | "READING_LESSONS", name: string, description: string, order: number) {
+    const slug = slugFor(base);
+    return db.course.upsert({
+      where: { slug },
+      update: { name, description, order, contentCollectionId: collection.id },
+      create: { slug, type, name, description, order, contentCollectionId: collection.id },
+    });
+  }
+
+  async function setChapters(courseId: string) {
+    await db.courseChapter.deleteMany({ where: { courseId } });
+    const rows = chapters.map((chapter, order) => ({ courseId, chapterId: chapter.id, order }));
+    if (rows.length > 0) await db.courseChapter.createMany({ data: rows });
+  }
+
+  // Zelfde volledige hoofdstuklijst als "van voor naar achter" (alleen de
+  // volgorde van het join-record — ChapterListCourseView vergrendelt bij
+  // FREE_CHOICE toch niets, zie sequential daar), zodat deze cursus zijn
+  // eigen pagina heeft i.p.v. terug te vallen op de generieke dashboard-
+  // weergave.
+  const freeChoice = await upsertCourse(FREE_CHOICE_SLUG, "FREE_CHOICE", "Vrije keuze", texts.freeChoice, 0);
+  await setChapters(freeChoice.id);
+
+  const frontToBack = await upsertCourse(FRONT_TO_BACK_SLUG, "FRONT_TO_BACK", "Van voor naar achter", texts.frontToBack, 1);
+  await setChapters(frontToBack.id);
+
+  const readingLessons = await upsertCourse(READING_LESSONS_SLUG, "READING_LESSONS", "Lezen van voor naar achter", texts.readingLessons, 2);
+  await syncReadingLessons(db, readingLessons.id, books);
+}
+
+/**
+ * Bouwt de structurele cursussen opnieuw op vanuit de huidige boeken/
+ * hoofdstukken: per schriftcollectie vrije keuze, van voor naar achter en de
+ * leeslessen (zie syncScriptureCourses), plus de introductie- en kindercursus
+ * bij het Boek van Mormon. Bewust idempotent: opnieuw draaien na een
+ * content-import zet alles weer in sync. Gebruikersvoortgang
+ * (UserCourseProgress) blijft intact, want Chapter-ID's blijven stabiel over
+ * een re-import heen — alleen de CourseChapter-koppelrijen worden hier
+ * weggegooid en herbouwd. Cursussen per boek bestaan niet meer (migratie
+ * 20260924210000_remove_by_book_courses).
  */
 export async function syncCourses(db: PrismaClient): Promise<void> {
   const defaultCollection = await db.contentCollection.findFirst({
     where: { enabled: true },
     orderBy: { order: "asc" },
-    select: { id: true },
+    select: { id: true, slug: true, name: true },
   });
   if (!defaultCollection) throw new Error("Geen contentcollectie beschikbaar.");
 
@@ -148,108 +198,33 @@ export async function syncCourses(db: PrismaClient): Promise<void> {
     },
   });
 
-  const freeChoice = await db.course.upsert({
-    where: { slug: FREE_CHOICE_SLUG },
-    update: { name: "Vrije keuze", order: 0, contentCollectionId: defaultCollection.id },
-    create: {
-      slug: FREE_CHOICE_SLUG,
-      type: "FREE_CHOICE",
-      name: "Vrije keuze",
-      description: "Kies zelf welk hoofdstuk je wil doen, in elke volgorde.",
-      order: 0,
-      contentCollectionId: defaultCollection.id,
-    },
+  await syncScriptureCourses(db, defaultCollection, books, true, {
+    freeChoice: "Kies zelf welk hoofdstuk je wil doen, in elke volgorde.",
+    frontToBack: "Eén vaste volgorde door alle boeken heen, hoofdstuk na hoofdstuk.",
+    readingLessons: "Lees het hele Boek van Mormon in kleine, behapbare lessen van ongeveer 5 tot 10 verzen.",
   });
-  // Zelfde volledige hoofdstuklijst als "van voor naar achter" (alleen de
-  // volgorde van het join-record — ChapterListCourseView vergrendelt bij
-  // FREE_CHOICE toch niets, zie sequential daar), zodat deze cursus zijn
-  // eigen pagina heeft i.p.v. terug te vallen op de generieke dashboard-
-  // weergave.
-  await db.courseChapter.deleteMany({ where: { courseId: freeChoice.id } });
-  const freeChoiceRows = books.flatMap((book) => book.chapters).map((chapter, order) => ({
-    courseId: freeChoice.id,
-    chapterId: chapter.id,
-    order,
-  }));
-  if (freeChoiceRows.length > 0) {
-    await db.courseChapter.createMany({ data: freeChoiceRows });
-  }
 
-  const readingLessons = await db.course.upsert({
-    where: { slug: READING_LESSONS_SLUG },
-    update: {
-      name: "Lezen van voor naar achter",
-      description: "Lees het hele Boek van Mormon in kleine, behapbare lessen van ongeveer 5 tot 10 verzen.",
-      order: 2,
-      contentCollectionId: defaultCollection.id,
-    },
-    create: {
-      slug: READING_LESSONS_SLUG,
-      type: "READING_LESSONS",
-      name: "Lezen van voor naar achter",
-      description: "Lees het hele Boek van Mormon in kleine, behapbare lessen van ongeveer 5 tot 10 verzen.",
-      order: 2,
-      contentCollectionId: defaultCollection.id,
-    },
-  });
-  await syncReadingLessons(db, readingLessons.id, books);
-
-  const frontToBack = await db.course.upsert({
-    where: { slug: FRONT_TO_BACK_SLUG },
-    update: { name: "Van voor naar achter", order: 1, contentCollectionId: defaultCollection.id },
-    create: {
-      slug: FRONT_TO_BACK_SLUG,
-      type: "FRONT_TO_BACK",
-      name: "Van voor naar achter",
-      description: "Eén vaste volgorde door alle boeken heen, hoofdstuk na hoofdstuk.",
-      order: 1,
-      contentCollectionId: defaultCollection.id,
-    },
-  });
-  await db.courseChapter.deleteMany({ where: { courseId: frontToBack.id } });
-  const frontToBackRows = books.flatMap((book) => book.chapters).map((chapter, order) => ({
-    courseId: frontToBack.id,
-    chapterId: chapter.id,
-    order,
-  }));
-  if (frontToBackRows.length > 0) {
-    await db.courseChapter.createMany({ data: frontToBackRows });
-  }
-
-  for (let i = 0; i < books.length; i++) {
-    const book = books[i];
-    const slug = `boek-${book.slug}`;
-    const course = await db.course.upsert({
-      where: { slug },
-      update: { name: book.name, bookId: book.id, order: 3 + i, contentCollectionId: book.contentCollectionId },
-      create: { slug, type: "BY_BOOK", name: book.name, bookId: book.id, order: 3 + i, contentCollectionId: book.contentCollectionId },
-    });
-    await db.courseChapter.deleteMany({ where: { courseId: course.id } });
-    const rows = book.chapters.map((chapter, order) => ({ courseId: course.id, chapterId: chapter.id, order }));
-    if (rows.length > 0) {
-      await db.courseChapter.createMany({ data: rows });
-    }
-  }
-
-  // Boeken van de andere collecties (Leer en Verbonden, Parel van Grote
-  // Waarde): alleen een cursus per boek, niet de Boek van Mormon-cursussen
-  // hierboven (van voor naar achter, leeslessen, ...), die bij die collectie horen.
+  // De andere schriftcollecties (Leer en Verbonden, Parel van Grote Waarde):
+  // dezelfde soorten cursussen, elk over de eigen boeken.
   const otherBooks = await db.book.findMany({
     where: { contentCollectionId: { not: defaultCollection.id } },
-    orderBy: [{ contentCollectionId: "asc" }, { order: "asc" }],
-    include: { chapters: { orderBy: { order: "asc" } } },
+    orderBy: { order: "asc" },
+    include: { chapters: { orderBy: { order: "asc" } }, contentCollection: { select: { id: true, slug: true, name: true } } },
   });
+  const byCollection = new Map<string, { collection: ScriptureCollection; books: typeof otherBooks }>();
   for (const book of otherBooks) {
-    const slug = `boek-${book.slug}`;
-    const data = { name: book.name, bookId: book.id, order: book.order, contentCollectionId: book.contentCollectionId };
-    const course = await db.course.upsert({
-      where: { slug },
-      update: data,
-      create: { slug, type: "BY_BOOK", ...data },
+    const entry = byCollection.get(book.contentCollectionId) ?? { collection: book.contentCollection, books: [] };
+    entry.books.push(book);
+    byCollection.set(book.contentCollectionId, entry);
+  }
+  for (const { collection, books: collectionBooks } of byCollection.values()) {
+    const term = chapterTerm(collectionBooks[0]?.slug, collection.id);
+    const across = collectionBooks.length > 1 ? " door alle boeken heen," : ",";
+    await syncScriptureCourses(db, collection, collectionBooks, false, {
+      freeChoice: `Kies zelf welk${term.singular === "afdeling" ? "e" : ""} ${term.singular} je wil doen, in elke volgorde.`,
+      frontToBack: `Eén vaste volgorde${across} ${term.singular} na ${term.singular}.`,
+      readingLessons: `Lees ${collection.name} helemaal door, in kleine, behapbare lessen van ongeveer 5 tot 10 verzen.`,
     });
-    await db.courseChapter.deleteMany({ where: { courseId: course.id } });
-    const rows = book.chapters.map((chapter, order) => ({ courseId: course.id, chapterId: chapter.id, order }));
-    if (rows.length > 0) await db.courseChapter.createMany({ data: rows });
   }
 
   // Per podcast één cursus, zonder CourseChapter-rijen: de PodcastEpisode-

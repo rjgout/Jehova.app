@@ -17,7 +17,7 @@ interface Props {
   courseName: string;
   currentChapterId: string | null;
   chapters: ChapterView[];
-  // Van voor naar achter en per-boek volgen een vaste volgorde (elk hoofdstuk
+  // Van voor naar achter volgt een vaste volgorde (elk hoofdstuk
   // vergrendeld tot het vorige is afgerond); Vrije keuze is expliciet
   // bedoeld om in elke volgorde te doen, dus daar mag nooit iets op slot.
   sequential?: boolean;
@@ -45,7 +45,7 @@ export default function ChapterListCourseView({ courseName, currentChapterId, ch
   const progressPercent = chapters.length > 0 ? Math.round((progressPosition / chapters.length) * 100) : 0;
 
   // Groepeer per boek, in de volgorde waarin ze in `chapters` voorkomen —
-  // bij per-boek-cursussen is dat er sowieso maar één.
+  // bij Leer en Verbonden is dat er sowieso maar één.
   const books: { name: string; chapters: ChapterView[] }[] = [];
   for (const chapter of chapters) {
     const last = books[books.length - 1];

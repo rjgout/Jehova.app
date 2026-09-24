@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ACHIEVEMENT_DISPLAY } from "@/lib/achievementDisplay";
 import { announceXpChanged } from "@/lib/xpBroadcast";
 import { ExerciseCard, ReaderView, type ChapterAudio, type Exercise } from "@/components/LessonFlow";
+import type { ChapterTerm } from "@/lib/chapterTerm";
 
 interface VerseView {
   id: string;
@@ -28,6 +29,7 @@ interface Props {
   nextLessonId: string | null;
   verses: VerseView[];
   audio?: ChapterAudio | null;
+  term?: ChapterTerm;
   exercises: Exercise[];
 }
 
@@ -65,6 +67,7 @@ export default function ReadingLessonFlow({
   nextLessonId,
   verses,
   audio,
+  term,
   exercises,
 }: Props) {
   const [phase, setPhase] = useState<Phase>("read");
@@ -121,6 +124,7 @@ export default function ReadingLessonFlow({
           chapterNumber={chapterNumber}
           verses={verses}
           audio={audio}
+          term={term}
         />
         <button
           className="btn-primary self-start"

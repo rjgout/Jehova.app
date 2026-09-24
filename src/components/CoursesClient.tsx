@@ -130,8 +130,7 @@ export default function CoursesClient() {
     return <p className="text-center text-slate-400 dark:text-slate-500">Laden...</p>;
   }
 
-  const hasByBookInCatalog = catalog?.some((c) => c.type === "BY_BOOK") ?? false;
-  const otherCatalogCourses = (catalog ?? []).filter((c) => c.type !== "BY_BOOK");
+  const otherCatalogCourses = catalog ?? [];
 
   return (
     <div className="max-w-5xl mx-auto flex flex-col gap-6">
@@ -276,18 +275,6 @@ export default function CoursesClient() {
                   </button>
                 </div>
               ))}
-              {hasByBookInCatalog && (
-                <Link
-                  href="/courses/per-boek"
-                  className="flex items-center justify-between gap-3 border border-slate-100 dark:border-slate-700 rounded-xl p-3 hover:border-brand-300"
-                >
-                  <div>
-                    <p className="text-xs font-bold uppercase text-slate-400 dark:text-slate-500">Per boek</p>
-                    <p className="font-bold dark:text-slate-100">📚 Kies een boek</p>
-                  </div>
-                  <span className="text-brand-600 dark:text-brand-300 font-bold">→</span>
-                </Link>
-              )}
             </div>
           )}
           <button className="text-sm text-slate-400 dark:text-slate-500 hover:underline self-start" onClick={() => setShowCatalog(false)}>

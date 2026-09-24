@@ -66,7 +66,7 @@ export default async function IntroLessonPage({ params }: { params: Promise<{ le
         return {
           type: "readMore",
           label: b.label,
-          href: chapter ? `/lesson/${chapter.id}` : "/courses/per-boek",
+          href: chapter ? `/lesson/${chapter.id}` : "/courses",
         };
       }
       if (b.type === "scripture") {

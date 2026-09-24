@@ -21,9 +21,11 @@ interface Props {
     endVerse: number;
   } | null;
   chapters: ChapterView[];
+  /** "hoofdstukken", of "afdelingen" bij Leer en Verbonden (zie src/lib/chapterTerm.ts). */
+  unitPlural?: string;
 }
 
-export default function ReadingCourseView({ courseId, courseName, today, chapters }: Props) {
+export default function ReadingCourseView({ courseId, courseName, today, chapters, unitPlural = "hoofdstukken" }: Props) {
   const allDone = chapters.length > 0 && chapters.every((chapter) => chapter.completedLessons === chapter.lessonCount);
   const currentChapterIndex = today
     ? chapters.findIndex((chapter) => chapter.bookName === today.bookName && chapter.number === today.chapterNumber)
@@ -47,7 +49,7 @@ export default function ReadingCourseView({ courseId, courseName, today, chapter
           <div className="card flex flex-col gap-2">
             <div className="flex items-center justify-between text-xs font-bold text-slate-500 dark:text-slate-400">
               <span>Voortgang</span>
-              <span>{progressPosition} / {chapters.length} hoofdstukken · {progressPercent}%</span>
+              <span>{progressPosition} / {chapters.length} {unitPlural} · {progressPercent}%</span>
             </div>
             <div className="h-2 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
               <div className="h-full bg-brand-500 transition-all" style={{ width: progressPercent + "%" }} />
