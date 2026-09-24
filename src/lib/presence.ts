@@ -157,7 +157,7 @@ export async function announceCameOnline(
 
   const friendIds = await getAcceptedFriendIds(userId);
   const viewers = await prisma.user.findMany({
-    where: { id: { in: friendIds }, shareOnlineStatus: true, onlineSocketCount: { gt: 0 } },
+    where: { id: { in: friendIds }, shareOnlineStatus: true, notifyFriendOnline: true, onlineSocketCount: { gt: 0 } },
     select: { id: true },
   });
   for (const viewer of viewers) {

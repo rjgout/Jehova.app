@@ -170,6 +170,9 @@ model User {
   notifySocial        Boolean @default(true) // vriendschapsverzoeken, uitdagingen, woordspel
   notifyAchievements  Boolean @default(true) // prestaties, wekelijkse competitie-uitslag
   notifyWordGame      Boolean @default(true) // nieuw woord van de dag
+  // Melding in de app als een vriend online komt (zie announceCameOnline in
+  // src/lib/presence.ts); nooit als push of e-mail.
+  notifyFriendOnline  Boolean @default(true)
 
   pushSubscriptions  PushSubscription[]
   challengesSent     Challenge[]        @relation("ChallengeSender")

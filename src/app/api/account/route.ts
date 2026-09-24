@@ -40,6 +40,7 @@ const patchSchema = z.object({
   notifySocial: z.boolean().optional(),
   notifyAchievements: z.boolean().optional(),
   notifyWordGame: z.boolean().optional(),
+  notifyFriendOnline: z.boolean().optional(),
   changelogEnabled: z.boolean().optional(),
   // Vrienden-aanwezigheid (zie src/lib/presence.ts).
   shareOnlineStatus: z.boolean().optional(),

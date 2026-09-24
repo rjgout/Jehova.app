@@ -45,7 +45,8 @@ van een specifieke cloud-hostingprovider.
   weggeven aan vrienden.
 - **Vrienden**: verzoeken sturen/accepteren, elkaars streak en XP zien. Wie
   zijn online-status deelt, krijgt een melding bovenin als een vriend (die dat
-  ook deelt) online komt, zolang de app open staat; geen pushmelding.
+  ook deelt) online komt, zolang de app open staat; geen pushmelding. Uit te
+  zetten bij de meldingen op het profiel.
 - **Wekelijkse competitie met divisies**: Bronze/Silver/Gold/Platinum/Diamond;
   de top promoveert, de onderkant degradeert aan het einde van de week
   (berekend zodra je voor het eerst die week actief wordt — geen aparte

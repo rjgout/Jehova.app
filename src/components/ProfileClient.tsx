@@ -41,6 +41,7 @@ interface ProfileData {
   notifySocial: boolean;
   notifyAchievements: boolean;
   notifyWordGame: boolean;
+  notifyFriendOnline: boolean;
   changelogEnabled: boolean;
   xpTotal: number;
   currentStreak: number;
@@ -259,7 +260,14 @@ export default function ProfileClient() {
   }
 
   async function toggleCategory(
-    field: "notifyDailyReminder" | "notifyDailyText" | "notifySocial" | "notifyAchievements" | "notifyWordGame" | "changelogEnabled"
+    field:
+      | "notifyDailyReminder"
+      | "notifyDailyText"
+      | "notifySocial"
+      | "notifyAchievements"
+      | "notifyWordGame"
+      | "notifyFriendOnline"
+      | "changelogEnabled"
   ) {
     if (!data) return;
     const next = !data[field];
@@ -843,6 +851,19 @@ export default function ProfileClient() {
               disabled={savingNotifications}
             />
             <span className="text-sm dark:text-slate-200">Woord van de dag — elke dag om 18:00 uur</span>
+          </label>
+
+          <label className="flex items-start gap-3 cursor-pointer">
+            <input
+              type="checkbox"
+              className="mt-1 h-5 w-5 accent-brand-500"
+              checked={data.notifyFriendOnline}
+              onChange={() => toggleCategory("notifyFriendOnline")}
+              disabled={savingNotifications}
+            />
+            <span className="text-sm dark:text-slate-200">
+              Vriend komt online — alleen in de app, als jullie allebei je online-status delen
+            </span>
           </label>
         </div>
       </CollapsibleCard>

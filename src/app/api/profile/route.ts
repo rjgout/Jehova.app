@@ -81,6 +81,7 @@ export async function GET() {
     notifySocial: user.notifySocial,
     notifyAchievements: user.notifyAchievements,
     notifyWordGame: user.notifyWordGame,
+    notifyFriendOnline: user.notifyFriendOnline,
     changelogEnabled: user.changelogEnabled,
     totpEnabled: user.totpEnabled,
     xpTotal: user.xpTotal,
