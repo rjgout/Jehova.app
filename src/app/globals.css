@@ -91,7 +91,7 @@ button,
 .btn-ice,
 a.card,
 header nav a,
-nav[aria-label="Hoofdnavigatie"] a {
+nav[data-main-nav] a {
   -webkit-user-select: none;
   user-select: none;
   -webkit-touch-callout: none;

@@ -24,6 +24,9 @@ import { PodcastPlayerProvider } from "@/lib/podcastPlayerContext";
 import { ReadAloudPlayerProvider } from "@/lib/readAloudPlayerContext";
 import ReadAloudMiniPlayer from "@/components/ReadAloudMiniPlayer";
 import ActivityTracker from "@/components/ActivityTracker";
+import { I18nProvider } from "@/components/I18nProvider";
+import { messagesFor } from "@/lib/i18n";
+import { toLanguageCode } from "@/lib/languages";
 import { APP_TAGLINE, resolveAppName } from "@/lib/brand";
 
 // PWA: manifest + icons zijn wat een browser nodig heeft om "toevoegen aan
@@ -129,13 +132,16 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const [user, { logoDataUrl, appName }] = await Promise.all([getCurrentUser(), getBranding()]);
   const contentContext = user ? await getContentContext(user.id) : null;
   const displayName = resolveAppName(appName);
+  // Uitgelogd: Nederlands, zoals voorheen.
+  const uiLanguage = toLanguageCode(user?.uiLanguage);
 
   return (
-    <html lang="nl" suppressHydrationWarning>
+    <html lang={uiLanguage} suppressHydrationWarning>
       <head>
         <ThemeScript />
       </head>
       <body>
+        <I18nProvider language={uiLanguage} messages={messagesFor(uiLanguage)}>
         <PodcastPlayerProvider>
         <ReadAloudPlayerProvider>
         {/* Header + mini-player samen in één vaste wrapper (i.p.v. sticky —
@@ -182,7 +188,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <main className="mx-auto max-w-5xl px-4 pb-[calc(6rem+env(safe-area-inset-bottom))] pt-[calc(var(--header-height,4.5rem)+2rem)]">
           {children}
         </main>
-        {user && <BottomNav />}
+        {user && <BottomNav language={uiLanguage} />}
         {user && <InviteListener />}
         {user && <ChangelogPopup />}
       {user && <FreezeGiftPopup />}
@@ -190,6 +196,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <EdgeSwipeGuard />
         </ReadAloudPlayerProvider>
         </PodcastPlayerProvider>
+        </I18nProvider>
       </body>
     </html>
   );
