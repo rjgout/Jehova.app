@@ -6,6 +6,8 @@ import { getCurrentUser } from "@/lib/session";
 import { prisma } from "@/lib/db";
 import { isEmailConfigured } from "@/lib/email";
 import { getTextOfTheDay } from "@/lib/dailyText";
+import { getT } from "@/lib/i18n";
+import { BOFM_WORK, resolveEditionId } from "@/lib/contentCollections";
 
 export default async function DashboardPage() {
   const user = await getCurrentUser();
@@ -13,6 +15,14 @@ export default async function DashboardPage() {
   if (user.mustChangePassword) redirect("/change-password");
   if (!user.emailVerifiedAt && (await isEmailConfigured())) redirect("/verify-email");
   if (!user.onboardingSeenAt) redirect("/onboarding");
+  const t = getT(user.uiLanguage);
+  // Leesvoortgang van het Boek van Mormon in de eigen contenttaal; niet alle
+  // hoofdstukken in de database (daar staan ook andere werken en talen in).
+  const bomEditionId = await resolveEditionId(BOFM_WORK, user.contentLanguage);
+  const bomEdition = bomEditionId
+    ? await prisma.contentCollection.findUnique({ where: { id: bomEditionId }, select: { name: true } })
+    : null;
+  const inBomEdition = bomEditionId ? { book: { contentCollectionId: bomEditionId } } : {};
 
   const [
     dailyText,
@@ -23,7 +33,7 @@ export default async function DashboardPage() {
     pendingFriendRequests,
   ] = await Promise.all([
     getTextOfTheDay(new Date(), user.contentLanguage),
-    prisma.chapter.count(),
+    prisma.chapter.count({ where: inBomEdition }),
     prisma.friendship.findMany({
       where: { status: "ACCEPTED", OR: [{ senderId: user.id }, { receiverId: user.id }] },
       select: { senderId: true, receiverId: true, sender: { select: { id: true, handle: true, shareOnlineStatus: true, onlineSocketCount: true } }, receiver: { select: { id: true, handle: true, shareOnlineStatus: true, onlineSocketCount: true } } },
@@ -45,7 +55,7 @@ export default async function DashboardPage() {
 
   const total = bomChapters;
   const completed = await prisma.chapterProgress.count({
-    where: { userId: user.id, completed: true },
+    where: { userId: user.id, completed: true, chapter: inBomEdition },
   });
   const progressPercent = total > 0 ? Math.round((completed / total) * 100) : 0;
 
@@ -56,19 +66,25 @@ export default async function DashboardPage() {
     ...Array.from({ length: pendingFriendRequests }, (_, index) => ({
       key: `friend-${index}`,
       icon: "👥",
-      text: pendingFriendRequests === 1 ? "Je hebt een nieuw vriendschapsverzoek." : `Je hebt ${pendingFriendRequests} openstaande vriendschapsverzoeken.`,
+      text:
+        pendingFriendRequests === 1
+          ? t("dashboard.friendRequestOne")
+          : t("dashboard.friendRequestMany", { n: pendingFriendRequests }),
       href: "/friends",
     })).slice(0, 1),
     ...pendingChallenges.map((challenge) => ({
       key: `challenge-${challenge.id}`,
       icon: "⚔️",
-      text: `${challenge.sender.handle} daagt je uit op ${challenge.chapter.book.name} ${challenge.chapter.number}.`,
+      text: t("dashboard.challenge", {
+        name: challenge.sender.handle,
+        chapter: `${challenge.chapter.book.name} ${challenge.chapter.number}`,
+      }),
       href: `/lesson/${challenge.chapterId}?challengeId=${challenge.id}`,
     })),
     ...scrabbleTurns.map((game) => ({
       key: `scrabble-${game.id}`,
       icon: "🔤",
-      text: `${game.player1Id === user.id ? game.player2.handle : game.player1.handle} wacht op jouw beurt.`,
+      text: t("dashboard.yourTurn", { name: game.player1Id === user.id ? game.player2.handle : game.player1.handle }),
       href: `/scrabble/${game.id}`,
     })),
   ];
@@ -77,7 +93,7 @@ export default async function DashboardPage() {
     <div className="max-w-5xl mx-auto flex flex-col gap-6">
       {dailyText && (
         <section className="card bg-gradient-to-br from-brand-500 to-brand-700 text-white flex flex-col gap-3">
-          <p className="text-brand-100 font-bold uppercase text-xs tracking-wide">Tekst van de dag</p>
+          <p className="text-brand-100 font-bold uppercase text-xs tracking-wide">{t("dashboard.dailyText")}</p>
           <p className="text-xl sm:text-2xl font-extrabold leading-snug">“{dailyText.text}”</p>
           <div className="flex flex-wrap items-center justify-between gap-2">
             <p className="text-sm text-brand-100">— {dailyText.bookName} {dailyText.chapterNumber}:{dailyText.verseNumber}</p>
@@ -85,7 +101,7 @@ export default async function DashboardPage() {
               href={dailyText.href}
               className="text-sm font-bold rounded-full bg-white/15 px-3 py-1.5 hover:bg-white/25 transition"
             >
-              Lees verder →
+              {t("dashboard.readMore")}
             </Link>
           </div>
         </section>
@@ -94,8 +110,8 @@ export default async function DashboardPage() {
       <section className="card flex flex-col gap-3">
         <div className="flex items-center justify-between gap-3">
           <div>
-            <p className="text-xs font-bold uppercase tracking-wide text-slate-400 dark:text-slate-500">Boek van Mormon</p>
-            <h2 className="text-xl font-extrabold text-brand-800 dark:text-brand-300">Leesvoortgang</h2>
+            <p className="text-xs font-bold uppercase tracking-wide text-slate-400 dark:text-slate-500">{bomEdition?.name ?? "Boek van Mormon"}</p>
+            <h2 className="text-xl font-extrabold text-brand-800 dark:text-brand-300">{t("dashboard.progressTitle")}</h2>
           </div>
           <span className="text-sm font-extrabold text-brand-600 dark:text-brand-300">{completed} / {total}</span>
         </div>
@@ -103,26 +119,28 @@ export default async function DashboardPage() {
           <div className="h-full bg-brand-500 dark:bg-brand-400 transition-all" style={{ width: `${progressPercent}%` }} />
         </div>
         <div className="flex items-center justify-between gap-3 text-sm">
-          <span className="text-slate-500 dark:text-slate-400">{progressPercent}% gelezen</span>
-          <Link href="/courses" className="font-bold text-brand-600 dark:text-brand-300 hover:underline">Bekijk cursussen →</Link>
+          <span className="text-slate-500 dark:text-slate-400">{t("dashboard.percentRead", { n: progressPercent })}</span>
+          <Link href="/courses" className="font-bold text-brand-600 dark:text-brand-300 hover:underline">{t("dashboard.viewCourses")}</Link>
         </div>
       </section>
 
       <section className="card flex flex-col gap-3">
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-extrabold dark:text-slate-100">Vrienden online</h2>
-          <Link href="/friends" className="text-sm font-bold text-brand-600 dark:text-brand-300 hover:underline">Bekijk vrienden →</Link>
+          <h2 className="text-lg font-extrabold dark:text-slate-100">{t("dashboard.friendsOnline")}</h2>
+          <Link href="/friends" className="text-sm font-bold text-brand-600 dark:text-brand-300 hover:underline">{t("dashboard.viewFriends")}</Link>
         </div>
         {onlineFriends > 0 ? (
-          <p className="text-sm text-slate-500 dark:text-slate-400">🟢 {onlineFriends} {onlineFriends === 1 ? "vriend is" : "vrienden zijn"} nu online.</p>
+          <p className="text-sm text-slate-500 dark:text-slate-400">
+            {onlineFriends === 1 ? t("dashboard.onlineOne", { n: onlineFriends }) : t("dashboard.onlineMany", { n: onlineFriends })}
+          </p>
         ) : (
-          <p className="text-sm text-slate-500 dark:text-slate-400">Niemand van je vrienden die zijn online-status deelt is nu online.</p>
+          <p className="text-sm text-slate-500 dark:text-slate-400">{t("dashboard.onlineNone")}</p>
         )}
       </section>
 
       {actions.length > 0 && (
         <section className="card flex flex-col gap-3">
-          <h2 className="text-lg font-extrabold dark:text-slate-100">Openstaande acties</h2>
+          <h2 className="text-lg font-extrabold dark:text-slate-100">{t("dashboard.openActions")}</h2>
           {actions.map((action) => (
             <Link key={action.key} href={action.href} className="flex items-center gap-3 rounded-2xl bg-slate-50 dark:bg-slate-800 px-4 py-3 hover:bg-brand-50 dark:hover:bg-slate-700">
               <span className="text-2xl">{action.icon}</span>
