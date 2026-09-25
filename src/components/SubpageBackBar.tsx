@@ -31,6 +31,14 @@ const GAME_PAGES: Record<string, { title: string; icon: string }> = {
   "/challenges": { title: "Uitdagingen", icon: "⚔️" },
 };
 
+const LESSON_PAGES: [RegExp, string, string][] = [
+  [/^\/lesson\/[^/]+$/, "Les", "📖"],
+  [/^\/reading-lesson\/[^/]+$/, "Leesles", "📖"],
+  [/^\/podcast\/[^/]+\/[^/]+$/, "Podcastles", "🎙️"],
+  [/^\/kids\/[^/]+$/, "Kinderverhaal", "🧒"],
+  [/^\/intro\/[^/]+$/, "Introductieles", "✨"],
+];
+
 function backTargetFor(pathname: string): BackTarget | null {
   const tool = TOOL_SUBPAGES[pathname];
   if (tool) return { href: "/tools", parent: "Hulpmiddelen", ...tool };
@@ -47,6 +55,11 @@ function backTargetFor(pathname: string): BackTarget | null {
   }
   if (/^\/scrabble\/[^/]+$/.test(pathname)) return { href: "/scrabble", parent: "Woordspellen", title: "Woordspel", icon: "🔤" };
   if (/^\/fsy\/[^/]+$/.test(pathname)) return { href: "/courses", parent: "Cursussen", title: "Les", icon: "📘" };
+  // Lessen uit een cursus. Ze worden ook vanuit bladwijzers en zoeken
+  // geopend, dus terug naar Cursussen klopt altijd (het adres zegt niet uit
+  // welke cursus iemand kwam).
+  const lesson = LESSON_PAGES.find(([pattern]) => pattern.test(pathname));
+  if (lesson) return { href: "/courses", parent: "Cursussen", title: lesson[1], icon: lesson[2] };
   const chapter = /^\/courses\/([^/]+)\/chapter\/[^/]+$/.exec(pathname);
   if (chapter) return { href: `/courses/${chapter[1]}`, parent: "Cursus", title: "Hoofdstuk", icon: "📖" };
   if (/^\/courses\/[^/]+$/.test(pathname)) return { href: "/courses", parent: "Cursussen", title: "Cursus", icon: "📚" };

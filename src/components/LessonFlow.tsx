@@ -2,14 +2,13 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import Breadcrumb from "@/components/Breadcrumb";
 import { ACHIEVEMENT_DISPLAY } from "@/lib/achievementDisplay";
 import { normalizeAnswer } from "@/lib/exerciseGen";
 import { useActivityStatus } from "@/lib/useActivity";
 import { announceXpChanged } from "@/lib/xpBroadcast";
 import ReadAloudPlayer from "@/components/ReadAloudPlayer";
 import { useReadAloudPlayer } from "@/lib/readAloudPlayerContext";
-import { capitalize, chapterTerm, type ChapterTerm } from "@/lib/chapterTerm";
+import { chapterTerm, type ChapterTerm } from "@/lib/chapterTerm";
 
 export type ExerciseType = "FILL_BLANK" | "WORD_BANK" | "TRUE_FALSE" | "MULTIPLE_CHOICE" | "SEQUENCE" | "IMAGE_CHOICE";
 
@@ -166,7 +165,6 @@ export default function LessonFlow({ chapterId, bookName, chapterNumber, nextCha
   if (phase === "read") {
     return (
       <div className="max-w-2xl mx-auto flex flex-col gap-4">
-        <Breadcrumb items={[{ label: bookName, href: "/dashboard" }, { label: `${capitalize(term.singular)} ${chapterNumber}` }]} />
         <ReaderView chapterId={chapterId} bookName={bookName} chapterNumber={chapterNumber} verses={verses} audio={audio} term={term} />
         <button className="btn-primary self-start" onClick={() => setPhase("exercises")}>
           Begin oefeningen →
