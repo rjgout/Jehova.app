@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getCurrentUser } from "@/lib/session";
 import { getContentContext } from "@/lib/contentCollections";
+import { getT } from "@/lib/i18n";
 
 interface ActivityItem {
   kind: "challenge" | "scrabble" | "live" | "chapter-guess-solo";
@@ -30,6 +31,7 @@ interface ActivityItem {
 export async function GET() {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: "Niet ingelogd" }, { status: 401 });
+  const t = getT(user.uiLanguage);
 
   const [challenges, scrabbleGames, liveGames, soloChapterGuessGames, gameScopes, contentContext, receivedLiveInvites] = await Promise.all([
     prisma.challenge.findMany({
@@ -154,7 +156,7 @@ export async function GET() {
         id: g.id,
         opponentName: opponent.handle,
         opponentId: opponent.id,
-        label: "Woordspel",
+        label: t("pages.wordGame"),
         link: "/scrabble",
         myTurn: null,
         contentCollectionId,
@@ -165,7 +167,7 @@ export async function GET() {
         id: g.id,
         opponentName: opponent.handle,
         opponentId: opponent.id,
-        label: "Woordspel",
+        label: t("pages.wordGame"),
         link: `/scrabble/${g.id}`,
         myTurn: g.turnUserId === user.id,
         contentCollectionId,
@@ -174,18 +176,18 @@ export async function GET() {
   }
 
   for (const lg of liveGames) {
-    const suffix = lg.status === "LOBBY" ? " (lobby)" : "";
+    const suffix = lg.status === "LOBBY" ? t("activeGames.lobbySuffix") : "";
     const contentCollectionId =
       lg.chapter?.book.contentCollectionId ??
       (lg.mode === "FAMILY_GAME" ? singleScope("gezinsavond") : singleScope("chapter-guess"));
     const label =
       lg.mode === "CHAPTER_GUESS"
-        ? `Live spel — Raad het hoofdstuk${suffix}`
+        ? `${t("activeGames.liveGame", { name: t("pages.chapterGuess") })}${suffix}`
         : lg.mode === "ALLESKENNER"
-          ? `De Alleskenner${suffix}`
+          ? `${t("pages.alleskenner")}${suffix}`
         : lg.mode === "FAMILY_GAME"
-          ? `Gezinsavond${suffix}`
-          : `Live spel — ${lg.chapter?.book.name} ${lg.chapter?.number}${suffix}`;
+          ? `${t("pages.familyNight")}${suffix}`
+          : `${t("activeGames.liveGame", { name: `${lg.chapter?.book.name} ${lg.chapter?.number}` })}${suffix}`;
 
     // Een lobby waar verder niemand op gereageerd/meegedaan heeft (net
     // aangemaakt, of uitgenodigd maar nog geen reactie) is geen "sessie die
@@ -226,14 +228,23 @@ export async function GET() {
     });
   }
 
-  const LEVEL_LABELS: Record<string, string> = { BEGINNER: "Beginner", ADVANCED: "Gevorderd", EXPERT: "Expert" };
+  const LEVEL_LABELS: Record<string, string> = {
+    BEGINNER: t("chapterGuessLevels.beginner"),
+    ADVANCED: t("chapterGuessLevels.advanced"),
+    EXPERT: t("chapterGuessLevels.expert"),
+  };
   for (const g of soloChapterGuessGames) {
     activeGames.push({
       kind: "chapter-guess-solo",
       id: g.id,
       opponentName: null,
       opponentId: null,
-      label: `Raad het hoofdstuk (${LEVEL_LABELS[g.level]}) — vraag ${g.currentIndex + 1}/${g.questionCount}`,
+      label: t("activeGames.soloChapterGuess", {
+        name: t("pages.chapterGuess"),
+        level: LEVEL_LABELS[g.level],
+        n: g.currentIndex + 1,
+        total: g.questionCount,
+      }),
       link: `/chapter-guess/solo/${g.id}`,
       myTurn: null,
       contentCollectionId: g.questions[0]?.chapterId
@@ -249,11 +260,11 @@ export async function GET() {
     opponentId: game.host.id,
     label:
       game.mode === "CHAPTER_GUESS"
-        ? "Raad het hoofdstuk"
+        ? t("pages.chapterGuess")
         : game.mode === "ALLESKENNER"
-          ? "De Alleskenner"
+          ? t("pages.alleskenner")
         : game.mode === "FAMILY_GAME"
-          ? "Gezinsavond"
+          ? t("pages.familyNight")
           : `${game.chapter?.book.name} ${game.chapter?.number}`,
     link: `/live/${game.code}`,
     myTurn: null,

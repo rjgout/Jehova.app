@@ -5,6 +5,9 @@ import Link from "next/link";
 import { announceXpChanged } from "@/lib/xpBroadcast";
 import UserTag from "@/components/UserTag";
 import UserAvatar from "@/components/UserAvatar";
+import { useT, useUiLanguage } from "@/components/I18nProvider";
+import { getLanguage } from "@/lib/languages";
+import { rich } from "@/lib/i18n/rich";
 
 type LetterState = "correct" | "present" | "absent";
 
@@ -53,6 +56,8 @@ const TILE_STYLES: Record<LetterState, string> = {
 };
 
 export default function WordGameClient() {
+  const t = useT();
+  const intlLocale = getLanguage(useUiLanguage()).intlLocale;
   const [game, setGame] = useState<GameView | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [guess, setGuess] = useState("");
@@ -64,16 +69,16 @@ export default function WordGameClient() {
     fetch("/api/word-game")
       .then(async (r) => {
         const data = await r.json();
-        if (!r.ok) throw new Error(data.error ?? "Kon het woordspel niet laden.");
+        if (!r.ok) throw new Error(data.error ?? t("wordOfTheDay.loadFailed"));
         setGame(data);
       })
-      .catch((e) => setLoadError(e instanceof Error ? e.message : "Er ging iets mis."));
+      .catch((e) => setLoadError(e instanceof Error ? e.message : t("wordOfTheDay.somethingWrong")));
   }, []);
 
   async function submitGuess() {
     if (!game || submitting) return;
     if (guess.length !== game.wordLength) {
-      setFormError(`Het woord moet ${game.wordLength} letters hebben.`);
+      setFormError(t("wordOfTheDay.wrongLength", { n: game.wordLength }));
       setShake(true);
       setTimeout(() => setShake(false), 350);
       return;
@@ -88,7 +93,7 @@ export default function WordGameClient() {
     const data = await res.json().catch(() => ({}));
     setSubmitting(false);
     if (!res.ok) {
-      setFormError(data.error ?? "Er ging iets mis.");
+      setFormError(data.error ?? t("wordOfTheDay.somethingWrong"));
       setShake(true);
       setTimeout(() => setShake(false), 350);
       return;
@@ -103,14 +108,14 @@ export default function WordGameClient() {
       <div className="max-w-md mx-auto card text-center flex flex-col gap-3">
         <p className="text-red-600 dark:text-red-400 font-semibold">{loadError}</p>
         <Link href="/live" className="btn-secondary self-center">
-          Terug
+          {t("wordOfTheDay.back")}
         </Link>
       </div>
     );
   }
 
   if (!game) {
-    return <p className="text-center text-slate-400 dark:text-slate-500">Laden...</p>;
+    return <p className="text-center text-slate-400 dark:text-slate-500">{t("common.loading")}</p>;
   }
 
   const finished = game.status !== "IN_PROGRESS";
@@ -118,7 +123,7 @@ export default function WordGameClient() {
   const emptyRows = game.maxGuesses - rows.length - (finished ? 0 : 1);
 
   function formatFinishedAt(value: string): string {
-    return new Intl.DateTimeFormat("nl-NL", {
+    return new Intl.DateTimeFormat(intlLocale, {
       timeZone: "Europe/Amsterdam",
       hour: "2-digit",
       minute: "2-digit",
@@ -129,10 +134,9 @@ export default function WordGameClient() {
     <div className="max-w-md mx-auto flex flex-col gap-6">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-extrabold text-brand-800 dark:text-brand-300">🔤 Woord van de dag</h1>
+          <h1 className="text-2xl font-extrabold text-brand-800 dark:text-brand-300">🔤 {t("pages.wordOfTheDay")}</h1>
           <p className="text-slate-500 dark:text-slate-400 text-sm">
-            Raad het {game.wordLength}-letterwoord uit het Boek van Mormon in {game.maxGuesses} pogingen. Elke dag om
-            18:00 uur komt er een nieuw woord.
+            {t("wordOfTheDay.intro", { length: game.wordLength, tries: game.maxGuesses })}
           </p>
         </div>
       </div>
@@ -190,11 +194,11 @@ export default function WordGameClient() {
               onKeyDown={(e) => {
                 if (e.key === "Enter") submitGuess();
               }}
-              placeholder={`${game.wordLength} letters...`}
+              placeholder={t("wordOfTheDay.placeholder", { n: game.wordLength })}
               autoFocus
             />
             <button className="btn-primary" disabled={submitting} onClick={submitGuess}>
-              {submitting ? "..." : "Raad"}
+              {submitting ? "..." : t("wordOfTheDay.guess")}
             </button>
           </div>
           {formError && <p className="text-red-600 dark:text-red-400 text-sm font-semibold">{formError}</p>}
@@ -205,11 +209,13 @@ export default function WordGameClient() {
         <div className="card flex flex-col items-center gap-3 text-center animate-pop">
           <div className="text-4xl">{game.status === "WON" ? "🎉" : "😔"}</div>
           <p className="text-lg font-extrabold dark:text-slate-100">
-            {game.status === "WON" ? "Goed geraden!" : "Helaas, dit keer niet gelukt."}
+            {game.status === "WON" ? t("wordOfTheDay.won") : t("wordOfTheDay.lost")}
           </p>
           {game.word && (
             <p className="text-slate-500 dark:text-slate-400">
-              Het woord was: <span className="font-extrabold uppercase text-brand-700 dark:text-brand-300">{game.word}</span>
+              {rich(t("wordOfTheDay.theWordWas"), {
+                word: <span className="font-extrabold uppercase text-brand-700 dark:text-brand-300">{game.word}</span>,
+              })}
             </p>
           )}
           {game.xpEarned > 0 && (
@@ -217,14 +223,14 @@ export default function WordGameClient() {
               <p className="text-gold-600 dark:text-gold-400 font-extrabold text-lg">+{game.xpEarned} XP</p>
               {game.leaderboardRank && game.leaderboardXpBonus > 0 && (
                 <p className="text-sm text-slate-500 dark:text-slate-400">
-                  🏆 #{game.leaderboardRank} van vandaag · +{game.leaderboardXpBonus} XP bonus
+                  {t("wordOfTheDay.rankBonus", { rank: game.leaderboardRank, xp: game.leaderboardXpBonus })}
                 </p>
               )}
             </div>
           )}
-          <p className="text-sm text-slate-400 dark:text-slate-500">Kom morgen om 18:00 uur terug voor een nieuw woord!</p>
+          <p className="text-sm text-slate-400 dark:text-slate-500">{t("wordOfTheDay.comeBack")}</p>
           <Link href="/live" className="btn-secondary mt-1">
-            Terug
+            {t("wordOfTheDay.back")}
           </Link>
         </div>
       )}
@@ -232,7 +238,7 @@ export default function WordGameClient() {
       {finished && game.verses.length > 0 && (
         <div className="flex flex-col gap-3">
           <h2 className="font-extrabold dark:text-slate-100">
-            📖 Waar &ldquo;{game.word}&rdquo; voorkomt ({game.verses.length})
+            {t("wordOfTheDay.whereItAppears", { word: game.word ?? "", count: game.verses.length })}
           </h2>
           <div className="flex flex-col gap-2">
             {game.verses.map((v, i) => (
@@ -252,9 +258,9 @@ export default function WordGameClient() {
 
       <div className="card flex flex-col gap-3">
         <div>
-          <h2 className="font-extrabold dark:text-slate-100">🏆 Snelste spelers van vandaag</h2>
+          <h2 className="font-extrabold dark:text-slate-100">{t("wordOfTheDay.fastestTitle")}</h2>
           <p className="text-sm text-slate-400 dark:text-slate-500">
-            De eerste tien die het woord goed hebben geraden, op volgorde van aankomst.
+            {t("wordOfTheDay.fastestIntro")}
           </p>
         </div>
 
@@ -279,7 +285,7 @@ export default function WordGameClient() {
           </div>
         ) : (
           <p className="text-sm text-slate-400 dark:text-slate-500">
-            Nog niemand heeft het woord van vandaag gehaald.
+            {t("wordOfTheDay.nobodyYet")}
           </p>
         )}
       </div>

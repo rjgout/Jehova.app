@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import UserAvatar from "@/components/UserAvatar";
 import FriendPicker, { type PickerFriend } from "@/components/FriendPicker";
+import { useT } from "@/components/I18nProvider";
+import { rich } from "@/lib/i18n/rich";
 
 interface ChallengeView {
   id: string;
@@ -28,6 +30,7 @@ interface ChapterOption {
 }
 
 export default function ChallengesClient() {
+  const t = useT();
   const [challenges, setChallenges] = useState<ChallengeView[] | null>(null);
   const [chapters, setChapters] = useState<ChapterOption[] | null>(null);
   const [selectedChapter, setSelectedChapter] = useState("");
@@ -50,7 +53,7 @@ export default function ChallengesClient() {
 
   /** Uit het vriendenpaneel; een foutmelding blijft in het paneel staan. */
   async function createChallenge(friend: PickerFriend): Promise<string | null> {
-    if (!selectedChapter) return "Kies eerst een hoofdstuk.";
+    if (!selectedChapter) return t("challenges.chooseChapterFirst");
     setMessage(null);
     const res = await fetch("/api/challenges", {
       method: "POST",
@@ -58,8 +61,8 @@ export default function ChallengesClient() {
       body: JSON.stringify({ friendUserId: friend.id, chapterId: selectedChapter }),
     });
     const body = await res.json().catch(() => ({}));
-    if (!res.ok) return body.error ?? "Kon de uitdaging niet versturen.";
-    setMessage(`Uitdaging verstuurd naar ${friend.handle}! ⚔️`);
+    if (!res.ok) return body.error ?? t("challenges.sendFailed");
+    setMessage(t("challenges.sent", { name: friend.handle }));
     setSelectedChapter("");
     load();
     return null;
@@ -75,12 +78,12 @@ export default function ChallengesClient() {
   }
 
   async function forfeit(id: string) {
-    if (!window.confirm("Weet je zeker dat je wil opgeven? Je tegenstander wordt dan automatisch winnaar.")) return;
+    if (!window.confirm(t("challenges.confirmForfeit"))) return;
     await fetch(`/api/challenges/${id}/forfeit`, { method: "POST" });
     load();
   }
 
-  if (!challenges || !chapters) return <p className="text-slate-400 dark:text-slate-500">Laden...</p>;
+  if (!challenges || !chapters) return <p className="text-slate-400 dark:text-slate-500">{t("common.loading")}</p>;
 
   const incoming = challenges.filter((c) => c.status === "PENDING" && !c.isSender);
   const outgoing = challenges.filter((c) => c.status === "PENDING" && c.isSender);
@@ -90,17 +93,16 @@ export default function ChallengesClient() {
   return (
     <div className="max-w-2xl mx-auto flex flex-col gap-8">
       <div>
-        <h1 className="text-2xl font-extrabold text-brand-800 dark:text-brand-300">Uitdagingen</h1>
+        <h1 className="text-2xl font-extrabold text-brand-800 dark:text-brand-300">{t("pages.challenges")}</h1>
         <p className="text-slate-500 dark:text-slate-400 text-sm">
-          Daag een vriend uit op een hoofdstuk: jullie spelen allebei wanneer het uitkomt, en zien daarna wie beter
-          scoorde.
+          {t("gamesHub.challenges.description")}
         </p>
       </div>
 
       <div className="card flex flex-col gap-3">
-        <h2 className="font-extrabold dark:text-slate-100">Nieuwe uitdaging</h2>
+        <h2 className="font-extrabold dark:text-slate-100">{t("challenges.newChallenge")}</h2>
         <select className="input" value={selectedChapter} onChange={(e) => setSelectedChapter(e.target.value)}>
-          <option value="">Kies een hoofdstuk...</option>
+          <option value="">{t("challenges.chooseChapter")}</option>
           {chapters.map((c) => (
             <option key={c.id} value={c.id}>
               {c.label}
@@ -108,12 +110,12 @@ export default function ChallengesClient() {
           ))}
         </select>
         <button className="btn-primary self-start" disabled={!selectedChapter} onClick={() => setPickerOpen(true)}>
-          Daag een vriend uit
+          {t("challenges.challengeFriend")}
         </button>
         <FriendPicker
           open={pickerOpen}
           onClose={() => setPickerOpen(false)}
-          title="Uitdagen"
+          title={t("challenges.pickerTitle")}
           subtitle={chapters.find((c) => c.id === selectedChapter)?.label}
           onPick={createChallenge}
         />
@@ -122,7 +124,7 @@ export default function ChallengesClient() {
 
       {incoming.length > 0 && (
         <section>
-          <h2 className="font-extrabold mb-2 text-slate-700 dark:text-slate-200">Nieuwe uitdagingen</h2>
+          <h2 className="font-extrabold mb-2 text-slate-700 dark:text-slate-200">{t("challenges.incoming")}</h2>
           <div className="flex flex-col gap-2">
             {incoming.map((c) => (
               <div
@@ -132,15 +134,17 @@ export default function ChallengesClient() {
                 <span className="flex items-center gap-2 dark:text-slate-100">
                   <UserAvatar id={c.opponent.id} handle={c.opponent.displayName} size="xs" />
                   <span>
-                    <strong>{c.opponent.displayName}</strong> daagt je uit op {c.bookName} {c.chapterNumber}
+                    {rich(t("challenges.challengesYou", { chapter: `${c.bookName} ${c.chapterNumber}` }), {
+                      name: <strong>{c.opponent.displayName}</strong>,
+                    })}
                   </span>
                 </span>
                 <div className="flex gap-2">
                   <button className="btn-primary !px-3 !py-1.5" onClick={() => respond(c.id, "accept")}>
-                    Accepteren
+                    {t("challenges.accept")}
                   </button>
                   <button className="btn-secondary !px-3 !py-1.5" onClick={() => respond(c.id, "decline")}>
-                    Weigeren
+                    {t("challenges.decline")}
                   </button>
                 </div>
               </div>
@@ -151,26 +155,28 @@ export default function ChallengesClient() {
 
       {active.length > 0 && (
         <section>
-          <h2 className="font-extrabold mb-2 text-slate-700 dark:text-slate-200">Actief</h2>
+          <h2 className="font-extrabold mb-2 text-slate-700 dark:text-slate-200">{t("challenges.active")}</h2>
           <div className="flex flex-col gap-2">
             {active.map((c) => (
               <div key={c.id} className="card flex items-center justify-between !py-3 flex-wrap gap-2">
                 <span className="flex items-center gap-2 dark:text-slate-100">
                   <UserAvatar id={c.opponent.id} handle={c.opponent.displayName} size="xs" />
                   <span>
-                    Tegen <strong>{c.opponent.displayName}</strong> op {c.bookName} {c.chapterNumber}
+                    {rich(t("challenges.against", { chapter: `${c.bookName} ${c.chapterNumber}` }), {
+                      name: <strong>{c.opponent.displayName}</strong>,
+                    })}
                   </span>
                 </span>
                 <div className="flex items-center gap-2">
                   {c.hasPlayed ? (
-                    <span className="text-sm text-slate-400 dark:text-slate-500">Wachten op tegenstander...</span>
+                    <span className="text-sm text-slate-400 dark:text-slate-500">{t("challenges.waitingOpponent")}</span>
                   ) : (
                     <button className="btn-primary !px-3 !py-1.5" onClick={() => play(c)}>
-                      Speel je beurt
+                      {t("challenges.playTurn")}
                     </button>
                   )}
                   <button className="btn-secondary !px-3 !py-1.5 !text-red-500 !border-red-200" onClick={() => forfeit(c.id)}>
-                    Opgeven
+                    {t("challenges.forfeit")}
                   </button>
                 </div>
               </div>
@@ -181,13 +187,13 @@ export default function ChallengesClient() {
 
       {outgoing.length > 0 && (
         <section>
-          <h2 className="font-extrabold mb-2 text-slate-700 dark:text-slate-200">Verstuurd, nog geen reactie</h2>
+          <h2 className="font-extrabold mb-2 text-slate-700 dark:text-slate-200">{t("challenges.outgoing")}</h2>
           <div className="flex flex-col gap-2">
             {outgoing.map((c) => (
               <div key={c.id} className="card !py-3 text-slate-500 dark:text-slate-400 flex items-center gap-2">
                 <UserAvatar id={c.opponent.id} handle={c.opponent.displayName} size="xs" />
                 <span>
-                  Wachten op {c.opponent.displayName} — {c.bookName} {c.chapterNumber}
+                  {t("activeGames.waitingFor", { name: c.opponent.displayName, label: `${c.bookName} ${c.chapterNumber}` })}
                 </span>
               </div>
             ))}
@@ -197,19 +203,23 @@ export default function ChallengesClient() {
 
       {finished.length > 0 && (
         <section>
-          <h2 className="font-extrabold mb-2 text-slate-700 dark:text-slate-200">Afgerond</h2>
+          <h2 className="font-extrabold mb-2 text-slate-700 dark:text-slate-200">{t("challenges.finished")}</h2>
           <div className="flex flex-col gap-2">
             {finished.map((c) => (
               <div key={c.id} className="card !py-3 text-sm dark:text-slate-200 flex items-center gap-2">
                 <UserAvatar id={c.opponent.id} handle={c.opponent.displayName} size="xs" />
                 {c.status === "DECLINED" ? (
                   <span className="text-slate-400 dark:text-slate-500">
-                    {c.bookName} {c.chapterNumber} tegen {c.opponent.displayName} — geweigerd
+                    {t("challenges.declined", { chapter: `${c.bookName} ${c.chapterNumber}`, name: c.opponent.displayName })}
                   </span>
                 ) : (
                   <span>
-                    {c.bookName} {c.chapterNumber} tegen {c.opponent.displayName}: jij {c.myScore ?? "–"}% —{" "}
-                    {c.opponent.displayName} {c.opponentScore ?? "–"}%{" "}
+                    {t("challenges.result", {
+                      chapter: `${c.bookName} ${c.chapterNumber}`,
+                      name: c.opponent.displayName,
+                      mine: c.myScore ?? "–",
+                      theirs: c.opponentScore ?? "–",
+                    })}{" "}
                     <strong
                       className={
                         c.tied
@@ -219,7 +229,7 @@ export default function ChallengesClient() {
                             : "text-slate-400 dark:text-slate-500"
                       }
                     >
-                      {c.tied ? "gelijkspel" : c.won ? "🎉 gewonnen" : "verloren"}
+                      {c.tied ? t("challenges.tied") : c.won ? t("challenges.won") : t("challenges.lost")}
                     </strong>
                   </span>
                 )}
@@ -230,7 +240,7 @@ export default function ChallengesClient() {
       )}
 
       {incoming.length === 0 && outgoing.length === 0 && active.length === 0 && finished.length === 0 && (
-        <p className="text-slate-400 dark:text-slate-500 text-center">Nog geen uitdagingen — daag hierboven een vriend uit!</p>
+        <p className="text-slate-400 dark:text-slate-500 text-center">{t("challenges.none")}</p>
       )}
     </div>
   );

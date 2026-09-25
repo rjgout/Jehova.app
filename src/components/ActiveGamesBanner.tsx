@@ -4,6 +4,7 @@ import { useEffect, useState, type MouseEvent } from "react";
 import Link from "next/link";
 import { getSocket } from "@/lib/socketClient";
 import UserAvatar from "@/components/UserAvatar";
+import { useT } from "@/components/I18nProvider";
 
 interface ActivityItem {
   kind: "challenge" | "scrabble" | "live" | "chapter-guess-solo";
@@ -39,6 +40,7 @@ const KIND_ICON: Record<ActivityItem["kind"], string> = {
 // een mislukte fetch, waardoor "geen spellen" en "kon niet laden" (zoals in
 // de geïnstalleerde webapp) niet van elkaar te onderscheiden waren.
 export default function ActiveGamesBanner() {
+  const t = useT();
   const [status, setStatus] = useState<ActivityStatus | null>(null);
   const [error, setError] = useState<string | null>(null);
   // Voorkomt dubbel annuleren terwijl het verzoek nog loopt.
@@ -53,14 +55,14 @@ export default function ActiveGamesBanner() {
     // webapp mag hier nooit een oud antwoord uit zijn HTTP-cache gebruiken.
     return fetch("/api/activity-status", { cache: "no-store" })
       .then(async (r) => {
-        if (!r.ok) throw new Error(`fout ${r.status}`);
+        if (!r.ok) throw new Error(t("activeGames.errorStatus", { status: r.status }));
         return r.json();
       })
       .then((d) => {
         setStatus(d);
         setError(null);
       })
-      .catch((e) => setError(e instanceof Error ? e.message : "onbekende fout"));
+      .catch((e) => setError(e instanceof Error ? e.message : t("activeGames.unknownError")));
   }
 
   useEffect(reload, []);
@@ -104,26 +106,26 @@ export default function ActiveGamesBanner() {
 
   async function cancelInvite(item: ActivityItem) {
     if (item.kind === "live") {
-      if (!window.confirm("Dit spel beëindigen? Dit kan niet ongedaan worden gemaakt.")) return;
+      if (!window.confirm(t("activeGames.confirmEnd"))) return;
       // De banner ververst zichzelf pas via het "game_cancelled"-event
       // hierboven, zodra de server het spel écht heeft verwijderd.
       getSocket().emit("cancel_game", { code: item.code });
       return;
     }
-    if (!window.confirm(`De uitnodiging aan ${item.opponentName} annuleren?`)) return;
+    if (!window.confirm(t("activeGames.confirmCancel", { name: item.opponentName ?? "" }))) return;
     setCancelling(item.id);
     const url = item.kind === "scrabble" ? `/api/scrabble/${item.id}/cancel` : `/api/challenges/${item.id}/cancel`;
     const response = await fetch(url, { method: "POST" }).catch(() => null);
     if (!response?.ok) {
       // Meestal: de ander heeft net geaccepteerd. Toon dan de actuele stand.
       const data = await response?.json().catch(() => null);
-      window.alert(data?.error ?? "Annuleren is niet gelukt.");
+      window.alert(data?.error ?? t("activeGames.cancelFailed"));
     }
     await load();
     setCancelling(null);
   }
 
-  const heading = <h2 className="text-sm font-extrabold text-slate-700 dark:text-slate-200">Actieve spellen</h2>;
+  const heading = <h2 className="text-sm font-extrabold text-slate-700 dark:text-slate-200">{t("activeGames.title")}</h2>;
 
   if (!status) {
     return (
@@ -131,13 +133,13 @@ export default function ActiveGamesBanner() {
         {heading}
         {error ? (
           <p className="text-sm text-red-600 dark:text-red-400">
-            Kon je spellen niet ophalen ({error}).{" "}
+            {t("activeGames.loadFailed", { error })}{" "}
             <button className="font-bold underline" onClick={reload}>
-              Opnieuw proberen
+              {t("activeGames.retry")}
             </button>
           </p>
         ) : (
-          <p className="text-sm text-slate-400 dark:text-slate-500">Laden...</p>
+          <p className="text-sm text-slate-400 dark:text-slate-500">{t("common.loading")}</p>
         )}
       </div>
     );
@@ -153,7 +155,7 @@ export default function ActiveGamesBanner() {
     return (
       <div className="card flex flex-col gap-1 !py-3">
         {heading}
-        <p className="text-sm text-slate-500 dark:text-slate-400">Je hebt nu geen lopende spellen of uitnodigingen.</p>
+        <p className="text-sm text-slate-500 dark:text-slate-400">{t("activeGames.empty")}</p>
       </div>
     );
   }
@@ -177,11 +179,11 @@ export default function ActiveGamesBanner() {
               )}
               <span className="min-w-0 flex-1">
                 <span className="block text-sm font-extrabold text-brand-800 dark:text-brand-200 leading-snug">
-                  {item.opponentName} nodigt je uit!
+                  {t("activeGames.invitesYou", { name: item.opponentName ?? "" })}
                 </span>
-                <span className="block text-xs text-slate-500 dark:text-slate-400 leading-snug">Live spel — {item.label}</span>
+                <span className="block text-xs text-slate-500 dark:text-slate-400 leading-snug">{t("activeGames.liveGame", { name: item.label })}</span>
               </span>
-              <span className="btn-primary !px-3 !py-1.5 !text-xs shrink-0">Meedoen</span>
+              <span className="btn-primary !px-3 !py-1.5 !text-xs shrink-0">{t("activeGames.join")}</span>
             </Link>
           ))}
         </div>
@@ -202,7 +204,7 @@ export default function ActiveGamesBanner() {
                 <span>{KIND_ICON[item.kind]}</span>
               )}
               <span>
-                {item.opponentName} nodigt je uit — {item.label}
+                {t("activeGames.invitesYouTo", { name: item.opponentName ?? "", label: item.label })}
               </span>
             </Link>
           ))}
@@ -220,7 +222,7 @@ export default function ActiveGamesBanner() {
               )}
               {item.opponentName ? `${item.opponentName} — ` : ""}
               {item.label}
-              {item.myTurn ? " · jouw beurt!" : ""}
+              {item.myTurn ? t("activeGames.yourTurn") : ""}
             </Link>
           ))}
         </div>
@@ -242,13 +244,17 @@ export default function ActiveGamesBanner() {
                 ) : (
                   <span className="mr-1.5">{KIND_ICON[item.kind]}</span>
                 )}
-                Wachten op {item.opponentName} — {item.label}
+                {t("activeGames.waitingFor", { name: item.opponentName ?? "", label: item.label })}
               </Link>
               <button
                 onClick={() => cancelInvite(item)}
                 disabled={cancelling === item.id}
-                aria-label={item.kind === "live" ? `Spel met ${item.opponentName} beëindigen` : `Uitnodiging aan ${item.opponentName} annuleren`}
-                title={item.kind === "live" ? "Beëindigen" : "Annuleren"}
+                aria-label={
+                  item.kind === "live"
+                    ? t("activeGames.endAria", { name: item.opponentName ?? "" })
+                    : t("activeGames.cancelAria", { name: item.opponentName ?? "" })
+                }
+                title={item.kind === "live" ? t("activeGames.end") : t("activeGames.cancel")}
                 className="btn-secondary !rounded-l-none !border-l-0 !px-3 !text-red-500 dark:!text-red-400"
               >
                 ✕
