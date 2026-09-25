@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/db";
-import { BOM_COLLECTION_ID } from "@/lib/contentCollections";
+import { BOFM_WORK, resolveEditionId } from "@/lib/contentCollections";
 import { isExerciseCorrect } from "@/lib/exerciseGen";
 import { pickRandomChapterIds, getChapterIntro, getChapterIntroAudio, labelsFor, type ChapterLabel, type IntroAudio } from "@/lib/chapterGuess";
 
@@ -193,11 +193,14 @@ function sanitizeRow(row: RawExerciseRow): FamilyExerciseCard {
 /** Kiest willekeurig een goedgekeurde oefening uit ALLE hoofdstukken (niet beperkt tot voortgang — dit is een gezinsspel, geen cursus). */
 export async function pickExerciseCard(
   tileKind: "KNOWLEDGE" | "FILL_IN",
-  difficulty: FamilyDifficulty
+  difficulty: FamilyDifficulty,
+  editionId?: string
 ): Promise<FamilyExerciseCard | null> {
   const types = tileKind === "FILL_IN" ? ["WORD_BANK" as const] : KNOWLEDGE_TYPES_BY_DIFFICULTY[difficulty];
-  // Gezinsavond speelt met het Boek van Mormon, niet met de andere collecties.
-  const where = { status: "APPROVED" as const, type: { in: types }, chapter: { book: { contentCollectionId: BOM_COLLECTION_ID } } };
+  // Gezinsavond speelt met het Boek van Mormon, niet met de andere werken;
+  // zonder opgegeven uitgave de Nederlandse.
+  const collectionId = editionId ?? (await resolveEditionId(BOFM_WORK));
+  const where = { status: "APPROVED" as const, type: { in: types }, chapter: { book: { contentCollectionId: collectionId ?? undefined } } };
   const count = await prisma.exercise.count({ where });
   if (count === 0) return null;
   const skip = Math.floor(Math.random() * count);
@@ -215,8 +218,8 @@ export interface WhereInBookAnswer {
 }
 
 /** "Waar in het boek?" — 1-op-1 hergebruik van de chapterGuess-mechaniek (beginner-stijl: 4 opties). */
-export async function pickWhereInBookCard(): Promise<{ card: FamilyWhereInBookCard; correctChapterId: string } | null> {
-  const [correctChapterId, ...wrongIds] = await pickRandomChapterIds(4);
+export async function pickWhereInBookCard(editionId?: string): Promise<{ card: FamilyWhereInBookCard; correctChapterId: string } | null> {
+  const [correctChapterId, ...wrongIds] = await pickRandomChapterIds(4, [], editionId);
   if (!correctChapterId) return null;
   const introText = await getChapterIntro(correctChapterId);
   const introAudio = await getChapterIntroAudio(correctChapterId);

@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/db";
-import { BOM_COLLECTION_ID } from "@/lib/contentCollections";
+import { BOFM_WORK, BOM_COLLECTION_ID, resolveEditionId } from "@/lib/contentCollections";
+import { verseInEdition } from "@/lib/scriptureRefs";
 import { amsterdamNow } from "@/lib/dates";
 
 export interface DailyText {
@@ -19,7 +20,7 @@ export interface DailyText {
  * "Boek van Mormon". Daarom selecteren we alle boeken en niet op een
  * specifieke naam.
  */
-export async function getTextOfTheDay(date = new Date()): Promise<DailyText | null> {
+export async function getTextOfTheDay(date = new Date(), language?: string | null): Promise<DailyText | null> {
   // Tellen en daarna met skip precies één vers ophalen, in plaats van elke
   // aanroep (dashboard én elke schedulertick) de volledige schrifttekst in
   // het geheugen te laden.
@@ -45,13 +46,34 @@ export async function getTextOfTheDay(date = new Date()): Promise<DailyText | nu
     select: {
       number: true,
       text: true,
-      chapter: { select: { id: true, number: true, book: { select: { name: true } } } },
+      chapter: { select: { id: true, number: true, book: { select: { name: true, key: true } } } },
     },
   });
   if (!verse) return null;
 
+  // Het vers wordt altijd gekozen in de Nederlandse uitgave (die telt het
+  // vaste aantal verzen waarop de keuze van de dag rust), zodat iedereen,
+  // in welke taal ook, dezelfde tekst van de dag heeft. Daarna tonen we dat
+  // vers in de uitgave van de contenttaal, als die er is.
+  const editionId = await resolveEditionId(BOFM_WORK, language);
+  if (editionId && editionId !== BOM_COLLECTION_ID && verse.chapter.book.key) {
+    const translated = await verseInEdition(
+      { bookKey: verse.chapter.book.key, chapter: verse.chapter.number, verse: verse.number },
+      editionId
+    );
+    if (translated) {
+      return {
+        href: await textOfTheDayHref(translated.chapter.id, translated.number, editionId),
+        bookName: translated.chapter.book.name,
+        chapterNumber: translated.chapter.number,
+        verseNumber: translated.number,
+        text: translated.text,
+      };
+    }
+  }
+
   return {
-    href: await textOfTheDayHref(verse.chapter.id, verse.number),
+    href: await textOfTheDayHref(verse.chapter.id, verse.number, BOM_COLLECTION_ID),
     bookName: verse.chapter.book.name,
     chapterNumber: verse.chapter.number,
     verseNumber: verse.number,
@@ -67,12 +89,12 @@ export async function getTextOfTheDay(date = new Date()): Promise<DailyText | nu
  * advanceCourseProgress), en het actieve cursus-id blijft ongemoeid. Staat
  * Vrije keuze uit, dan opent het hoofdstuk zonder cursus.
  */
-async function textOfTheDayHref(chapterId: string, verseNumber: number): Promise<string> {
+async function textOfTheDayHref(chapterId: string, verseNumber: number, editionId: string): Promise<string> {
   const freeChoice = await prisma.course.findFirst({
     where: {
       type: "FREE_CHOICE",
       enabled: true,
-      contentCollectionId: BOM_COLLECTION_ID,
+      contentCollectionId: editionId,
       chapters: { some: { chapterId } },
     },
     select: { id: true },

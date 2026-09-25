@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/db";
-import { BOM_COLLECTION_ID } from "@/lib/contentCollections";
+import { BOFM_WORK, resolveEditionId } from "@/lib/contentCollections";
 import { shuffle } from "@/lib/scrabble/tiles";
 import { completeChapterGuess } from "@/lib/streak";
 import type { ChapterGuessLevel } from "@prisma/client";
@@ -69,18 +69,25 @@ export async function getChapterIntroAudio(chapterId: string): Promise<IntroAudi
   return { url: chapter.audioUrl, start: chapter.audioHeadingStart, end: chapter.audioHeadingEnd };
 }
 
-export async function pickRandomChapterIds(count: number, excludeIds: string[] = []): Promise<string[]> {
-  // Alleen het Boek van Mormon: het spel hoort bij die collectie, ook nu er
-  // andere schriften in dezelfde tabellen staan.
+export async function pickRandomChapterIds(count: number, excludeIds: string[] = [], editionId?: string): Promise<string[]> {
+  // Alleen het Boek van Mormon: het spel hoort bij dat werk, ook nu er
+  // andere schriften in dezelfde tabellen staan. Zonder opgegeven uitgave de
+  // Nederlandse (zie resolveEditionId).
+  const collectionId = editionId ?? (await resolveEditionId(BOFM_WORK));
   const all = await prisma.chapter.findMany({
-    where: { id: { notIn: excludeIds }, book: { contentCollectionId: BOM_COLLECTION_ID } },
+    where: { id: { notIn: excludeIds }, book: { contentCollectionId: collectionId ?? undefined } },
     select: { id: true },
   });
   return shuffle(all.map((c) => c.id)).slice(0, count);
 }
 
 export async function buildBeginnerOptionIds(correctChapterId: string): Promise<string[]> {
-  const wrong = await pickRandomChapterIds(BEGINNER_OPTION_COUNT - 1, [correctChapterId]);
+  // Foute keuzes uit dezelfde uitgave als het goede antwoord.
+  const correct = await prisma.chapter.findUnique({
+    where: { id: correctChapterId },
+    select: { book: { select: { contentCollectionId: true } } },
+  });
+  const wrong = await pickRandomChapterIds(BEGINNER_OPTION_COUNT - 1, [correctChapterId], correct?.book.contentCollectionId);
   return shuffle([correctChapterId, ...wrong]);
 }
 

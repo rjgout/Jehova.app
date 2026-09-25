@@ -53,13 +53,19 @@ async function runDailyTextTick(): Promise<void> {
       OR: [{ emailNotificationsEnabled: true }, { pushNotificationsEnabled: true }],
       AND: [{ OR: [{ lastDailyTextSentDate: null }, { lastDailyTextSentDate: { not: today } }] }],
     },
-    select: { id: true },
+    select: { id: true, contentLanguage: true },
   });
   if (candidates.length === 0) return;
-  const text = await getTextOfTheDay(now);
-  if (!text) return;
 
+  // Hetzelfde vers voor iedereen, maar in de contenttaal van elke ontvanger;
+  // per taal maar één keer opzoeken.
+  const textByLanguage = new Map<string, Awaited<ReturnType<typeof getTextOfTheDay>>>();
   for (const user of candidates) {
+    if (!textByLanguage.has(user.contentLanguage)) {
+      textByLanguage.set(user.contentLanguage, await getTextOfTheDay(now, user.contentLanguage));
+    }
+    const text = textByLanguage.get(user.contentLanguage);
+    if (!text) continue;
     await notifyDailyText(user.id, { ...text, content: text.text }).catch(() => {});
     await prisma.user.update({ where: { id: user.id }, data: { lastDailyTextSentDate: today } }).catch(() => {});
   }

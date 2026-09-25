@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/db";
+import { DEFAULT_LANGUAGE } from "@/lib/languages";
 
 export interface ContentCollectionView {
   id: string;
@@ -7,6 +8,10 @@ export interface ContentCollectionView {
   icon: string;
   order: number;
   visibleToUsers: boolean;
+  /** Welk werk (bv. "bofm"), los van de taal; zie ContentCollection.work. */
+  work: string | null;
+  /** Taal van deze uitgave (src/lib/languages.ts). */
+  language: string;
 }
 
 export interface AdminContentCollection extends ContentCollectionView {
@@ -27,6 +32,9 @@ export const BOM_COLLECTION_ID = "content_bom";
 // Zie migratie 20260924200000_dc_pgp_collections.
 export const DC_COLLECTION_ID = "content_dc";
 export const PGP_COLLECTION_ID = "content_pgp";
+// Werken (ContentCollection.work): hetzelfde werk in een andere taal is een
+// andere collectie met hetzelfde work.
+export const BOFM_WORK = "bofm";
 
 const DEFAULT_COLLECTION: ContentCollectionView = {
   id: BOM_COLLECTION_ID,
@@ -35,9 +43,11 @@ const DEFAULT_COLLECTION: ContentCollectionView = {
   icon: "📖",
   order: 0,
   visibleToUsers: true,
+  work: BOFM_WORK,
+  language: DEFAULT_LANGUAGE,
 };
 
-const VIEW_SELECT = { id: true, slug: true, name: true, icon: true, order: true, visibleToUsers: true } as const;
+const VIEW_SELECT = { id: true, slug: true, name: true, icon: true, order: true, visibleToUsers: true, work: true, language: true } as const;
 
 /** Welke collecties iemand mag kiezen: beheerders ook de verborgen. */
 function selectableWhere(isAdmin: boolean) {
@@ -154,4 +164,22 @@ export async function isContentCollectionSelectable(contentCollectionId: string 
     where: { id: contentCollectionId, ...selectableWhere(false) },
   });
   return count > 0;
+}
+
+/**
+ * De uitgave (collectie) van een werk in een taal, bv. het Boek van Mormon in
+ * het Engels. Bestaat die (nog) niet of staat die niet open voor gebruikers,
+ * dan de Nederlandse uitgave: zo blijft alles werken terwijl een taal wordt
+ * opgebouwd. Voor het Boek van Mormon valt dit uiteindelijk terug op de
+ * vaste collectie, ook op een lege database.
+ */
+export async function resolveEditionId(work: string, language?: string | null): Promise<string | null> {
+  const editions = await prisma.contentCollection.findMany({
+    where: { work, ...selectableWhere(false) },
+    select: { id: true, language: true },
+  });
+  const edition =
+    editions.find((candidate) => candidate.language === language) ??
+    editions.find((candidate) => candidate.language === DEFAULT_LANGUAGE);
+  return edition?.id ?? (work === BOFM_WORK ? BOM_COLLECTION_ID : null);
 }

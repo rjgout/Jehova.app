@@ -22,7 +22,7 @@ export default async function DashboardPage() {
     scrabbleTurns,
     pendingFriendRequests,
   ] = await Promise.all([
-    getTextOfTheDay(),
+    getTextOfTheDay(new Date(), user.contentLanguage),
     prisma.chapter.count(),
     prisma.friendship.findMany({
       where: { status: "ACCEPTED", OR: [{ senderId: user.id }, { receiverId: user.id }] },

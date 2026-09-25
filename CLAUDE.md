@@ -321,6 +321,34 @@ verwerken". Fundamenteel anders dan de rest van de API:
   worden met toestemming gebruikt — deel dit dus niet als losstaand
   bestand/export met een instantie die die toestemming niet apart heeft.
 
+## Talen (Nederlands, Engels, Duits, Frans)
+
+Doel: één app in vier talen, met één gezamenlijke competitie en spellen die
+spelers in verschillende talen samen kunnen spelen (bv. De Alleskenner, Raad
+het hoofdstuk). Het fundament ligt er; zichtbaar is alles nog Nederlands.
+
+- **Twee losse taalkeuzes per gebruiker**: `User.uiLanguage` (menu's,
+  knoppen, meldingen, e-mails) en `User.contentLanguage` (welke uitgave je
+  leest en speelt). Codes en namen staan in `src/lib/languages.ts`.
+- **Een collectie is één uitgave**: `ContentCollection.work` (bv. `bofm`,
+  `dc-testament`, `pgp`) + `language`. Een Engelse uitgave van het Boek van
+  Mormon wordt een eigen collectie met hetzelfde `work`. Zoek een uitgave op
+  met `resolveEditionId(work, taal)` (`src/lib/contentCollections.ts`); die
+  valt terug op de Nederlandse. Nieuwe code filtert dus op werk + taal, niet
+  op een vaste collectie-id als `BOM_COLLECTION_ID`.
+- **Dezelfde tekst in elke taal**: `Book.key` is het pad dat de kerk gebruikt
+  (`bofm/alma`, zie `prisma/bookKeys.ts`); sleutel + hoofdstuk + vers is in
+  elke uitgave hetzelfde. Helpers in `src/lib/scriptureRefs.ts`. Een spel
+  tussen talen kiest één verwijzing en laat die elke speler in de eigen
+  contenttaal zien; scores tellen op de vraag, niet op de tekst.
+- **App-teksten**: `src/lib/i18n/messages/nl.ts` is de bron; `en/de/fr.ts`
+  volgen die structuur en vallen per ontbrekende tekst terug op het
+  Nederlands. Sleutels zijn getypt. Server (ook de eager-keten van
+  `server.ts`): `getT(user.uiLanguage)`; client: `useT()` uit
+  `src/components/I18nProvider.tsx`. Voortgang: `npx tsx scripts/i18n/check.ts`.
+  Zet teksten per onderdeel om (niet alles tegelijk) en groepeer sleutels per
+  onderdeel van de app. Codecommentaar en commitmessages blijven Nederlands.
+
 ## Podcastafleveringen verwerken (`prisma/podcastContent.ts`)
 
 De app kent meerdere podcasts (vaste lijst in `src/lib/podcasts.ts`, elk met
