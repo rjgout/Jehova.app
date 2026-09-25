@@ -46,11 +46,14 @@ export async function POST(req: NextRequest) {
 
   let correctCount = 0;
   const results: { exerciseId: string; correct: boolean; correctAnswer: string[] }[] = [];
+  const exerciseById = new Map(lesson.exercises.map(({ exercise }) => [exercise.id, exercise]));
 
-  for (const { exercise } of lesson.exercises) {
+  for (const [exerciseId, given] of submittedById) {
+    const exercise = exerciseById.get(exerciseId);
+    if (!exercise) continue;
+
     const accepted = JSON.parse(exercise.answers) as string[];
-    const given = submittedById.get(exercise.id);
-    const correct = given ? isExerciseCorrect(exercise.type, given, accepted) : false;
+    const correct = isExerciseCorrect(exercise.type, given, accepted);
     if (correct) correctCount++;
 
     results.push({
@@ -59,16 +62,14 @@ export async function POST(req: NextRequest) {
       correctAnswer: accepted,
     });
 
-    if (given) {
-      await prisma.exerciseAttempt.create({
-        data: {
-          userId: user.id,
-          exerciseId: exercise.id,
-          givenText: given.join(" "),
-          correct,
-        },
-      });
-    }
+    await prisma.exerciseAttempt.create({
+      data: {
+        userId: user.id,
+        exerciseId: exercise.id,
+        givenText: given.join(" "),
+        correct,
+      },
+    });
   }
 
   const total = results.length;
