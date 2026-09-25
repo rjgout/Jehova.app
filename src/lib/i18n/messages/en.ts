@@ -327,7 +327,7 @@ export const en: PartialMessages = {
       description: "Guess the 5-letter word from the Book of Mormon — a new word every day at 6:00 p.m., one try per day, and it counts toward your streak.",
       linkLabel: "Open Word of the Day",
       rule1: "Guess the daily word from the Book of Mormon.",
-      rule2: "You have 5 tries. Green = right letter in the right spot, yellow = right letter in the wrong spot, and gray = the letter isn't in the word.",
+      rule2: "You have 6 tries. Green = right letter in the right spot, yellow = right letter in the wrong spot, and gray = the letter isn't in the word.",
       rule3: "The game ends when you guess the word or run out of tries.",
     },
     scrabble: {

@@ -331,7 +331,7 @@ export const nl = {
       description: "Raad het 5-letterwoord uit het Boek van Mormon — elke dag om 18:00 uur een nieuw woord, één poging per dag, en het telt mee voor je streak.",
       linkLabel: "Woord van de dag openen",
       rule1: "Raad het dagelijkse woord uit het Boek van Mormon.",
-      rule2: "Je hebt 5 pogingen. Groen = juiste letter op de juiste plek, geel = juiste letter op de verkeerde plek en grijs = de letter komt niet voor.",
+      rule2: "Je hebt 6 pogingen. Groen = juiste letter op de juiste plek, geel = juiste letter op de verkeerde plek en grijs = de letter komt niet voor.",
       rule3: "Het spel eindigt als je het woord raadt of je pogingen op zijn.",
     },
     scrabble: {

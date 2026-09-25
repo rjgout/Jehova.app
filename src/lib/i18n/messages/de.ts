@@ -327,7 +327,7 @@ export const de: PartialMessages = {
       description: "Errate das Wort mit 5 Buchstaben aus dem Buch Mormon — jeden Tag um 18:00 Uhr ein neues Wort, ein Versuch pro Tag, und es zählt für deine Serie.",
       linkLabel: "Wort des Tages öffnen",
       rule1: "Errate das tägliche Wort aus dem Buch Mormon.",
-      rule2: "Du hast 5 Versuche. Grün = richtiger Buchstabe an der richtigen Stelle, gelb = richtiger Buchstabe an der falschen Stelle und grau = der Buchstabe kommt nicht vor.",
+      rule2: "Du hast 6 Versuche. Grün = richtiger Buchstabe an der richtigen Stelle, gelb = richtiger Buchstabe an der falschen Stelle und grau = der Buchstabe kommt nicht vor.",
       rule3: "Das Spiel endet, wenn du das Wort errätst oder keine Versuche mehr hast.",
     },
     scrabble: {

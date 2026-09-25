@@ -327,7 +327,7 @@ export const fr: PartialMessages = {
       description: "Devine le mot de 5 lettres tiré du Livre de Mormon — un nouveau mot chaque jour à 18 h, un essai par jour, et il compte pour ta série.",
       linkLabel: "Ouvrir le mot du jour",
       rule1: "Devine le mot du jour tiré du Livre de Mormon.",
-      rule2: "Tu as 5 essais. Vert = bonne lettre à la bonne place, jaune = bonne lettre à la mauvaise place et gris = la lettre n’est pas dans le mot.",
+      rule2: "Tu as 6 essais. Vert = bonne lettre à la bonne place, jaune = bonne lettre à la mauvaise place et gris = la lettre n’est pas dans le mot.",
       rule3: "La partie se termine quand tu devines le mot ou que tu n’as plus d’essais.",
     },
     scrabble: {
