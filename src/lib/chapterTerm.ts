@@ -3,15 +3,19 @@
 // alle andere boeken in hoofdstukken. Puur data, dus bruikbaar op de server
 // en in client components.
 
+import type { TFunction } from "@/lib/i18n/core";
+
 export interface ChapterTerm {
+  /** Welk soort onderdeel, voor de vertaling (zie localizeTerm). */
+  kind: "chapter" | "section";
   singular: string; // "hoofdstuk"
   plural: string; // "hoofdstukken"
   // Met lidwoord, want het verschilt: "dit hoofdstuk", "deze afdeling".
   thisOne: string;
 }
 
-const HOOFDSTUK: ChapterTerm = { singular: "hoofdstuk", plural: "hoofdstukken", thisOne: "dit hoofdstuk" };
-const AFDELING: ChapterTerm = { singular: "afdeling", plural: "afdelingen", thisOne: "deze afdeling" };
+const HOOFDSTUK: ChapterTerm = { kind: "chapter", singular: "hoofdstuk", plural: "hoofdstukken", thisOne: "dit hoofdstuk" };
+const AFDELING: ChapterTerm = { kind: "section", singular: "afdeling", plural: "afdelingen", thisOne: "deze afdeling" };
 
 // Leer en Verbonden in elke taal: de Nederlandse slug, of de slug die
 // fetch_scripture.py maakt ("<taal>-dc-testament-dc").
@@ -34,4 +38,17 @@ export function chapterTerm(bookSlug: string | null | undefined, collectionId?: 
 
 export function capitalize(word: string): string {
   return word.charAt(0).toUpperCase() + word.slice(1);
+}
+
+/**
+ * Dezelfde term in de taal van de app ("chapter", "Abschnitt", ...). Voor het
+ * Nederlands geeft de vertaling exact de woorden hierboven terug.
+ */
+export function localizeTerm(term: ChapterTerm, t: TFunction): ChapterTerm {
+  return {
+    kind: term.kind,
+    singular: t(`terms.${term.kind}.singular`),
+    plural: t(`terms.${term.kind}.plural`),
+    thisOne: t(`terms.${term.kind}.thisOne`),
+  };
 }

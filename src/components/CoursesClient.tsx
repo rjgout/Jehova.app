@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useT } from "@/components/I18nProvider";
+import type { MessageKey } from "@/lib/i18n/core";
 import { SortableList, DragHandle } from "@/components/SortableList";
 import { applyPersonalOrder, fetchListOrder, saveListOrder } from "@/lib/listOrder";
 
@@ -28,18 +30,19 @@ interface CatalogCourseView {
   totalChapters: number;
 }
 
-const TYPE_LABELS: Record<CourseView["type"], string> = {
-  INTRO: "Introductie",
-  READING_LESSONS: "Korte stappen",
-  FRONT_TO_BACK: "Leesroute",
-  FREE_CHOICE: "Vrije keuze",
-  BY_BOOK: "Per boek",
-  PODCAST: "Podcast",
-  KIDS: "Voor kinderen",
-  FSY: "Voor de kracht van de jeugd",
+const TYPE_LABELS: Record<CourseView["type"], MessageKey> = {
+  INTRO: "courses.types.intro",
+  READING_LESSONS: "courses.types.readingLessons",
+  FRONT_TO_BACK: "courses.types.frontToBack",
+  FREE_CHOICE: "courses.types.freeChoice",
+  BY_BOOK: "courses.types.byBook",
+  PODCAST: "courses.types.podcast",
+  KIDS: "courses.types.kids",
+  FSY: "courses.types.fsy",
 };
 
 export default function CoursesClient() {
+  const t = useT();
   const [courses, setCourses] = useState<CourseView[] | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [activatingId, setActivatingId] = useState<string | null>(null);
@@ -51,13 +54,13 @@ export default function CoursesClient() {
     Promise.all([
       fetch("/api/courses").then(async (r) => {
         const data = await r.json().catch(() => null);
-        if (!r.ok) throw new Error(data?.error ?? `Er ging iets mis (${r.status}).`);
+        if (!r.ok) throw new Error(data?.error ?? t("courses.errorStatus", { status: r.status }));
         return data;
       }),
       fetchListOrder("courses"),
     ])
       .then(([d, order]) => setCourses(applyPersonalOrder(d.courses ?? [], order)))
-      .catch((e) => setLoadError(e instanceof Error ? e.message : "Er ging iets mis."));
+      .catch((e) => setLoadError(e instanceof Error ? e.message : t("courses.error")));
   }
 
   useEffect(loadCourses, []);
@@ -97,7 +100,7 @@ export default function CoursesClient() {
   async function remove(courseId: string) {
     if (
       !window.confirm(
-        "Deze cursus uit je lijst verwijderen? Je voortgang blijft bewaard — je kan 'm later gewoon weer toevoegen."
+        t("courses.removeConfirm")
       )
     ) {
       return;
@@ -120,14 +123,14 @@ export default function CoursesClient() {
       <div className="max-w-md mx-auto card text-center flex flex-col gap-3">
         <p className="text-red-600 dark:text-red-400 font-semibold">{loadError}</p>
         <button className="btn-secondary self-center" onClick={() => window.location.reload()}>
-          Opnieuw proberen
+          {t("courses.retry")}
         </button>
       </div>
     );
   }
 
   if (!courses) {
-    return <p className="text-center text-slate-400 dark:text-slate-500">Laden...</p>;
+    return <p className="text-center text-slate-400 dark:text-slate-500">{t("courses.loading")}</p>;
   }
 
   const otherCatalogCourses = catalog ?? [];
@@ -135,19 +138,14 @@ export default function CoursesClient() {
   return (
     <div className="max-w-5xl mx-auto flex flex-col gap-6">
       <div>
-        <h1 className="text-2xl font-extrabold text-brand-800 dark:text-brand-300">Cursussen</h1>
-        <p className="text-slate-500 dark:text-slate-400 text-sm">
-          Dit zijn jouw cursussen — je voortgang per cursus blijft bewaard als je wisselt. Wil je er nog eentje
-          proberen, voeg 'm dan toe met de knop hieronder.
-        </p>
+        <h1 className="text-2xl font-extrabold text-brand-800 dark:text-brand-300">{t("pages.courses")}</h1>
+        <p className="text-slate-500 dark:text-slate-400 text-sm">{t("courses.intro")}</p>
       </div>
 
       {courses.length === 0 && (
         <div className="card text-center flex flex-col gap-2">
-          <p className="font-bold dark:text-slate-100">Je hebt nog geen cursussen toegevoegd</p>
-          <p className="text-sm text-slate-500 dark:text-slate-400">
-            Klik hieronder op "Voeg nieuwe cursus toe" om te beginnen.
-          </p>
+          <p className="font-bold dark:text-slate-100">{t("courses.noneTitle")}</p>
+          <p className="text-sm text-slate-500 dark:text-slate-400">{t("courses.noneHint")}</p>
         </div>
       )}
 
@@ -172,14 +170,14 @@ export default function CoursesClient() {
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
                       <p className="text-xs font-extrabold uppercase tracking-wide text-slate-400 dark:text-slate-500">
-                        {TYPE_LABELS[course.type]}
+                        {t(TYPE_LABELS[course.type])}
                       </p>
                       <h2 className="font-extrabold text-lg leading-tight dark:text-slate-100">{course.name}</h2>
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
                       {course.isActive && (
                         <span className="text-xs font-extrabold uppercase text-brand-600 dark:text-brand-300 bg-brand-50 dark:bg-slate-700 rounded-full px-3 py-1">
-                          Actief
+                          {t("courses.active")}
                         </span>
                       )}
                       <button
@@ -187,8 +185,8 @@ export default function CoursesClient() {
                         className="w-8 h-8 rounded-full border border-slate-200 dark:border-slate-700 text-slate-400 dark:text-slate-500 hover:text-red-500 hover:border-red-200 dark:hover:border-red-900 flex items-center justify-center text-lg leading-none transition-colors"
                         disabled={removingId === course.id}
                         onClick={() => remove(course.id)}
-                        aria-label={"Cursus " + course.name + " verwijderen"}
-                        title="Cursus verwijderen"
+                        aria-label={t("courses.removeAria", { name: course.name })}
+                        title={t("courses.removeTitle")}
                       >
                         ×
                       </button>
@@ -205,9 +203,13 @@ export default function CoursesClient() {
                         <div className="h-full bg-gold-400" style={{ width: `${pct}%` }} />
                       </div>
                       <p className="text-xs text-slate-400 dark:text-slate-500">
-                        {course.completedCount} / {course.totalChapters} {course.unitPlural ?? "hoofdstukken"} voltooid
+                        {t("courses.progress", {
+                          done: course.completedCount,
+                          total: course.totalChapters,
+                          unit: course.unitPlural ?? t("terms.chapter.plural"),
+                        })}
                         {course.currentChapter &&
-                          ` — volgende: ${course.currentChapter.bookName} ${course.currentChapter.number}`}
+                          t("courses.next", { chapter: `${course.currentChapter.bookName} ${course.currentChapter.number}` })}
                       </p>
                     </div>
                   )}
@@ -215,7 +217,7 @@ export default function CoursesClient() {
                   <div className="flex gap-3 mt-3">
                     {course.isActive ? (
                       <Link href={`/courses/${course.id}`} className="btn-primary self-start">
-                        Ga verder →
+                        {t("courses.continue")}
                       </Link>
                     ) : (
                       <button
@@ -223,7 +225,7 @@ export default function CoursesClient() {
                         disabled={activatingId === course.id}
                         onClick={() => activate(course.id)}
                       >
-                        {activatingId === course.id ? "Bezig..." : "Kies deze cursus"}
+                        {activatingId === course.id ? t("courses.busy") : t("courses.choose")}
                       </button>
                     )}
                   </div>
@@ -239,16 +241,16 @@ export default function CoursesClient() {
           className="rounded-2xl border-2 border-dashed border-slate-300 dark:border-slate-600 text-slate-500 dark:text-slate-400 font-extrabold text-sm py-3 hover:border-brand-400 hover:text-brand-600 dark:hover:text-brand-300 transition-colors"
           onClick={openCatalog}
         >
-          ➕ Voeg nieuwe cursus toe
+          ➕ {t("courses.addNew")}
         </button>
       ) : (
         <div className="card flex flex-col gap-3">
-          <h2 className="font-extrabold dark:text-slate-100">Voeg nieuwe cursus toe</h2>
+          <h2 className="font-extrabold dark:text-slate-100">{t("courses.addNew")}</h2>
           {!catalog ? (
-            <p className="text-slate-400 dark:text-slate-500">Laden...</p>
+            <p className="text-slate-400 dark:text-slate-500">{t("courses.loading")}</p>
           ) : catalog.length === 0 ? (
             <p className="text-sm text-slate-500 dark:text-slate-400">
-              Je hebt alles al toegevoegd wat er is — niets meer om te kiezen.
+              {t("courses.allAdded")}
             </p>
           ) : (
             <div className="flex flex-col gap-2">
@@ -259,7 +261,7 @@ export default function CoursesClient() {
                 >
                   <div>
                     <p className="text-xs font-bold uppercase text-slate-400 dark:text-slate-500">
-                      {TYPE_LABELS[course.type]}
+                      {t(TYPE_LABELS[course.type])}
                     </p>
                     <p className="font-bold dark:text-slate-100">{course.name}</p>
                     {course.description && (
@@ -271,20 +273,20 @@ export default function CoursesClient() {
                     disabled={activatingId === course.id}
                     onClick={() => activate(course.id)}
                   >
-                    {activatingId === course.id ? "Bezig..." : "Toevoegen"}
+                    {activatingId === course.id ? t("courses.busy") : t("courses.add")}
                   </button>
                 </div>
               ))}
             </div>
           )}
           <button className="text-sm text-slate-400 dark:text-slate-500 hover:underline self-start" onClick={() => setShowCatalog(false)}>
-            Sluiten
+            {t("common.close")}
           </button>
         </div>
       )}
 
       <Link href="/tools" className="btn-secondary w-full justify-center">
-        🧰 Hulpmiddelen
+        🧰 {t("pages.tools")}
       </Link>
     </div>
   );

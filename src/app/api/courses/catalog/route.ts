@@ -2,7 +2,9 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getCurrentUser } from "@/lib/session";
 import { getContentContext } from "@/lib/contentCollections";
-import { chapterTerm } from "@/lib/chapterTerm";
+import { chapterTerm, localizeTerm } from "@/lib/chapterTerm";
+import { localizedCourse } from "@/lib/courseText";
+import { getT } from "@/lib/i18n";
 
 // Cursussen die nog NIET in de persoonlijke lijst staan — voor de "Voeg
 // nieuwe cursus toe"-catalogus op /courses (en /courses/per-boek, dat dit
@@ -13,12 +15,17 @@ export async function GET() {
   if (!user) return NextResponse.json({ error: "Niet ingelogd" }, { status: 401 });
 
   const contentContext = await getContentContext(user.id);
+  const t = getT(user.uiLanguage);
 
   const [courses, subscriptions] = await Promise.all([
     prisma.course.findMany({
       where: { enabled: true, contentCollectionId: contentContext.active.id },
       orderBy: { order: "asc" },
-      include: { _count: { select: { chapters: true } }, book: { select: { slug: true } } },
+      include: {
+        _count: { select: { chapters: true } },
+        book: { select: { slug: true } },
+        contentCollection: { select: { work: true } },
+      },
     }),
     prisma.userCourseProgress.findMany({
       where: { userId: user.id, subscribed: true },
@@ -34,10 +41,9 @@ export async function GET() {
       id: c.id,
       slug: c.slug,
       type: c.type,
-      name: c.name,
-      description: c.description,
+      ...localizedCourse({ ...c, work: c.contentCollection.work }, user.uiLanguage),
       totalChapters: c._count.chapters,
-      unitPlural: chapterTerm(c.book?.slug, c.contentCollectionId).plural,
+      unitPlural: localizeTerm(chapterTerm(c.book?.slug, c.contentCollectionId), t).plural,
     })),
   });
 }
