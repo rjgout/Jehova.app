@@ -9,6 +9,7 @@ import { announceXpChanged } from "@/lib/xpBroadcast";
 import UserAvatar from "@/components/UserAvatar";
 import LobbyInviteCard from "@/components/LobbyInviteCard";
 import { useT } from "@/components/I18nProvider";
+import { translateServerText } from "@/lib/i18n/serverTexts";
 import IntroAudioButton from "@/components/IntroAudioButton";
 
 interface LobbyPlayer {
@@ -211,7 +212,7 @@ export default function ChapterGuessGameRoom({ code, myUserId }: { code: string;
   if (phase === "error") {
     return (
       <div className="max-w-md mx-auto card text-center flex flex-col gap-4">
-        <p className="text-red-600 dark:text-red-400 font-bold">{errorMessage}</p>
+        <p className="text-red-600 dark:text-red-400 font-bold">{translateServerText(errorMessage ?? "", t)}</p>
         <Link href="/live" className="btn-secondary self-center">
           {t("wordOfTheDay.back")}
         </Link>
@@ -306,7 +307,7 @@ export default function ChapterGuessGameRoom({ code, myUserId }: { code: string;
             </button>
           </div>
         </div>
-        {hintError && <p className="text-red-600 dark:text-red-400 text-sm font-semibold">{hintError}</p>}
+        {hintError && <p className="text-red-600 dark:text-red-400 text-sm font-semibold">{translateServerText(hintError, t)}</p>}
 
         <div className="card flex flex-col gap-5">
           <p className="text-xs font-bold uppercase text-slate-400 dark:text-slate-500">{t("chapterGuess.readHeading")}</p>

@@ -7,6 +7,7 @@ import { getSocket } from "@/lib/socketClient";
 import UserAvatar from "@/components/UserAvatar";
 import UserTag from "@/components/UserTag";
 import { useT, useUiLanguage } from "@/components/I18nProvider";
+import { translateServerText } from "@/lib/i18n/serverTexts";
 import { getLanguage } from "@/lib/languages";
 import type { TFunction } from "@/lib/i18n/core";
 
@@ -324,7 +325,7 @@ export default function FriendPicker({
                     const s = status[friend.id];
                     const state = stateFor?.(friend.id) ?? "invite";
                     const detail = s?.activity
-                      ? `${s.activity.icon} ${s.activity.label}`
+                      ? `${s.activity.icon} ${translateServerText(s.activity.label, t)}`
                       : s?.online
                         ? t("friendPicker.online")
                         : lastPlayed[friend.id]

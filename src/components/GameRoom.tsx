@@ -10,6 +10,7 @@ import { announceXpChanged } from "@/lib/xpBroadcast";
 import UserAvatar from "@/components/UserAvatar";
 import LobbyInviteCard from "@/components/LobbyInviteCard";
 import { useT } from "@/components/I18nProvider";
+import { translateServerText } from "@/lib/i18n/serverTexts";
 
 interface LobbyPlayer {
   userId: string;
@@ -154,7 +155,7 @@ export default function GameRoom({ code, myUserId }: { code: string; myUserId: s
   if (phase === "error") {
     return (
       <div className="max-w-md mx-auto card text-center flex flex-col gap-4">
-        <p className="text-red-600 dark:text-red-400 font-bold">{errorMessage}</p>
+        <p className="text-red-600 dark:text-red-400 font-bold">{translateServerText(errorMessage ?? "", t)}</p>
         <Link href="/live" className="btn-secondary self-center">
           {t("wordOfTheDay.back")}
         </Link>

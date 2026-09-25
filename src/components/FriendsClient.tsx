@@ -7,6 +7,7 @@ import UserTag from "@/components/UserTag";
 import UserAvatar from "@/components/UserAvatar";
 import FriendInviteCard from "@/components/FriendInviteCard";
 import { useT } from "@/components/I18nProvider";
+import { translateServerText } from "@/lib/i18n/serverTexts";
 import { rich } from "@/lib/i18n/rich";
 
 interface FriendUser {
@@ -330,10 +331,10 @@ export default function FriendsClient({ appName }: { appName: string }) {
                     </div>
                     {status?.activity ? (
                       <div className="text-xs text-brand-600 dark:text-brand-300 font-semibold truncate">
-                        {status.activity.icon} {status.activity.label}
+                        {status.activity.icon} {translateServerText(status.activity.label, t)}
                       </div>
                     ) : status && !status.online && status.lastSeenLabel ? (
-                      <div className="text-xs text-slate-400 dark:text-slate-500 truncate">{t("friends.lastActive", { when: status.lastSeenLabel })}</div>
+                      <div className="text-xs text-slate-400 dark:text-slate-500 truncate">{t("friends.lastActive", { when: translateServerText(status.lastSeenLabel, t) })}</div>
                     ) : null}
                   </div>
                 </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { getSocket } from "@/lib/socketClient";
@@ -13,6 +13,26 @@ import UserAvatar from "@/components/UserAvatar";
 import LobbyInviteCard from "@/components/LobbyInviteCard";
 import { useT } from "@/components/I18nProvider";
 import { rich } from "@/lib/i18n/rich";
+import { translateServerText } from "@/lib/i18n/serverTexts";
+import type { TFunction } from "@/lib/i18n/core";
+
+// De server maakt titels, feedback en teamnamen in het Nederlands (voor alle
+// spelers dezelfde status); elke speler ziet ze hier in de eigen taal.
+function localizeState(state: AkStateView, t: TFunction): AkStateView {
+  const tr = (text: string) => translateServerText(text, t);
+  return {
+    ...state,
+    lobbyTeams: state.lobbyTeams?.map((team) => ({ ...team, name: tr(team.name) })) ?? null,
+    // Bij teams is de naam van een deelnemer een teamnaam; spelersnamen blijven zoals ze zijn.
+    contestants: state.teamMode ? state.contestants.map((c) => ({ ...c, name: tr(c.name) })) : state.contestants,
+    intermission: state.intermission && {
+      ...state.intermission,
+      title: tr(state.intermission.title),
+      subtitle: tr(state.intermission.subtitle),
+    },
+    feedback: state.feedback && { ...state.feedback, text: tr(state.feedback.text) },
+  };
+}
 
 interface Friend {
   id: string;
@@ -26,7 +46,8 @@ interface Friend {
  */
 export default function AlleskennerRoom({ code, soloRunId }: { code: string; soloRunId?: string }) {
   const t = useT();
-  const [state, setState] = useState<AkStateView | null>(null);
+  const [rawState, setState] = useState<AkStateView | null>(null);
+  const state = useMemo(() => rawState && localizeState(rawState, t), [rawState, t]);
   const [receivedAt, setReceivedAt] = useState(0);
   const [error, setError] = useState<string | null>(null);
 
@@ -63,7 +84,7 @@ export default function AlleskennerRoom({ code, soloRunId }: { code: string; sol
       <div className="max-w-md mx-auto card text-center flex flex-col gap-3">
         {error ? (
           <>
-            <p className="font-semibold text-red-600 dark:text-red-400">{error}</p>
+            <p className="font-semibold text-red-600 dark:text-red-400">{translateServerText(error, t)}</p>
             <Link href={soloRunId ? "/alleskenner/alleen" : "/live"} className="btn-secondary self-center">
               {soloRunId ? t("akRoom.backToSolo") : t("akRoom.backToPlay")}
             </Link>
@@ -77,7 +98,7 @@ export default function AlleskennerRoom({ code, soloRunId }: { code: string; sol
 
   return (
     <div className="max-w-3xl mx-auto flex flex-col gap-4">
-      {error && <p className="card !py-3 text-sm font-semibold text-red-600 dark:text-red-400">{error}</p>}
+      {error && <p className="card !py-3 text-sm font-semibold text-red-600 dark:text-red-400">{translateServerText(error, t)}</p>}
       {state.phase === "LOBBY" && <Lobby state={state} onLeave={leave} />}
       {state.phase !== "LOBBY" && state.phase !== "FINISHED" && (
         <AlleskennerGame state={state} receivedAt={receivedAt} />
@@ -500,7 +521,7 @@ function SoloFinished({ state, solo }: { state: AkStateView; solo: NonNullable<A
           </>
         )}
       </div>
-      {error && <p className="card !py-3 text-sm font-semibold text-red-600 dark:text-red-400">{error}</p>}
+      {error && <p className="card !py-3 text-sm font-semibold text-red-600 dark:text-red-400">{translateServerText(error, t)}</p>}
       <div className="flex flex-wrap justify-center gap-2">
         <Link href="/alleskenner/alleen" className="btn-primary">
           {solo.mode === "DAILY" ? t("akRoom.toLeaderboard") : t("wordOfTheDay.back")}

@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { getSocket } from "@/lib/socketClient";
 import UserAvatar from "@/components/UserAvatar";
 import { useT } from "@/components/I18nProvider";
+import { translateServerText } from "@/lib/i18n/serverTexts";
 import type { TFunction } from "@/lib/i18n/core";
 
 interface Invite {
@@ -134,7 +135,7 @@ export default function InviteListener() {
   const inviteText =
     notice.kind === "invite"
       ? notice.gameLabel
-        ? t("inviteBanner.invitesYouFor", { name: notice.fromDisplayName, game: notice.gameLabel })
+        ? t("inviteBanner.invitesYouFor", { name: translateServerText(notice.fromDisplayName, t), game: translateServerText(notice.gameLabel, t) })
         : t("inviteBanner.invitesYou", { name: notice.fromDisplayName })
       : "";
   const onlineText =

@@ -274,6 +274,7 @@ function Header({ state, deadlineLeft }: { state: AkStateView; deadlineLeft: num
 }
 
 function Intermission({ state }: { state: AkStateView }) {
+  const t = useT();
   const intermission = state.intermission!;
   const ranked = [...state.contestants].sort((a, b) => b.seconds - a.seconds);
   return (
@@ -291,7 +292,7 @@ function Intermission({ state }: { state: AkStateView }) {
           ))}
         </ol>
       )}
-      {intermission.title !== "Tussenstand" && <p className="text-brand-100">{intermission.subtitle}</p>}
+      {intermission.title !== t("serverTexts.akStandings") && <p className="text-brand-100">{intermission.subtitle}</p>}
     </div>
   );
 }

@@ -9,6 +9,7 @@ import UserAvatar from "@/components/UserAvatar";
 import LobbyInviteCard from "@/components/LobbyInviteCard";
 import IntroAudioButton from "@/components/IntroAudioButton";
 import { useT } from "@/components/I18nProvider";
+import { translateServerText } from "@/lib/i18n/serverTexts";
 
 type Phase = "connecting" | "lobby" | "playing" | "finished" | "error";
 type Region = "JERUZALEM" | "WILDERNIS" | "ZEE" | "BELOOFDE_LAND" | "ZARAHEMLA";
@@ -382,7 +383,7 @@ export default function FamilyGameRoom({ code, myUserId }: { code: string; myUse
   if (phase === "error") {
     return (
       <div className="max-w-md mx-auto card text-center flex flex-col gap-4">
-        <p className="text-red-600 dark:text-red-400 font-bold">{errorMessage}</p>
+        <p className="text-red-600 dark:text-red-400 font-bold">{translateServerText(errorMessage ?? "", t)}</p>
         <Link href="/gezinsavond" className="btn-secondary self-center">
           {t("wordOfTheDay.back")}
         </Link>
@@ -699,11 +700,11 @@ export default function FamilyGameRoom({ code, myUserId }: { code: string; myUse
         {card && myTurn && card.tileKind === "EVENT" && !eventResult && (
           <div className="card flex flex-col gap-4">
             {showTip && <p className="text-xs font-bold uppercase text-slate-400 dark:text-slate-500">{t("familyGame.tipEvent")}</p>}
-            <p className="text-lg font-bold">{card.title}</p>
+            <p className="text-lg font-bold">{translateServerText(card.title, t)}</p>
             <div className="flex flex-col gap-2">
               {card.choices.map((choice, i) => (
                 <button key={choice} className="btn-secondary" onClick={() => chooseEvent(i)}>
-                  {choice}
+                  {translateServerText(choice, t)}
                 </button>
               ))}
             </div>
@@ -729,7 +730,7 @@ export default function FamilyGameRoom({ code, myUserId }: { code: string; myUse
 
         {eventResult && (
           <div className="card flex flex-col gap-1">
-            <p className="font-extrabold">{eventResult.label}</p>
+            <p className="font-extrabold">{translateServerText(eventResult.label, t)}</p>
             <p className="text-sm text-slate-500 dark:text-slate-400">
               {eventResult.delta > 0
                 ? t("familyGame.points", { n: `+${eventResult.delta}` })
