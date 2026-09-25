@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useT } from "@/components/I18nProvider";
 
 /**
  * Persoonlijke uitnodigingslink op de Vrienden-pagina (zie
@@ -8,6 +9,7 @@ import { useEffect, useState } from "react";
  * vriend.
  */
 export default function FriendInviteCard({ appName }: { appName: string }) {
+  const t = useT();
   const [code, setCode] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -29,7 +31,7 @@ export default function FriendInviteCard({ appName }: { appName: string }) {
     try {
       await navigator.share({
         title: appName,
-        text: `Doe je mee met ${appName}? Via deze link zijn we meteen vrienden.`,
+        text: t("friendInvite.shareText", { app: appName }),
         url: link,
       });
     } catch {
@@ -41,16 +43,16 @@ export default function FriendInviteCard({ appName }: { appName: string }) {
     if (!link) return;
     try {
       await navigator.clipboard.writeText(link);
-      setMessage("Link gekopieerd! 📋");
+      setMessage(t("friendInvite.copied"));
     } catch {
-      setMessage("Kopiëren lukte niet. Houd de link hieronder ingedrukt om hem zelf te kopiëren.");
+      setMessage(t("friendInvite.copyFailed"));
     }
   }
 
   async function regenerate() {
     if (
       !window.confirm(
-        "Nieuwe link maken?\n\nDe oude link werkt daarna niet meer. Wie al via de oude link je vriend is, blijft dat wel."
+        t("friendInvite.confirmRegenerate")
       )
     ) {
       return;
@@ -60,20 +62,20 @@ export default function FriendInviteCard({ appName }: { appName: string }) {
     const body = await res.json().catch(() => ({}));
     setBusy(false);
     if (!res.ok || !body.code) {
-      setMessage(body.error ?? "Kon geen nieuwe link maken.");
+      setMessage(body.error ?? t("friendInvite.regenerateFailed"));
       return;
     }
     setCode(body.code);
-    setMessage("Nieuwe link gemaakt. De oude werkt niet meer.");
+    setMessage(t("friendInvite.regenerated"));
   }
 
   return (
     <div className="card flex flex-col gap-3">
       <p className="font-bold text-sm dark:text-slate-100 flex items-center gap-2">
-        <span aria-hidden>💌</span> Nodig vrienden uit
+        <span aria-hidden>💌</span> {t("friendInvite.title")}
       </p>
       <p className="text-sm text-slate-500 dark:text-slate-400">
-        Stuur je persoonlijke link via een appje of sms. Wie daarmee een account maakt, is meteen je vriend.
+        {t("friendInvite.text")}
       </p>
       {link ? (
         <>
@@ -83,19 +85,19 @@ export default function FriendInviteCard({ appName }: { appName: string }) {
           <div className="flex gap-2 flex-wrap">
             {canShare && (
               <button className="btn-primary !px-4 !py-2" onClick={share}>
-                Delen
+                {t("friendInvite.share")}
               </button>
             )}
             <button className={`${canShare ? "btn-secondary" : "btn-primary"} !px-4 !py-2`} onClick={copy}>
-              Link kopiëren
+              {t("friendInvite.copy")}
             </button>
             <button className="btn-secondary !px-4 !py-2" disabled={busy} onClick={regenerate}>
-              {busy ? "Bezig..." : "Nieuwe link maken"}
+              {busy ? t("courses.busy") : t("friendInvite.regenerate")}
             </button>
           </div>
         </>
       ) : (
-        <p className="text-sm text-slate-400 dark:text-slate-500">Laden...</p>
+        <p className="text-sm text-slate-400 dark:text-slate-500">{t("common.loading")}</p>
       )}
       {message && <p className="text-sm font-semibold text-brand-600 dark:text-brand-300">{message}</p>}
     </div>

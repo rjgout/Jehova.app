@@ -2,7 +2,8 @@
 
 import { useLayoutEffect, useRef } from "react";
 import type { LeagueTier } from "@prisma/client";
-import { TIER_ICONS, TIER_LABELS, TIER_ORDER } from "@/lib/leagues";
+import { TIER_ICONS, TIER_ORDER } from "@/lib/leagues";
+import { useT } from "@/components/I18nProvider";
 
 type TierState = "current" | "reached" | "previously" | "locked";
 
@@ -39,6 +40,7 @@ function stateFor(index: number, current: number, highest: number): TierState {
  * degradeerde, is een schaduw met wat kleur.
  */
 export default function DivisionScroller({ current, highest }: { current: LeagueTier; highest: LeagueTier }) {
+  const t = useT();
   const scroller = useRef<HTMLDivElement>(null);
   const currentItem = useRef<HTMLDivElement>(null);
   const currentIndex = TIER_ORDER.indexOf(current);
@@ -85,10 +87,10 @@ export default function DivisionScroller({ current, highest }: { current: League
                         : "text-xs font-bold text-brand-100"
                 }`}
               >
-                {TIER_LABELS[tier]}
+                {t(`tiers.${tier}`)}
               </span>
               <span className="h-4 text-[10px] font-bold uppercase tracking-wider text-gold-400">
-                {isCurrent ? "Deze week" : state === "previously" ? "Eerder" : ""}
+                {isCurrent ? t("profile.thisWeek") : state === "previously" ? t("leaderboard.earlier") : ""}
               </span>
             </div>
           );

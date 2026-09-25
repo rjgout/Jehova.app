@@ -2,7 +2,9 @@
 
 import { useEffect, useState } from "react";
 import type { LeagueTier } from "@prisma/client";
-import { TIER_LABELS, TIER_ICONS } from "@/lib/leagues";
+import { TIER_ICONS } from "@/lib/leagues";
+import { useT } from "@/components/I18nProvider";
+import type { TFunction } from "@/lib/i18n/core";
 import UserAvatar from "@/components/UserAvatar";
 import DivisionScroller from "@/components/DivisionScroller";
 
@@ -62,26 +64,27 @@ const ZONE_DOT: Record<Exclude<Zone, null>, string> = {
  * Uitleg van promotie/degradatie voor de huidige stand. De aantallen komen
  * van de server en hangen af van hoeveel spelers er deze week meedoen.
  */
-function movementText(data: LeagueData): string {
+function movementText(data: LeagueData, t: TFunction): string {
   if (data.entries.length === 0) {
-    return "Wie deze week XP verdient, doet mee. Hoe meer spelers, hoe meer er promoveren en degraderen (tot 3 van de 30).";
+    return t("leaderboard.movementEmpty");
   }
   const up =
     data.promoteCount === 0
-      ? "Dit is de hoogste divisie"
+      ? t("leaderboard.upNone")
       : data.promoteCount === 1
-        ? "De bovenste speler promoveert aan het einde van de week"
-        : `De bovenste ${data.promoteCount} promoveren aan het einde van de week`;
+        ? t("leaderboard.upOne")
+        : t("leaderboard.upMany", { n: data.promoteCount });
   const down =
     data.demoteCount === 0
-      ? "niemand degradeert"
+      ? t("leaderboard.downNone")
       : data.demoteCount === 1
-        ? "de onderste degradeert"
-        : `de onderste ${data.demoteCount} degraderen`;
-  return `${up}, ${down}.`;
+        ? t("leaderboard.downOne")
+        : t("leaderboard.downMany", { n: data.demoteCount });
+  return t("leaderboard.movement", { up, down });
 }
 
 export default function LeaderboardClient() {
+  const t = useT();
   const [scope, setScope] = useState<"league" | "friends" | "national">("league");
   const [data, setData] = useState<LeagueData | NationalData | null>(null);
   // Blijft staan bij het wisselen van tabblad, zodat de divisiebalk niet
@@ -108,7 +111,9 @@ export default function LeaderboardClient() {
       <div className="card bg-gradient-to-br from-brand-500 to-brand-700 dark:from-brand-600 dark:to-brand-900 text-white !border-0 !px-0 !py-5 h-48 flex flex-col items-center justify-center gap-1 overflow-hidden">
         {scope === "league" ? (
           <>
-            <h1 className="sr-only">Competitie — {tiers ? TIER_LABELS[tiers.current] : "divisie"}</h1>
+            <h1 className="sr-only">
+              {t("nav.competition")} — {tiers ? t(`tiers.${tiers.current}`) : t("leaderboard.divisionLower")}
+            </h1>
             {tiers && <DivisionScroller current={tiers.current} highest={tiers.highest} />}
           </>
         ) : scope === "friends" ? (
@@ -116,16 +121,16 @@ export default function LeaderboardClient() {
             <span className="text-5xl" aria-hidden>
               🤝
             </span>
-            <h1 className="text-2xl font-extrabold">Vrienden</h1>
-            <p className="text-brand-100 text-sm text-center px-6">Jij en je vrienden, deze week</p>
+            <h1 className="text-2xl font-extrabold">{t("nav.friends")}</h1>
+            <p className="text-brand-100 text-sm text-center px-6">{t("leaderboard.friendsSub")}</p>
           </>
         ) : (
           <>
             <span className="text-5xl" aria-hidden>
-              🇳🇱
+              {t("leaderboard.nationalIcon")}
             </span>
-            <h1 className="text-2xl font-extrabold">Nederlandse ranglijst</h1>
-            <p className="text-brand-100 text-sm text-center px-6">Je huidige XP: alles wat je verdiende, min je aankopen in de winkel</p>
+            <h1 className="text-2xl font-extrabold">{t("leaderboard.national")}</h1>
+            <p className="text-brand-100 text-sm text-center px-6">{t("leaderboard.nationalSub")}</p>
           </>
         )}
       </div>
@@ -137,7 +142,7 @@ export default function LeaderboardClient() {
             scope === "league" ? "bg-brand-500 text-white" : "text-slate-500 dark:text-slate-300"
           }`}
         >
-          Divisie
+          {t("leaderboard.division")}
         </button>
         <button
           onClick={() => setScope("friends")}
@@ -145,7 +150,7 @@ export default function LeaderboardClient() {
             scope === "friends" ? "bg-brand-500 text-white" : "text-slate-500 dark:text-slate-300"
           }`}
         >
-          Vrienden
+          {t("nav.friends")}
         </button>
         <button
           onClick={() => setScope("national")}
@@ -153,28 +158,28 @@ export default function LeaderboardClient() {
             scope === "national" ? "bg-brand-500 text-white" : "text-slate-500 dark:text-slate-300"
           }`}
         >
-          Nederlandse ranglijst
+          {t("leaderboard.national")}
         </button>
       </div>
 
       {scope === "league" && leagueData && (
-        <p className="text-sm text-slate-400 dark:text-slate-500 text-center">{movementText(leagueData)}</p>
+        <p className="text-sm text-slate-400 dark:text-slate-500 text-center">{movementText(leagueData, t)}</p>
       )}
 
       {scope === "league" && leagueData?.xpGap && (
         <div className="card !py-3 !bg-gold-50 dark:!bg-slate-700 !border-gold-400/30 dark:!border-slate-600 text-center">
           <p className="font-extrabold text-gold-700 dark:text-gold-400">
-            {leagueData.xpGap.toward === "SAFETY" && `Nog ${leagueData.xpGap.xp} XP tot veiligheid.`}
-            {leagueData.xpGap.toward === "PROMOTION" && `Nog ${leagueData.xpGap.xp} XP tot promotie.`}
-            {leagueData.xpGap.toward === "FIRST_PLACE" && `Nog ${leagueData.xpGap.xp} XP tot de eerste plek!`}
+            {leagueData.xpGap.toward === "SAFETY" && t("leaderboard.gapSafety", { xp: leagueData.xpGap.xp })}
+            {leagueData.xpGap.toward === "PROMOTION" && t("leaderboard.gapPromotion", { xp: leagueData.xpGap.xp })}
+            {leagueData.xpGap.toward === "FIRST_PLACE" && t("leaderboard.gapFirst", { xp: leagueData.xpGap.xp })}
           </p>
         </div>
       )}
 
-      {!data && <p className="text-slate-400">Laden...</p>}
+      {!data && <p className="text-slate-400">{t("common.loading")}</p>}
 
       {leagueData && leagueData.entries.length === 0 && (
-        <p className="text-slate-400">Nog geen XP verdiend deze week. Doe een les om op de ranglijst te komen!</p>
+        <p className="text-slate-400">{t("leaderboard.noXp")}</p>
       )}
 
       {leagueData && leagueData.entries.length > 0 && (
@@ -193,10 +198,10 @@ export default function LeaderboardClient() {
                     className="shrink-0"
                     title={
                       e.zone === "PROMOTION"
-                        ? "Promotiezone"
+                        ? t("leaderboard.zonePromotion")
                         : e.zone === "RELEGATION"
-                          ? "Degradatiezone"
-                          : "Veilige zone"
+                          ? t("leaderboard.zoneRelegation")
+                          : t("leaderboard.zoneSafe")
                     }
                   >
                     {ZONE_DOT[e.zone]}
@@ -204,7 +209,7 @@ export default function LeaderboardClient() {
                 )}
                 <UserAvatar id={e.userId} handle={e.handle} />
                 <span className="min-w-0 truncate dark:text-slate-100" title={e.handle}>
-                  {e.handle} {e.isMe && <span className="text-brand-500 dark:text-brand-300">(jij)</span>}
+                  {e.handle} {e.isMe && <span className="text-brand-500 dark:text-brand-300">{t("lobby.you")}</span>}
                 </span>
               </div>
               <span className="shrink-0 whitespace-nowrap text-gold-600 dark:text-gold-400 font-extrabold">
@@ -234,6 +239,7 @@ export default function LeaderboardClient() {
 }
 
 function NationalRow({ e }: { e: NationalEntry }) {
+  const t = useT();
   return (
     <div className={`flex items-center gap-3 py-3 px-2 rounded-xl min-w-0 ${
       e.isMe ? "font-extrabold" : ""
@@ -242,10 +248,10 @@ function NationalRow({ e }: { e: NationalEntry }) {
         <span className="w-8 shrink-0 text-center text-lg">{MEDALS[e.rank - 1] ?? `#${e.rank}`}</span>
         <UserAvatar id={e.userId} handle={e.handle} />
         <span className="min-w-0 truncate dark:text-slate-100" title={e.handle}>
-          {e.handle} {e.isMe && <span className="text-brand-500 dark:text-brand-300">(jij)</span>}
+          {e.handle} {e.isMe && <span className="text-brand-500 dark:text-brand-300">{t("lobby.you")}</span>}
         </span>
         {e.tier && (
-          <span className="shrink-0" title={TIER_LABELS[e.tier]}>
+          <span className="shrink-0" title={t(`tiers.${e.tier}`)}>
             {TIER_ICONS[e.tier]}
           </span>
         )}

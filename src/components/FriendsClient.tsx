@@ -6,6 +6,8 @@ import { getSocket } from "@/lib/socketClient";
 import UserTag from "@/components/UserTag";
 import UserAvatar from "@/components/UserAvatar";
 import FriendInviteCard from "@/components/FriendInviteCard";
+import { useT } from "@/components/I18nProvider";
+import { rich } from "@/lib/i18n/rich";
 
 interface FriendUser {
   id: string;
@@ -37,6 +39,7 @@ interface SearchResult {
 }
 
 export default function FriendsClient({ appName }: { appName: string }) {
+  const t = useT();
   const [data, setData] = useState<FriendsData | null>(null);
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SearchResult[] | null>(null);
@@ -129,9 +132,9 @@ export default function FriendsClient({ appName }: { appName: string }) {
     });
     const body = await res.json().catch(() => ({}));
     if (!res.ok) {
-      setMessage(body.error ?? "Er ging iets mis.");
+      setMessage(body.error ?? t("wordOfTheDay.somethingWrong"));
     } else {
-      setMessage(`Vriendschapsverzoek naar ${formatTag(target.handle, target.discriminator)} verstuurd!`);
+      setMessage(t("friends.requestSent", { tag: formatTag(target.handle, target.discriminator) }));
       setSentTo((prev) => new Set(prev).add(target.id));
       getSocket().emit("friendship_changed", { otherUserId: target.id });
       load();
@@ -144,11 +147,11 @@ export default function FriendsClient({ appName }: { appName: string }) {
     load();
   }
 
-  async function removeFriendship(friendshipId: string, label: string) {
-    if (!window.confirm(`${label} verwijderen?\n\nWeet je het zeker?`)) return;
+  async function removeFriendship(friendshipId: string, kind: "request" | "friendship") {
+    if (!window.confirm(t(kind === "request" ? "friends.confirmRemoveRequest" : "friends.confirmRemoveFriendship"))) return;
     const res = await fetch(`/api/friends/${friendshipId}`, { method: "DELETE" });
     const body = await res.json().catch(() => ({}));
-    if (!res.ok) { setMessage(body.error ?? "Kon dit niet verwijderen."); return; }
+    if (!res.ok) { setMessage(body.error ?? t("friends.removeFailed")); return; }
     load();
   }
 
@@ -161,15 +164,15 @@ export default function FriendsClient({ appName }: { appName: string }) {
     });
     const body = await res.json().catch(() => ({}));
     if (!res.ok) {
-      setMessage(body.error ?? "Kon geen freeze geven.");
+      setMessage(body.error ?? t("friends.freezeFailed"));
     } else {
       setGiftedTo(toUserId);
-      setMessage("Streak freeze verstuurd! 🧊");
+      setMessage(t("friends.freezeSent"));
       setTimeout(() => setGiftedTo(null), 2000);
     }
   }
 
-  if (!data) return <p className="text-slate-400 dark:text-slate-500">Laden...</p>;
+  if (!data) return <p className="text-slate-400 dark:text-slate-500">{t("common.loading")}</p>;
 
   const onlineCount = Object.values(data.statusByUserId).filter((s) => s.online).length;
 
@@ -177,10 +180,10 @@ export default function FriendsClient({ appName }: { appName: string }) {
     <div className="max-w-5xl mx-auto flex flex-col gap-6">
       <div className="flex flex-col gap-1">
         <h1 className="text-2xl font-extrabold text-brand-800 dark:text-brand-300 flex items-center gap-2">
-          <span aria-hidden>👥</span> Vrienden
+          <span aria-hidden>👥</span> {t("nav.friends")}
         </h1>
         <p className="text-sm text-slate-500 dark:text-slate-400">
-          Verzoeken, wie er online is, en makkelijk een streak-freeze cadeau doen.
+          {t("friends.intro")}
         </p>
       </div>
 
@@ -188,29 +191,29 @@ export default function FriendsClient({ appName }: { appName: string }) {
         <div className="grid grid-cols-2 gap-3">
           <div className="card !py-4 flex flex-col items-center gap-0.5">
             <div className="text-xl font-extrabold text-brand-600 dark:text-brand-300">👥 {data.friends.length}</div>
-            <div className="text-xs font-bold uppercase text-slate-400 dark:text-slate-500">Vrienden</div>
+            <div className="text-xs font-bold uppercase text-slate-400 dark:text-slate-500">{t("nav.friends")}</div>
           </div>
           <div className="card !py-4 flex flex-col items-center gap-0.5">
             <div className="text-xl font-extrabold text-green-600 dark:text-green-400">🟢 {onlineCount}</div>
-            <div className="text-xs font-bold uppercase text-slate-400 dark:text-slate-500">Nu online</div>
+            <div className="text-xs font-bold uppercase text-slate-400 dark:text-slate-500">{t("friendPicker.onlineNow")}</div>
           </div>
         </div>
       )}
 
       <div className="card flex flex-col gap-3">
         <p className="font-bold text-sm dark:text-slate-100 flex items-center gap-2">
-          <span aria-hidden>➕</span> Vriend toevoegen
+          <span aria-hidden>➕</span> {t("friends.addFriend")}
         </p>
         <div className="flex gap-2 flex-wrap sm:flex-nowrap">
           <input
             className="input flex-1"
-            placeholder="Zoek op gebruikersnaam (Naam#42) of, als iemand dat heeft aangezet, e-mailadres"
+            placeholder={t("friends.searchPlaceholder")}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
           />
         </div>
         {results && results.length === 0 && query.trim().length >= 2 && (
-          <p className="text-sm text-slate-400 dark:text-slate-500">Niemand gevonden.</p>
+          <p className="text-sm text-slate-400 dark:text-slate-500">{t("friends.nobodyFound")}</p>
         )}
         {results && results.length > 0 && (
           <div className="flex flex-col gap-2">
@@ -229,9 +232,9 @@ export default function FriendsClient({ appName }: { appName: string }) {
                   onClick={() => sendRequest(r)}
                   aria-label={
                     r.friendshipStatus === "ACCEPTED"
-                      ? "Al bevriend"
+                      ? t("friends.alreadyFriends")
                       : r.friendshipStatus === "PENDING"
-                        ? "Vriendschapsverzoek in behandeling"
+                        ? t("friends.requestPending")
                         : undefined
                   }
                 >
@@ -240,8 +243,8 @@ export default function FriendsClient({ appName }: { appName: string }) {
                     : r.friendshipStatus === "PENDING"
                       ? "⏳"
                       : sentTo.has(r.id)
-                        ? "Verstuurd"
-                        : "Toevoegen"}
+                        ? t("friends.sent")
+                        : t("courses.add")}
                 </button>
               </div>
             ))}
@@ -255,7 +258,7 @@ export default function FriendsClient({ appName }: { appName: string }) {
       {data.incoming.length > 0 && (
         <section className="flex flex-col gap-2">
           <h2 className="font-extrabold text-slate-700 dark:text-slate-200 flex items-center gap-2">
-            Verzoeken
+            {t("friends.requests")}
             <span className="inline-flex items-center justify-center min-w-[1.5rem] h-6 px-1.5 rounded-full bg-gold-50 dark:bg-slate-700 text-gold-700 dark:text-gold-400 text-xs font-extrabold">
               {data.incoming.length}
             </span>
@@ -272,10 +275,10 @@ export default function FriendsClient({ appName }: { appName: string }) {
                 </span>
                 <div className="flex gap-2">
                   <button className="btn-primary !px-3 !py-1.5" onClick={() => respond(friendshipId, "accept", from.id)}>
-                    Accepteren
+                    {t("challenges.accept")}
                   </button>
                   <button className="btn-secondary !px-3 !py-1.5" onClick={() => respond(friendshipId, "decline", from.id)}>
-                    Weigeren
+                    {t("challenges.decline")}
                   </button>
                 </div>
               </div>
@@ -286,14 +289,16 @@ export default function FriendsClient({ appName }: { appName: string }) {
 
       {data.outgoing.length > 0 && (
         <section className="flex flex-col gap-2">
-          <h2 className="font-extrabold text-slate-700 dark:text-slate-200">Verstuurde verzoeken</h2>
+          <h2 className="font-extrabold text-slate-700 dark:text-slate-200">{t("friends.sentRequests")}</h2>
           <div className="flex flex-col gap-2">
             {data.outgoing.map(({ friendshipId, to }) => (
               <div key={friendshipId} className="card flex items-center gap-3 !py-3 text-slate-500 dark:text-slate-400">
                 <UserAvatar id={to.id} handle={to.handle} avatarEmoji={to.avatarEmoji} size="sm" />
                 <span aria-hidden>⏳</span>
-                <span className="min-w-0 flex-1">Wachten op <UserTag handle={to.handle} discriminator={to.discriminator} /></span>
-                <button className="btn-secondary !px-3 !py-1.5 !text-xs" onClick={() => removeFriendship(friendshipId, "Vriendschapsverzoek")}>Annuleren</button>
+                <span className="min-w-0 flex-1">
+                  {rich(t("friends.waitingFor"), { tag: <UserTag handle={to.handle} discriminator={to.discriminator} /> })}
+                </span>
+                <button className="btn-secondary !px-3 !py-1.5 !text-xs" onClick={() => removeFriendship(friendshipId, "request")}>{t("activeGames.cancel")}</button>
               </div>
             ))}
           </div>
@@ -302,9 +307,9 @@ export default function FriendsClient({ appName }: { appName: string }) {
 
       <section className="flex flex-col gap-2">
         <h2 className="font-extrabold text-slate-700 dark:text-slate-200">
-          Jouw vrienden
+          {t("friends.yourFriends")}
         </h2>
-        {data.friends.length === 0 && <p className="text-slate-400 dark:text-slate-500">Nog geen vrienden — zoek iemand hierboven!</p>}
+        {data.friends.length === 0 && <p className="text-slate-400 dark:text-slate-500">{t("friends.none")}</p>}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {data.friends.map(({ friendshipId, user: f }) => {
             const status = data.statusByUserId[f.id];
@@ -320,7 +325,7 @@ export default function FriendsClient({ appName }: { appName: string }) {
                     <div className="font-bold flex items-center gap-1.5 dark:text-slate-100">
                       <UserTag handle={f.handle} discriminator={f.discriminator} className="truncate" />
                       {status?.online && (
-                        <span className="text-[10px] font-bold uppercase text-green-600 dark:text-green-400 shrink-0">Online</span>
+                        <span className="text-[10px] font-bold uppercase text-green-600 dark:text-green-400 shrink-0">{t("friendPicker.online")}</span>
                       )}
                     </div>
                     {status?.activity ? (
@@ -328,7 +333,7 @@ export default function FriendsClient({ appName }: { appName: string }) {
                         {status.activity.icon} {status.activity.label}
                       </div>
                     ) : status && !status.online && status.lastSeenLabel ? (
-                      <div className="text-xs text-slate-400 dark:text-slate-500 truncate">💤 Laatst actief {status.lastSeenLabel}</div>
+                      <div className="text-xs text-slate-400 dark:text-slate-500 truncate">{t("friends.lastActive", { when: status.lastSeenLabel })}</div>
                     ) : null}
                   </div>
                 </div>
@@ -342,10 +347,10 @@ export default function FriendsClient({ appName }: { appName: string }) {
                 </div>
                 <div className="flex gap-2">
                   <button className="btn-ice flex-1 !py-2" onClick={() => setPendingFreeze(f)} disabled={giftedTo === f.id}>
-                    {giftedTo === f.id ? "Verstuurd!" : "🧊 Geef freeze"}
+                    {giftedTo === f.id ? t("friends.sentExcl") : t("friends.giveFreeze")}
                   </button>
-                  <button className="btn-secondary !px-3 !py-2 !text-xs" onClick={() => removeFriendship(friendshipId, "Vriendschap")}>
-                    Ontvrienden
+                  <button className="btn-secondary !px-3 !py-2 !text-xs" onClick={() => removeFriendship(friendshipId, "friendship")}>
+                    {t("friends.unfriend")}
                   </button>
                 </div>
               </div>
@@ -362,15 +367,16 @@ export default function FriendsClient({ appName }: { appName: string }) {
         >
           <div className="card w-full max-w-sm !p-5 shadow-xl">
             <h2 id="freeze-confirm-title" className="text-lg font-extrabold text-slate-800 dark:text-slate-100">
-              Freeze geven?
+              {t("friends.freezeTitle")}
             </h2>
             <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
-              Weet je zeker dat je een streak freeze wilt geven aan{" "}
-              <UserTag handle={pendingFreeze.handle} discriminator={pendingFreeze.discriminator} className="font-bold" />?
+              {rich(t("friends.freezeConfirm"), {
+                tag: <UserTag handle={pendingFreeze.handle} discriminator={pendingFreeze.discriminator} className="font-bold" />,
+              })}
             </p>
             <div className="mt-5 flex justify-end gap-2">
               <button className="btn-secondary !px-3 !py-2" onClick={() => setPendingFreeze(null)}>
-                Annuleren
+                {t("activeGames.cancel")}
               </button>
               <button
                 className="btn-ice !px-3 !py-2"
@@ -382,7 +388,7 @@ export default function FriendsClient({ appName }: { appName: string }) {
                   setPendingFreeze(null);
                 }}
               >
-                {confirmingFreeze ? "Versturen..." : "Ja, geef freeze"}
+                {confirmingFreeze ? t("friends.sending") : t("friends.yesGiveFreeze")}
               </button>
             </div>
           </div>

@@ -1,6 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useT, useUiLanguage } from "@/components/I18nProvider";
+import { getLanguage } from "@/lib/languages";
+import { rich } from "@/lib/i18n/rich";
 import Link from "next/link";
 
 type StreakDayState = "STUDIED" | "FROZEN" | "NONE" | "FUTURE";
@@ -27,14 +30,13 @@ interface StreakOverview {
   month: StreakMonthView;
 }
 
-const WEEKDAY_LABELS = ["Ma", "Di", "Wo", "Do", "Vr", "Za", "Zo"];
 
 function todayKey(): string {
   return new Date().toISOString().slice(0, 10);
 }
 
-function monthLabel(year: number, month: number): string {
-  return new Intl.DateTimeFormat("nl-NL", { month: "long", year: "numeric", timeZone: "UTC" }).format(
+function monthLabel(year: number, month: number, locale: string): string {
+  return new Intl.DateTimeFormat(locale, { month: "long", year: "numeric", timeZone: "UTC" }).format(
     new Date(Date.UTC(year, month - 1, 1))
   );
 }
@@ -44,6 +46,8 @@ function isActive(day: StreakDayView | null): boolean {
 }
 
 export default function StreakClient() {
+  const t = useT();
+  const intlLocale = getLanguage(useUiLanguage()).intlLocale;
   const [overview, setOverview] = useState<StreakOverview | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -55,10 +59,10 @@ export default function StreakClient() {
     fetch(`/api/streak${qs ? `?${qs}` : ""}`)
       .then(async (r) => {
         const data = await r.json();
-        if (!r.ok) throw new Error(data.error ?? "Kon de reeks niet laden.");
+        if (!r.ok) throw new Error(data.error ?? t("streakPage.loadFailed"));
         setOverview(data);
       })
-      .catch((e) => setError(e instanceof Error ? e.message : "Er ging iets mis."));
+      .catch((e) => setError(e instanceof Error ? e.message : t("wordOfTheDay.somethingWrong")));
   }
 
   useEffect(() => {
@@ -70,14 +74,14 @@ export default function StreakClient() {
       <div className="max-w-md mx-auto card text-center flex flex-col gap-3">
         <p className="text-red-600 dark:text-red-400 font-semibold">{error}</p>
         <Link href="/dashboard" className="btn-secondary self-center">
-          Terug
+          {t("wordOfTheDay.back")}
         </Link>
       </div>
     );
   }
 
   if (!overview) {
-    return <p className="text-center text-slate-400 dark:text-slate-500">Laden...</p>;
+    return <p className="text-center text-slate-400 dark:text-slate-500">{t("common.loading")}</p>;
   }
 
   const { month } = overview;
@@ -117,17 +121,17 @@ export default function StreakClient() {
 
   return (
     <div className="max-w-5xl mx-auto flex flex-col gap-5">
-      <h1 className="text-2xl font-extrabold text-brand-800 dark:text-brand-300">🔥 Reeks</h1>
+      <h1 className="text-2xl font-extrabold text-brand-800 dark:text-brand-300">{t("streakPage.title")}</h1>
 
       <div className="card bg-gradient-to-br from-orange-400 to-red-500 text-white flex flex-col items-center gap-1 !py-8">
         <span className="text-4xl" aria-hidden>
           🔥
         </span>
         <div className="text-5xl font-extrabold leading-none">{overview.currentStreak}</div>
-        <div className="text-orange-50 font-bold text-sm mt-1">dagen op rij geoefend!</div>
+        <div className="text-orange-50 font-bold text-sm mt-1">{t("streakPage.daysInARow")}</div>
         {overview.longestStreak > 0 && (
           <span className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-black/15 px-3.5 py-1.5 text-xs font-bold text-white">
-            🏆 Langste reeks: {overview.longestStreak} dagen
+            {t("streakPage.longest", { n: overview.longestStreak })}
           </span>
         )}
       </div>
@@ -137,38 +141,37 @@ export default function StreakClient() {
           🧊
         </span>
         <p className="text-sm text-ice-700 dark:text-ice-400">
-          Behoud je <span className="font-bold text-orange-500">reeks</span> door elke dag te oefenen! Mis je een dag, dan
-          wordt automatisch een beschikbare freeze ingezet — heb je geen freeze meer, dan breekt je reeks.
+          {rich(t("streakPage.explain"), { streak: <span className="font-bold text-orange-500">{t("streakPage.streakWord")}</span> })}
         </p>
       </div>
 
       <div className="grid grid-cols-2 gap-3">
         <div className="card !py-4 flex flex-col items-center gap-0.5">
           <div className="text-xl font-extrabold text-orange-500">🔥 {month.daysStudied}</div>
-          <div className="text-xs font-bold uppercase text-slate-400 dark:text-slate-500">Dagen deze maand</div>
+          <div className="text-xs font-bold uppercase text-slate-400 dark:text-slate-500">{t("streakPage.daysThisMonth")}</div>
         </div>
         <div className="card !py-4 flex flex-col items-center gap-0.5">
           <div className="text-xl font-extrabold text-ice-600 dark:text-ice-400">🧊 {overview.freezeCount}</div>
-          <div className="text-xs font-bold uppercase text-slate-400 dark:text-slate-500">Freezes</div>
+          <div className="text-xs font-bold uppercase text-slate-400 dark:text-slate-500">{t("lesson.freezes")}</div>
         </div>
       </div>
 
       <div className="card flex flex-col gap-4">
         <div className="flex items-center justify-between">
-          <button className="btn-secondary !px-3 !py-1.5" onClick={() => goToMonth(-1)} aria-label="Vorige maand">
+          <button className="btn-secondary !px-3 !py-1.5" onClick={() => goToMonth(-1)} aria-label={t("streakPage.prevMonth")}>
             ‹
           </button>
           <div className="text-center">
-            <h2 className="font-extrabold text-lg capitalize dark:text-slate-100">{monthLabel(month.year, month.month)}</h2>
+            <h2 className="font-extrabold text-lg capitalize dark:text-slate-100">{monthLabel(month.year, month.month, intlLocale)}</h2>
             {month.freezesUsed > 0 && (
-              <p className="text-xs text-slate-400 dark:text-slate-500">🧊 {month.freezesUsed} bevriezing{month.freezesUsed > 1 ? "en" : ""} gebruikt</p>
+              <p className="text-xs text-slate-400 dark:text-slate-500">{month.freezesUsed > 1 ? t("streakPage.freezesUsedMany", { n: month.freezesUsed }) : t("streakPage.freezesUsedOne", { n: month.freezesUsed })}</p>
             )}
           </div>
           <button
             className="btn-secondary !px-3 !py-1.5 disabled:opacity-30"
             onClick={() => goToMonth(1)}
             disabled={isCurrentMonth}
-            aria-label="Volgende maand"
+            aria-label={t("streakPage.nextMonth")}
           >
             ›
           </button>
@@ -176,7 +179,7 @@ export default function StreakClient() {
 
         <div>
           <div className="grid grid-cols-7 text-center text-xs font-bold text-slate-400 dark:text-slate-500 mb-2">
-            {WEEKDAY_LABELS.map((d) => (
+            {t("streakPage.weekdays").split(",").map((d) => (
               <div key={d}>{d}</div>
             ))}
           </div>

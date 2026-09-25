@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useT, useUiLanguage } from "@/components/I18nProvider";
+import { getLanguage } from "@/lib/languages";
 
 type XPReason =
   | "LESSON_COMPLETED"
@@ -25,23 +27,6 @@ interface XpTransaction {
   reason: XPReason;
   createdAt: string;
 }
-
-const REASON_LABELS: Record<XPReason, string> = {
-  LESSON_COMPLETED: "Les afgerond",
-  PERFECT_SCORE: "Perfecte score",
-  LIVE_GAME_PLAYED: "Live quiz gespeeld",
-  LIVE_GAME_WON: "Live quiz gewonnen",
-  ACHIEVEMENT: "Achievement behaald",
-  QUICK_PRACTICE: "Snelle ronde",
-  PODCAST_LESSON_COMPLETED: "Podcastles afgerond",
-  KIDS_STORY_COMPLETED: "Kinderverhaal afgerond",
-  HINT_PURCHASED: "Hint gekocht",
-  FREEZE_PURCHASED: "Streak freeze gekocht",
-  CHAPTER_GUESS_COMPLETED: "Raad het hoofdstuk",
-  WORD_GAME_WON: "Woordspel gewonnen",
-  INTRO_LESSON_COMPLETED: "Introductieles afgerond",
-  ALLESKENNER_SOLO: "De Alleskenner alleen",
-};
 
 const REASON_ICONS: Record<XPReason, string> = {
   LESSON_COMPLETED: "📖",
@@ -79,22 +64,24 @@ function mondayOfWeek(d: Date): number {
 // bewust op de kalenderdag in de tijdzone van de browser, niet op de
 // UTC-dagbucket die de server voor streaks gebruikt (hier gaat het puur om
 // leesbaarheid, niet om een harde grens zoals bij de streak-logica).
-function groupTransactions(transactions: XpTransaction[]): { label: string; items: XpTransaction[] }[] {
+type Bucket = "today" | "yesterday" | "thisWeek" | "earlier";
+
+function groupTransactions(transactions: XpTransaction[]): { label: Bucket; items: XpTransaction[] }[] {
   const now = new Date();
   const todayStart = startOfDay(now);
   const yesterdayStart = todayStart - 86_400_000;
   const weekStart = mondayOfWeek(now);
 
-  function bucketFor(iso: string): string {
-    const t = new Date(iso).getTime();
-    if (t >= todayStart) return "Vandaag";
-    if (t >= yesterdayStart) return "Gisteren";
-    if (t >= weekStart) return "Deze week";
-    return "Eerder";
+  function bucketFor(iso: string): Bucket {
+    const time = new Date(iso).getTime();
+    if (time >= todayStart) return "today";
+    if (time >= yesterdayStart) return "yesterday";
+    if (time >= weekStart) return "thisWeek";
+    return "earlier";
   }
 
-  const order = ["Vandaag", "Gisteren", "Deze week", "Eerder"];
-  const byLabel = new Map<string, XpTransaction[]>();
+  const order: Bucket[] = ["today", "yesterday", "thisWeek", "earlier"];
+  const byLabel = new Map<Bucket, XpTransaction[]>();
   for (const tx of transactions) {
     const label = bucketFor(tx.createdAt);
     if (!byLabel.has(label)) byLabel.set(label, []);
@@ -106,15 +93,17 @@ function groupTransactions(transactions: XpTransaction[]): { label: string; item
   });
 }
 
-function formatRowTime(iso: string, bucket: string): string {
+function formatRowTime(iso: string, bucket: Bucket, locale: string): string {
   const d = new Date(iso);
-  if (bucket === "Vandaag" || bucket === "Gisteren") {
-    return new Intl.DateTimeFormat("nl-NL", { hour: "2-digit", minute: "2-digit" }).format(d);
+  if (bucket === "today" || bucket === "yesterday") {
+    return new Intl.DateTimeFormat(locale, { hour: "2-digit", minute: "2-digit" }).format(d);
   }
-  return new Intl.DateTimeFormat("nl-NL", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }).format(d);
+  return new Intl.DateTimeFormat(locale, { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }).format(d);
 }
 
 export default function XpHistoryClient() {
+  const t = useT();
+  const intlLocale = getLanguage(useUiLanguage()).intlLocale;
   const [transactions, setTransactions] = useState<XpTransaction[]>([]);
   const [xpTotal, setXpTotal] = useState<number | null>(null);
   const [xpThisWeek, setXpThisWeek] = useState<number>(0);
@@ -126,13 +115,13 @@ export default function XpHistoryClient() {
     fetch(`/api/xp-history?skip=${skip}`)
       .then(async (r) => {
         const data = await r.json();
-        if (!r.ok) throw new Error(data.error ?? "Kon de XP-geschiedenis niet laden.");
+        if (!r.ok) throw new Error(data.error ?? t("xpHistory.loadFailed"));
         setXpTotal(data.xpTotal);
         if (typeof data.xpThisWeek === "number") setXpThisWeek(data.xpThisWeek);
         setHasMore(data.hasMore);
         setTransactions((prev) => (skip === 0 ? data.transactions : [...prev, ...data.transactions]));
       })
-      .catch((e) => setError(e instanceof Error ? e.message : "Er ging iets mis."))
+      .catch((e) => setError(e instanceof Error ? e.message : t("wordOfTheDay.somethingWrong")))
       .finally(() => setLoadingMore(false));
   }
 
@@ -150,31 +139,31 @@ export default function XpHistoryClient() {
       <div className="max-w-md mx-auto card text-center flex flex-col gap-3">
         <p className="text-red-600 dark:text-red-400 font-semibold">{error}</p>
         <Link href="/dashboard" className="btn-secondary self-center">
-          Terug
+          {t("wordOfTheDay.back")}
         </Link>
       </div>
     );
   }
 
   if (xpTotal === null) {
-    return <p className="text-center text-slate-400 dark:text-slate-500">Laden...</p>;
+    return <p className="text-center text-slate-400 dark:text-slate-500">{t("common.loading")}</p>;
   }
 
   const groups = groupTransactions(transactions);
 
   return (
     <div className="max-w-5xl mx-auto flex flex-col gap-5">
-      <h1 className="text-2xl font-extrabold text-brand-800 dark:text-brand-300">⭐ Ervaringspunten</h1>
+      <h1 className="text-2xl font-extrabold text-brand-800 dark:text-brand-300">{t("xpHistory.title")}</h1>
 
       <div className="card bg-gradient-to-br from-brand-500 to-brand-700 dark:from-brand-600 dark:to-brand-900 text-white flex flex-col items-center gap-1 !py-8">
         <span className="text-4xl" aria-hidden>
           ⭐
         </span>
         <div className="text-5xl font-extrabold leading-none">{xpTotal}</div>
-        <div className="text-brand-100 font-bold text-sm mt-1">XP verzameld</div>
+        <div className="text-brand-100 font-bold text-sm mt-1">{t("xpHistory.collected")}</div>
         {xpThisWeek > 0 && (
           <span className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-black/15 px-3.5 py-1.5 text-xs font-bold text-gold-400">
-            🔥 Deze week: +{xpThisWeek} XP
+            {t("xpHistory.thisWeek", { xp: xpThisWeek })}
           </span>
         )}
       </div>
@@ -187,20 +176,20 @@ export default function XpHistoryClient() {
           💡
         </span>
         <div className="min-w-0">
-          <p className="font-extrabold text-sm dark:text-slate-100">Wat levert dit op?</p>
-          <p className="text-xs text-gold-700 dark:text-gold-400 font-semibold">Bekijk het overzicht van elke activiteit →</p>
+          <p className="font-extrabold text-sm dark:text-slate-100">{t("xpHistory.whatEarns")}</p>
+          <p className="text-xs text-gold-700 dark:text-gold-400 font-semibold">{t("xpHistory.overview")}</p>
         </div>
       </Link>
 
       <div className="flex flex-col gap-4">
-        <h2 className="font-extrabold text-lg dark:text-slate-100">Geschiedenis</h2>
+        <h2 className="font-extrabold text-lg dark:text-slate-100">{t("xpHistory.history")}</h2>
         {groups.length === 0 ? (
-          <p className="text-sm text-slate-400 dark:text-slate-500">Nog geen XP verdiend.</p>
+          <p className="text-sm text-slate-400 dark:text-slate-500">{t("xpHistory.none")}</p>
         ) : (
           groups.map((group) => (
             <div key={group.label} className="flex flex-col gap-2">
               <p className="text-xs font-bold uppercase tracking-wide text-slate-400 dark:text-slate-500 px-1">
-                {group.label}
+                {t(`xpHistory.buckets.${group.label}`)}
               </p>
               <div className="flex flex-col gap-2">
                 {group.items.map((tx) => (
@@ -213,8 +202,8 @@ export default function XpHistoryClient() {
                         {REASON_ICONS[tx.reason]}
                       </span>
                       <div className="min-w-0">
-                        <p className="font-semibold text-sm truncate dark:text-slate-100">{REASON_LABELS[tx.reason]}</p>
-                        <p className="text-xs text-slate-400 dark:text-slate-500">{formatRowTime(tx.createdAt, group.label)}</p>
+                        <p className="font-semibold text-sm truncate dark:text-slate-100">{t(`xpHistory.reasons.${tx.reason}`)}</p>
+                        <p className="text-xs text-slate-400 dark:text-slate-500">{formatRowTime(tx.createdAt, group.label, intlLocale)}</p>
                       </div>
                     </div>
                     <span
@@ -232,7 +221,7 @@ export default function XpHistoryClient() {
 
         {hasMore && (
           <button className="btn-secondary self-center mt-1" onClick={loadMore} disabled={loadingMore}>
-            {loadingMore ? "Bezig..." : "Meer laden"}
+            {loadingMore ? t("courses.busy") : t("xpHistory.loadMore")}
           </button>
         )}
       </div>
