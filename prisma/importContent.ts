@@ -11,6 +11,7 @@ import { generateExerciseHint } from "../src/lib/exerciseHints";
 import { syncCourses } from "../src/lib/courses";
 import type { SeedBook } from "./content";
 import { BOOK_KEYS_BY_SLUG } from "./bookKeys";
+import { toLanguageCode, type LanguageCode } from "../src/lib/languages";
 
 type ExerciseRow = Prisma.ExerciseCreateManyInput;
 type OptionRow = Prisma.QuestionOptionCreateManyInput;
@@ -28,9 +29,11 @@ function chapterExercises(
   seedBook: SeedBook,
   seedChapter: SeedBook["chapters"][number],
   chapterId: string,
-  verseIds: string[]
+  verseIds: string[],
+  language: LanguageCode
 ): { exerciseRows: ExerciseRow[]; optionRows: OptionRow[] } {
-  const distractorPool = buildDistractorPool(seedChapter.verses);
+  // Woordenlijsten en hints in de taal van de uitgave (Nederlands: zoals voorheen).
+  const distractorPool = buildDistractorPool(seedChapter.verses, language);
 
   const exerciseRows: ExerciseRow[] = [];
   const optionRows: OptionRow[] = [];
@@ -40,7 +43,7 @@ function chapterExercises(
     const verseRef = `${seedBook.name} ${seedChapter.number}:${i + 1}`;
     const sourceVerseId = verseIds[i];
 
-    const fillBlank = generateFillBlank(seedChapter.verses[i], verseRef, i, distractorPool);
+    const fillBlank = generateFillBlank(seedChapter.verses[i], verseRef, i, distractorPool, language);
     if (fillBlank) {
       const exerciseId = randomUUID();
       exerciseRows.push({
@@ -57,7 +60,8 @@ function chapterExercises(
           fillBlank.prompt,
           fillBlank.answers,
           fillBlank.verseRef,
-          seedChapter.verses[i]
+          seedChapter.verses[i],
+          language
         ),
       });
       fillBlank.options?.forEach((label, order) => {
@@ -89,12 +93,13 @@ function chapterExercises(
             wordBank.prompt,
             wordBank.answers,
             wordBank.verseRef,
-            seedChapter.verses[i]
+            seedChapter.verses[i],
+            language
           ),
         });
       }
     } else {
-      const trueFalse = generateTrueFalse(seedChapter.verses[i], verseRef, i);
+      const trueFalse = generateTrueFalse(seedChapter.verses[i], verseRef, i, language);
       if (trueFalse) {
         exerciseRows.push({
           id: randomUUID(),
@@ -110,7 +115,8 @@ function chapterExercises(
             trueFalse.prompt,
             trueFalse.answers,
             trueFalse.verseRef,
-            seedChapter.verses[i]
+            seedChapter.verses[i],
+            language
           ),
         });
       }
@@ -136,7 +142,9 @@ function chapterExercises(
           "MULTIPLE_CHOICE",
           comp.prompt,
           [comp.options[comp.correctIndex]],
-          comp.verseRef
+          comp.verseRef,
+          undefined,
+          language
         ),
       });
       // Geshuffeld, want handmatig geschreven meerkeuzevragen hebben het
@@ -161,7 +169,7 @@ function chapterExercises(
         prompt: comp.prompt,
         answers: JSON.stringify(comp.items.map((item) => item.toLowerCase())),
         wordBank: JSON.stringify(shuffled),
-        hint: generateExerciseHint("SEQUENCE", comp.prompt, comp.items, comp.verseRef),
+        hint: generateExerciseHint("SEQUENCE", comp.prompt, comp.items, comp.verseRef, undefined, language),
       });
     }
   }
@@ -190,12 +198,16 @@ export async function importBooks(
   log: (msg: string) => void = console.log,
   contentCollectionId?: string
 ) {
-  const collectionId = contentCollectionId ?? (await prisma.contentCollection.findFirst({
-    where: { enabled: true },
-    orderBy: { order: "asc" },
-    select: { id: true },
-  }))?.id;
-  if (!collectionId) throw new Error("Geen contentcollectie beschikbaar om boeken aan te koppelen.");
+  const collection = contentCollectionId
+    ? await prisma.contentCollection.findUnique({ where: { id: contentCollectionId }, select: { id: true, language: true } })
+    : await prisma.contentCollection.findFirst({
+        where: { enabled: true },
+        orderBy: { order: "asc" },
+        select: { id: true, language: true },
+      });
+  if (!collection) throw new Error("Geen contentcollectie beschikbaar om boeken aan te koppelen.");
+  const collectionId = collection.id;
+  const language = toLanguageCode(collection.language);
 
   const bookIds: string[] = [];
   for (let bookOrder = 0; bookOrder < books.length; bookOrder++) {
@@ -253,7 +265,7 @@ export async function importBooks(
         if (verse.number > seedChapter.verses.length) verseDeletes.push(verse.id);
       }
 
-      const generated = chapterExercises(seedBook, seedChapter, chapterId, verseIds);
+      const generated = chapterExercises(seedBook, seedChapter, chapterId, verseIds, language);
       exerciseRows.push(...generated.exerciseRows);
       optionRows.push(...generated.optionRows);
       bookExercises += generated.exerciseRows.length;

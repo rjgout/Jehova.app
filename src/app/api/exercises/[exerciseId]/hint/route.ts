@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getCurrentUser } from "@/lib/session";
 import { generateExerciseHint } from "@/lib/exerciseHints";
+import { toLanguageCode } from "@/lib/languages";
 
 export async function GET(_req: NextRequest) {
   const user = await getCurrentUser();
@@ -18,14 +19,19 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ ex
   const { exerciseId } = await params;
   const exercise = await prisma.exercise.findUnique({
     where: { id: exerciseId },
-    include: { sourceVerse: { select: { text: true } } },
+    include: {
+      sourceVerse: { select: { text: true } },
+      chapter: { select: { book: { select: { contentCollection: { select: { language: true } } } } } },
+    },
   });
   if (!exercise) return NextResponse.json({ error: "Oefening niet gevonden" }, { status: 404 });
 
   let hint = exercise.hint;
   if (!hint) {
     const answers = JSON.parse(exercise.answers) as string[];
-    hint = generateExerciseHint(exercise.type, exercise.prompt, answers, exercise.verseRef, exercise.sourceVerse?.text);
+    // In de taal van de uitgave, net als de oefening zelf.
+    const language = toLanguageCode(exercise.chapter?.book.contentCollection.language);
+    hint = generateExerciseHint(exercise.type, exercise.prompt, answers, exercise.verseRef, exercise.sourceVerse?.text, language);
     await prisma.exercise.update({ where: { id: exercise.id }, data: { hint } });
   }
 
