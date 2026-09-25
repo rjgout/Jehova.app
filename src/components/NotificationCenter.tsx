@@ -5,6 +5,9 @@ import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { getSocket } from "@/lib/socketClient";
 import { notificationGroup } from "@/lib/notificationGroups";
+import { useT, useUiLanguage } from "@/components/I18nProvider";
+import { getLanguage } from "@/lib/languages";
+import type { TFunction } from "@/lib/i18n/core";
 
 interface NotificationItem {
   id: string;
@@ -19,14 +22,14 @@ const POLL_MS = 30_000;
 const DISMISS_DISTANCE_PX = 90;
 const TAP_TOLERANCE_PX = 6;
 
-function timeLabel(iso: string, now: number): string {
+function timeLabel(iso: string, now: number, t: TFunction, intlLocale: string): string {
   const minutes = Math.floor((now - new Date(iso).getTime()) / 60_000);
-  if (minutes < 1) return "nu";
-  if (minutes < 60) return `${minutes} min`;
+  if (minutes < 1) return t("notifications.timeNow");
+  if (minutes < 60) return t("notifications.timeMinutes", { n: minutes });
   const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours} u`;
-  if (hours < 48) return "gisteren";
-  return new Date(iso).toLocaleDateString("nl-NL", { day: "numeric", month: "short" });
+  if (hours < 24) return t("notifications.timeHours", { n: hours });
+  if (hours < 48) return t("notifications.timeYesterday");
+  return new Date(iso).toLocaleDateString(intlLocale, { day: "numeric", month: "short" });
 }
 
 // Het getal op het app-icoon is het aantal meldingen hier (zie notifyUser).
@@ -49,6 +52,7 @@ function syncAppBadge(count: number) {
  * aanmaakt, kan de socketserver niet zien).
  */
 export default function NotificationCenter() {
+  const t = useT();
   const router = useRouter();
   const [items, setItems] = useState<NotificationItem[]>([]);
   const [count, setCount] = useState(0);
@@ -172,7 +176,7 @@ export default function NotificationCenter() {
         type="button"
         onClick={() => setOpen(true)}
         className="relative flex h-8 w-8 items-center justify-center rounded-full text-slate-500 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
-        aria-label={count > 0 ? `Meldingen (${count} nieuw)` : "Meldingen"}
+        aria-label={count > 0 ? t("notifications.titleWithCount", { count }) : t("notifications.title")}
       >
         <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
           <path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" />
@@ -192,7 +196,7 @@ export default function NotificationCenter() {
             className="fixed inset-0 z-[80] bg-slate-900/60 dark:bg-slate-950/70 backdrop-blur-2xl animate-sheet-down"
             role="dialog"
             aria-modal="true"
-            aria-label="Meldingen"
+            aria-label={t("notifications.title")}
             onClick={() => setOpen(false)}
           >
             <div
@@ -200,7 +204,7 @@ export default function NotificationCenter() {
               style={{ paddingTop: "calc(env(safe-area-inset-top) + 1rem)" }}
             >
               <div className="flex items-center justify-between gap-3 px-1 pb-3" onClick={(e) => e.stopPropagation()}>
-                <h2 className="text-3xl font-extrabold text-white drop-shadow">Meldingen</h2>
+                <h2 className="text-3xl font-extrabold text-white drop-shadow">{t("notifications.title")}</h2>
                 <div className="flex items-center gap-2">
                   {items.length > 0 && (
                     <button
@@ -208,14 +212,14 @@ export default function NotificationCenter() {
                       className="rounded-full bg-white/20 px-3 py-1.5 text-xs font-bold text-white hover:bg-white/30"
                       onClick={() => remove({ all: true })}
                     >
-                      Alles wissen
+                      {t("notifications.clearAll")}
                     </button>
                   )}
                   <button
                     type="button"
                     className="flex h-8 w-8 items-center justify-center rounded-full bg-white/20 text-white hover:bg-white/30"
                     onClick={() => setOpen(false)}
-                    aria-label="Sluiten"
+                    aria-label={t("common.close")}
                   >
                     ✕
                   </button>
@@ -230,12 +234,12 @@ export default function NotificationCenter() {
                     <span className="text-4xl" aria-hidden>
                       🔔
                     </span>
-                    <p className="font-bold">Geen meldingen</p>
-                    <p className="text-sm text-white/60">Uitnodigingen, beurten en uitslagen verschijnen hier.</p>
+                    <p className="font-bold">{t("notifications.empty")}</p>
+                    <p className="text-sm text-white/60">{t("notifications.emptyHint")}</p>
                   </div>
                 ) : (
                   groups.map(({ kind, list }) => {
-                    const group = notificationGroup(kind);
+                    const group = { ...notificationGroup(kind), label: t(notificationGroup(kind).labelKey) };
                     const isExpanded = expanded.has(kind) || list.length === 1;
                     return (
                       <section key={kind} className="flex flex-col gap-2" onClick={(e) => e.stopPropagation()}>
@@ -248,13 +252,13 @@ export default function NotificationCenter() {
                                 className="rounded-full bg-white/20 px-3 py-1 text-xs font-bold text-white hover:bg-white/30"
                                 onClick={() => toggleGroup(kind, false)}
                               >
-                                Toon minder
+                                {t("notifications.showLess")}
                               </button>
                               <button
                                 type="button"
                                 className="flex h-6 w-6 items-center justify-center rounded-full bg-white/20 text-xs text-white hover:bg-white/30"
                                 onClick={() => remove({ kind })}
-                                aria-label={`Wis alle meldingen van ${group.label}`}
+                                aria-label={t("notifications.clearGroupAria", { group: group.label })}
                               >
                                 ✕
                               </button>
@@ -321,6 +325,8 @@ function NotificationCard({
   onOpen: () => void;
   onDismiss: () => void;
 }) {
+  const t = useT();
+  const uiLanguage = useUiLanguage();
   const [offsetX, setOffsetX] = useState(0);
   const [leaving, setLeaving] = useState(false);
   const drag = useRef<{ startX: number; startY: number; moved: number } | null>(null);
@@ -378,7 +384,7 @@ function NotificationCard({
         <div className="min-w-0 flex-1">
           <div className="flex items-center justify-between gap-2">
             <p className="text-sm font-extrabold text-slate-900 dark:text-slate-100 truncate">{item.title}</p>
-            <span className="text-[11px] text-slate-400 dark:text-slate-500 shrink-0">{timeLabel(item.createdAt, now)}</span>
+            <span className="text-[11px] text-slate-400 dark:text-slate-500 shrink-0">{timeLabel(item.createdAt, now, t, getLanguage(uiLanguage).intlLocale)}</span>
           </div>
           <p className="text-sm text-slate-600 dark:text-slate-300 leading-snug">{item.body}</p>
           {more > 0 && (
@@ -397,7 +403,7 @@ function NotificationCard({
         }}
         onPointerDown={(e) => e.stopPropagation()}
         onPointerUp={(e) => e.stopPropagation()}
-        aria-label={more > 0 ? "Wis deze groep" : "Wis melding"}
+        aria-label={more > 0 ? t("notifications.clearGroup") : t("notifications.clearOne")}
       >
         ✕
       </button>

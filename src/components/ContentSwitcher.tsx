@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { getLanguage } from "@/lib/languages";
+import { useT } from "@/components/I18nProvider";
 
 interface Collection {
   id: string;
@@ -31,6 +32,7 @@ export default function ContentSwitcher({
   /** Er is meer dan één contenttaal te kiezen: toon dan overal de taal. */
   showLanguage: boolean;
 }) {
+  const t = useT();
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -92,9 +94,9 @@ export default function ContentSwitcher({
         onClick={() => setOpen((value) => !value)}
         aria-expanded={open}
         aria-haspopup="listbox"
-        aria-label={
-          "Actieve content: " + active.name + (showLanguage ? ` (${getLanguage(active.language).nativeName})` : "") + ". Klik om te wisselen."
-        }
+        aria-label={t("contentSwitcher.activeAria", {
+          name: active.name + (showLanguage ? ` (${getLanguage(active.language).nativeName})` : ""),
+        })}
         className="h-full inline-flex items-center justify-center gap-1.5 px-2 text-sm font-bold text-slate-600 dark:text-slate-300 hover:text-brand-600 dark:hover:text-brand-300"
       >
         <span aria-hidden>{active.icon}</span>
@@ -107,7 +109,7 @@ export default function ContentSwitcher({
 
       {open && (
         <div className="absolute top-full left-1/2 -translate-x-1/2 w-screen max-w-5xl overflow-hidden rounded-b-2xl border border-slate-200 bg-white shadow-xl dark:border-slate-700 dark:bg-slate-900 z-50">
-          <div className="mx-auto max-w-2xl px-4 py-2" role="listbox" aria-label="Beschikbare content">
+          <div className="mx-auto max-w-2xl px-4 py-2" role="listbox" aria-label={t("contentSwitcher.available")}>
             {ordered.map(({ work, edition: collection }, index) => {
               const selected = work === activeWork;
               return (
@@ -137,7 +139,7 @@ export default function ContentSwitcher({
                   {/* Alleen beheerders krijgen verborgen content in dit menu. */}
                   {!collection.visibleToUsers && (
                     <span className="ml-auto shrink-0 text-[10px] font-bold uppercase text-slate-500 bg-slate-100 dark:bg-slate-800 dark:text-slate-400 rounded-full px-2 py-0.5">
-                      Verborgen
+                      {t("contentSwitcher.hidden")}
                     </span>
                   )}
                 </button>
@@ -147,9 +149,9 @@ export default function ContentSwitcher({
           {activeEditions.length > 1 && (
             <div className="mx-auto max-w-2xl px-4 pb-3 pt-1 border-t border-slate-100 dark:border-slate-800">
               <p className="text-xs font-bold uppercase tracking-wide text-slate-400 dark:text-slate-500 pt-2 pb-1.5">
-                Taal van de tekst
+                {t("contentSwitcher.textLanguage")}
               </p>
-              <div className="flex flex-wrap gap-2" role="radiogroup" aria-label="Taal van de tekst">
+              <div className="flex flex-wrap gap-2" role="radiogroup" aria-label={t("contentSwitcher.textLanguage")}>
                 {activeEditions.map((edition) => {
                   const language = getLanguage(edition.language);
                   const selected = edition.id === active.id;
@@ -161,7 +163,7 @@ export default function ContentSwitcher({
                       aria-checked={selected}
                       disabled={busy}
                       onClick={() => selectLanguage(edition)}
-                      title={edition.visibleToUsers ? undefined : "Verborgen voor gebruikers"}
+                      title={edition.visibleToUsers ? undefined : t("contentSwitcher.hiddenTitle")}
                       className={[
                         "rounded-full px-3 py-1.5 text-sm font-bold border-2 transition",
                         selected

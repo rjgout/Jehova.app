@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { onXpChanged } from "@/lib/xpBroadcast";
+import { useT } from "@/components/I18nProvider";
 
 export default function NavUserBadges({
   streak,
@@ -16,6 +17,7 @@ export default function NavUserBadges({
   // ergens anders op dezelfde pagina (zie src/lib/xpBroadcast.ts) meteen
   // zichtbaar is zonder op de volgende paginanavigatie te hoeven wachten.
   const [values, setValues] = useState({ streak, xp });
+  const t = useT();
 
   useEffect(() => {
     return onXpChanged(() => {
@@ -28,10 +30,10 @@ export default function NavUserBadges({
 
   return (
     <div className="flex items-center gap-3 text-sm font-bold leading-none">
-      <Link href="/streak" title="Reeks" className="flex items-center gap-1 text-orange-500">
+      <Link href="/streak" title={t("header.streak")} className="flex items-center gap-1 text-orange-500">
         🔥 {values.streak}
       </Link>
-      <Link href="/xp" title="Ervaringspunten" className="flex items-center gap-1 text-gold-600">
+      <Link href="/xp" title={t("header.xp")} className="flex items-center gap-1 text-gold-600">
         ⭐ {values.xp}
       </Link>
     </div>

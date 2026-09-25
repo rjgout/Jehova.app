@@ -1,17 +1,20 @@
 // Groepen in het meldingencentrum (zie NotificationCenter.tsx). Puur data,
 // veilig voor zowel server (notify.ts) als client. Volgorde = volgorde van de
-// groepen als ze even nieuw zijn.
+// groepen als ze even nieuw zijn. De naam staat in de vertalingen
+// (notifications.groups.*).
+import type { MessageKey } from "@/lib/i18n/core";
+
 export const NOTIFICATION_GROUPS = {
-  games: { label: "Live spellen", icon: "🎮" },
-  wordgame: { label: "Woordspel", icon: "🔤" },
-  challenges: { label: "Uitdagingen", icon: "⚔️" },
-  friends: { label: "Vrienden", icon: "👥" },
-  achievements: { label: "Prestaties", icon: "🏅" },
-  competition: { label: "Competitie", icon: "🏆" },
-} as const;
+  games: { labelKey: "notifications.groups.games", icon: "🎮" },
+  wordgame: { labelKey: "notifications.groups.wordgame", icon: "🔤" },
+  challenges: { labelKey: "notifications.groups.challenges", icon: "⚔️" },
+  friends: { labelKey: "notifications.groups.friends", icon: "👥" },
+  achievements: { labelKey: "notifications.groups.achievements", icon: "🏅" },
+  competition: { labelKey: "notifications.groups.competition", icon: "🏆" },
+} as const satisfies Record<string, { labelKey: MessageKey; icon: string }>;
 
 export type NotificationKind = keyof typeof NOTIFICATION_GROUPS;
 
-export function notificationGroup(kind: string): { label: string; icon: string } {
-  return NOTIFICATION_GROUPS[kind as NotificationKind] ?? { label: "Meldingen", icon: "🔔" };
+export function notificationGroup(kind: string): { labelKey: MessageKey; icon: string } {
+  return NOTIFICATION_GROUPS[kind as NotificationKind] ?? { labelKey: "notifications.groups.other", icon: "🔔" };
 }

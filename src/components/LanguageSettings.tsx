@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import CollapsibleCard from "@/components/CollapsibleCard";
 import { LANGUAGES, getLanguage } from "@/lib/languages";
+import { useT } from "@/components/I18nProvider";
 
 // Twee losse keuzes (zie User.uiLanguage / contentLanguage): de taal van de
 // app en de taal waarin je de Schriften leest en speelt. Een taal staat
@@ -10,6 +11,7 @@ import { LANGUAGES, getLanguage } from "@/lib/languages";
 // (Language.uiReady; beheerders zien alles, om een vertaling te bekijken), of
 // minstens één uitgave die je kunt kiezen.
 export default function LanguageSettings({ uiLanguage, isAdmin }: { uiLanguage: string; isAdmin: boolean }) {
+  const t = useT();
   const [contentLanguage, setContentLanguage] = useState<string | null>(null);
   const [contentLanguages, setContentLanguages] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
@@ -41,7 +43,7 @@ export default function LanguageSettings({ uiLanguage, isAdmin }: { uiLanguage: 
       });
       if (!response.ok) {
         const data = await response.json().catch(() => null);
-        setError(data?.error ?? "Opslaan is niet gelukt.");
+        setError(data?.error ?? t("languageSettings.saveFailed"));
         return;
       }
       window.location.reload();
@@ -51,11 +53,11 @@ export default function LanguageSettings({ uiLanguage, isAdmin }: { uiLanguage: 
   }
 
   return (
-    <CollapsibleCard title="Taal">
+    <CollapsibleCard title={t("languageSettings.title")}>
       <div className="flex flex-col gap-5">
       <label className="flex flex-col gap-1.5">
-        <span className="text-sm font-semibold dark:text-slate-200">Taal van de app</span>
-        <span className="text-xs text-slate-500 dark:text-slate-400">Menu&apos;s, knoppen, meldingen en e-mails.</span>
+        <span className="text-sm font-semibold dark:text-slate-200">{t("languageSettings.appLanguage")}</span>
+        <span className="text-xs text-slate-500 dark:text-slate-400">{t("languageSettings.appLanguageHint")}</span>
         {uiChoices.length > 1 ? (
           <select
             className="input"
@@ -66,20 +68,20 @@ export default function LanguageSettings({ uiLanguage, isAdmin }: { uiLanguage: 
             {uiChoices.map((language) => (
               <option key={language.code} value={language.code}>
                 {language.nativeName}
-                {language.uiReady ? "" : " (vertaling in ontwikkeling)"}
+                {language.uiReady ? "" : ` ${t("languageSettings.inDevelopment")}`}
               </option>
             ))}
           </select>
         ) : (
-          <span className="text-sm dark:text-slate-200">{getLanguage(uiLanguage).nativeName} · meer talen volgen</span>
+          <span className="text-sm dark:text-slate-200">
+            {t("languageSettings.moreFollow", { language: getLanguage(uiLanguage).nativeName })}
+          </span>
         )}
       </label>
 
       <label className="flex flex-col gap-1.5">
-        <span className="text-sm font-semibold dark:text-slate-200">Taal van de tekst</span>
-        <span className="text-xs text-slate-500 dark:text-slate-400">
-          In welke taal je de Schriften leest en oefent. Kan anders zijn dan de taal van de app.
-        </span>
+        <span className="text-sm font-semibold dark:text-slate-200">{t("languageSettings.textLanguage")}</span>
+        <span className="text-xs text-slate-500 dark:text-slate-400">{t("languageSettings.textLanguageHint")}</span>
         {contentLanguage && contentChoices.length > 1 ? (
           <select
             className="input"
@@ -95,7 +97,7 @@ export default function LanguageSettings({ uiLanguage, isAdmin }: { uiLanguage: 
           </select>
         ) : (
           <span className="text-sm dark:text-slate-200">
-            {getLanguage(contentLanguage).nativeName} · meer talen volgen
+            {t("languageSettings.moreFollow", { language: getLanguage(contentLanguage).nativeName })}
           </span>
         )}
       </label>
