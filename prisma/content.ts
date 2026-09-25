@@ -39,6 +39,8 @@ export interface SeedChapter {
 
 export interface SeedBook {
   slug: string;
+  /** Taalonafhankelijke sleutel (zie prisma/bookKeys.ts); anders afgeleid van de slug. */
+  key?: string;
   name: string;
   chapters: SeedChapter[];
 }

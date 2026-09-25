@@ -10,6 +10,7 @@ import {
 import { generateExerciseHint } from "../src/lib/exerciseHints";
 import { syncCourses } from "../src/lib/courses";
 import type { SeedBook } from "./content";
+import { BOOK_KEYS_BY_SLUG } from "./bookKeys";
 
 type ExerciseRow = Prisma.ExerciseCreateManyInput;
 type OptionRow = Prisma.QuestionOptionCreateManyInput;
@@ -199,10 +200,11 @@ export async function importBooks(
   const bookIds: string[] = [];
   for (let bookOrder = 0; bookOrder < books.length; bookOrder++) {
     const seedBook = books[bookOrder];
+    const key = seedBook.key ?? BOOK_KEYS_BY_SLUG[seedBook.slug] ?? null;
     const book = await prisma.book.upsert({
       where: { slug: seedBook.slug },
-      update: { name: seedBook.name, order: bookOrder, contentCollectionId: collectionId },
-      create: { slug: seedBook.slug, name: seedBook.name, order: bookOrder, contentCollectionId: collectionId },
+      update: { name: seedBook.name, order: bookOrder, contentCollectionId: collectionId, key },
+      create: { slug: seedBook.slug, name: seedBook.name, order: bookOrder, contentCollectionId: collectionId, key },
     });
     bookIds.push(book.id);
   }

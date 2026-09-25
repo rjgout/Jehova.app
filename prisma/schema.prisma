@@ -95,6 +95,13 @@ model User {
   activeContentCollectionId String?
   activeContentCollection   ContentCollection? @relation("ActiveContentCollection", fields: [activeContentCollectionId], references: [id], onDelete: SetNull)
 
+  // Taal van de app (menu's, knoppen, meldingen, e-mails) en taal van de
+  // content (welke uitgave van een werk je leest en speelt) staan bewust los
+  // van elkaar: je kunt bv. de app in het Duits gebruiken en het Boek van
+  // Mormon in het Nederlands lezen. Codes uit src/lib/languages.ts.
+  uiLanguage      String @default("nl")
+  contentLanguage String @default("nl")
+
   // Eigen emoji voor het avatar-rondje (zie ProfileClient.tsx — klik op het
   // rondje op je profielpagina om 'm te zetten), los van de gebruikersnaam:
   // een naam die met een emoji begint, wordt daar bewust NIET automatisch
@@ -324,10 +331,18 @@ model Book {
   slug     String    @unique
   name     String
   order    Int
+  // Taalonafhankelijke sleutel van het boek: het pad dat de kerk zelf
+  // gebruikt ("bofm/alma", "dc-testament/dc", "pgp/moses"). Een vers in een
+  // andere taal is hetzelfde vers als Book.key, hoofdstuk- en versnummer
+  // gelijk zijn; zo kunnen spelers in verschillende talen samen spelen.
+  // Null bij content zonder vaste bron (bv. een eigen import).
+  key      String?
   chapters Chapter[]
   courses  Course[] // BY_BOOK-cursussen die dit boek dekken
   contentCollectionId String
   contentCollection   ContentCollection @relation(fields: [contentCollectionId], references: [id], onDelete: Cascade)
+
+  @@unique([contentCollectionId, key])
 }
 
 model Chapter {
@@ -380,6 +395,12 @@ model ContentCollection {
   // Beheerders zien altijd alle collecties, zodat ze nieuwe content kunnen
   // bekijken voordat die voor iedereen beschikbaar is.
   visibleToUsers Boolean @default(true)
+  // Welk werk dit is, los van de taal (kerk-URI-deel: "bofm",
+  // "dc-testament", "pgp"; eigen content: "fsy", "podcasts"). Samen met
+  // language vormt dit één uitgave; dezelfde verzen in een andere taal
+  // vind je via hetzelfde werk en dezelfde Book.key.
+  work      String?
+  language  String   @default("nl")
   books     Book[]
   courses   Course[]
   gameScopes GameContentScope[]
