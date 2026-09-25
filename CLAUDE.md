@@ -342,6 +342,20 @@ het hoofdstuk). Het fundament ligt er; zichtbaar is alles nog Nederlands.
   elke uitgave hetzelfde. Helpers in `src/lib/scriptureRefs.ts`. Een spel
   tussen talen kiest één verwijzing en laat die elke speler in de eigen
   contenttaal zien; scores tellen op de vraag, niet op de tekst.
+- **Uitgaven in andere talen**: `scripts/church-text/fetch_scripture.py <en|de|fr>`
+  haalt Boek van Mormon, Leer en Verbonden en Parel van Grote Waarde op
+  (verzen + opschriften, met `key` per boek; stopt als het aantal verzen
+  afwijkt van het Nederlands) en schrijft `prisma/<werk>Content.<taal>.json`
+  en `<werk>WordCounts.<taal>.json`. Collecties komen via een migratie
+  (Engels: `content_bom_en`, `content_dc_en`, `content_pgp_en`, verborgen),
+  de seed importeert ze. Oefeningen en hints worden gemaakt in de taal van de
+  collectie (woordenlijsten per taal in `src/lib/exerciseGen.ts`, hints in
+  `src/lib/exerciseHints.ts`); de Nederlandse uitvoer mag daarbij nooit
+  veranderen. **Let op:** JSON die `tsx` laadt (alles in de keten van
+  `server.ts` en de seed) mag geen objecten met woorden als sleutels
+  bevatten: `tsx` maakt van elke sleutel een variabele, en woorden als
+  `yield` of `let` laten de app dan bij het opstarten crashen. Woordenlijsten
+  in andere talen staan daarom als `[woord, aantal]`-paren.
 - **App-teksten**: `src/lib/i18n/messages/nl.ts` is de bron; `en/de/fr.ts`
   volgen die structuur; een ontbrekende tekst valt terug langs
   `fallbackChain` (Duits/Frans → Engels → Nederlands). Sleutels zijn getypt. Server (ook de eager-keten van

@@ -5,8 +5,17 @@ import { importChapterAudio, type ChapterAudioSeed } from "../../prisma/importAu
 import bomAudio from "../../prisma/bomAudio.json";
 import dcContent from "../../prisma/dcContent.json";
 import pgpContent from "../../prisma/pgpContent.json";
+import bomContentEn from "../../prisma/bomContent.en.json";
+import dcContentEn from "../../prisma/dcContent.en.json";
+import pgpContentEn from "../../prisma/pgpContent.en.json";
 import type { SeedBook } from "../../prisma/content";
-import { DC_COLLECTION_ID, PGP_COLLECTION_ID } from "./contentCollections";
+import {
+  BOM_EN_COLLECTION_ID,
+  DC_COLLECTION_ID,
+  DC_EN_COLLECTION_ID,
+  PGP_COLLECTION_ID,
+  PGP_EN_COLLECTION_ID,
+} from "./contentCollections";
 import { podcastEpisodes } from "../../prisma/podcastContent";
 import { kastVanMormonEpisodes } from "../../prisma/kastVanMormonContent";
 import { GJDO_PODCAST_ID, KAST_PODCAST_ID } from "./podcasts";
@@ -69,13 +78,18 @@ export async function runSeed(client: PrismaClient, log: (msg: string) => void =
   await importBooks(client, seedBooks, log);
   await importChapterAudio(client, bomAudio as ChapterAudioSeed[], log);
 
-  // Leer en Verbonden en de Parel van Grote Waarde, elk in een eigen
-  // collectie. Alleen als die collectie bestaat (migratie
-  // 20260924200000_dc_pgp_collections), anders zou importBooks ze bij het
-  // Boek van Mormon zetten.
+  // Leer en Verbonden en de Parel van Grote Waarde, en de Engelse uitgaven
+  // van alle drie, elk in een eigen collectie. Alleen als die collectie
+  // bestaat (migraties 20260924200000_dc_pgp_collections en
+  // 20260925120000_english_editions), anders zou importBooks ze bij het
+  // Boek van Mormon zetten. De taal van de collectie bepaalt de taal van de
+  // gegenereerde oefeningen en hints.
   for (const [collectionId, books, label] of [
     [DC_COLLECTION_ID, dcContent as SeedBook[], "Leer en Verbonden"],
     [PGP_COLLECTION_ID, pgpContent as SeedBook[], "Parel van Grote Waarde"],
+    [BOM_EN_COLLECTION_ID, bomContentEn as SeedBook[], "Book of Mormon (Engels)"],
+    [DC_EN_COLLECTION_ID, dcContentEn as SeedBook[], "Doctrine and Covenants (Engels)"],
+    [PGP_EN_COLLECTION_ID, pgpContentEn as SeedBook[], "Pearl of Great Price (Engels)"],
   ] as const) {
     if (!(await client.contentCollection.findUnique({ where: { id: collectionId }, select: { id: true } }))) continue;
     log(`Seeding ${label}...`);

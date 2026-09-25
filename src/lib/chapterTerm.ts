@@ -13,15 +13,22 @@ export interface ChapterTerm {
 const HOOFDSTUK: ChapterTerm = { singular: "hoofdstuk", plural: "hoofdstukken", thisOne: "dit hoofdstuk" };
 const AFDELING: ChapterTerm = { singular: "afdeling", plural: "afdelingen", thisOne: "deze afdeling" };
 
-const SECTION_BOOK_SLUGS = new Set(["leer-en-verbonden"]);
+// Leer en Verbonden in elke taal: de Nederlandse slug, of de slug die
+// fetch_scripture.py maakt ("<taal>-dc-testament-dc").
+function isSectionBook(bookSlug: string): boolean {
+  return bookSlug === "leer-en-verbonden" || bookSlug.endsWith("-dc-testament-dc");
+}
 // Voor cursussen zonder vast boek (van voor naar achter, leeslessen): de
-// collectie. Letterlijk en niet uit contentCollections.ts, omdat dat bestand
-// de database importeert en dit ook in client components gebruikt wordt.
-const SECTION_COLLECTION_IDS = new Set(["content_dc"]);
+// collectie ("content_dc", "content_dc_en", ...). Letterlijk en niet uit
+// contentCollections.ts, omdat dat bestand de database importeert en dit ook
+// in client components gebruikt wordt.
+function isSectionCollection(collectionId: string): boolean {
+  return collectionId === "content_dc" || collectionId.startsWith("content_dc_");
+}
 
 export function chapterTerm(bookSlug: string | null | undefined, collectionId?: string | null): ChapterTerm {
-  if (bookSlug && SECTION_BOOK_SLUGS.has(bookSlug)) return AFDELING;
-  if (!bookSlug && collectionId && SECTION_COLLECTION_IDS.has(collectionId)) return AFDELING;
+  if (bookSlug && isSectionBook(bookSlug)) return AFDELING;
+  if (!bookSlug && collectionId && isSectionCollection(collectionId)) return AFDELING;
   return HOOFDSTUK;
 }
 

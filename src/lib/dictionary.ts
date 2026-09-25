@@ -1,8 +1,18 @@
 import bomWordCounts from "../../prisma/bomWordCounts.json";
 import dcWordCounts from "../../prisma/dcWordCounts.json";
 import pgpWordCounts from "../../prisma/pgpWordCounts.json";
+import bomWordCountsEn from "../../prisma/bomWordCounts.en.json";
+import dcWordCountsEn from "../../prisma/dcWordCounts.en.json";
+import pgpWordCountsEn from "../../prisma/pgpWordCounts.en.json";
 import { prisma } from "@/lib/db";
-import { BOM_COLLECTION_ID, DC_COLLECTION_ID, PGP_COLLECTION_ID } from "@/lib/contentCollections";
+import {
+  BOM_COLLECTION_ID,
+  BOM_EN_COLLECTION_ID,
+  DC_COLLECTION_ID,
+  DC_EN_COLLECTION_ID,
+  PGP_COLLECTION_ID,
+  PGP_EN_COLLECTION_ID,
+} from "@/lib/contentCollections";
 
 export interface DictionaryEntry {
   word: string;
@@ -16,9 +26,13 @@ export interface DictionaryEntry {
 // als hulpmiddel bij woordspelletjes. Statisch gegenereerd i.p.v. live
 // opgeteld uit de database, om dezelfde reden dat bomWords.json dat ook is.
 // Leer en Verbonden en de Parel van Grote Waarde hebben elk een eigen lijst
-// met dezelfde extractie (zie scripts/church-text/fetch_dc_pgp.py).
-function toEntries(counts: Record<string, number>): DictionaryEntry[] {
-  return Object.entries(counts)
+// met dezelfde extractie (zie scripts/church-text/fetch_dc_pgp.py), net als
+// de uitgaven in andere talen (scripts/church-text/fetch_scripture.py).
+// De uitgaven in andere talen staan als lijst van [woord, aantal]: als object
+// zouden Engelse woorden als "yield" de app onder tsx laten crashen (zie
+// fetch_scripture.py).
+function toEntries(counts: Record<string, number> | [string, number][]): DictionaryEntry[] {
+  return (Array.isArray(counts) ? counts : Object.entries(counts))
     .map(([word, count]) => ({ word, count }))
     .sort((a, b) => a.word.localeCompare(b.word, "nl"));
 }
@@ -27,6 +41,9 @@ const ENTRIES_BY_COLLECTION: Record<string, DictionaryEntry[]> = {
   [BOM_COLLECTION_ID]: toEntries(bomWordCounts as Record<string, number>),
   [DC_COLLECTION_ID]: toEntries(dcWordCounts as Record<string, number>),
   [PGP_COLLECTION_ID]: toEntries(pgpWordCounts as Record<string, number>),
+  [BOM_EN_COLLECTION_ID]: toEntries(bomWordCountsEn as [string, number][]),
+  [DC_EN_COLLECTION_ID]: toEntries(dcWordCountsEn as [string, number][]),
+  [PGP_EN_COLLECTION_ID]: toEntries(pgpWordCountsEn as [string, number][]),
 };
 
 /** Collecties met een woordenboek (zie src/app/tools/page.tsx). */

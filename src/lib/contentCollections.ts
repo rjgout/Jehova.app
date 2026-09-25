@@ -32,6 +32,10 @@ export const BOM_COLLECTION_ID = "content_bom";
 // Zie migratie 20260924200000_dc_pgp_collections.
 export const DC_COLLECTION_ID = "content_dc";
 export const PGP_COLLECTION_ID = "content_pgp";
+// Engelse uitgaven, zie migratie 20260925120000_english_editions.
+export const BOM_EN_COLLECTION_ID = "content_bom_en";
+export const DC_EN_COLLECTION_ID = "content_dc_en";
+export const PGP_EN_COLLECTION_ID = "content_pgp_en";
 // Werken (ContentCollection.work): hetzelfde werk in een andere taal is een
 // andere collectie met hetzelfde work.
 export const BOFM_WORK = "bofm";
