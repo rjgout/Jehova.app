@@ -167,7 +167,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               <ContentSwitcher
                 enabled={contentContext.switcherEnabled || user.isAdmin}
                 active={contentContext.active}
-                collections={contentContext.collections}
+                works={contentContext.works}
+                activeEditions={contentContext.activeEditions}
+                showLanguage={contentContext.contentLanguages.length > 1}
               />
             )}
 

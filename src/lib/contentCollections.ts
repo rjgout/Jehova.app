@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/db";
-import { DEFAULT_LANGUAGE, fallbackChain } from "@/lib/languages";
+import { DEFAULT_LANGUAGE, LANGUAGES, fallbackChain } from "@/lib/languages";
 
 export interface ContentCollectionView {
   id: string;
@@ -18,11 +18,46 @@ export interface AdminContentCollection extends ContentCollectionView {
   enabled: boolean;
 }
 
+/** Eén werk in de contentkiezer, met de uitgave waar een klik naartoe gaat. */
+export interface WorkOption {
+  /** ContentCollection.work, of het collectie-id voor content zonder werk. */
+  work: string;
+  edition: ContentCollectionView;
+}
+
 export interface ContentContext {
   switcherEnabled: boolean;
   active: ContentCollectionView;
   collections: ContentCollectionView[];
   gameKeys: string[];
+  /** De gekozen taal van de content (User.contentLanguage). */
+  contentLanguage: string;
+  /** Eén regel per werk, in de contenttaal waar die uitgave bestaat. */
+  works: WorkOption[];
+  /** Talen waarin het actieve werk te lezen is, met de uitgave per taal. */
+  activeEditions: ContentCollectionView[];
+  /** Alle talen met minstens één kiesbare uitgave (voor de taalkeuze in het profiel). */
+  contentLanguages: string[];
+}
+
+function workOf(collection: ContentCollectionView): string {
+  return collection.work ?? collection.id;
+}
+
+/** Per werk de uitgave in de gewenste taal, langs fallbackChain. */
+function pickEditions(collections: ContentCollectionView[], language: string): WorkOption[] {
+  const byWork = new Map<string, ContentCollectionView[]>();
+  for (const collection of collections) {
+    const list = byWork.get(workOf(collection)) ?? [];
+    list.push(collection);
+    byWork.set(workOf(collection), list);
+  }
+  const chain = fallbackChain(language);
+  return [...byWork.entries()].map(([work, editions]) => ({
+    work,
+    edition:
+      chain.map((code) => editions.find((edition) => edition.language === code)).find(Boolean) ?? editions[0],
+  }));
 }
 
 // Vaste id uit migratie 20260922120000_content_collections; ook gebruikt om
@@ -68,7 +103,7 @@ export async function getContentContext(userId: string): Promise<ContentContext>
     getContentSwitcherSettings(),
     prisma.user.findUnique({
       where: { id: userId },
-      select: { activeContentCollectionId: true, isAdmin: true },
+      select: { activeContentCollectionId: true, isAdmin: true, contentLanguage: true },
     }),
   ]);
   const collections = await prisma.contentCollection.findMany({
@@ -78,7 +113,15 @@ export async function getContentContext(userId: string): Promise<ContentContext>
   });
 
   const available = collections.length > 0 ? collections : [DEFAULT_COLLECTION];
-  const selected = available.find((collection) => collection.id === user?.activeContentCollectionId) ?? available[0];
+  const contentLanguage = user?.contentLanguage ?? DEFAULT_LANGUAGE;
+  const works = pickEditions(available, contentLanguage);
+  // Nog geen expliciete keuze: het eerste werk, in de eigen contenttaal.
+  const selected =
+    available.find((collection) => collection.id === user?.activeContentCollectionId) ?? works[0].edition;
+  // In de kiezer staat bij het actieve werk de uitgave die nu open is.
+  const worksWithActive = works.map((option) =>
+    option.work === workOf(selected) ? { ...option, edition: selected } : option
+  );
 
   const gameScopes = await prisma.gameContentScope.findMany({
     where: { contentCollectionId: selected.id },
@@ -91,7 +134,37 @@ export async function getContentContext(userId: string): Promise<ContentContext>
     active: selected,
     collections: available,
     gameKeys: gameScopes.map((scope) => scope.gameKey),
+    contentLanguage,
+    works: worksWithActive,
+    activeEditions: available.filter((collection) => workOf(collection) === workOf(selected)),
+    contentLanguages: LANGUAGES.map((language) => language.code).filter((code) =>
+      available.some((collection) => collection.language === code)
+    ),
   };
+}
+
+/**
+ * Kiest de taal van de content. Het werk dat nu open is, gaat mee naar de
+ * uitgave in die taal (als die er is); andere werken volgen bij de volgende
+ * keuze vanzelf, via pickEditions.
+ */
+export async function setContentLanguage(userId: string, isAdmin: boolean, language: string): Promise<void> {
+  const collections = await prisma.contentCollection.findMany({
+    where: selectableWhere(isAdmin),
+    select: VIEW_SELECT,
+  });
+  if (!collections.some((collection) => collection.language === language)) {
+    throw new Error("Deze taal is (nog) niet beschikbaar.");
+  }
+  const user = await prisma.user.findUnique({ where: { id: userId }, select: { activeContentCollectionId: true } });
+  const active = collections.find((collection) => collection.id === user?.activeContentCollectionId);
+  const sameWork = active
+    ? collections.find((collection) => workOf(collection) === workOf(active) && collection.language === language)
+    : undefined;
+  await prisma.user.update({
+    where: { id: userId },
+    data: { contentLanguage: language, ...(sameWork ? { activeContentCollectionId: sameWork.id } : {}) },
+  });
 }
 
 export async function setActiveContentCollection(

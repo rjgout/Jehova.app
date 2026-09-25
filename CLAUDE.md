@@ -329,7 +329,14 @@ het hoofdstuk). Het fundament ligt er; zichtbaar is alles nog Nederlands.
 
 - **Twee losse taalkeuzes per gebruiker**: `User.uiLanguage` (menu's,
   knoppen, meldingen, e-mails) en `User.contentLanguage` (welke uitgave je
-  leest en speelt). Codes en namen staan in `src/lib/languages.ts`.
+  leest en speelt). Codes en namen staan in `src/lib/languages.ts`. Kiezen
+  gebeurt in het profiel (blok "Taal", `LanguageSettings.tsx`) en in de
+  contentkiezer: één regel per werk, met taalknoppen voor de talen van het
+  actieve werk (`getContentContext` levert `works`/`activeEditions`;
+  `PUT /api/content-context {contentLanguage}` wisselt de taal en neemt het
+  actieve werk mee). Een app-taal is pas kiesbaar als `uiReady` in
+  `languages.ts` aan staat; beheerders kunnen elke taal kiezen om een
+  vertaling te bekijken.
 - **Een collectie is één uitgave**: `ContentCollection.work` (bv. `bofm`,
   `dc-testament`, `pgp`) + `language`. Een Engelse uitgave van het Boek van
   Mormon wordt een eigen collectie met hetzelfde `work`. Zoek een uitgave op

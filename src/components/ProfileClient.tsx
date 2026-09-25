@@ -3,6 +3,7 @@
 import { useEffect, useState, type SyntheticEvent } from "react";
 import Link from "next/link";
 import CollapsibleCard from "@/components/CollapsibleCard";
+import LanguageSettings from "@/components/LanguageSettings";
 import { useRouter } from "next/navigation";
 import type { LeagueTier } from "@prisma/client";
 import { TIER_LABELS, TIER_ICONS } from "@/lib/leagues";
@@ -43,6 +44,7 @@ interface ProfileData {
   notifyWordGame: boolean;
   notifyFriendOnline: boolean;
   changelogEnabled: boolean;
+  uiLanguage: string;
   xpTotal: number;
   currentStreak: number;
   longestStreak: number;
@@ -657,6 +659,8 @@ export default function ProfileClient() {
           </Link>
         </div>
       </CollapsibleCard>
+
+      <LanguageSettings uiLanguage={data.uiLanguage} isAdmin={data.isAdmin} />
 
       <CollapsibleCard title="Voorlezen">
         <p className="text-sm text-slate-500 dark:text-slate-400">

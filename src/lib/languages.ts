@@ -18,13 +18,18 @@ export interface Language {
   churchCode: string;
   /** Voor datums en getallen (Intl). */
   intlLocale: string;
+  /**
+   * De app-teksten in deze taal zijn af genoeg om te kiezen als taal van de
+   * app. Beheerders kunnen elke taal kiezen, om een vertaling te bekijken.
+   */
+  uiReady: boolean;
 }
 
 export const LANGUAGES: Language[] = [
-  { code: "nl", nativeName: "Nederlands", badge: "NL", churchCode: "nld", intlLocale: "nl-NL" },
-  { code: "en", nativeName: "English", badge: "EN", churchCode: "eng", intlLocale: "en-US" },
-  { code: "de", nativeName: "Deutsch", badge: "DE", churchCode: "deu", intlLocale: "de-DE" },
-  { code: "fr", nativeName: "Français", badge: "FR", churchCode: "fra", intlLocale: "fr-FR" },
+  { code: "nl", nativeName: "Nederlands", badge: "NL", churchCode: "nld", intlLocale: "nl-NL", uiReady: true },
+  { code: "en", nativeName: "English", badge: "EN", churchCode: "eng", intlLocale: "en-US", uiReady: false },
+  { code: "de", nativeName: "Deutsch", badge: "DE", churchCode: "deu", intlLocale: "de-DE", uiReady: false },
+  { code: "fr", nativeName: "Français", badge: "FR", churchCode: "fra", intlLocale: "fr-FR", uiReady: false },
 ];
 
 export const DEFAULT_LANGUAGE: LanguageCode = "nl";

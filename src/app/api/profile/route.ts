@@ -83,6 +83,7 @@ export async function GET() {
     notifyWordGame: user.notifyWordGame,
     notifyFriendOnline: user.notifyFriendOnline,
     changelogEnabled: user.changelogEnabled,
+    uiLanguage: user.uiLanguage,
     totpEnabled: user.totpEnabled,
     xpTotal: user.xpTotal,
     currentStreak: user.currentStreak,

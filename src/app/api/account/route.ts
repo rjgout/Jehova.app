@@ -6,6 +6,7 @@ import { getCurrentUser } from "@/lib/session";
 import { SESSION_COOKIE, createSessionToken, hashPassword, sessionCookieOptions, verifyPassword } from "@/lib/auth";
 import { generateDiscriminator, HANDLE_REGEX, HANDLE_MIN_LENGTH, HANDLE_MAX_LENGTH, containsForbiddenEmoji, isSingleEmoji } from "@/lib/handle";
 import { setIncognito, INCOGNITO_DURATIONS_HOURS } from "@/lib/presence";
+import { LANGUAGES, getLanguage } from "@/lib/languages";
 
 const patchSchema = z.object({
   handle: z
@@ -42,6 +43,9 @@ const patchSchema = z.object({
   notifyWordGame: z.boolean().optional(),
   notifyFriendOnline: z.boolean().optional(),
   changelogEnabled: z.boolean().optional(),
+  // Taal van de app (menu's, meldingen, e-mails); de taal van de content
+  // loopt via /api/content-context, omdat die ook de actieve uitgave wisselt.
+  uiLanguage: z.enum(LANGUAGES.map((language) => language.code) as [string, ...string[]]).optional(),
   // Vrienden-aanwezigheid (zie src/lib/presence.ts).
   shareOnlineStatus: z.boolean().optional(),
   shareCurrentActivity: z.boolean().optional(),
@@ -106,6 +110,11 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ error: "Niets om op te slaan" }, { status: 400 });
   }
   const { handle, incognitoHours, ...rest } = parsed.data;
+  // Een taal waarvan de app-teksten nog niet af zijn, alleen voor beheerders
+  // (om de vertaling te bekijken).
+  if (rest.uiLanguage && !getLanguage(rest.uiLanguage).uiReady && !user.isAdmin) {
+    return NextResponse.json({ error: "Deze taal is nog niet beschikbaar." }, { status: 400 });
+  }
 
   if (incognitoHours !== undefined) {
     await setIncognito(user.id, incognitoHours);
