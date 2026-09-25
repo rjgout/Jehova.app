@@ -5,6 +5,7 @@ import { isEmailConfigured } from "@/lib/email";
 import PodcastLessonFlow from "@/components/PodcastLessonFlow";
 import type { Exercise } from "@/components/LessonFlow";
 import { shuffleForDisplay } from "@/lib/exerciseGen";
+import CourseBackTarget from "@/components/CourseBackTarget";
 
 export default async function PodcastLessonPage({
   params,
@@ -49,7 +50,7 @@ export default async function PodcastLessonPage({
   // zolang die nog niet af is.
   const otherMode = mode === "CONTENT" ? "BOM_CONNECTION" : "CONTENT";
   const [course, otherExerciseCount, otherProgress] = await Promise.all([
-    prisma.course.findFirst({ where: { podcastId: episode.podcastId }, select: { id: true } }),
+    prisma.course.findFirst({ where: { podcastId: episode.podcastId }, select: { id: true, name: true } }),
     prisma.podcastExercise.count({ where: { episodeId, mode: otherMode } }),
     prisma.podcastEpisodeProgress.findUnique({
       where: { userId_episodeId_mode: { userId: user.id, episodeId, mode: otherMode } },
@@ -67,6 +68,7 @@ export default async function PodcastLessonPage({
 
   return (
     <div className="flex flex-col gap-6">
+      {course && <CourseBackTarget href={courseHref} parent={course.name} />}
       <div className="max-w-2xl mx-auto w-full">
         <h1 className="text-xl font-extrabold text-brand-800 dark:text-brand-300">
           🎙️ Aflevering {episode.number} — {episode.title}

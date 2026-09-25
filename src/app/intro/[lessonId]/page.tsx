@@ -6,6 +6,7 @@ import IntroLessonFlow, { type ResolvedIntroBlock } from "@/components/IntroLess
 import type { Exercise } from "@/components/LessonFlow";
 import type { IntroBlock } from "../../../../prisma/introContent";
 import { shuffleForDisplay } from "@/lib/exerciseGen";
+import CourseBackTarget from "@/components/CourseBackTarget";
 
 export default async function IntroLessonPage({ params }: { params: Promise<{ lessonId: string }> }) {
   const user = await getCurrentUser();
@@ -107,10 +108,12 @@ export default async function IntroLessonPage({ params }: { params: Promise<{ le
   // IntroLessonFlow.tsx.
   const [nextLesson, introCourse] = await Promise.all([
     prisma.introLesson.findFirst({ where: { number: lesson.number + 1 }, select: { id: true } }),
-    prisma.course.findFirst({ where: { type: "INTRO" }, select: { id: true } }),
+    prisma.course.findFirst({ where: { type: "INTRO" }, select: { id: true, name: true } }),
   ]);
 
   return (
+    <>
+    {introCourse && <CourseBackTarget href={`/courses/${introCourse.id}`} parent={introCourse.name} />}
     <IntroLessonFlow
       lessonId={lesson.id}
       number={lesson.number}
@@ -120,5 +123,6 @@ export default async function IntroLessonPage({ params }: { params: Promise<{ le
       nextLessonId={nextLesson?.id ?? null}
       courseHref={introCourse ? `/courses/${introCourse.id}` : "/courses"}
     />
+    </>
   );
 }

@@ -283,6 +283,7 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ c
 
   return (
     <ChapterListCourseView
+      courseId={course.id}
       courseName={course.name}
       currentChapterId={courseProgress?.currentChapterId ?? null}
       sequential={course.type !== "FREE_CHOICE"}

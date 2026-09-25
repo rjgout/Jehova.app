@@ -14,6 +14,7 @@ interface ChapterView {
 }
 
 interface Props {
+  courseId: string;
   courseName: string;
   currentChapterId: string | null;
   chapters: ChapterView[];
@@ -32,7 +33,7 @@ interface Props {
 // en in welke volgorde/vergrendeling. Bij meerdere boeken (van-voor-naar-
 // achter, vrije keuze) wordt elk boek een inklapbare sectie — anders werd dit
 // bij het hele Boek van Mormon in één keer een erg lange pagina.
-export default function ChapterListCourseView({ courseName, currentChapterId, chapters, sequential = true, unitPlural = "hoofdstukken" }: Props) {
+export default function ChapterListCourseView({ courseId, courseName, currentChapterId, chapters, sequential = true, unitPlural = "hoofdstukken" }: Props) {
   const allDone = chapters.length > 0 && chapters.every((c) => c.completed);
   const todayChapter =
     (currentChapterId && chapters.find((c) => c.id === currentChapterId)) ||
@@ -60,7 +61,7 @@ export default function ChapterListCourseView({ courseName, currentChapterId, ch
     previousCompleted = chapter.completed;
     return (
       <Link
-        href={locked ? "#" : `/lesson/${chapter.id}`}
+        href={locked ? "#" : `/lesson/${chapter.id}?cursus=${courseId}`}
         aria-disabled={locked}
         className={`card flex items-center gap-4 transition max-w-sm ${
           locked ? "opacity-50 pointer-events-none" : "hover:shadow-md hover:-translate-y-0.5"
@@ -114,7 +115,7 @@ export default function ChapterListCourseView({ courseName, currentChapterId, ch
             </h2>
             <p className="text-brand-100">⏱️ ongeveer {estimatedMinutes} minuten · ⭐ {xpAvailable} XP te verdienen</p>
             <Link
-              href={`/lesson/${todayChapter.id}`}
+              href={`/lesson/${todayChapter.id}?cursus=${courseId}`}
               className="btn-primary self-start !bg-white !text-brand-700 !shadow-[0_4px_0_0_theme(colors.brand.800)] hover:!bg-brand-50"
             >
               Lees verder →

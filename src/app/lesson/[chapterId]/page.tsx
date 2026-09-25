@@ -3,6 +3,7 @@ import { getCurrentUser } from "@/lib/session";
 import { prisma } from "@/lib/db";
 import LessonFlow from "@/components/LessonFlow";
 import { chapterTerm } from "@/lib/chapterTerm";
+import CourseBackTarget from "@/components/CourseBackTarget";
 
 // Een hoofdstuk kan (met de automatisch gegenereerde invuloefeningen erbij)
 // tientallen oefeningen hebben — veel te veel voor één les. Net als bij de
@@ -16,13 +17,13 @@ export default async function LessonPage({
   searchParams,
 }: {
   params: Promise<{ chapterId: string }>;
-  searchParams: Promise<{ challengeId?: string }>;
+  searchParams: Promise<{ challengeId?: string; cursus?: string }>;
 }) {
   const user = await getCurrentUser();
   if (!user) redirect("/login");
 
   const { chapterId } = await params;
-  const { challengeId } = await searchParams;
+  const { challengeId, cursus } = await searchParams;
   const chapter = await prisma.chapter.findUnique({
     where: { id: chapterId },
     include: {
@@ -69,7 +70,20 @@ export default async function LessonPage({
     options: e.options.length > 0 ? e.options.map((o) => o.label) : undefined,
   }));
 
+  // De cursus waar de les bij hoort, voor "terug" en het volgende hoofdstuk:
+  // de cursus waaruit de les geopend werd (?cursus=), anders de actieve
+  // cursus — maar alleen als dit hoofdstuk daar echt in zit.
+  const courseCandidateId = cursus ?? user.activeCourseId;
+  const course = courseCandidateId
+    ? await prisma.course.findFirst({
+        where: { id: courseCandidateId, chapters: { some: { chapterId: chapter.id } } },
+        select: { id: true, name: true },
+      })
+    : null;
+
   return (
+    <>
+    {course && <CourseBackTarget href={`/courses/${course.id}`} parent={course.name} />}
     <LessonFlow
       chapterId={chapter.id}
       bookName={chapter.book.name}
@@ -88,6 +102,8 @@ export default async function LessonPage({
       term={chapterTerm(chapter.book.slug)}
       exercises={exercises}
       challengeId={challengeId}
+      courseId={course?.id}
     />
+    </>
   );
 }

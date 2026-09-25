@@ -53,6 +53,8 @@ interface Props {
   // (zie /challenges) — de score telt dan ook mee voor die uitdaging, zie
   // /api/chapters/[chapterId]/submit.
   challengeId?: string;
+  /** De cursus waaruit de les geopend is; gaat mee naar het volgende hoofdstuk (terugbalk). */
+  courseId?: string;
 }
 
 type Phase = "read" | "exercises" | "review" | "summary";
@@ -82,7 +84,7 @@ const FONT_SCALE_KEY = "bom-reader-font-scale";
 const MIN_SCALE = 0.85;
 const MAX_SCALE = 1.5;
 
-export default function LessonFlow({ chapterId, bookName, chapterNumber, nextChapterId, verses, audio, term = chapterTerm(null), exercises, challengeId }: Props) {
+export default function LessonFlow({ chapterId, bookName, chapterNumber, nextChapterId, verses, audio, term = chapterTerm(null), exercises, challengeId, courseId }: Props) {
   const [phase, setPhase] = useState<Phase>("read");
   const [index, setIndex] = useState(0);
   const [answers, setAnswers] = useState<SubmittedAnswer[]>([]);
@@ -217,7 +219,7 @@ export default function LessonFlow({ chapterId, bookName, chapterNumber, nextCha
   }
 
   if (phase === "summary" && summary) {
-    return <SummaryScreen summary={summary} nextChapterId={nextChapterId} term={term} />;
+    return <SummaryScreen summary={summary} nextChapterId={nextChapterId} term={term} courseId={courseId} />;
   }
 
   return null;
@@ -863,7 +865,17 @@ function FooterControls({
   );
 }
 
-function SummaryScreen({ summary, nextChapterId, term }: { summary: SummaryResult; nextChapterId: string | null; term: ChapterTerm }) {
+function SummaryScreen({
+  summary,
+  nextChapterId,
+  term,
+  courseId,
+}: {
+  summary: SummaryResult;
+  nextChapterId: string | null;
+  term: ChapterTerm;
+  courseId?: string;
+}) {
   return (
     <div className="max-w-md mx-auto card flex flex-col items-center gap-4 text-center animate-pop">
       <div className="text-5xl">{summary.scorePercent >= 80 ? "🎉" : summary.scorePercent >= 50 ? "👍" : "💪"}</div>
@@ -924,7 +936,7 @@ function SummaryScreen({ summary, nextChapterId, term }: { summary: SummaryResul
           Terug naar lessen
         </Link>
         {nextChapterId && (
-          <Link href={`/lesson/${nextChapterId}`} className="btn-primary">
+          <Link href={`/lesson/${nextChapterId}${courseId ? `?cursus=${courseId}` : ""}`} className="btn-primary">
             Volgend{term.singular === "afdeling" ? "e" : ""} {term.singular} →
           </Link>
         )}

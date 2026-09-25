@@ -5,6 +5,7 @@ import { isEmailConfigured } from "@/lib/email";
 import KidsLessonFlow from "@/components/KidsLessonFlow";
 import type { Exercise } from "@/components/LessonFlow";
 import { shuffleForDisplay } from "@/lib/exerciseGen";
+import CourseBackTarget from "@/components/CourseBackTarget";
 
 export default async function KidsStoryPage({ params }: { params: Promise<{ storyId: string }> }) {
   const user = await getCurrentUser();
@@ -42,7 +43,7 @@ export default async function KidsStoryPage({ params }: { params: Promise<{ stor
   // Voor de knoppen op het afrondscherm: terug naar de kindercursus zelf (niet
   // de algemene cursuslijst) en door naar het volgende verhaal.
   const [course, nextStory] = await Promise.all([
-    prisma.course.findFirst({ where: { type: "KIDS" }, select: { id: true } }),
+    prisma.course.findFirst({ where: { type: "KIDS" }, select: { id: true, name: true } }),
     prisma.kidsStory.findFirst({
       where: { order: { gt: story.order } },
       orderBy: { order: "asc" },
@@ -51,6 +52,8 @@ export default async function KidsStoryPage({ params }: { params: Promise<{ stor
   ]);
 
   return (
+    <>
+    {course && <CourseBackTarget href={`/courses/${course.id}`} parent={course.name} />}
     <KidsLessonFlow
       storyId={story.id}
       title={story.title}
@@ -60,5 +63,6 @@ export default async function KidsStoryPage({ params }: { params: Promise<{ stor
       courseHref={course ? `/courses/${course.id}` : "/courses"}
       nextStoryHref={nextStory ? `/kids/${nextStory.id}` : null}
     />
+    </>
   );
 }

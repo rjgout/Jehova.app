@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db";
 import { advanceCourseProgress } from "@/lib/courses";
 import ReadingLessonFlow from "@/components/ReadingLessonFlow";
 import { chapterTerm } from "@/lib/chapterTerm";
+import CourseBackTarget from "@/components/CourseBackTarget";
 
 export default async function ReadingLessonPage({
   params,
@@ -104,6 +105,8 @@ export default async function ReadingLessonPage({
     .slice(0, 3);
 
   return (
+    <>
+    <CourseBackTarget href={`/courses/${lesson.courseId}`} parent={lesson.course.name} />
     <ReadingLessonFlow
       lessonId={lesson.id}
       chapterId={lesson.chapterId}
@@ -127,5 +130,6 @@ export default async function ReadingLessonPage({
       term={chapterTerm(lesson.chapter.book.slug)}
       exercises={exercises}
     />
+    </>
   );
 }

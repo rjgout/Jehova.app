@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useBackTargetOverride } from "@/lib/backTarget";
 
 interface BackTarget {
   href: string; // waar "terug" naartoe gaat
@@ -55,9 +56,9 @@ function backTargetFor(pathname: string): BackTarget | null {
   }
   if (/^\/scrabble\/[^/]+$/.test(pathname)) return { href: "/scrabble", parent: "Woordspellen", title: "Woordspel", icon: "🔤" };
   if (/^\/fsy\/[^/]+$/.test(pathname)) return { href: "/courses", parent: "Cursussen", title: "Les", icon: "📘" };
-  // Lessen uit een cursus. Ze worden ook vanuit bladwijzers en zoeken
-  // geopend, dus terug naar Cursussen klopt altijd (het adres zegt niet uit
-  // welke cursus iemand kwam).
+  // Lessen uit een cursus. Weet de pagina uit welke cursus de les komt, dan
+  // geeft hij die door (zie CourseBackTarget); anders, bv. vanuit
+  // bladwijzers of zoeken, gaat terug naar de cursussenlijst.
   const lesson = LESSON_PAGES.find(([pattern]) => pattern.test(pathname));
   if (lesson) return { href: "/courses", parent: "Cursussen", title: lesson[1], icon: lesson[2] };
   const chapter = /^\/courses\/([^/]+)\/chapter\/[^/]+$/.exec(pathname);
@@ -75,7 +76,9 @@ function backTargetFor(pathname: string): BackTarget | null {
  */
 export default function SubpageBackBar() {
   const pathname = usePathname();
-  const page = backTargetFor(pathname);
+  const override = useBackTargetOverride(pathname);
+  const base = backTargetFor(pathname);
+  const page = base && override ? { ...base, href: override.href, parent: override.parent } : base;
   if (!page) return null;
 
   return (
@@ -93,7 +96,8 @@ export default function SubpageBackBar() {
           </span>
           <span className="flex flex-col leading-tight min-w-0">
             <span className="text-[10px] font-bold uppercase tracking-wider text-white/70">Terug naar</span>
-            <span className="font-extrabold">{page.parent}</span>
+            {/* Cursusnamen kunnen lang zijn ("Verhalen uit het Boek van Mormon (voor kinderen)"). */}
+            <span className="font-extrabold truncate max-w-[55vw] sm:max-w-md">{page.parent}</span>
           </span>
         </Link>
 
