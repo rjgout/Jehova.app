@@ -46,7 +46,20 @@ export default async function ReadingLessonPage({
     });
   }
 
-  if (courseProgress?.currentLessonId !== lesson.id) {
+  const lessonProgress = await prisma.userCourseLessonProgress.findUnique({
+    where: {
+      userId_lessonId: {
+        userId: user.id,
+        lessonId: lesson.id,
+      },
+    },
+    select: { completed: true },
+  });
+
+  const isCompleted = lessonProgress?.completed ?? false;
+  const isCurrent = courseProgress?.currentLessonId === lesson.id;
+
+  if (!isCurrent && !isCompleted) {
     redirect(`/courses/${lesson.courseId}/chapter/${lesson.chapterId}`);
   }
 
@@ -64,10 +77,6 @@ export default async function ReadingLessonPage({
     prisma.note.findMany({ where: { userId: user.id, verseId: { in: verseIds } } }),
     prisma.courseLesson.count({ where: { courseId: lesson.courseId, chapterId: lesson.chapterId } }),
   ]);
-
-  const bookmarkedVerseIds = new Set(bookmarks.map((bookmark) => bookmark.verseId));
-  const highlightedVerseIds = new Set(highlights.map((highlight) => highlight.verseId));
-  const notesByVerseId = Object.fromEntries(notes.map((note) => [note.verseId, note.text]));
 
   // Voorlezen stopt aan het eind van deze les: bij het begin van het vers
   // ná de laatste, of pas aan het eind van het bestand als dat er niet is.
