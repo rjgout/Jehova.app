@@ -6,6 +6,9 @@ import Link from "next/link";
 import { getSocket } from "@/lib/socketClient";
 import UserAvatar from "@/components/UserAvatar";
 import UserTag from "@/components/UserTag";
+import { useT, useUiLanguage } from "@/components/I18nProvider";
+import { getLanguage } from "@/lib/languages";
+import type { TFunction } from "@/lib/i18n/core";
 
 export interface PickerFriend {
   id: string;
@@ -28,11 +31,11 @@ const CLOSE_DISTANCE_PX = 110;
 const CLOSE_VELOCITY = 0.6; // px per ms
 const RECENT_WINDOW_MS = 30 * 24 * 60 * 60 * 1000;
 
-function sinceLabel(iso: string): string {
+function sinceLabel(iso: string, t: TFunction): string {
   const days = Math.floor((Date.now() - new Date(iso).getTime()) / (24 * 60 * 60 * 1000));
-  if (days < 1) return "vandaag samen gespeeld";
-  if (days === 1) return "gisteren samen gespeeld";
-  return `${days} dagen geleden samen gespeeld`;
+  if (days < 1) return t("friendPicker.playedToday");
+  if (days === 1) return t("friendPicker.playedYesterday");
+  return t("friendPicker.playedDaysAgo", { n: days });
 }
 
 /**
@@ -54,8 +57,8 @@ export default function FriendPicker({
   onPick,
   onInvite,
   stateFor,
-  inviteLabel = "Nodig uit",
-  joinedLabel = "Doet mee",
+  inviteLabel,
+  joinedLabel,
 }: {
   open: boolean;
   onClose: () => void;
@@ -67,6 +70,8 @@ export default function FriendPicker({
   inviteLabel?: string;
   joinedLabel?: string;
 }) {
+  const t = useT();
+  const intlLocale = getLanguage(useUiLanguage()).intlLocale;
   const [friends, setFriends] = useState<PickerFriend[] | null>(null);
   const [status, setStatus] = useState<Record<string, FriendStatus>>({});
   const [lastPlayed, setLastPlayed] = useState<Record<string, string>>({});
@@ -202,7 +207,7 @@ export default function FriendPicker({
 
   const sections = useMemo(() => {
     if (!friends) return [];
-    const byName = (a: PickerFriend, b: PickerFriend) => a.handle.localeCompare(b.handle, "nl", { sensitivity: "base" });
+    const byName = (a: PickerFriend, b: PickerFriend) => a.handle.localeCompare(b.handle, intlLocale, { sensitivity: "base" });
     const recentAt = (f: PickerFriend) => (lastPlayed[f.id] ? new Date(lastPlayed[f.id]).getTime() : 0);
     const needle = query.trim().toLowerCase().replace(/^@/, "");
     if (needle) {
@@ -223,11 +228,11 @@ export default function FriendPicker({
     const shown = new Set([...online, ...recent].map((f) => f.id));
     const rest = friends.filter((f) => !shown.has(f.id)).sort(byName);
     return [
-      { label: "Nu online", list: online },
-      { label: "Onlangs samen gespeeld", list: recent },
-      { label: online.length + recent.length > 0 ? "Alle vrienden" : null, list: rest },
+      { label: t("friendPicker.onlineNow"), list: online },
+      { label: t("friendPicker.recent"), list: recent },
+      { label: online.length + recent.length > 0 ? t("friendPicker.all") : null, list: rest },
     ].filter((s) => s.list.length > 0);
-  }, [friends, status, lastPlayed, query]);
+  }, [friends, status, lastPlayed, query, t, intlLocale]);
 
   async function pick(friend: PickerFriend) {
     if (!onPick || busyId) return;
@@ -274,7 +279,7 @@ export default function FriendPicker({
             type="button"
             className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300"
             onClick={onClose}
-            aria-label="Sluiten"
+            aria-label={t("common.close")}
           >
             ✕
           </button>
@@ -284,27 +289,27 @@ export default function FriendPicker({
           <input
             className="input"
             type="search"
-            placeholder="Zoek een vriend..."
+            placeholder={t("friendPicker.searchPlaceholder")}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            aria-label="Zoek een vriend"
+            aria-label={t("friendPicker.search")}
           />
           {error && <p className="mt-2 text-sm font-semibold text-red-600 dark:text-red-400">{error}</p>}
         </div>
 
         <div ref={listRef} className="flex-1 overflow-y-auto overscroll-contain px-3 pb-4 pt-2" style={{ touchAction: "pan-y" }}>
           {friends === null ? (
-            <p className="px-2 py-6 text-center text-sm text-slate-400">Laden...</p>
+            <p className="px-2 py-6 text-center text-sm text-slate-400">{t("common.loading")}</p>
           ) : friends.length === 0 ? (
             <div className="px-2 py-8 text-center text-sm text-slate-500 dark:text-slate-400">
-              <p>Je hebt nog geen vrienden.</p>
+              <p>{t("friendPicker.noFriends")}</p>
               <Link href="/friends" className="font-bold text-brand-600 dark:text-brand-300 hover:underline" onClick={onClose}>
-                Voeg vrienden toe →
+                {t("friendPicker.addFriends")}
               </Link>
             </div>
           ) : sections.length === 0 ? (
             <p className="px-2 py-6 text-center text-sm text-slate-500 dark:text-slate-400">
-              Geen vriend gevonden met &ldquo;{query.trim()}&rdquo;.
+              {t("friendPicker.noMatch", { query: query.trim() })}
             </p>
           ) : (
             sections.map((section, index) => (
@@ -321,9 +326,9 @@ export default function FriendPicker({
                     const detail = s?.activity
                       ? `${s.activity.icon} ${s.activity.label}`
                       : s?.online
-                        ? "Online"
+                        ? t("friendPicker.online")
                         : lastPlayed[friend.id]
-                          ? sinceLabel(lastPlayed[friend.id])
+                          ? sinceLabel(lastPlayed[friend.id], t)
                           : null;
                     const rowContent = (
                       <>
@@ -358,7 +363,7 @@ export default function FriendPicker({
                           >
                             {rowContent}
                             <span className="shrink-0 text-sm font-bold text-brand-600 dark:text-brand-300">
-                              {busyId === friend.id ? "Bezig..." : "Kies"}
+                              {busyId === friend.id ? t("courses.busy") : t("friendPicker.pick")}
                             </span>
                           </button>
                         ) : (
@@ -366,7 +371,7 @@ export default function FriendPicker({
                             {rowContent}
                             {state === "joined" ? (
                               <span className="shrink-0 rounded-full bg-green-50 px-3 py-1 text-xs font-bold text-green-700 dark:bg-slate-800 dark:text-green-400">
-                                {joinedLabel}
+                                {joinedLabel ?? t("friendPicker.joined")}
                               </span>
                             ) : (
                               <button
@@ -375,7 +380,7 @@ export default function FriendPicker({
                                 disabled={state === "invited"}
                                 onClick={() => onInvite?.(friend)}
                               >
-                                {state === "invited" ? "Uitgenodigd ✓" : inviteLabel}
+                                {state === "invited" ? t("friendPicker.invited") : (inviteLabel ?? t("friendPicker.invite"))}
                               </button>
                             )}
                           </div>

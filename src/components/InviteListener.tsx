@@ -4,6 +4,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { getSocket } from "@/lib/socketClient";
 import UserAvatar from "@/components/UserAvatar";
+import { useT } from "@/components/I18nProvider";
+import type { TFunction } from "@/lib/i18n/core";
 
 interface Invite {
   code: string;
@@ -24,8 +26,10 @@ type Notice =
   // Vrienden die (vrijwel) tegelijk online kwamen, in één melding.
   | { kind: "online"; friends: { userId: string; name: string }[] };
 
-function joinNames(names: string[]): string {
-  return names.length > 1 ? `${names.slice(0, -1).join(", ")} en ${names[names.length - 1]}` : (names[0] ?? "");
+function joinNames(names: string[], t: TFunction): string {
+  return names.length > 1
+    ? t("friendPicker.namesAnd", { names: names.slice(0, -1).join(", "), last: names[names.length - 1] })
+    : (names[0] ?? "");
 }
 
 const AUTO_HIDE_MS = 8000;
@@ -43,6 +47,7 @@ const TAP_TOLERANCE_PX = 6;
  * vervangen.
  */
 export default function InviteListener() {
+  const t = useT();
   const router = useRouter();
   const pathname = usePathname();
   const [notice, setNotice] = useState<Notice | null>(null);
@@ -125,25 +130,37 @@ export default function InviteListener() {
     router.push(notice.kind === "invite" ? inviteHref(notice) : "/friends");
   }
 
-  const names = notice.kind === "online" ? joinNames(notice.friends.map((f) => f.name)) : "";
+  const names = notice.kind === "online" ? joinNames(notice.friends.map((f) => f.name), t) : "";
+  const inviteText =
+    notice.kind === "invite"
+      ? notice.gameLabel
+        ? t("inviteBanner.invitesYouFor", { name: notice.fromDisplayName, game: notice.gameLabel })
+        : t("inviteBanner.invitesYou", { name: notice.fromDisplayName })
+      : "";
+  const onlineText =
+    notice.kind === "online"
+      ? notice.friends.length > 1
+        ? t("inviteBanner.areOnline", { names })
+        : t("inviteBanner.isOnline", { names })
+      : "";
   const content =
     notice.kind === "invite"
       ? {
           person: notice.fromUserId ? { id: notice.fromUserId, name: notice.fromDisplayName } : null,
           icon: "🎮",
           iconClass: "from-brand-500 to-brand-700",
-          title: notice.href ? "Uitnodiging" : "Uitnodiging voor een live spel",
-          text: `${notice.fromDisplayName} nodigt je uit${notice.gameLabel ? ` voor ${notice.gameLabel}` : ""}. Tik om mee te doen.`,
-          label: `${notice.fromDisplayName} nodigt je uit${notice.gameLabel ? ` voor ${notice.gameLabel}` : ""}. Tik om mee te doen, veeg omhoog om te negeren.`,
+          title: notice.href ? t("inviteBanner.invitation") : t("inviteBanner.liveInvitation"),
+          text: `${inviteText}${t("inviteBanner.tapToJoin")}`,
+          label: `${inviteText}${t("inviteBanner.tapToJoinOrSwipe")}`,
         }
       : {
           // Bij meerdere vrienden tegelijk: de avatar van wie het laatst online kwam.
           person: { id: notice.friends[notice.friends.length - 1].userId, name: notice.friends[notice.friends.length - 1].name },
           icon: "👋",
           iconClass: "from-green-500 to-green-700",
-          title: notice.friends.length > 1 ? "Vrienden online" : "Vriend online",
-          text: `${names} ${notice.friends.length > 1 ? "zijn" : "is"} nu online. Tik om naar je vrienden te gaan.`,
-          label: `${names} ${notice.friends.length > 1 ? "zijn" : "is"} nu online. Tik om naar je vrienden te gaan, veeg omhoog om te negeren.`,
+          title: notice.friends.length > 1 ? t("inviteBanner.friendsOnline") : t("inviteBanner.friendOnline"),
+          text: `${onlineText}${t("inviteBanner.tapToFriends")}`,
+          label: `${onlineText}${t("inviteBanner.tapToFriendsOrSwipe")}`,
         };
 
   function onPointerDown(e: React.PointerEvent<HTMLDivElement>) {
@@ -219,7 +236,7 @@ export default function InviteListener() {
             <div className="min-w-0 flex-1">
               <div className="flex items-center justify-between gap-2">
                 <p className="text-sm font-extrabold text-slate-900 dark:text-slate-100 truncate">{content.title}</p>
-                <span className="text-[11px] text-slate-400 dark:text-slate-500 shrink-0">nu</span>
+                <span className="text-[11px] text-slate-400 dark:text-slate-500 shrink-0">{t("inviteBanner.now")}</span>
               </div>
               <p className="text-sm text-slate-600 dark:text-slate-300 leading-snug">{content.text}</p>
             </div>

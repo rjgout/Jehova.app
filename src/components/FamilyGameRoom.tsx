@@ -8,6 +8,7 @@ import LobbyClosedNotice from "@/components/LobbyClosedNotice";
 import UserAvatar from "@/components/UserAvatar";
 import LobbyInviteCard from "@/components/LobbyInviteCard";
 import IntroAudioButton from "@/components/IntroAudioButton";
+import { useT } from "@/components/I18nProvider";
 
 type Phase = "connecting" | "lobby" | "playing" | "finished" | "error";
 type Region = "JERUZALEM" | "WILDERNIS" | "ZEE" | "BELOOFDE_LAND" | "ZARAHEMLA";
@@ -37,13 +38,13 @@ type CardView =
   | { tileKind: "WHERE_IN_BOOK"; introText: string; introAudio?: { url: string; start: number; end: number } | null; options: { chapterId: string; label: string }[] }
   | { tileKind: "EVENT"; slug: string; title: string; choices: string[] };
 
-const REGION_LABEL: Record<Region, string> = {
-  JERUZALEM: "Jeruzalem",
-  WILDERNIS: "Wildernis",
-  ZEE: "Zee",
-  BELOOFDE_LAND: "Beloofde land",
-  ZARAHEMLA: "Zarahemla",
-};
+const REGION_KEY = {
+  JERUZALEM: "jerusalem",
+  WILDERNIS: "wilderness",
+  ZEE: "sea",
+  BELOOFDE_LAND: "promisedLand",
+  ZARAHEMLA: "zarahemla",
+} as const satisfies Record<Region, string>;
 const REGION_IMAGE: Record<Region, string> = {
   JERUZALEM: "/gezinsavond/regions/jeruzalem.webp",
   WILDERNIS: "/gezinsavond/regions/wildernis.webp",
@@ -83,6 +84,7 @@ function tileY(index: number): number {
 }
 
 export default function FamilyGameRoom({ code, myUserId }: { code: string; myUserId: string }) {
+  const t = useT();
   const [phase, setPhase] = useState<Phase>("connecting");
   const [hostId, setHostId] = useState<string | null>(null);
   const [players, setPlayers] = useState<FamilyPlayerView[]>([]);
@@ -335,12 +337,12 @@ export default function FamilyGameRoom({ code, myUserId }: { code: string; myUse
   }
 
   function cancelGame() {
-    if (!window.confirm("Dit spel beëindigen? Dit kan niet ongedaan worden gemaakt.")) return;
+    if (!window.confirm(t("activeGames.confirmEnd"))) return;
     socket.emit("cancel_game", { code });
   }
 
   function abortInProgress() {
-    if (!window.confirm("Dit spel nu afbreken voor iedereen?")) return;
+    if (!window.confirm(t("familyGame.confirmAbort"))) return;
     socket.emit("forfeit");
   }
 
@@ -382,38 +384,38 @@ export default function FamilyGameRoom({ code, myUserId }: { code: string; myUse
       <div className="max-w-md mx-auto card text-center flex flex-col gap-4">
         <p className="text-red-600 dark:text-red-400 font-bold">{errorMessage}</p>
         <Link href="/gezinsavond" className="btn-secondary self-center">
-          Terug
+          {t("wordOfTheDay.back")}
         </Link>
       </div>
     );
   }
 
   if (phase === "connecting") {
-    return <p className="text-center text-slate-400 dark:text-slate-500">Verbinden...</p>;
+    return <p className="text-center text-slate-400 dark:text-slate-500">{t("lobby.connecting")}</p>;
   }
 
   if (phase === "lobby") {
     return (
       <div className="max-w-xl mx-auto flex flex-col gap-6">
-        <h1 className="text-2xl font-extrabold text-brand-800 dark:text-brand-300 text-center">🎉 Gezinsavond</h1>
+        <h1 className="text-2xl font-extrabold text-brand-800 dark:text-brand-300 text-center">🎉 {t("pages.familyNight")}</h1>
 
         <div className="card">
-          <h2 className="font-extrabold mb-3">Spelers ({players.length})</h2>
+          <h2 className="font-extrabold mb-3">{t("lobby.players", { n: players.length })}</h2>
           <ul className="flex flex-col gap-2">
             {players.map((p) => (
               <li key={p.userId} className="flex items-center gap-2">
                 {/* Een gast heeft geen account (en dus geen eigen avatar-emoji). */}
                 <UserAvatar id={p.userId} handle={p.displayName} avatarEmoji={p.isGuest ? null : undefined} size="xs" />
                 <span className="font-bold">{p.displayName}</span>
-                {p.userId === hostId && <span title="Host">👑</span>}
-                {p.userId === myUserId && <span className="text-brand-500 dark:text-brand-300 text-sm">(jij)</span>}
-                {p.isGuest && <span className="text-slate-400 dark:text-slate-500 text-xs">gast</span>}
+                {p.userId === hostId && <span title={t("lobby.host")}>👑</span>}
+                {p.userId === myUserId && <span className="text-brand-500 dark:text-brand-300 text-sm">{t("lobby.you")}</span>}
+                {p.isGuest && <span className="text-slate-400 dark:text-slate-500 text-xs">{t("familyGame.guest")}</span>}
                 {p.isGuest && myUserId === hostId && (
                   <button
                     className="ml-auto text-red-500 dark:text-red-400 text-xs font-semibold hover:underline"
                     onClick={() => socket.emit("remove_guest", { guestId: p.userId })}
                   >
-                    verwijderen
+                    {t("familyGame.remove")}
                   </button>
                 )}
               </li>
@@ -423,21 +425,21 @@ export default function FamilyGameRoom({ code, myUserId }: { code: string; myUse
 
         {myUserId === hostId && (
           <div className="card flex flex-col gap-3">
-            <h2 className="font-extrabold dark:text-slate-100">Gast toevoegen</h2>
+            <h2 className="font-extrabold dark:text-slate-100">{t("familyGame.addGuest")}</h2>
             <p className="text-sm text-slate-500 dark:text-slate-400">
-              Voor wie geen eigen account of apparaat heeft — alleen een naam nodig.
+              {t("familyGame.addGuestHint")}
             </p>
             <div className="flex gap-2">
               <input
                 className="input flex-1"
-                placeholder="Naam"
+                placeholder={t("familyGame.name")}
                 maxLength={24}
                 value={guestName}
                 onChange={(e) => setGuestName(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && addGuest()}
               />
               <button className="btn-secondary" onClick={addGuest} disabled={!guestName.trim()}>
-                Toevoegen
+                {t("courses.add")}
               </button>
             </div>
           </div>
@@ -445,7 +447,7 @@ export default function FamilyGameRoom({ code, myUserId }: { code: string; myUse
 
         {myUserId === hostId && (
           <LobbyInviteCard
-            title="Vriend uitnodigen (op hun eigen apparaat)"
+            title={t("familyGame.inviteFriend")}
             friends={friends}
             invitedIds={invited}
             joinedIds={players.map((p) => p.userId)}
@@ -456,20 +458,20 @@ export default function FamilyGameRoom({ code, myUserId }: { code: string; myUse
         {myUserId === hostId ? (
           <div className="flex flex-col items-center gap-2">
             <button className="btn-primary self-center" onClick={startGame} disabled={players.length < 2}>
-              Start spel →
+              {t("lobby.start")}
             </button>
             {players.length < 2 && (
-              <p className="text-xs text-slate-400 dark:text-slate-500">Voeg minstens nog één speler of gast toe.</p>
+              <p className="text-xs text-slate-400 dark:text-slate-500">{t("familyGame.needMorePlayers")}</p>
             )}
             <button className="text-red-500 dark:text-red-400 text-sm font-semibold hover:underline" onClick={cancelGame}>
-              Spel beëindigen
+              {t("lobby.end")}
             </button>
           </div>
         ) : (
           <div className="flex flex-col items-center gap-2">
-            <p className="text-center text-slate-400 dark:text-slate-500">Wachten tot de host het spel start...</p>
+            <p className="text-center text-slate-400 dark:text-slate-500">{t("lobby.waitingForHost")}</p>
             <button className="text-slate-500 dark:text-slate-400 text-sm font-semibold hover:underline" onClick={leaveLobby}>
-              Lobby verlaten
+              {t("lobby.leave")}
             </button>
           </div>
         )}
@@ -481,9 +483,9 @@ export default function FamilyGameRoom({ code, myUserId }: { code: string; myUse
     return (
       <div className="max-w-3xl mx-auto flex flex-col gap-3">
         <div className="flex items-center justify-between gap-2 flex-wrap">
-          <h1 className="text-xl font-extrabold text-brand-800 dark:text-brand-300">🎉 Gezinsavond</h1>
+          <h1 className="text-xl font-extrabold text-brand-800 dark:text-brand-300">🎉 {t("pages.familyNight")}</h1>
           <button className="text-xs text-slate-400 dark:text-slate-500 hover:underline" onClick={abortInProgress}>
-            Spel afbreken
+            {t("familyGame.abort")}
           </button>
         </div>
 
@@ -493,8 +495,8 @@ export default function FamilyGameRoom({ code, myUserId }: { code: string; myUse
           }`}
         >
           <span className={`w-2 h-2 rounded-full ${isMyOwnTurn ? "bg-brand-500 animate-pulse" : "bg-slate-400"}`} />
-          {currentPlayer?.displayName ?? "?"} is aan de beurt
-          {isMyOwnTurn && " — jij!"}
+          {t("familyGame.turnOf", { name: currentPlayer?.displayName ?? "?" })}
+          {isMyOwnTurn && t("familyGame.turnYou")}
         </div>
 
         <div ref={stageRef} className="relative h-[340px] rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 touch-none">
@@ -515,7 +517,7 @@ export default function FamilyGameRoom({ code, myUserId }: { code: string; myUse
                   style={{ left, width, backgroundImage: `url(${REGION_IMAGE[region]})` }}
                 >
                   <span className="px-3 py-1 rounded-full font-extrabold text-sm bg-slate-900/55 text-white backdrop-blur-sm">
-                    {REGION_LABEL[region]}
+                    {t(`familyGame.regions.${REGION_KEY[region]}`)}
                   </span>
                 </div>
               );
@@ -581,14 +583,14 @@ export default function FamilyGameRoom({ code, myUserId }: { code: string; myUse
             {diceMode === "DIGITAL" ? (
               <>
                 <button className="btn-primary" disabled={rolling} onClick={rollDice}>
-                  🎲 Gooi de dobbelsteen
+                  {t("familyGame.roll")}
                 </button>
-                {lastRoll !== null && <p className="font-extrabold text-lg">Je gooide {lastRoll}!</p>}
-                {showTip && <p className="text-xs text-slate-400 dark:text-slate-500">De app gooit voor je — tik gewoon op de knop.</p>}
+                {lastRoll !== null && <p className="font-extrabold text-lg">{t("familyGame.youRolled", { n: lastRoll })}</p>}
+                {showTip && <p className="text-xs text-slate-400 dark:text-slate-500">{t("familyGame.tipDigital")}</p>}
               </>
             ) : (
               <>
-                <p className="font-bold">🎲 Hoeveel heb je gegooid?</p>
+                <p className="font-bold">{t("familyGame.howMany")}</p>
                 <div className="flex gap-2">
                   {[1, 2, 3, 4, 5, 6].map((n) => (
                     <button
@@ -602,14 +604,14 @@ export default function FamilyGameRoom({ code, myUserId }: { code: string; myUse
                     </button>
                   ))}
                 </div>
-                {showTip && <p className="text-xs text-slate-400 dark:text-slate-500">Gooi zelf met een echte dobbelsteen en vul hier het aantal ogen in.</p>}
+                {showTip && <p className="text-xs text-slate-400 dark:text-slate-500">{t("familyGame.tipPhysical")}</p>}
               </>
             )}
           </div>
         )}
 
         {!myTurn && !card && !reveal && !eventResult && (
-          <p className="text-center text-slate-400 dark:text-slate-500">Wachten tot {currentPlayer?.displayName} gooit...</p>
+          <p className="text-center text-slate-400 dark:text-slate-500">{t("familyGame.waitingRoll", { name: currentPlayer?.displayName ?? "" })}</p>
         )}
 
         {/* Alleen de speler (of, voor een gast, de host) die aan de beurt is
@@ -618,7 +620,7 @@ export default function FamilyGameRoom({ code, myUserId }: { code: string; myUse
             iets doet (de server keurt zo'n actie toch af, zie canActFor). */}
         {card && !myTurn && !reveal && !eventResult && (
           <p className="text-center text-slate-400 dark:text-slate-500">
-            {currentPlayer?.displayName} is aan het antwoorden...
+            {t("familyGame.answering", { name: currentPlayer?.displayName ?? "" })}
           </p>
         )}
 
@@ -626,12 +628,12 @@ export default function FamilyGameRoom({ code, myUserId }: { code: string; myUse
           <div className="card flex flex-col gap-4">
             {showTip && (
               <p className="text-xs font-bold uppercase text-slate-400 dark:text-slate-500">
-                {card.tileKind === "KNOWLEDGE" ? "📖 Kennisvraag — beantwoord om je beurt af te ronden" : "🔤 Vul aan — sleep de woorden op volgorde"}
+                {card.tileKind === "KNOWLEDGE" ? t("familyGame.tipKnowledge") : t("familyGame.tipFillIn")}
               </p>
             )}
             {card.tileKind === "WHERE_IN_BOOK" ? (
               <>
-                <p className="text-xs font-bold uppercase text-slate-400 dark:text-slate-500">📍 Waar in het boek?</p>
+                <p className="text-xs font-bold uppercase text-slate-400 dark:text-slate-500">{t("familyGame.whereInBook")}</p>
                 <p className="text-lg italic leading-relaxed">&ldquo;{card.introText}&rdquo;</p>
                 <IntroAudioButton audio={card.introAudio} />
                 <div className="grid grid-cols-2 gap-3">
@@ -662,13 +664,13 @@ export default function FamilyGameRoom({ code, myUserId }: { code: string; myUse
                       onClick={() => setGiven(["true"])}
                       className={`btn flex-1 border-2 ${given[0] === "true" ? "bg-brand-500 text-white border-brand-500" : "border-slate-200 dark:border-slate-600 dark:text-slate-100"}`}
                     >
-                      Waar
+                      {t("lesson.true")}
                     </button>
                     <button
                       onClick={() => setGiven(["false"])}
                       className={`btn flex-1 border-2 ${given[0] === "false" ? "bg-brand-500 text-white border-brand-500" : "border-slate-200 dark:border-slate-600 dark:text-slate-100"}`}
                     >
-                      Niet waar
+                      {t("lesson.false")}
                     </button>
                   </div>
                 ) : (
@@ -689,14 +691,14 @@ export default function FamilyGameRoom({ code, myUserId }: { code: string; myUse
               </>
             )}
             <button className="btn-primary self-end" disabled={given.length === 0} onClick={submitAnswer}>
-              Verstuur
+              {t("lobby.send")}
             </button>
           </div>
         )}
 
         {card && myTurn && card.tileKind === "EVENT" && !eventResult && (
           <div className="card flex flex-col gap-4">
-            {showTip && <p className="text-xs font-bold uppercase text-slate-400 dark:text-slate-500">⚔️ Gebeurteniskaart — kies wat je doet</p>}
+            {showTip && <p className="text-xs font-bold uppercase text-slate-400 dark:text-slate-500">{t("familyGame.tipEvent")}</p>}
             <p className="text-lg font-bold">{card.title}</p>
             <div className="flex flex-col gap-2">
               {card.choices.map((choice, i) => (
@@ -711,10 +713,10 @@ export default function FamilyGameRoom({ code, myUserId }: { code: string; myUse
         {reveal && (
           <div className={`card flex flex-col gap-2 ${reveal.correct ? "border-2 border-brand-500" : "border-2 border-red-300"}`}>
             <p className={`font-extrabold ${reveal.correct ? "text-brand-600 dark:text-brand-300" : "text-red-500"}`}>
-              {reveal.correct ? "✅ Goed!" : "❌ Helaas!"}
+              {reveal.correct ? t("familyGame.correct") : t("familyGame.wrong")}
             </p>
             {reveal.explanation && "correctLabel" in reveal.explanation && (
-              <p className="text-sm text-slate-600 dark:text-slate-300">Het juiste antwoord: {reveal.explanation.correctLabel}</p>
+              <p className="text-sm text-slate-600 dark:text-slate-300">{t("familyGame.correctAnswer", { answer: reveal.explanation.correctLabel })}</p>
             )}
             {reveal.explanation && "verseRef" in reveal.explanation && (
               <div className="text-sm text-slate-600 dark:text-slate-300">
@@ -729,7 +731,11 @@ export default function FamilyGameRoom({ code, myUserId }: { code: string; myUse
           <div className="card flex flex-col gap-1">
             <p className="font-extrabold">{eventResult.label}</p>
             <p className="text-sm text-slate-500 dark:text-slate-400">
-              {eventResult.delta > 0 ? `+${eventResult.delta} punt` : eventResult.delta < 0 ? `${eventResult.delta} punt` : "Geen effect deze keer."}
+              {eventResult.delta > 0
+                ? t("familyGame.points", { n: `+${eventResult.delta}` })
+                : eventResult.delta < 0
+                  ? t("familyGame.points", { n: eventResult.delta })
+                  : t("familyGame.noEffect")}
             </p>
           </div>
         )}
@@ -742,10 +748,10 @@ export default function FamilyGameRoom({ code, myUserId }: { code: string; myUse
   if (phase === "finished") {
     return (
       <div className="max-w-xl mx-auto flex flex-col gap-6 items-center">
-        <h1 className="text-3xl font-extrabold text-brand-800 dark:text-brand-300">🏁 Gezinsavond afgelopen!</h1>
+        <h1 className="text-3xl font-extrabold text-brand-800 dark:text-brand-300">{t("familyGame.over")}</h1>
         <FamilyScoreboard players={players} myUserId={myUserId} showMedals />
         <Link href="/gezinsavond" className="btn-primary">
-          Nog een potje
+          {t("familyGame.again")}
         </Link>
       </div>
     );
@@ -764,6 +770,7 @@ function WordBankCard({
   setGiven: (g: string[]) => void;
 }) {
   const [placed, setPlaced] = useState<{ word: string; poolIndex: number }[]>([]);
+  const t = useT();
   const pool = card.wordBank ?? [];
   const available = pool.map((word, poolIndex) => ({ word, poolIndex })).filter(({ poolIndex }) => !placed.some((p) => p.poolIndex === poolIndex));
 
@@ -780,7 +787,7 @@ function WordBankCard({
 
   return (
     <>
-      <p className="text-xs font-bold uppercase text-slate-400 dark:text-slate-500">🔤 Vul aan</p>
+      <p className="text-xs font-bold uppercase text-slate-400 dark:text-slate-500">{t("familyGame.fillIn")}</p>
       <p className="text-lg leading-relaxed">{card.prompt}</p>
       <div className="flex flex-wrap gap-2 min-h-[3rem] p-3 rounded-2xl bg-slate-50 dark:bg-slate-900 border-2 border-dashed border-slate-200 dark:border-slate-700">
         {placed.map((p, i) => (
@@ -806,6 +813,7 @@ function WordBankCard({
 
 function FamilyScoreboard({ players, myUserId, showMedals }: { players: FamilyPlayerView[]; myUserId: string; showMedals?: boolean }) {
   const sorted = [...players].sort((a, b) => b.score - a.score);
+  const t = useT();
   const medals = ["🥇", "🥈", "🥉"];
   return (
     <div className="card flex flex-col divide-y divide-slate-100 dark:divide-slate-700 w-full">
@@ -814,7 +822,7 @@ function FamilyScoreboard({ players, myUserId, showMedals }: { players: FamilyPl
           <span className="flex items-center gap-2">
             {showMedals ? (medals[i] ?? i + 1) : i + 1}.
             <UserAvatar id={p.userId} handle={p.displayName} avatarEmoji={p.isGuest ? null : undefined} size="xs" />
-            {p.displayName} {p.userId === myUserId && "(jij)"}
+            {p.displayName} {p.userId === myUserId && t("lobby.you")}
           </span>
           <span className="text-gold-600 font-bold">{p.score}</span>
         </div>

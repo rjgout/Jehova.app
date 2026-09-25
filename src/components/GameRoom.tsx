@@ -9,6 +9,7 @@ import { normalizeAnswer } from "@/lib/exerciseGen";
 import { announceXpChanged } from "@/lib/xpBroadcast";
 import UserAvatar from "@/components/UserAvatar";
 import LobbyInviteCard from "@/components/LobbyInviteCard";
+import { useT } from "@/components/I18nProvider";
 
 interface LobbyPlayer {
   userId: string;
@@ -37,6 +38,7 @@ interface Friend {
 type Phase = "connecting" | "lobby" | "question" | "reveal" | "finished" | "error";
 
 export default function GameRoom({ code, myUserId }: { code: string; myUserId: string }) {
+  const t = useT();
   const [phase, setPhase] = useState<Phase>("connecting");
   const [hostId, setHostId] = useState<string | null>(null);
   const [players, setPlayers] = useState<LobbyPlayer[]>([]);
@@ -124,12 +126,12 @@ export default function GameRoom({ code, myUserId }: { code: string; myUserId: s
   }
 
   function cancelGame() {
-    if (!window.confirm("Dit spel beëindigen? Dit kan niet ongedaan worden gemaakt.")) return;
+    if (!window.confirm(t("activeGames.confirmEnd"))) return;
     socket.emit("cancel_game", { code });
   }
 
   function forfeit() {
-    if (!window.confirm("Weet je zeker dat je wil opgeven? Je tegenstander wint dan automatisch.")) return;
+    if (!window.confirm(t("lobby.confirmForfeit"))) return;
     socket.emit("forfeit");
   }
 
@@ -154,28 +156,28 @@ export default function GameRoom({ code, myUserId }: { code: string; myUserId: s
       <div className="max-w-md mx-auto card text-center flex flex-col gap-4">
         <p className="text-red-600 dark:text-red-400 font-bold">{errorMessage}</p>
         <Link href="/live" className="btn-secondary self-center">
-          Terug
+          {t("wordOfTheDay.back")}
         </Link>
       </div>
     );
   }
 
   if (phase === "connecting") {
-    return <p className="text-center text-slate-400 dark:text-slate-500">Verbinden...</p>;
+    return <p className="text-center text-slate-400 dark:text-slate-500">{t("lobby.connecting")}</p>;
   }
 
   if (phase === "lobby") {
     return (
       <div className="max-w-xl mx-auto flex flex-col gap-6">
         <div className="card">
-          <h2 className="font-extrabold mb-3">Spelers ({players.length})</h2>
+          <h2 className="font-extrabold mb-3">{t("lobby.players", { n: players.length })}</h2>
           <ul className="flex flex-col gap-2">
             {players.map((p) => (
               <li key={p.userId} className="flex items-center gap-2">
                 <UserAvatar id={p.userId} handle={p.displayName} size="xs" />
                 <span className="font-bold">{p.displayName}</span>
-                {p.userId === hostId && <span title="Host">👑</span>}
-                {p.userId === myUserId && <span className="text-brand-500 dark:text-brand-300 text-sm">(jij)</span>}
+                {p.userId === hostId && <span title={t("lobby.host")}>👑</span>}
+                {p.userId === myUserId && <span className="text-brand-500 dark:text-brand-300 text-sm">{t("lobby.you")}</span>}
               </li>
             ))}
           </ul>
@@ -191,17 +193,17 @@ export default function GameRoom({ code, myUserId }: { code: string; myUserId: s
         {myUserId === hostId ? (
           <div className="flex flex-col items-center gap-2">
             <button className="btn-primary self-center" onClick={startGame} disabled={players.length === 0}>
-              Start spel →
+              {t("lobby.start")}
             </button>
             <button className="text-red-500 dark:text-red-400 text-sm font-semibold hover:underline" onClick={cancelGame}>
-              Spel beëindigen
+              {t("lobby.end")}
             </button>
           </div>
         ) : (
           <div className="flex flex-col items-center gap-2">
-            <p className="text-center text-slate-400 dark:text-slate-500">Wachten tot de host het spel start...</p>
+            <p className="text-center text-slate-400 dark:text-slate-500">{t("lobby.waitingForHost")}</p>
             <button className="text-slate-500 dark:text-slate-400 text-sm font-semibold hover:underline" onClick={leaveLobby}>
-              Lobby verlaten
+              {t("lobby.leave")}
             </button>
           </div>
         )}
@@ -215,11 +217,11 @@ export default function GameRoom({ code, myUserId }: { code: string; myUserId: s
       <div className="max-w-xl mx-auto flex flex-col gap-6">
         <div className="flex items-center justify-between text-sm font-bold text-slate-400 dark:text-slate-500">
           <span>
-            Vraag {question.index + 1} / {question.total}
+            {t("chapterGuess.questionOf", { n: question.index + 1, total: question.total })}
           </span>
           {phase === "question" && (
             <span>
-              {answeredCount.answered}/{players.length || answeredCount.total} beantwoord
+              {t("lobby.answered", { n: answeredCount.answered, total: players.length || answeredCount.total })}
             </span>
           )}
         </div>
@@ -227,7 +229,7 @@ export default function GameRoom({ code, myUserId }: { code: string; myUserId: s
 
         {phase === "question" && (
           <button className="btn-secondary self-start !px-3 !py-1.5 !text-xs !text-red-500" onClick={forfeit}>
-            🏳️ Opgeven
+            🏳️ {t("challenges.forfeit")}
           </button>
         )}
 
@@ -309,13 +311,13 @@ export default function GameRoom({ code, myUserId }: { code: string; myUserId: s
               disabled={question.type === "WORD_BANK" ? placed.length !== question.blanks : choice.length === 0}
               onClick={submitAnswer}
             >
-              Verstuur
+              {t("lobby.send")}
             </button>
           )}
-          {submitted && phase === "question" && <p className="text-slate-400 dark:text-slate-500 text-sm self-end">Antwoord verstuurd, wachten op anderen...</p>}
+          {submitted && phase === "question" && <p className="text-slate-400 dark:text-slate-500 text-sm self-end">{t("lobby.answerSent")}</p>}
           {phase === "reveal" && correctAnswer && (
             <p className="bg-brand-50 dark:bg-slate-700 text-brand-700 dark:text-brand-300 rounded-xl px-3 py-2 font-bold">
-              Juiste antwoord: {correctAnswer.join(" ")}
+              {t("lobby.correctAnswer", { answer: correctAnswer.join(" ") })}
             </p>
           )}
         </div>
@@ -329,15 +331,15 @@ export default function GameRoom({ code, myUserId }: { code: string; myUserId: s
     const forfeiter = players.find((p) => p.userId === forfeitedBy);
     return (
       <div className="max-w-xl mx-auto flex flex-col gap-6 items-center">
-        <h1 className="text-3xl font-extrabold text-brand-800 dark:text-brand-300">🏁 Spel afgelopen!</h1>
+        <h1 className="text-3xl font-extrabold text-brand-800 dark:text-brand-300">{t("lobby.gameOver")}</h1>
         {forfeiter && (
           <p className="text-sm font-bold text-red-500 bg-red-50 dark:bg-slate-700 rounded-xl px-3 py-2">
-            {forfeiter.userId === myUserId ? "Je hebt opgegeven." : `${forfeiter.displayName} heeft opgegeven.`}
+            {forfeiter.userId === myUserId ? t("lobby.youGaveUp") : t("lobby.gaveUp", { name: forfeiter.displayName })}
           </p>
         )}
         <Scoreboard players={players} myUserId={myUserId} showMedals />
         <Link href="/live" className="btn-primary">
-          Nieuw spel
+          {t("lobby.newGame")}
         </Link>
       </div>
     );
@@ -371,6 +373,7 @@ function CountdownBar({ timeLimitMs, active }: { timeLimitMs: number; active: bo
 }
 
 function Scoreboard({ players, myUserId, showMedals }: { players: LobbyPlayer[]; myUserId: string; showMedals?: boolean }) {
+  const t = useT();
   const medals = ["🥇", "🥈", "🥉"];
   return (
     <div className="card flex flex-col divide-y divide-slate-100 w-full">
@@ -379,7 +382,7 @@ function Scoreboard({ players, myUserId, showMedals }: { players: LobbyPlayer[];
           <span className="flex items-center gap-2">
             {showMedals ? medals[i] ?? i + 1 : i + 1}.
             <UserAvatar id={p.userId} handle={p.displayName} size="xs" />
-            {p.displayName} {p.userId === myUserId && "(jij)"}
+            {p.displayName} {p.userId === myUserId && t("lobby.you")}
           </span>
           <span className="text-gold-600 font-bold">{p.score}</span>
         </div>

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import FriendPicker from "@/components/FriendPicker";
 import UserAvatar from "@/components/UserAvatar";
+import { useT } from "@/components/I18nProvider";
 
 const SHOWN_AVATARS = 6;
 
@@ -12,7 +13,7 @@ const SHOWN_AVATARS = 6;
  * eerst), met eronder wie er al is uitgenodigd.
  */
 export default function LobbyInviteCard({
-  title = "Vrienden uitnodigen",
+  title,
   friends,
   invitedIds,
   joinedIds,
@@ -25,14 +26,16 @@ export default function LobbyInviteCard({
   onInvite: (friendId: string) => void;
 }) {
   const [open, setOpen] = useState(false);
+  const t = useT();
+  const heading = title ?? t("lobby.inviteFriends");
   const waiting = friends.filter((f) => invitedIds.has(f.id) && !joinedIds.includes(f.id));
 
   return (
     <div className="card flex flex-col gap-3">
       <div className="flex items-center justify-between gap-3">
-        <h2 className="font-extrabold dark:text-slate-100">{title}</h2>
+        <h2 className="font-extrabold dark:text-slate-100">{heading}</h2>
         <button type="button" className="btn-secondary shrink-0 whitespace-nowrap !px-3 !py-1.5 !text-sm" onClick={() => setOpen(true)}>
-          + Nodig uit
+          {t("lobby.invite")}
         </button>
       </div>
       {waiting.length > 0 ? (
@@ -44,19 +47,19 @@ export default function LobbyInviteCard({
           </div>
           <p className="text-sm text-slate-500 dark:text-slate-400">
             {waiting.length === 1
-              ? `${waiting[0].handle} is uitgenodigd`
-              : `${waiting.length} vrienden uitgenodigd`}
+              ? t("lobby.invitedOne", { name: waiting[0].handle })
+              : t("lobby.invitedMany", { n: waiting.length })}
             {waiting.length > SHOWN_AVATARS ? ` (+${waiting.length - SHOWN_AVATARS})` : ""}
           </p>
         </div>
       ) : (
-        <p className="text-sm text-slate-500 dark:text-slate-400">Nodig vrienden uit; ze krijgen meteen een melding.</p>
+        <p className="text-sm text-slate-500 dark:text-slate-400">{t("lobby.inviteHint")}</p>
       )}
       <FriendPicker
         open={open}
         onClose={() => setOpen(false)}
-        title={title}
-        subtitle="Wie online is, staat bovenaan."
+        title={heading}
+        subtitle={t("lobby.onlineFirst")}
         onInvite={(friend) => onInvite(friend.id)}
         stateFor={(id) => (joinedIds.includes(id) ? "joined" : invitedIds.has(id) ? "invited" : "invite")}
       />

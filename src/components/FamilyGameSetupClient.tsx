@@ -2,23 +2,25 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useT } from "@/components/I18nProvider";
 
-const DURATIONS: { minutes: 15 | 30 | 60; label: string; icon: string }[] = [
-  { minutes: 15, label: "15 minuten", icon: "⚡" },
-  { minutes: 30, label: "30 minuten", icon: "🎲" },
-  { minutes: 60, label: "60 minuten", icon: "🏠" },
+const DURATIONS: { minutes: 15 | 30 | 60; icon: string }[] = [
+  { minutes: 15, icon: "⚡" },
+  { minutes: 30, icon: "🎲" },
+  { minutes: 60, icon: "🏠" },
 ];
 
-const DICE_MODES: { value: "DIGITAL" | "PHYSICAL"; label: string; description: string; icon: string }[] = [
-  { value: "DIGITAL", label: "Digitale dobbelsteen", description: "De app gooit voor je.", icon: "📱" },
-  { value: "PHYSICAL", label: "Echte dobbelsteen", description: "Jullie gooien zelf, en voeren het aantal ogen in.", icon: "🎲" },
-];
+const DICE_MODES = [
+  { value: "DIGITAL", key: "digital", icon: "📱" },
+  { value: "PHYSICAL", key: "physical", icon: "🎲" },
+] as const;
 
 // Bewust maar twee keuzes vooraf (speelduur + dobbelsteen) — spelers/gasten
 // voeg je toe in de lobby hierna, net als bij elk ander live spel (zie
 // "Nodig uit" in GameRoom.tsx). Geen verdere instellingen: "simpel starten,
 // later verdiepen" (zie het besproken ontwerp).
 export default function FamilyGameSetupClient() {
+  const t = useT();
   const router = useRouter();
   const [minutes, setMinutes] = useState<15 | 30 | 60>(30);
   const [diceMode, setDiceMode] = useState<"DIGITAL" | "PHYSICAL">("DIGITAL");
@@ -35,7 +37,7 @@ export default function FamilyGameSetupClient() {
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
-      setError(data.error ?? "Kon geen spel starten.");
+      setError(data.error ?? t("gamesHub.createFailed"));
       setStarting(false);
       return;
     }
@@ -45,15 +47,14 @@ export default function FamilyGameSetupClient() {
   return (
     <div className="max-w-xl mx-auto flex flex-col gap-6">
       <div>
-        <h1 className="text-2xl font-extrabold text-brand-800 dark:text-brand-300">🎉 Gezinsavond</h1>
+        <h1 className="text-2xl font-extrabold text-brand-800 dark:text-brand-300">🎉 {t("pages.familyNight")}</h1>
         <p className="text-slate-500 dark:text-slate-400 text-sm">
-          Een avontuurlijk bordspel over het Boek van Mormon — samen aan tafel, op één apparaat, of ieder op je eigen
-          telefoon. Vrienden en gasten voeg je zo toe.
+          {t("familyGame.setupIntro")}
         </p>
       </div>
 
       <div className="card flex flex-col gap-3">
-        <h2 className="font-extrabold dark:text-slate-100">Speelduur</h2>
+        <h2 className="font-extrabold dark:text-slate-100">{t("familyGame.duration")}</h2>
         <div className="flex gap-3">
           {DURATIONS.map((d) => (
             <button
@@ -66,14 +67,14 @@ export default function FamilyGameSetupClient() {
               }`}
             >
               <div className="text-xl mb-1">{d.icon}</div>
-              {d.label}
+              {t("familyGame.minutes", { n: d.minutes })}
             </button>
           ))}
         </div>
       </div>
 
       <div className="card flex flex-col gap-3">
-        <h2 className="font-extrabold dark:text-slate-100">Dobbelsteen</h2>
+        <h2 className="font-extrabold dark:text-slate-100">{t("familyGame.dice")}</h2>
         <div className="flex flex-col gap-2">
           {DICE_MODES.map((m) => (
             <button
@@ -86,16 +87,16 @@ export default function FamilyGameSetupClient() {
               }`}
             >
               <p className="font-extrabold dark:text-slate-100">
-                {m.icon} {m.label}
+                {m.icon} {t(`familyGame.diceModes.${m.key}.label`)}
               </p>
-              <p className="text-sm text-slate-500 dark:text-slate-400">{m.description}</p>
+              <p className="text-sm text-slate-500 dark:text-slate-400">{t(`familyGame.diceModes.${m.key}.description`)}</p>
             </button>
           ))}
         </div>
       </div>
 
       <button className="btn-primary self-start" disabled={starting} onClick={createGame}>
-        {starting ? "Bezig..." : "Maak spel"}
+        {starting ? t("courses.busy") : t("familyGame.create")}
       </button>
       {error && <p className="text-red-600 dark:text-red-400 text-sm font-semibold">{error}</p>}
     </div>
