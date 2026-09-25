@@ -334,7 +334,8 @@ het hoofdstuk). Het fundament ligt er; zichtbaar is alles nog Nederlands.
   `dc-testament`, `pgp`) + `language`. Een Engelse uitgave van het Boek van
   Mormon wordt een eigen collectie met hetzelfde `work`. Zoek een uitgave op
   met `resolveEditionId(work, taal)` (`src/lib/contentCollections.ts`); die
-  valt terug op de Nederlandse. Nieuwe code filtert dus op werk + taal, niet
+  valt terug volgens `fallbackChain` (eigen taal → Engels → Nederlands;
+  Nederlands zelf valt nooit terug). Nieuwe code filtert dus op werk + taal, niet
   op een vaste collectie-id als `BOM_COLLECTION_ID`.
 - **Dezelfde tekst in elke taal**: `Book.key` is het pad dat de kerk gebruikt
   (`bofm/alma`, zie `prisma/bookKeys.ts`); sleutel + hoofdstuk + vers is in
@@ -342,8 +343,8 @@ het hoofdstuk). Het fundament ligt er; zichtbaar is alles nog Nederlands.
   tussen talen kiest één verwijzing en laat die elke speler in de eigen
   contenttaal zien; scores tellen op de vraag, niet op de tekst.
 - **App-teksten**: `src/lib/i18n/messages/nl.ts` is de bron; `en/de/fr.ts`
-  volgen die structuur en vallen per ontbrekende tekst terug op het
-  Nederlands. Sleutels zijn getypt. Server (ook de eager-keten van
+  volgen die structuur; een ontbrekende tekst valt terug langs
+  `fallbackChain` (Duits/Frans → Engels → Nederlands). Sleutels zijn getypt. Server (ook de eager-keten van
   `server.ts`): `getT(user.uiLanguage)`; client: `useT()` uit
   `src/components/I18nProvider.tsx`. Voortgang: `npx tsx scripts/i18n/check.ts`.
   Zet teksten per onderdeel om (niet alles tegelijk) en groepeer sleutels per

@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/db";
-import { DEFAULT_LANGUAGE } from "@/lib/languages";
+import { DEFAULT_LANGUAGE, fallbackChain } from "@/lib/languages";
 
 export interface ContentCollectionView {
   id: string;
@@ -168,18 +168,18 @@ export async function isContentCollectionSelectable(contentCollectionId: string 
 
 /**
  * De uitgave (collectie) van een werk in een taal, bv. het Boek van Mormon in
- * het Engels. Bestaat die (nog) niet of staat die niet open voor gebruikers,
- * dan de Nederlandse uitgave: zo blijft alles werken terwijl een taal wordt
- * opgebouwd. Voor het Boek van Mormon valt dit uiteindelijk terug op de
- * vaste collectie, ook op een lege database.
+ * het Duits. Bestaat die (nog) niet of staat die niet open voor gebruikers,
+ * dan volgens fallbackChain de Engelse en daarna de Nederlandse: zo blijft
+ * alles werken terwijl een taal wordt opgebouwd. Voor het Boek van Mormon
+ * valt dit uiteindelijk terug op de vaste collectie, ook op een lege database.
  */
 export async function resolveEditionId(work: string, language?: string | null): Promise<string | null> {
   const editions = await prisma.contentCollection.findMany({
     where: { work, ...selectableWhere(false) },
     select: { id: true, language: true },
   });
-  const edition =
-    editions.find((candidate) => candidate.language === language) ??
-    editions.find((candidate) => candidate.language === DEFAULT_LANGUAGE);
+  const edition = fallbackChain(language)
+    .map((code) => editions.find((candidate) => candidate.language === code))
+    .find(Boolean);
   return edition?.id ?? (work === BOFM_WORK ? BOM_COLLECTION_ID : null);
 }

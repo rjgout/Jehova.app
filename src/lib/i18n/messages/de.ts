@@ -1,6 +1,6 @@
 import type { PartialMessages } from "../core";
 
-// Ontbrekende teksten vallen terug op het Nederlands (messages/nl.ts).
+// Ontbrekende teksten vallen terug volgens fallbackChain (src/lib/languages.ts).
 export const de: PartialMessages = {
   nav: {
     main: "Hauptnavigation",

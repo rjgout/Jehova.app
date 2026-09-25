@@ -38,6 +38,20 @@ export function toLanguageCode(value: string | null | undefined): LanguageCode {
   return isLanguageCode(value) ? value : DEFAULT_LANGUAGE;
 }
 
+/**
+ * In welke volgorde we terugvallen als iets in een taal ontbreekt (een
+ * app-tekst of een uitgave): eerst de taal zelf, dan Engels (dat verstaan
+ * Duits- en Franstaligen doorgaans beter dan Nederlands), en als laatste
+ * Nederlands, de enige taal die altijd compleet is.
+ */
+export function fallbackChain(code: string | null | undefined): LanguageCode[] {
+  const language = toLanguageCode(code);
+  // Nederlands is compleet: nooit terugvallen op Engels.
+  if (language === DEFAULT_LANGUAGE) return [DEFAULT_LANGUAGE];
+  const chain: LanguageCode[] = [language, "en", DEFAULT_LANGUAGE];
+  return chain.filter((item, index) => chain.indexOf(item) === index);
+}
+
 export function getLanguage(code: string | null | undefined): Language {
   const resolved = toLanguageCode(code);
   return LANGUAGES.find((language) => language.code === resolved)!;
