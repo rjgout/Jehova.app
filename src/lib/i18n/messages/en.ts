@@ -1938,6 +1938,7 @@ export const en: PartialMessages = {
     listenChapter: "Listen to this chapter",
   },
   misc: {
+    kidsImageChoice: "Which picture belongs to the story \"{title}\"?",
     backToDashboard: "Back to dashboard",
     practiceTitle: "⚡ Quick round",
     practiceEmptyTitle: "Nothing to review yet",
@@ -2197,5 +2198,12 @@ export const en: PartialMessages = {
     working: "🔧 I'm on it",
     done: "✅ Done",
     wontDo: "🚫 Won't be done",
+  },
+  akGen: {
+    headingQuestion: "Which book has the chapter about: “{part}”?",
+    listen: "Listen carefully: which book is the verse read aloud from?",
+    fillName: "Which name is missing? “{verse}” ({ref})",
+    bookSubject: "the book of {book}",
+    headingLabel: "chapter heading",
   },
 };

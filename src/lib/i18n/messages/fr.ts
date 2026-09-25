@@ -1938,6 +1938,7 @@ export const fr: PartialMessages = {
     listenChapter: "Écoute ce chapitre",
   },
   misc: {
+    kidsImageChoice: "Quelle image correspond à l’histoire « {title} » ?",
     backToDashboard: "Retour au tableau de bord",
     practiceTitle: "⚡ Partie rapide",
     practiceEmptyTitle: "Rien à réviser pour l’instant",
@@ -2197,5 +2198,12 @@ export const fr: PartialMessages = {
     working: "🔧 Je m’en occupe",
     done: "✅ Terminé",
     wontDo: "🚫 Ne sera pas fait",
+  },
+  akGen: {
+    headingQuestion: "Dans quel livre se trouve le chapitre sur : « {part} » ?",
+    listen: "Écoute bien : de quel livre vient le verset lu à voix haute ?",
+    fillName: "Quel nom manque ? « {verse} » ({ref})",
+    bookSubject: "le livre de {book}",
+    headingLabel: "chapeau du chapitre",
   },
 };

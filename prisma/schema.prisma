@@ -484,6 +484,7 @@ model Course {
   // /api/courses/catalog), maar bestaande voortgang blijft gewoon bestaan en
   // een rechtstreekse link blijft werken (bewust geen harde blokkade).
   enabled     Boolean    @default(true)
+  kidsStories KidsStory[]
 
   chapters       CourseChapter[]
   userProgress   UserCourseProgress[]
@@ -716,19 +717,28 @@ model PodcastEpisodeProgress {
 }
 
 // "Verhalen uit het Boek van Mormon" (kindercursus, o.b.v. het gelijknamige
-// officiële kinderboek — met toestemming gebruikt, zie prisma/kidsContent.ts
-// en prisma/importKids.ts). Eigen modelfamilie, net als Podcast*, omdat een
-// KidsStory geen echt Chapter/Verse is.
+// officiële kinderboek — met toestemming gebruikt, zie prisma/importKids.ts).
+// Eigen modelfamilie, net als Podcast*, omdat een KidsStory geen echt
+// Chapter/Verse is. Elke kindercursus heeft eigen verhalen: de oudere
+// Nederlandse uitgave (kidsManifest.json) en de uitgave 2023 per taal
+// (kidsStories2023.<taal>.json). Hetzelfde nummer is in elke taal van die
+// uitgave hetzelfde verhaal.
 model KidsStory {
-  id     String @id @default(cuid())
-  number Int    @unique
-  title  String
-  text   String
-  images String // JSON-array van afbeeldings-URL's (public/kids/images)
-  order  Int    @default(0)
+  id        String  @id @default(cuid())
+  courseId  String?
+  course    Course? @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  number    Int
+  title     String
+  subtitle  String?
+  reference String? // bv. "1 Nephi 1–2", zoals in de uitgave
+  text      String
+  images    String // JSON-array van afbeeldings-URL's (public/kids/images of de server van de kerk)
+  order     Int     @default(0)
 
   exercises KidsExercise[]
   progress  KidsStoryProgress[]
+
+  @@unique([courseId, number])
 }
 
 model KidsExercise {
@@ -1904,8 +1914,26 @@ model AlleskennerItem {
   createdAt     DateTime            @default(now())
   updatedAt     DateTime            @updatedAt
   seenBy        AlleskennerSeen[]
+  translations  AlleskennerItemTranslation[]
 
   @@index([kind, enabled])
+}
+
+// Hetzelfde onderdeel in een andere contenttaal (data in dezelfde vorm als
+// AlleskennerItem.data). Automatisch omgezet vanuit dezelfde bron (zie
+// prisma/alleskennerTranslate.ts) of handgeschreven. Meerkeuzeopties staan in
+// dezelfde volgorde als in het Nederlands, zodat spelers in verschillende
+// talen op dezelfde vraag spelen. Een onderdeel dat de beheerder aanpaste
+// (editedByAdmin) gebruikt geen vertalingen: die horen bij de oorspronkelijke tekst.
+model AlleskennerItemTranslation {
+  itemId    String
+  item      AlleskennerItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  language  String
+  data      String
+  updatedAt DateTime        @updatedAt
+
+  @@id([itemId, language])
+  @@index([language])
 }
 
 // Wat iemand al gezien heeft (als speler, quizmaster of toeschouwer), zodat

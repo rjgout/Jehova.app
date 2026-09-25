@@ -2,7 +2,8 @@ import type { AlleskennerItemKind } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { alleskennerItems } from "../../../prisma/alleskennerContent";
 import { generatedAlleskennerItems } from "../../../prisma/alleskennerGenerated";
-import { importAlleskennerItems } from "../../../prisma/importAlleskenner";
+import { importAlleskennerItems, importAlleskennerTranslations } from "../../../prisma/importAlleskenner";
+import { alleskennerTranslations } from "../../../prisma/alleskennerTranslate";
 import kidsManifest from "../../../prisma/kidsManifest.json";
 import { parsePassage, type AlleskennerDataFor } from "@/lib/alleskenner/content";
 
@@ -16,6 +17,11 @@ export async function ensureAlleskennerContent(): Promise<void> {
   const inDatabase = await prisma.alleskennerItem.count({ where: { id: { in: all.map((i) => i.id) } } });
   if (inDatabase < all.length) {
     await importAlleskennerItems(prisma, all, () => {});
+  }
+  const translations = alleskennerTranslations(all);
+  const translated = await prisma.alleskennerItemTranslation.count();
+  if (translated < translations.length) {
+    await importAlleskennerTranslations(prisma, translations, () => {});
   }
 }
 

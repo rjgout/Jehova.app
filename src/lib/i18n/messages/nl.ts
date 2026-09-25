@@ -1942,6 +1942,7 @@ export const nl = {
     listenChapter: "Luister naar dit hoofdstuk",
   },
   misc: {
+    kidsImageChoice: "Welke afbeelding hoort bij het verhaal \"{title}\"?",
     backToDashboard: "Terug naar dashboard",
     practiceTitle: "⚡ Snelle ronde",
     practiceEmptyTitle: "Nog niks om te herhalen",
@@ -2201,5 +2202,12 @@ export const nl = {
     working: "🔧 Ik ga ermee bezig",
     done: "✅ Klaar",
     wontDo: "🚫 Wordt niet uitgevoerd",
+  },
+  akGen: {
+    headingQuestion: "In welk boek staat het hoofdstuk over: “{part}”?",
+    listen: "Luister goed: uit welk boek komt het voorgelezen vers?",
+    fillName: "Welke naam ontbreekt? “{verse}” ({ref})",
+    bookSubject: "het boek {book}",
+    headingLabel: "hoofdstukkop",
   },
 };

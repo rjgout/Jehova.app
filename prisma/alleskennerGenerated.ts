@@ -83,7 +83,7 @@ function bookAccept(name: string): string[] {
   return [`${ORDINALS[match[1]]} ${match[2]}`, `${match[1]}e ${match[2]}`, `${match[2]} ${match[1]}`];
 }
 
-function containsWord(text: string, word: string): boolean {
+export function containsWord(text: string, word: string): boolean {
   return new RegExp(`(^|[^\\p{L}])${word}([^\\p{L}]|$)`, "u").test(text);
 }
 
@@ -92,7 +92,7 @@ function containsWord(text: string, word: string): boolean {
  * een gedachtestreep (" – " in de huidige uitgave, " — " in de oudere), met
  * aan het eind een jaartal ("Ongeveer 76–74 v.C.", soms per vers).
  */
-function headingParts(text: string): string[] {
+export function headingParts(text: string): string[] {
   const withoutDate = text.replace(/\s+(Ongeveer|Vers(zen)? \d|De verzen)\b[\s\S]*$/, "");
   return withoutDate
     .split(/\s+[—–]\s+/)

@@ -7,12 +7,54 @@ import {
   buildDistractorPool,
   shuffleWithSeed,
 } from "../src/lib/exerciseGen";
+import { getT } from "../src/lib/i18n";
+import type { LanguageCode } from "../src/lib/languages";
+import { KIDS_SLUG } from "../src/lib/courses";
+
+// Kindercursus van de uitgave 2023, per taal (zie prisma/kidsStories2023.<taal>.json).
+export const KIDS_2023_SLUG_PREFIX = "kinderen-2023-";
 
 export interface KidsStorySeed {
   number: number;
   title: string;
+  subtitle?: string | null;
+  ref?: string | null;
   text: string;
   images: string[];
+}
+
+/**
+ * Zorgt voor de kindercursus van de uitgave 2023 in deze collectie en geeft
+ * het id terug. Wordt de Nederlandse cursus voor het eerst aangemaakt, dan
+ * gaat de oudere Nederlandse kindercursus uit het aanbod (voortgang en
+ * directe links blijven werken, zie Course.enabled); daarna blijft dat een
+ * keuze van de beheerder.
+ */
+export async function ensureKids2023Course(
+  prisma: PrismaClient,
+  language: LanguageCode,
+  contentCollectionId: string
+): Promise<string> {
+  const slug = `${KIDS_2023_SLUG_PREFIX}${language}`;
+  const existing = await prisma.course.findUnique({ where: { slug }, select: { id: true } });
+  if (existing) {
+    await prisma.course.update({ where: { slug }, data: { contentCollectionId } });
+    return existing.id;
+  }
+  const classic = await prisma.course.findUnique({ where: { slug: KIDS_SLUG }, select: { order: true } });
+  const created = await prisma.course.create({
+    data: {
+      slug,
+      type: "KIDS",
+      name: "Verhalen uit het Boek van Mormon (voor kinderen)",
+      description: "Korte, geïllustreerde verhalen met een plaatjesspel en simpele vraagjes — leuk voor de kleintjes.",
+      order: classic?.order ?? 100,
+      contentCollectionId,
+    },
+    select: { id: true },
+  });
+  if (language === "nl") await prisma.course.updateMany({ where: { slug: KIDS_SLUG }, data: { enabled: false } });
+  return created.id;
 }
 
 const MAX_TEXT_EXERCISES_PER_STORY = 8;
@@ -39,18 +81,35 @@ function splitSentences(text: string): string[] {
 export async function importKidsStories(
   prisma: PrismaClient,
   stories: KidsStorySeed[],
-  log: (msg: string) => void = console.log
+  log: (msg: string) => void = console.log,
+  options: { courseId?: string; language?: LanguageCode } = {}
 ) {
+  const language = options.language ?? "nl";
+  // Zonder courseId: de oudere Nederlandse uitgave, bij de vaste kindercursus.
+  const courseId =
+    options.courseId ?? (await prisma.course.findUnique({ where: { slug: KIDS_SLUG }, select: { id: true } }))?.id;
+  if (!courseId) throw new Error("Kindercursus ontbreekt; draai eerst de import van de boeken (syncCourses).");
+  const t = getT(language);
   const allImages = stories.flatMap((s) => s.images);
 
   for (let i = 0; i < stories.length; i++) {
     const seed = stories[i];
     const story = await prisma.kidsStory.upsert({
-      where: { number: seed.number },
-      update: { title: seed.title, text: seed.text, images: JSON.stringify(seed.images), order: seed.number },
+      where: { courseId_number: { courseId, number: seed.number } },
+      update: {
+        title: seed.title,
+        subtitle: seed.subtitle ?? null,
+        reference: seed.ref ?? null,
+        text: seed.text,
+        images: JSON.stringify(seed.images),
+        order: seed.number,
+      },
       create: {
+        courseId,
         number: seed.number,
         title: seed.title,
+        subtitle: seed.subtitle ?? null,
+        reference: seed.ref ?? null,
         text: seed.text,
         images: JSON.stringify(seed.images),
         order: seed.number,
@@ -60,7 +119,7 @@ export async function importKidsStories(
     await prisma.kidsExercise.deleteMany({ where: { storyId: story.id } });
 
     const sentences = splitSentences(seed.text).slice(0, MAX_TEXT_EXERCISES_PER_STORY);
-    const distractorPool = buildDistractorPool(sentences);
+    const distractorPool = buildDistractorPool(sentences, language);
 
     const exerciseRows: Prisma.KidsExerciseCreateManyInput[] = [];
     const optionRows: Prisma.KidsExerciseOptionCreateManyInput[] = [];
@@ -68,12 +127,12 @@ export async function importKidsStories(
 
     for (let s = 0; s < sentences.length; s++) {
       const sentence = sentences[s];
-      const verseRef = `Verhaal ${seed.number}`;
+      const verseRef = t("misc.storyN", { n: seed.number });
       let generated;
       if (s % 3 === 2) {
-        generated = generateTrueFalse(sentence, verseRef, s);
+        generated = generateTrueFalse(sentence, verseRef, s, language);
       } else if (s % 2 === 0) {
-        generated = generateFillBlank(sentence, verseRef, s, distractorPool);
+        generated = generateFillBlank(sentence, verseRef, s, distractorPool, language);
       } else {
         generated = generateWordBank(sentence, verseRef, s);
       }
@@ -115,7 +174,7 @@ export async function importKidsStories(
         storyId: story.id,
         order: order++,
         type: "IMAGE_CHOICE",
-        prompt: `Welke afbeelding hoort bij het verhaal "${seed.title}"?`,
+        prompt: t("misc.kidsImageChoice", { title: seed.title }),
         answers: JSON.stringify([correctImage.toLowerCase()]),
       });
       imageOptions.forEach((url, idx) => {

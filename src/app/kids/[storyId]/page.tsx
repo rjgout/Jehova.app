@@ -43,10 +43,13 @@ export default async function KidsStoryPage({ params }: { params: Promise<{ stor
 
   // Voor de knoppen op het afrondscherm: terug naar de kindercursus zelf (niet
   // de algemene cursuslijst) en door naar het volgende verhaal.
+  // Elke kindercursus heeft eigen verhalen (zie KidsStory.courseId).
   const [course, nextStory] = await Promise.all([
-    prisma.course.findFirst({ where: { type: "KIDS" }, select: { id: true, name: true } }),
+    story.courseId
+      ? prisma.course.findUnique({ where: { id: story.courseId }, select: { id: true, name: true } })
+      : null,
     prisma.kidsStory.findFirst({
-      where: { order: { gt: story.order } },
+      where: { courseId: story.courseId, order: { gt: story.order } },
       orderBy: { order: "asc" },
       select: { id: true },
     }),

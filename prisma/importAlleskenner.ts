@@ -43,3 +43,49 @@ export async function importAlleskennerItems(
 
   log(`Alleskenner: ${toCreate.length} nieuw, ${toUpdate.length} bijgewerkt, ${kept} door beheer aangepast (ongemoeid).`);
 }
+
+/**
+ * Zet vertalingen van onderdelen in de database (zie prisma/alleskennerTranslate.ts).
+ * Per taal is de lijst compleet: een vertaling die niet meer gemaakt wordt
+ * (bv. omdat het onderdeel in die taal niet meer past) verdwijnt, zodat het
+ * spel dat onderdeel in die taal niet meer kiest. Draait na importAlleskennerItems.
+ */
+export async function importAlleskennerTranslations(
+  client: PrismaClient,
+  seeds: { itemId: string; language: string; data: unknown }[],
+  log: (msg: string) => void = console.log
+): Promise<void> {
+  const languages = [...new Set(seeds.map((s) => s.language))];
+  const known = new Set(
+    (await client.alleskennerItem.findMany({ where: { id: { in: seeds.map((s) => s.itemId) } }, select: { id: true } })).map((r) => r.id)
+  );
+  const wanted = new Map(seeds.filter((s) => known.has(s.itemId)).map((s) => [`${s.itemId}|${s.language}`, s]));
+  const existing = await client.alleskennerItemTranslation.findMany({
+    where: { language: { in: languages } },
+    select: { itemId: true, language: true, data: true },
+  });
+  const existingByKey = new Map(existing.map((row) => [`${row.itemId}|${row.language}`, row]));
+
+  const stale = existing.filter((row) => !wanted.has(`${row.itemId}|${row.language}`));
+  for (const row of stale) {
+    await client.alleskennerItemTranslation.delete({ where: { itemId_language: { itemId: row.itemId, language: row.language } } });
+  }
+  const toCreate = [...wanted.values()].filter((s) => !existingByKey.has(`${s.itemId}|${s.language}`));
+  if (toCreate.length > 0) {
+    await client.alleskennerItemTranslation.createMany({
+      data: toCreate.map((s) => ({ itemId: s.itemId, language: s.language, data: JSON.stringify(s.data) })),
+      skipDuplicates: true,
+    });
+  }
+  const toUpdate = [...wanted.values()].filter((s) => {
+    const row = existingByKey.get(`${s.itemId}|${s.language}`);
+    return row && row.data !== JSON.stringify(s.data);
+  });
+  for (const s of toUpdate) {
+    await client.alleskennerItemTranslation.update({
+      where: { itemId_language: { itemId: s.itemId, language: s.language } },
+      data: { data: JSON.stringify(s.data) },
+    });
+  }
+  log(`Alleskenner-vertalingen (${languages.join(", ")}): ${toCreate.length} nieuw, ${toUpdate.length} bijgewerkt, ${stale.length} verwijderd.`);
+}

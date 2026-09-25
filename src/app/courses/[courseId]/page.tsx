@@ -93,6 +93,7 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ c
 
   if (course.type === "KIDS") {
     const stories = await prisma.kidsStory.findMany({
+      where: { courseId: course.id },
       orderBy: { order: "asc" },
       include: { progress: { where: { userId: user.id } } },
     });

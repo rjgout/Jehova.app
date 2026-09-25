@@ -30,7 +30,8 @@ import { introPersons } from "../../prisma/introPersons";
 import { dcPersons } from "../../prisma/dcPersons";
 import { alleskennerItems } from "../../prisma/alleskennerContent";
 import { generatedAlleskennerItems } from "../../prisma/alleskennerGenerated";
-import { importAlleskennerItems } from "../../prisma/importAlleskenner";
+import { importAlleskennerItems, importAlleskennerTranslations } from "../../prisma/importAlleskenner";
+import { alleskennerTranslations } from "../../prisma/alleskennerTranslate";
 
 // Namen/omschrijvingen bij de achievement-slugs uit src/lib/achievements.ts.
 const achievementDefs = [
@@ -119,7 +120,9 @@ export async function runSeed(client: PrismaClient, log: (msg: string) => void =
   await importIntroLessons(client, introLessons, log);
 
   log("Seeding De Alleskenner...");
-  await importAlleskennerItems(client, [...alleskennerItems, ...generatedAlleskennerItems()], log);
+  const alleskennerAll = [...alleskennerItems, ...generatedAlleskennerItems()];
+  await importAlleskennerItems(client, alleskennerAll, log);
+  await importAlleskennerTranslations(client, alleskennerTranslations(alleskennerAll), log);
 
   log("Seeding achievements...");
   for (const def of achievementDefs) {
