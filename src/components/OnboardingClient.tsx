@@ -7,6 +7,7 @@ import { enableBrowserPush, isPushSupported } from "@/lib/pushClient";
 import { isStandalone } from "@/lib/pwaInstall";
 import InstallAppCard from "@/components/InstallAppCard";
 import UserTag from "@/components/UserTag";
+import { useT } from "@/components/I18nProvider";
 
 interface OnboardingClientProps {
   email: string;
@@ -42,6 +43,7 @@ export default function OnboardingClient({
   emailConfigured,
 }: OnboardingClientProps) {
   const router = useRouter();
+  const t = useT();
   const [ready, setReady] = useState(false);
   const [steps, setSteps] = useState<StepId[]>(ALL_STEPS);
   const [index, setIndex] = useState(0);
@@ -64,7 +66,7 @@ export default function OnboardingClient({
     else setIndex(index + 1);
   }
 
-  if (!ready) return <p className="text-slate-400 dark:text-slate-500 text-center py-12">Laden...</p>;
+  if (!ready) return <p className="text-slate-400 dark:text-slate-500 text-center py-12">{t("common.loading")}</p>;
 
   const step = steps[index];
 
@@ -99,20 +101,21 @@ export default function OnboardingClient({
       )}
 
       <button className="text-sm text-slate-400 dark:text-slate-500 underline self-center" onClick={finish} disabled={finishing}>
-        Overslaan
+        {t("onboarding.skip")}
       </button>
     </div>
   );
 }
 
-const KNOWLEDGE_OPTIONS: { level: "NEVER" | "SOME" | "READ_BEFORE" | "UNSURE"; label: string }[] = [
-  { level: "NEVER", label: "Nog nooit" },
-  { level: "SOME", label: "Een paar stukjes" },
-  { level: "READ_BEFORE", label: "Ik heb het al eens gelezen" },
-  { level: "UNSURE", label: "Ik weet het eigenlijk niet meer" },
-];
+const KNOWLEDGE_OPTIONS = [
+  { level: "NEVER", key: "never" },
+  { level: "SOME", key: "some" },
+  { level: "READ_BEFORE", key: "readBefore" },
+  { level: "UNSURE", key: "unsure" },
+] as const;
 
 function KennisStep({ onNext }: { onNext: () => void }) {
+  const t = useT();
   const [saving, setSaving] = useState(false);
 
   async function choose(level: (typeof KNOWLEDGE_OPTIONS)[number]["level"]) {
@@ -128,10 +131,9 @@ function KennisStep({ onNext }: { onNext: () => void }) {
 
   return (
     <div className="flex flex-col gap-4">
-      <h1 className="text-xl font-extrabold text-brand-800 dark:text-brand-300 text-center">Welkom!</h1>
+      <h1 className="text-xl font-extrabold text-brand-800 dark:text-brand-300 text-center">{t("onboarding.welcome")}</h1>
       <p className="text-sm text-slate-500 dark:text-slate-400 text-center">
-        Heb je het Boek van Mormon al eens gelezen? Voorkennis is niet nodig — dit bepaalt alleen wat we je als eerste
-        laten zien.
+        {t("onboarding.knowledgeQuestion")}
       </p>
       <div className="flex flex-col gap-2">
         {KNOWLEDGE_OPTIONS.map((opt) => (
@@ -141,7 +143,7 @@ function KennisStep({ onNext }: { onNext: () => void }) {
             disabled={saving}
             onClick={() => choose(opt.level)}
           >
-            {opt.label}
+            {t(`onboarding.knowledge.${opt.key}`)}
           </button>
         ))}
       </div>
@@ -150,29 +152,30 @@ function KennisStep({ onNext }: { onNext: () => void }) {
 }
 
 function WebappStep({ onNext }: { onNext: () => void }) {
+  const t = useT();
   return (
     <div className="flex flex-col gap-4">
-      <h1 className="text-xl font-extrabold text-brand-800 dark:text-brand-300 text-center">Welkom! Eerst dit...</h1>
+      <h1 className="text-xl font-extrabold text-brand-800 dark:text-brand-300 text-center">{t("onboarding.welcomeFirst")}</h1>
       <InstallAppCard />
       <button className="btn-primary self-center" onClick={onNext}>
-        Volgende
+        {t("onboarding.next")}
       </button>
     </div>
   );
 }
 
 function UitlegStep({ onNext }: { onNext: () => void }) {
+  const t = useT();
   return (
     <div className="flex flex-col gap-4">
-      <h1 className="text-xl font-extrabold text-brand-800 dark:text-brand-300 text-center">Zo werkt het</h1>
+      <h1 className="text-xl font-extrabold text-brand-800 dark:text-brand-300 text-center">{t("onboarding.howItWorks")}</h1>
       <div className="card text-left flex flex-col gap-4">
         <div className="flex gap-3 items-start">
           <span className="text-2xl">🔥</span>
           <div>
-            <h3 className="font-extrabold dark:text-slate-100">Reeks</h3>
+            <h3 className="font-extrabold dark:text-slate-100">{t("profile.streak")}</h3>
             <p className="text-sm text-slate-500 dark:text-slate-400">
-              Oefen elke dag een beetje om je reeks op te bouwen. Een dag gemist? Dan springt automatisch een
-              verdiende streak freeze bij — op zijn je freezes op, dan breekt je reeks alsnog.
+              {t("onboarding.streakText")}
             </p>
           </div>
         </div>
@@ -181,21 +184,20 @@ function UitlegStep({ onNext }: { onNext: () => void }) {
           <div>
             <h3 className="font-extrabold dark:text-slate-100">XP</h3>
             <p className="text-sm text-slate-500 dark:text-slate-400">
-              Voor elke les, oefening en spelletje verdien je XP. Daarmee klim je ook in de wekelijkse
-              divisiecompetitie tegen andere spelers.
+              {t("onboarding.xpText")}
             </p>
           </div>
         </div>
         <div className="flex gap-3 items-start">
           <span className="text-2xl">💡</span>
           <div>
-            <h3 className="font-extrabold dark:text-slate-100">Hints</h3>
-            <p className="text-sm text-slate-500 dark:text-slate-400">Kom je er niet uit bij een oefening? Koop een hint met je XP.</p>
+            <h3 className="font-extrabold dark:text-slate-100">{t("shop.hints")}</h3>
+            <p className="text-sm text-slate-500 dark:text-slate-400">{t("onboarding.hintsText")}</p>
           </div>
         </div>
       </div>
       <button className="btn-primary self-center" onClick={onNext}>
-        Volgende
+        {t("onboarding.next")}
       </button>
     </div>
   );
@@ -208,6 +210,7 @@ interface SearchResult {
 }
 
 function VriendenStep({ email, initialSearchable, onNext }: { email: string; initialSearchable: boolean; onNext: () => void }) {
+  const t = useT();
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SearchResult[] | null>(null);
   const [sentTo, setSentTo] = useState<Set<string>>(new Set());
@@ -237,10 +240,10 @@ function VriendenStep({ email, initialSearchable, onNext }: { email: string; ini
     });
     const body = await res.json().catch(() => ({}));
     if (!res.ok) {
-      setMessage(body.error ?? "Er ging iets mis.");
+      setMessage(body.error ?? t("wordOfTheDay.somethingWrong"));
     } else {
       setSentTo((prev) => new Set(prev).add(target.id));
-      setMessage(`Verzoek naar ${formatTag(target.handle, target.discriminator)} verstuurd!`);
+      setMessage(t("onboarding.requestSent", { tag: formatTag(target.handle, target.discriminator) }));
     }
   }
 
@@ -258,20 +261,20 @@ function VriendenStep({ email, initialSearchable, onNext }: { email: string; ini
 
   return (
     <div className="flex flex-col gap-4">
-      <h1 className="text-xl font-extrabold text-brand-800 dark:text-brand-300 text-center">Zoek je vrienden op</h1>
+      <h1 className="text-xl font-extrabold text-brand-800 dark:text-brand-300 text-center">{t("onboarding.findFriends")}</h1>
       <p className="text-sm text-slate-500 dark:text-slate-400 text-center">
-        Meestal ken je hier al mensen die meedoen — zoek ze gelijk even op, dan kan je straks samen spelen.
+        {t("onboarding.findFriendsText")}
       </p>
 
       <div className="card flex flex-col gap-3">
         <input
           className="input"
-          placeholder="Zoek op gebruikersnaam (Naam#42) of e-mailadres"
+          placeholder={t("onboarding.searchPlaceholder")}
           value={query}
           onChange={(e) => setQuery(e.target.value)}
         />
         {results && results.length === 0 && query.trim().length >= 2 && (
-          <p className="text-sm text-slate-400 dark:text-slate-500">Niemand gevonden.</p>
+          <p className="text-sm text-slate-400 dark:text-slate-500">{t("friends.nobodyFound")}</p>
         )}
         {results && results.length > 0 && (
           <div className="flex flex-col gap-2">
@@ -279,7 +282,7 @@ function VriendenStep({ email, initialSearchable, onNext }: { email: string; ini
               <div key={r.id} className="flex items-center justify-between !py-2">
                 <UserTag handle={r.handle} discriminator={r.discriminator} className="dark:text-slate-100" />
                 <button className="btn-secondary !px-3 !py-1.5" disabled={sentTo.has(r.id)} onClick={() => sendRequest(r)}>
-                  {sentTo.has(r.id) ? "Verstuurd" : "Toevoegen"}
+                  {sentTo.has(r.id) ? t("friends.sent") : t("courses.add")}
                 </button>
               </div>
             ))}
@@ -297,16 +300,16 @@ function VriendenStep({ email, initialSearchable, onNext }: { email: string; ini
           disabled={savingSearchable}
         />
         <span className="text-sm dark:text-slate-200">
-          Vindbaar via e-mailadres ({email}) bij het toevoegen van vrienden.
+          {t("profile.searchableByEmail", { email })}
           <br />
           <span className="text-slate-400 dark:text-slate-500">
-            Handig als vrienden je willen vinden via mond-tot-mondreclame. Staat standaard uit.
+            {t("onboarding.searchableHint")}
           </span>
         </span>
       </label>
 
       <button className="btn-primary self-center" onClick={onNext}>
-        Volgende
+        {t("onboarding.next")}
       </button>
     </div>
   );
@@ -319,6 +322,7 @@ function OnlineStatusStep({
   initialShareOnlineStatus: boolean;
   onNext: () => void;
 }) {
+  const t = useT();
   const [shareOnlineStatus, setShareOnlineStatus] = useState(initialShareOnlineStatus);
   const [saving, setSaving] = useState(false);
 
@@ -335,9 +339,9 @@ function OnlineStatusStep({
 
   return (
     <div className="flex flex-col gap-4">
-      <h1 className="text-xl font-extrabold text-brand-800 dark:text-brand-300 text-center">Online status</h1>
+      <h1 className="text-xl font-extrabold text-brand-800 dark:text-brand-300 text-center">{t("onboarding.onlineStatus")}</h1>
       <p className="text-sm text-slate-500 dark:text-slate-400 text-center">
-        Kies of je vrienden mogen zien wanneer je online bent. Deze keuze staat ook later altijd in je profiel.
+        {t("onboarding.onlineStatusText")}
       </p>
 
       <div className="flex flex-col gap-2">
@@ -348,9 +352,9 @@ function OnlineStatusStep({
           disabled={saving}
           aria-pressed={shareOnlineStatus}
         >
-          <div className="font-extrabold dark:text-slate-100">🟢 Ja, deel mijn online status</div>
+          <div className="font-extrabold dark:text-slate-100">{t("onboarding.shareYes")}</div>
           <div className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-            Vrienden kunnen zien of je online bent en, als je dat toestaat, wat je aan het doen bent.
+            {t("onboarding.shareYesText")}
           </div>
         </button>
 
@@ -361,15 +365,15 @@ function OnlineStatusStep({
           disabled={saving}
           aria-pressed={!shareOnlineStatus}
         >
-          <div className="font-extrabold dark:text-slate-100">🙈 Nee, liever niet</div>
+          <div className="font-extrabold dark:text-slate-100">{t("onboarding.shareNo")}</div>
           <div className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-            Je bent onzichtbaar voor vrienden — en om het eerlijk te houden kun je dan ook hun online status niet zien.
+            {t("onboarding.shareNoText")}
           </div>
         </button>
       </div>
 
       <button className="btn-primary self-center" onClick={saveAndContinue} disabled={saving}>
-        {saving ? "Opslaan..." : "Volgende"}
+        {saving ? t("onboarding.saving") : t("onboarding.next")}
       </button>
     </div>
   );
@@ -392,6 +396,7 @@ function NotificatiesStep({
   onNext: () => void;
   finishing: boolean;
 }) {
+  const t = useT();
   const [push, setPush] = useState(initialPush);
   const [email, setEmail] = useState(initialEmail);
   const [dailyText, setDailyText] = useState(initialDailyText);
@@ -412,7 +417,7 @@ function NotificatiesStep({
         body: JSON.stringify({ pushNotificationsEnabled: true }),
       });
     } catch (e) {
-      setPushError(e instanceof Error ? e.message : "Kon pushmeldingen niet aanzetten.");
+      setPushError(e instanceof Error ? e.message : t("onboarding.pushFailed"));
     }
     setBusy(false);
   }
@@ -448,19 +453,19 @@ function NotificatiesStep({
 
   return (
     <div className="flex flex-col gap-4">
-      <h1 className="text-xl font-extrabold text-brand-800 dark:text-brand-300 text-center">Mis niks</h1>
+      <h1 className="text-xl font-extrabold text-brand-800 dark:text-brand-300 text-center">{t("onboarding.missNothing")}</h1>
 
       <div className="card text-left flex flex-col gap-3">
-        <h3 className="font-extrabold dark:text-slate-100">🔔 Pushmeldingen (aanbevolen)</h3>
+        <h3 className="font-extrabold dark:text-slate-100">{t("onboarding.pushTitle")}</h3>
         <p className="text-sm text-slate-500 dark:text-slate-400">
-          Voor je dagelijkse herinnering, vriendschapsverzoeken en de wekelijkse competitie-uitslag.
-          {!pushSupported && " Werkt in deze browser niet — zet 'm aan zodra je de app op je scherm hebt staan."}
+          {t("onboarding.pushText")}
+          {!pushSupported && t("onboarding.pushUnsupported")}
         </p>
         {push ? (
-          <p className="text-sm font-semibold text-brand-600 dark:text-brand-300">Pushmeldingen staan aan ✓</p>
+          <p className="text-sm font-semibold text-brand-600 dark:text-brand-300">{t("onboarding.pushOn")}</p>
         ) : (
           <button className="btn-primary self-start" onClick={enablePush} disabled={busy || !pushSupported}>
-            {busy ? "Bezig..." : "Pushmeldingen aanzetten"}
+            {busy ? t("courses.busy") : t("onboarding.pushEnable")}
           </button>
         )}
         {pushError && <p className="text-sm text-red-600 dark:text-red-400">{pushError}</p>}
@@ -470,9 +475,9 @@ function NotificatiesStep({
         <label className="card text-left flex items-start gap-3 cursor-pointer">
           <input type="checkbox" className="mt-1 h-5 w-5 accent-brand-500" checked={email} onChange={toggleEmail} />
           <span className="text-sm dark:text-slate-200">
-            E-mailnotificaties (optioneel)
+            {t("onboarding.emailTitle")}
             <br />
-            <span className="text-slate-400 dark:text-slate-500">Push heeft de voorkeur — dit is een extra, geen vervanging.</span>
+            <span className="text-slate-400 dark:text-slate-500">{t("onboarding.emailHint")}</span>
           </span>
         </label>
       )}
@@ -481,16 +486,16 @@ function NotificatiesStep({
         <label className="flex items-start gap-3 cursor-pointer">
           <input type="checkbox" className="mt-1 h-5 w-5 accent-brand-500" checked={dailyText} onChange={toggleDailyText} />
           <span className="text-sm dark:text-slate-200">
-            📖 Tekst van de dag (optioneel)
+            {t("onboarding.dailyTextTitle")}
             <br />
             <span className="text-slate-400 dark:text-slate-500">
-              Elke dag één vers als melding, via push{emailConfigured ? " of e-mail" : ""}. Je kunt dit altijd uitzetten in je profiel.
+              {emailConfigured ? t("onboarding.dailyTextHintEmail") : t("onboarding.dailyTextHint")}
             </span>
           </span>
         </label>
         {dailyText && (
           <label className="flex items-center gap-2 text-sm dark:text-slate-200 pl-8">
-            Tijdstip
+            {t("onboarding.time")}
             <input
               type="time"
               className="input !w-auto !py-1"
@@ -502,7 +507,7 @@ function NotificatiesStep({
       </div>
 
       <button className="btn-primary self-center" onClick={onNext} disabled={finishing}>
-        {finishing ? "Bezig..." : "Klaar, aan de slag!"}
+        {finishing ? t("courses.busy") : t("onboarding.done")}
       </button>
     </div>
   );

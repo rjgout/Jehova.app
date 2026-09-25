@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useT } from "@/components/I18nProvider";
 import { hasInstallPrompt, onInstallPromptChange, promptInstall, isStandalone, isIOS } from "@/lib/pwaInstall";
 
 /**
@@ -10,6 +11,7 @@ import { hasInstallPrompt, onInstallPromptChange, promptInstall, isStandalone, i
  * nog niet geïnstalleerd is.
  */
 export default function InstallAppCard() {
+  const t = useT();
   const [standalone, setStandalone] = useState(false);
   const [promptAvailable, setPromptAvailable] = useState(false);
   const [ios, setIos] = useState(false);
@@ -27,8 +29,8 @@ export default function InstallAppCard() {
     return (
       <div className="card text-left">
         <div className="text-3xl mb-2">✅</div>
-        <h3 className="font-extrabold mb-1 dark:text-slate-100">App staat al op je scherm</h3>
-        <p className="text-sm text-slate-500 dark:text-slate-400">Je gebruikt de app al — top, dan kan je ook pushmeldingen ontvangen.</p>
+        <h3 className="font-extrabold mb-1 dark:text-slate-100">{t("installApp.alreadyInstalled")}</h3>
+        <p className="text-sm text-slate-500 dark:text-slate-400">{t("installApp.alreadyText")}</p>
       </div>
     );
   }
@@ -44,33 +46,33 @@ export default function InstallAppCard() {
     <div className="card text-left">
       <div className="text-3xl mb-2">📲</div>
       <h3 className="font-extrabold mb-1 dark:text-slate-100">
-        Zet de app op je {ios ? "beginscherm" : "startscherm"}
+        {ios ? t("installApp.titleIos") : t("installApp.title")}
       </h3>
       <p className="text-sm text-slate-500 dark:text-slate-400 mb-3">
-        Nodig, want pushmeldingen (zie de laatste stap) werken alleen als de app op je scherm staat.
+        {t("installApp.why")}
       </p>
 
       {promptAvailable && (
         <button className="btn-primary" onClick={onInstallClick} disabled={busy}>
-          {busy ? "Bezig..." : "App installeren"}
+          {busy ? t("courses.busy") : t("installApp.install")}
         </button>
       )}
 
       {!promptAvailable && dismissedResult && (
-        <p className="text-sm text-slate-500 dark:text-slate-400">Oké, je kan dit later alsnog doen.</p>
+        <p className="text-sm text-slate-500 dark:text-slate-400">{t("installApp.later")}</p>
       )}
 
       {!promptAvailable && !dismissedResult && ios && (
         <ol className="text-sm text-slate-500 dark:text-slate-400 list-decimal list-inside flex flex-col gap-1">
-          <li>Tik onderin Safari op het deel-icoon</li>
-          <li>Kies &ldquo;Zet op beginscherm&rdquo;</li>
-          <li>Tik rechtsboven op &ldquo;Voeg toe&rdquo;</li>
+          <li>{t("installApp.ios1")}</li>
+          <li>{t("installApp.ios2")}</li>
+          <li>{t("installApp.ios3")}</li>
         </ol>
       )}
 
       {!promptAvailable && !dismissedResult && !ios && (
         <p className="text-sm text-slate-500 dark:text-slate-400">
-          Gebruik het menu van je browser en kies &ldquo;App installeren&rdquo; of &ldquo;Toevoegen aan startscherm&rdquo;.
+          {t("installApp.other")}
         </p>
       )}
     </div>
