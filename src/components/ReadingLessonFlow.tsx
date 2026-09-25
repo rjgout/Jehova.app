@@ -31,6 +31,8 @@ interface Props {
   audio?: ChapterAudio | null;
   term?: ChapterTerm;
   exercises: Exercise[];
+  /** Taal van de uitgave, voor de voorleesstem. */
+  language?: string;
 }
 
 interface Result {
@@ -69,6 +71,7 @@ export default function ReadingLessonFlow({
   audio,
   term,
   exercises,
+  language,
 }: Props) {
   const [phase, setPhase] = useState<Phase>("read");
   const [index, setIndex] = useState(0);
@@ -125,6 +128,7 @@ export default function ReadingLessonFlow({
           verses={verses}
           audio={audio}
           term={term}
+          language={language}
         />
         <button
           className="btn-primary self-start"

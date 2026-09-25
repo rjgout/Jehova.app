@@ -27,7 +27,7 @@ export default async function LessonPage({
   const chapter = await prisma.chapter.findUnique({
     where: { id: chapterId },
     include: {
-      book: true,
+      book: { include: { contentCollection: { select: { language: true } } } },
       verses: { orderBy: { number: "asc" } },
       exercises: {
         orderBy: { order: "asc" },
@@ -104,6 +104,7 @@ export default async function LessonPage({
       challengeId={challengeId}
       courseId={course?.id}
       focusVerse={vers ? Number(vers) || undefined : undefined}
+      language={chapter.book.contentCollection.language}
     />
     </>
   );

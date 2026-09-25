@@ -3,6 +3,7 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import { getDutchVoices, getSelectedDutchVoice } from "@/lib/readAloud";
 import { beginSpeechPlayback, endSpeechPlayback } from "@/lib/speechAudioSession";
+import { getLanguage } from "@/lib/languages";
 
 export interface ReadAloudVerse {
   number: number;
@@ -21,6 +22,8 @@ export interface ReadAloudSource {
    * van het bestand door te spelen.
    */
   audio?: { url: string; end: number | null } | null;
+  /** Taal van de tekst (src/lib/languages.ts); bepaalt de computerstem. Zonder: Nederlands. */
+  language?: string;
 }
 
 // Echte audio alleen als élk vers een begintijd heeft; anders de computerstem,
@@ -51,7 +54,16 @@ export function useReadAloudPlayer(): ReadAloudPlayerContextValue {
   return ctx;
 }
 
-function getVoice(): SpeechSynthesisVoice | null {
+function getVoice(language?: string): SpeechSynthesisVoice | null {
+  const { code, intlLocale } = getLanguage(language);
+  if (code !== "nl") {
+    // Andere talen: de stemkeuze in het profiel geldt alleen voor Nederlands.
+    const voices = window.speechSynthesis.getVoices();
+    return voices.find((voice) => voice.lang.toLowerCase() === intlLocale.toLowerCase())
+      ?? voices.find((voice) => voice.lang.toLowerCase().startsWith(`${code}-`))
+      ?? voices.find((voice) => voice.lang.toLowerCase().startsWith(code))
+      ?? null;
+  }
   const voices = getDutchVoices();
   return getSelectedDutchVoice() ?? voices.find((voice) => voice.lang.toLowerCase() === "nl-nl")
     ?? voices.find((voice) => voice.lang.toLowerCase().startsWith("nl-"))
@@ -162,11 +174,11 @@ export function ReadAloudPlayerProvider({ children }: { children: React.ReactNod
 
     const synth = window.speechSynthesis;
     const utteranceId = ++utteranceIdRef.current;
-    const voice = getVoice();
+    const voice = getVoice(currentSource.language);
 
     for (let verseIndex = index; verseIndex < currentSource.verses.length; verseIndex += 1) {
       const utterance = new SpeechSynthesisUtterance(currentSource.verses[verseIndex].text);
-      utterance.lang = "nl-NL";
+      utterance.lang = getLanguage(currentSource.language).intlLocale;
       utterance.rate = speedRef.current;
       if (voice) {
         utterance.voice = voice;

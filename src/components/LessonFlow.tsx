@@ -57,6 +57,8 @@ interface Props {
   courseId?: string;
   /** Vers om naartoe te scrollen en even op te lichten (bv. vanaf de tekst van de dag). */
   focusVerse?: number;
+  /** Taal van de uitgave, voor de voorleesstem. */
+  language?: string;
 }
 
 type Phase = "read" | "exercises" | "review" | "summary";
@@ -86,7 +88,7 @@ const FONT_SCALE_KEY = "bom-reader-font-scale";
 const MIN_SCALE = 0.85;
 const MAX_SCALE = 1.5;
 
-export default function LessonFlow({ chapterId, bookName, chapterNumber, nextChapterId, verses, audio, term = chapterTerm(null), exercises, challengeId, courseId, focusVerse }: Props) {
+export default function LessonFlow({ chapterId, bookName, chapterNumber, nextChapterId, verses, audio, term = chapterTerm(null), exercises, challengeId, courseId, focusVerse, language }: Props) {
   const [phase, setPhase] = useState<Phase>("read");
   const [index, setIndex] = useState(0);
   const [answers, setAnswers] = useState<SubmittedAnswer[]>([]);
@@ -169,7 +171,7 @@ export default function LessonFlow({ chapterId, bookName, chapterNumber, nextCha
   if (phase === "read") {
     return (
       <div className="max-w-2xl mx-auto flex flex-col gap-4">
-        <ReaderView chapterId={chapterId} bookName={bookName} chapterNumber={chapterNumber} verses={verses} audio={audio} term={term} focusVerse={focusVerse} />
+        <ReaderView chapterId={chapterId} bookName={bookName} chapterNumber={chapterNumber} verses={verses} audio={audio} term={term} focusVerse={focusVerse} language={language} />
         <button className="btn-primary self-start" onClick={() => setPhase("exercises")}>
           Begin oefeningen →
         </button>
@@ -235,6 +237,7 @@ export function ReaderView({
   audio,
   term = chapterTerm(null),
   focusVerse,
+  language,
 }: {
   chapterId: string;
   bookName: string;
@@ -243,6 +246,7 @@ export function ReaderView({
   audio?: ChapterAudio | null;
   term?: ChapterTerm;
   focusVerse?: number;
+  language?: string;
 }) {
   const [scale, setScale] = useState(1);
   const [verseState, setVerseState] = useState(verses);
@@ -328,6 +332,7 @@ export function ReaderView({
         verses={verseState.map((v) => ({ number: v.number, text: v.text, audioStart: v.audioStart }))}
         audio={audio}
         subtitle={`Luister naar ${term.thisOne}`}
+        language={language}
       />
 
       <div className="card flex flex-col gap-4" style={{ "--reader-font-scale": scale } as React.CSSProperties}>

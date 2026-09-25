@@ -20,7 +20,7 @@ export default async function ReadingLessonPage({
     include: {
       course: true,
       chapter: {
-        include: { book: true },
+        include: { book: { include: { contentCollection: { select: { language: true } } } } },
       },
       exercises: {
         orderBy: { order: "asc" },
@@ -129,6 +129,7 @@ export default async function ReadingLessonPage({
       audio={audio}
       term={chapterTerm(lesson.chapter.book.slug)}
       exercises={exercises}
+      language={lesson.chapter.book.contentCollection.language}
     />
     </>
   );
