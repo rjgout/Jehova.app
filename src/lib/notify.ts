@@ -254,18 +254,19 @@ export async function notifySeasonResult(
   });
 }
 
-export async function notifyDailyText(userId: string, text: { bookName: string; chapterNumber: number; verseNumber: number; content: string }): Promise<void> {
-  const url = `${await getAppUrl()}/dashboard`;
+export async function notifyDailyText(userId: string, text: { href: string; bookName: string; chapterNumber: number; verseNumber: number; content: string }): Promise<void> {
+  // Rechtstreeks naar het vers, net als een klik op de tekst van de dag op het dashboard.
+  const url = `${await getAppUrl()}${text.href}`;
   const reference = `${text.bookName} ${text.chapterNumber}:${text.verseNumber}`;
   await notifyUser({
     userId,
     category: "dailyText",
     subject: "Tekst van de dag",
-    emailHtml: emailWrap(`📖 <strong>${reference}</strong><br />${text.content}`, url, "Bekijk je dashboard"),
+    emailHtml: emailWrap(`📖 <strong>${reference}</strong><br />${text.content}`, url, "Lees verder"),
     emailText: `📖 ${reference} — ${text.content} — ${url}`,
     pushTitle: "Tekst van de dag 📖",
     pushBody: `${reference} — ${text.content}`,
-    url: "/dashboard",
+    url: text.href,
   });
 }
 

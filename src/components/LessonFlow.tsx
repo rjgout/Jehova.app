@@ -55,6 +55,8 @@ interface Props {
   challengeId?: string;
   /** De cursus waaruit de les geopend is; gaat mee naar het volgende hoofdstuk (terugbalk). */
   courseId?: string;
+  /** Vers om naartoe te scrollen en even op te lichten (bv. vanaf de tekst van de dag). */
+  focusVerse?: number;
 }
 
 type Phase = "read" | "exercises" | "review" | "summary";
@@ -84,7 +86,7 @@ const FONT_SCALE_KEY = "bom-reader-font-scale";
 const MIN_SCALE = 0.85;
 const MAX_SCALE = 1.5;
 
-export default function LessonFlow({ chapterId, bookName, chapterNumber, nextChapterId, verses, audio, term = chapterTerm(null), exercises, challengeId, courseId }: Props) {
+export default function LessonFlow({ chapterId, bookName, chapterNumber, nextChapterId, verses, audio, term = chapterTerm(null), exercises, challengeId, courseId, focusVerse }: Props) {
   const [phase, setPhase] = useState<Phase>("read");
   const [index, setIndex] = useState(0);
   const [answers, setAnswers] = useState<SubmittedAnswer[]>([]);
@@ -167,7 +169,7 @@ export default function LessonFlow({ chapterId, bookName, chapterNumber, nextCha
   if (phase === "read") {
     return (
       <div className="max-w-2xl mx-auto flex flex-col gap-4">
-        <ReaderView chapterId={chapterId} bookName={bookName} chapterNumber={chapterNumber} verses={verses} audio={audio} term={term} />
+        <ReaderView chapterId={chapterId} bookName={bookName} chapterNumber={chapterNumber} verses={verses} audio={audio} term={term} focusVerse={focusVerse} />
         <button className="btn-primary self-start" onClick={() => setPhase("exercises")}>
           Begin oefeningen →
         </button>
@@ -232,6 +234,7 @@ export function ReaderView({
   verses,
   audio,
   term = chapterTerm(null),
+  focusVerse,
 }: {
   chapterId: string;
   bookName: string;
@@ -239,12 +242,22 @@ export function ReaderView({
   verses: VerseView[];
   audio?: ChapterAudio | null;
   term?: ChapterTerm;
+  focusVerse?: number;
 }) {
   const [scale, setScale] = useState(1);
   const [verseState, setVerseState] = useState(verses);
   const [openNoteFor, setOpenNoteFor] = useState<string | null>(null);
   const { source, currentIndex, isPlaying } = useReadAloudPlayer();
   const readingVerse = source && source.id === chapterId && isPlaying ? source.verses[currentIndex]?.number ?? null : null;
+  // Het opgevraagde vers licht even op, zodat je ziet waar je bent beland.
+  const [flashVerse, setFlashVerse] = useState<number | null>(focusVerse ?? null);
+
+  useEffect(() => {
+    if (!focusVerse) return;
+    document.getElementById(`vers-${focusVerse}`)?.scrollIntoView({ block: "center" });
+    const timer = window.setTimeout(() => setFlashVerse(null), 4000);
+    return () => window.clearTimeout(timer);
+  }, [focusVerse]);
 
 
   useEffect(() => {
@@ -321,8 +334,11 @@ export function ReaderView({
         {verseState.map((v) => (
           <div
             key={v.id}
-            className={`reader-text flex flex-col gap-2 rounded-xl -mx-2 px-2 py-1 transition-colors ${
-              v.highlighted
+            id={`vers-${v.number}`}
+            className={`reader-text flex flex-col gap-2 rounded-xl -mx-2 px-2 py-1 transition-colors duration-700 ${
+              flashVerse === v.number
+                ? "bg-brand-100/70 dark:bg-brand-900/30 ring-2 ring-brand-400 dark:ring-brand-500"
+                : v.highlighted
                 ? "bg-gold-400/20 dark:bg-gold-400/10"
                 : readingVerse === v.number
                   ? "bg-brand-100/70 dark:bg-brand-900/30 ring-2 ring-brand-300/50 dark:ring-brand-700/50"

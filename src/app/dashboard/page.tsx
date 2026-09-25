@@ -76,11 +76,17 @@ export default async function DashboardPage() {
   return (
     <div className="max-w-5xl mx-auto flex flex-col gap-6">
       {dailyText && (
-        <section className="card bg-gradient-to-br from-brand-500 to-brand-700 text-white flex flex-col gap-3">
+        <Link
+          href={dailyText.href}
+          className="card bg-gradient-to-br from-brand-500 to-brand-700 text-white flex flex-col gap-3 transition hover:ring-2 hover:ring-brand-300 active:scale-[0.99]"
+        >
           <p className="text-brand-100 font-bold uppercase text-xs tracking-wide">Tekst van de dag</p>
           <p className="text-xl sm:text-2xl font-extrabold leading-snug">“{dailyText.text}”</p>
-          <p className="text-sm text-brand-100">— {dailyText.bookName} {dailyText.chapterNumber}:{dailyText.verseNumber}</p>
-        </section>
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <p className="text-sm text-brand-100">— {dailyText.bookName} {dailyText.chapterNumber}:{dailyText.verseNumber}</p>
+            <span className="text-sm font-bold">Lees verder →</span>
+          </div>
+        </Link>
       )}
 
       <section className="card flex flex-col gap-3">

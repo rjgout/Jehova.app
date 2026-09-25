@@ -17,13 +17,13 @@ export default async function LessonPage({
   searchParams,
 }: {
   params: Promise<{ chapterId: string }>;
-  searchParams: Promise<{ challengeId?: string; cursus?: string }>;
+  searchParams: Promise<{ challengeId?: string; cursus?: string; vers?: string }>;
 }) {
   const user = await getCurrentUser();
   if (!user) redirect("/login");
 
   const { chapterId } = await params;
-  const { challengeId, cursus } = await searchParams;
+  const { challengeId, cursus, vers } = await searchParams;
   const chapter = await prisma.chapter.findUnique({
     where: { id: chapterId },
     include: {
@@ -103,6 +103,7 @@ export default async function LessonPage({
       exercises={exercises}
       challengeId={challengeId}
       courseId={course?.id}
+      focusVerse={vers ? Number(vers) || undefined : undefined}
     />
     </>
   );
