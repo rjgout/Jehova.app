@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { announceXpChanged } from "@/lib/xpBroadcast";
 import IntroAudioButton from "@/components/IntroAudioButton";
+import { useT } from "@/components/I18nProvider";
 
 type Level = "BEGINNER" | "ADVANCED" | "EXPERT";
 
@@ -68,6 +69,7 @@ interface HintResult {
 }
 
 export default function ChapterGuessSoloClient({ gameId }: { gameId: string }) {
+  const t = useT();
   const [game, setGame] = useState<GameView | null>(null);
   const [chapters, setChapters] = useState<ChapterOption[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -88,11 +90,11 @@ export default function ChapterGuessSoloClient({ gameId }: { gameId: string }) {
     fetch(`/api/chapter-guess/${gameId}`)
       .then(async (r) => {
         const data = await r.json();
-        if (!r.ok) throw new Error(data.error ?? "Spel niet gevonden.");
+        if (!r.ok) throw new Error(data.error ?? t("chapterGuess.notFound"));
         setGame(data);
         if (data.status === "FINISHED" && data.summary) setFinalSummary(data.summary);
       })
-      .catch((e) => setError(e instanceof Error ? e.message : "Er ging iets mis."));
+      .catch((e) => setError(e instanceof Error ? e.message : t("wordOfTheDay.somethingWrong")));
     fetch("/api/chapters")
       .then((r) => r.json())
       .then(setChapters);
@@ -118,7 +120,7 @@ export default function ChapterGuessSoloClient({ gameId }: { gameId: string }) {
     const data = await res.json().catch(() => ({}));
     setSubmitting(false);
     if (!res.ok) {
-      setError(data.error ?? "Er ging iets mis.");
+      setError(data.error ?? t("wordOfTheDay.somethingWrong"));
       return;
     }
     setFeedback(data);
@@ -144,7 +146,7 @@ export default function ChapterGuessSoloClient({ gameId }: { gameId: string }) {
     const data = await res.json().catch(() => ({}));
     setHintLoading(false);
     if (!res.ok) {
-      setError(data.error ?? "Geen hint beschikbaar.");
+      setError(data.error ?? t("chapterGuess.noHint"));
       return;
     }
     setHint(data);
@@ -160,7 +162,7 @@ export default function ChapterGuessSoloClient({ gameId }: { gameId: string }) {
     const data = await res.json().catch(() => ({}));
     setGivingUp(false);
     if (!res.ok) {
-      setError(data.error ?? "Er ging iets mis.");
+      setError(data.error ?? t("wordOfTheDay.somethingWrong"));
       return;
     }
     setConfirmingGiveUp(false);
@@ -172,30 +174,30 @@ export default function ChapterGuessSoloClient({ gameId }: { gameId: string }) {
       <div className="max-w-md mx-auto card text-center flex flex-col gap-3">
         <p className="text-red-600 dark:text-red-400 font-semibold">{error}</p>
         <Link href="/chapter-guess" className="btn-secondary self-center">
-          Terug
+          {t("wordOfTheDay.back")}
         </Link>
       </div>
     );
   }
 
   if (!game) {
-    return <p className="text-center text-slate-400 dark:text-slate-500">Laden...</p>;
+    return <p className="text-center text-slate-400 dark:text-slate-500">{t("common.loading")}</p>;
   }
 
   if (gaveUpSummary) {
     return (
       <div className="max-w-md mx-auto card flex flex-col items-center gap-4 text-center animate-pop">
         <div className="text-5xl">🏳️</div>
-        <h2 className="text-2xl font-extrabold text-slate-600 dark:text-slate-300">Je hebt opgegeven</h2>
+        <h2 className="text-2xl font-extrabold text-slate-600 dark:text-slate-300">{t("chapterGuess.gaveUp")}</h2>
         <p className="text-slate-500 dark:text-slate-400">
-          Je stond op {gaveUpSummary.correctCount} / {gaveUpSummary.total} goed — geen XP voor dit potje.
+          {t("chapterGuess.gaveUpScore", { correct: gaveUpSummary.correctCount, total: gaveUpSummary.total })}
         </p>
         <div className="flex gap-3 mt-2">
           <Link href="/chapter-guess" className="btn-primary">
-            Nog een keer
+            {t("chapterGuess.again")}
           </Link>
           <Link href="/live" className="btn-secondary">
-            Terug
+            {t("wordOfTheDay.back")}
           </Link>
         </div>
       </div>
@@ -207,7 +209,7 @@ export default function ChapterGuessSoloClient({ gameId }: { gameId: string }) {
       <div className="max-w-md mx-auto card flex flex-col items-center gap-4 text-center animate-pop">
         <div className="text-5xl">🔎</div>
         <h2 className="text-2xl font-extrabold text-brand-800 dark:text-brand-300">
-          {finalSummary.correctCount} / {finalSummary.total} goed
+          {t("readingLesson.score", { correct: finalSummary.correctCount, total: finalSummary.total })}
         </h2>
         {!!finalSummary.xpEarned && <p className="text-gold-600 dark:text-gold-400 font-extrabold text-lg">+{finalSummary.xpEarned} XP</p>}
         {!!finalSummary.currentStreak && !finalSummary.alreadyStudiedToday && (
@@ -215,10 +217,10 @@ export default function ChapterGuessSoloClient({ gameId }: { gameId: string }) {
         )}
         <div className="flex gap-3 mt-2">
           <Link href="/chapter-guess" className="btn-primary">
-            Nog een keer
+            {t("chapterGuess.again")}
           </Link>
           <Link href="/live" className="btn-secondary">
-            Terug
+            {t("wordOfTheDay.back")}
           </Link>
         </div>
       </div>
@@ -226,7 +228,7 @@ export default function ChapterGuessSoloClient({ gameId }: { gameId: string }) {
   }
 
   const question = game.question;
-  if (!question) return <p className="text-center text-slate-400 dark:text-slate-500">Laden...</p>;
+  if (!question) return <p className="text-center text-slate-400 dark:text-slate-500">{t("common.loading")}</p>;
 
   const chaptersForBook = chapters.filter((c) => c.bookId === pickedBookId).sort((a, b) => a.number - b.number);
   const uniqueBooks = [...new Map(chapters.map((c) => [c.bookId, c.bookName])).entries()];
@@ -236,12 +238,12 @@ export default function ChapterGuessSoloClient({ gameId }: { gameId: string }) {
     <div className="max-w-xl mx-auto flex flex-col gap-6">
       <div className="flex items-center justify-between text-sm font-bold text-slate-400 dark:text-slate-500">
         <span>
-          Vraag {question.index + 1} / {question.total}
+          {t("chapterGuess.questionOf", { n: question.index + 1, total: question.total })}
         </span>
         <div className="flex items-center gap-2">
           {game.level !== "EXPERT" && (
             <button className="btn-secondary !px-3 !py-1.5 !text-xs" disabled={hintLoading || hint !== null || answered} onClick={useHint}>
-              💡 Hint ({game.hintCredits})
+              {t("chapterGuess.hintButton", { n: game.hintCredits })}
             </button>
           )}
           <button
@@ -249,7 +251,7 @@ export default function ChapterGuessSoloClient({ gameId }: { gameId: string }) {
             disabled={givingUp}
             onClick={() => setConfirmingGiveUp(true)}
           >
-            🏳️ Opgeven
+            🏳️ {t("challenges.forfeit")}
           </button>
         </div>
       </div>
@@ -259,14 +261,14 @@ export default function ChapterGuessSoloClient({ gameId }: { gameId: string }) {
       {confirmingGiveUp && (
         <div className="card !py-3 flex flex-col sm:flex-row items-center justify-between gap-3 !border-2 !border-red-200 dark:!border-red-900">
           <p className="text-sm font-bold text-red-600 dark:text-red-400">
-            Weet je het zeker? Je krijgt dan geen XP voor dit potje.
+            {t("chapterGuess.confirmGiveUp")}
           </p>
           <div className="flex gap-2 shrink-0">
             <button className="btn-secondary !px-3 !py-1.5 !text-xs" disabled={givingUp} onClick={() => setConfirmingGiveUp(false)}>
-              Annuleren
+              {t("activeGames.cancel")}
             </button>
             <button className="btn-primary !bg-red-500 !px-3 !py-1.5 !text-xs" disabled={givingUp} onClick={giveUp}>
-              {givingUp ? "Bezig..." : "Ja, opgeven"}
+              {givingUp ? t("courses.busy") : t("chapterGuess.yesGiveUp")}
             </button>
           </div>
         </div>
@@ -276,13 +278,13 @@ export default function ChapterGuessSoloClient({ gameId }: { gameId: string }) {
       </div>
 
       <div className="card flex flex-col gap-5">
-        <p className="text-xs font-bold uppercase text-slate-400 dark:text-slate-500">Lees deze hoofdstukkop — welk hoofdstuk is dit?</p>
+        <p className="text-xs font-bold uppercase text-slate-400 dark:text-slate-500">{t("chapterGuess.readHeading")}</p>
         <p className="text-xl leading-relaxed italic">&ldquo;{question.introText}&rdquo;</p>
         <IntroAudioButton audio={question.introAudio} />
 
         {hint?.bookName && !answered && (
           <p className="text-sm bg-gold-50 dark:bg-slate-700 text-gold-600 dark:text-gold-400 rounded-xl px-3 py-2 font-bold">
-            💡 Hint: dit hoofdstuk staat in {hint.bookName}.
+            {t("chapterGuess.hintBook", { book: hint.bookName })}
           </p>
         )}
 
@@ -323,7 +325,7 @@ export default function ChapterGuessSoloClient({ gameId }: { gameId: string }) {
                 setPickedNumber("");
               }}
             >
-              <option value="">Kies een boek...</option>
+              <option value="">{t("chapterGuess.chooseBook")}</option>
               {uniqueBooks.map(([id, name]) => (
                 <option key={id} value={id}>
                   {name}
@@ -336,10 +338,10 @@ export default function ChapterGuessSoloClient({ gameId }: { gameId: string }) {
               disabled={answered || !pickedBookId}
               onChange={(e) => setPickedNumber(e.target.value ? Number(e.target.value) : "")}
             >
-              <option value="">Kies een hoofdstuk...</option>
+              <option value="">{t("challenges.chooseChapter")}</option>
               {chaptersForBook.map((c) => (
                 <option key={c.id} value={c.number}>
-                  Hoofdstuk {c.number}
+                  {t("chapterGuess.chapterN", { n: c.number })}
                 </option>
               ))}
             </select>
@@ -352,7 +354,7 @@ export default function ChapterGuessSoloClient({ gameId }: { gameId: string }) {
                   if (match) submitAnswer(match.id);
                 }}
               >
-                Bevestig keuze
+                {t("chapterGuess.confirmChoice")}
               </button>
             )}
           </div>
@@ -366,13 +368,13 @@ export default function ChapterGuessSoloClient({ gameId }: { gameId: string }) {
                 : "bg-red-50 dark:bg-slate-700 text-red-500 dark:text-red-400"
             }`}
           >
-            {feedback.correct ? "Goed gedaan! ✅" : `Niet helemaal — het juiste antwoord was: ${feedback.correctChapter.label}`}
+            {feedback.correct ? t("lesson.correct") : t("lesson.wrongAnswer", { answer: feedback.correctChapter.label })}
           </p>
         )}
 
         {answered && !feedback?.finished && (
           <button className="btn-primary self-end" onClick={nextQuestion}>
-            Volgende vraag →
+            {t("chapterGuess.nextQuestion")}
           </button>
         )}
 

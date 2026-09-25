@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import UserAvatar from "@/components/UserAvatar";
 import { getSocket } from "@/lib/socketClient";
 import FriendPicker, { type PickerFriend } from "@/components/FriendPicker";
+import { useT } from "@/components/I18nProvider";
+import { rich } from "@/lib/i18n/rich";
 
 interface GameView {
   id: string;
@@ -19,6 +21,7 @@ interface GameView {
 }
 
 export default function ScrabbleListClient() {
+  const t = useT();
   const [games, setGames] = useState<GameView[] | null>(null);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
@@ -51,8 +54,8 @@ export default function ScrabbleListClient() {
       body: JSON.stringify({ friendUserId: friend.id }),
     });
     const body = await res.json().catch(() => ({}));
-    if (!res.ok) return body.error ?? "Kon het spel niet aanmaken.";
-    setMessage(`Uitnodiging verstuurd naar ${friend.handle}! 🔤`);
+    if (!res.ok) return body.error ?? t("scrabble.createFailed");
+    setMessage(t("scrabble.inviteSent", { name: friend.handle }));
     // De route kan de socketserver niet bereiken: zelf seinen, zodat je
     // vriend de uitnodiging meteen ziet (melding bovenin, lijst ververst).
     if (body.id) getSocket().emit("scrabble_changed", { gameId: body.id });
@@ -70,7 +73,7 @@ export default function ScrabbleListClient() {
     load();
   }
 
-  if (!games) return <p className="text-slate-400 dark:text-slate-500">Laden...</p>;
+  if (!games) return <p className="text-slate-400 dark:text-slate-500">{t("common.loading")}</p>;
 
   const incoming = games.filter((g) => g.status === "PENDING" && !g.isSender);
   const outgoing = games.filter((g) => g.status === "PENDING" && g.isSender);
@@ -80,32 +83,31 @@ export default function ScrabbleListClient() {
   return (
     <div className="max-w-5xl mx-auto flex flex-col gap-8">
       <div>
-        <h1 className="text-2xl font-extrabold text-brand-800 dark:text-brand-300">Woordspel</h1>
+        <h1 className="text-2xl font-extrabold text-brand-800 dark:text-brand-300">{t("pages.wordGame")}</h1>
         <p className="text-slate-500 dark:text-slate-400 text-sm">
-          Een woordlegspel met alleen woorden uit het Boek van Mormon. Asynchroon: speel je
-          beurt wanneer het uitkomt.
+          {t("scrabble.intro")}
         </p>
       </div>
 
       <div className="card flex flex-col gap-3">
-        <h2 className="font-extrabold dark:text-slate-100">Nieuw spel</h2>
-        <p className="text-sm text-slate-500 dark:text-slate-400">Kies een vriend; die krijgt meteen je uitnodiging.</p>
+        <h2 className="font-extrabold dark:text-slate-100">{t("lobby.newGame")}</h2>
+        <p className="text-sm text-slate-500 dark:text-slate-400">{t("scrabble.pickFriendHint")}</p>
         <button className="btn-primary self-start" onClick={() => setPickerOpen(true)}>
-          Kies een vriend
+          {t("scrabble.pickFriend")}
         </button>
         {message && <p className="text-sm font-semibold text-brand-600 dark:text-brand-300">{message}</p>}
         <FriendPicker
           open={pickerOpen}
           onClose={() => setPickerOpen(false)}
-          title="Woordspel met..."
-          subtitle="Tik op een vriend om uit te nodigen."
+          title={t("scrabble.pickerTitle")}
+          subtitle={t("scrabble.pickerSubtitle")}
           onPick={createGame}
         />
       </div>
 
       {incoming.length > 0 && (
         <section>
-          <h2 className="font-extrabold mb-2 text-slate-700 dark:text-slate-200">Nieuwe uitnodigingen</h2>
+          <h2 className="font-extrabold mb-2 text-slate-700 dark:text-slate-200">{t("scrabble.incoming")}</h2>
           <div className="flex flex-col gap-2">
             {incoming.map((g) => (
               <div
@@ -115,15 +117,15 @@ export default function ScrabbleListClient() {
                 <span className="flex items-center gap-2 dark:text-slate-100">
                   <UserAvatar id={g.opponent.id} handle={g.opponent.displayName} size="xs" />
                   <span>
-                    <strong>{g.opponent.displayName}</strong> daagt je uit voor een woordspel
+                    {rich(t("scrabble.challengesYou"), { name: <strong>{g.opponent.displayName}</strong> })}
                   </span>
                 </span>
                 <div className="flex gap-2">
                   <button className="btn-primary !px-3 !py-1.5" onClick={() => respond(g.id, "accept")}>
-                    Accepteren
+                    {t("challenges.accept")}
                   </button>
                   <button className="btn-secondary !px-3 !py-1.5" onClick={() => respond(g.id, "decline")}>
-                    Weigeren
+                    {t("challenges.decline")}
                   </button>
                 </div>
               </div>
@@ -134,7 +136,7 @@ export default function ScrabbleListClient() {
 
       {active.length > 0 && (
         <section>
-          <h2 className="font-extrabold mb-2 text-slate-700 dark:text-slate-200">Actief</h2>
+          <h2 className="font-extrabold mb-2 text-slate-700 dark:text-slate-200">{t("challenges.active")}</h2>
           <div className="flex flex-col gap-2">
             {active.map((g) => (
               <div
@@ -147,15 +149,17 @@ export default function ScrabbleListClient() {
                 <span className="flex items-center gap-2 dark:text-slate-100">
                   <UserAvatar id={g.opponent.id} handle={g.opponent.displayName} size="xs" />
                   <span>
-                    Tegen <strong>{g.opponent.displayName}</strong> — {g.myScore} - {g.opponentScore}
+                    {rich(t("scrabble.againstScore", { mine: g.myScore, theirs: g.opponentScore }), {
+                      name: <strong>{g.opponent.displayName}</strong>,
+                    })}
                   </span>
                 </span>
                 {g.isMyTurn ? (
                   <span className="text-xs font-extrabold uppercase text-gold-700 dark:text-gold-400 bg-gold-50 dark:bg-slate-700 rounded-full px-3 py-1">
-                    Jij bent aan de beurt!
+                    {t("scrabble.yourTurn")}
                   </span>
                 ) : (
-                  <span className="text-sm text-slate-400 dark:text-slate-500">Wachten op {g.opponent.displayName}...</span>
+                  <span className="text-sm text-slate-400 dark:text-slate-500">{t("scrabble.waitingFor", { name: g.opponent.displayName })}</span>
                 )}
               </div>
             ))}
@@ -165,7 +169,7 @@ export default function ScrabbleListClient() {
 
       {outgoing.length > 0 && (
         <section>
-          <h2 className="font-extrabold mb-2 text-slate-700 dark:text-slate-200">Verstuurd, nog geen reactie</h2>
+          <h2 className="font-extrabold mb-2 text-slate-700 dark:text-slate-200">{t("challenges.outgoing")}</h2>
           <div className="flex flex-col gap-2">
             {outgoing.map((g) => (
               <div
@@ -174,10 +178,10 @@ export default function ScrabbleListClient() {
               >
                 <span className="flex items-center gap-2">
                   <UserAvatar id={g.opponent.id} handle={g.opponent.displayName} size="xs" />
-                  <span>Wachten op {g.opponent.displayName}</span>
+                  <span>{t("scrabble.waitingForShort", { name: g.opponent.displayName })}</span>
                 </span>
                 <button className="btn-secondary !px-3 !py-1.5" onClick={() => respond(g.id, "cancel")}>
-                  Annuleren
+                  {t("activeGames.cancel")}
                 </button>
               </div>
             ))}
@@ -187,16 +191,16 @@ export default function ScrabbleListClient() {
 
       {finished.length > 0 && (
         <section>
-          <h2 className="font-extrabold mb-2 text-slate-700 dark:text-slate-200">Afgerond</h2>
+          <h2 className="font-extrabold mb-2 text-slate-700 dark:text-slate-200">{t("challenges.finished")}</h2>
           <div className="flex flex-col gap-2">
             {finished.map((g) => (
               <div key={g.id} className="card !py-3 text-sm dark:text-slate-200 flex items-center gap-2">
                 <UserAvatar id={g.opponent.id} handle={g.opponent.displayName} size="xs" />
                 {g.status === "DECLINED" ? (
-                  <span className="text-slate-400 dark:text-slate-500">Tegen {g.opponent.displayName} — geweigerd</span>
+                  <span className="text-slate-400 dark:text-slate-500">{t("scrabble.declined", { name: g.opponent.displayName })}</span>
                 ) : (
                   <span>
-                    Tegen {g.opponent.displayName}: {g.myScore} - {g.opponentScore}{" "}
+                    {t("scrabble.result", { name: g.opponent.displayName, mine: g.myScore, theirs: g.opponentScore })}{" "}
                     <strong
                       className={
                         g.tied
@@ -206,7 +210,7 @@ export default function ScrabbleListClient() {
                             : "text-slate-400 dark:text-slate-500"
                       }
                     >
-                      {g.tied ? "gelijkspel" : g.won ? "🎉 gewonnen" : "verloren"}
+                      {g.tied ? t("challenges.tied") : g.won ? t("challenges.won") : t("challenges.lost")}
                     </strong>
                   </span>
                 )}
@@ -217,7 +221,7 @@ export default function ScrabbleListClient() {
       )}
 
       {incoming.length === 0 && outgoing.length === 0 && active.length === 0 && finished.length === 0 && (
-        <p className="text-slate-400 dark:text-slate-500 text-center">Nog geen woordspellen — nodig hierboven een vriend uit!</p>
+        <p className="text-slate-400 dark:text-slate-500 text-center">{t("scrabble.none")}</p>
       )}
     </div>
   );

@@ -4,6 +4,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import UserAvatar from "@/components/UserAvatar";
 import { getSocket } from "@/lib/socketClient";
+import { useT } from "@/components/I18nProvider";
+import { rich } from "@/lib/i18n/rich";
 
 const BOARD_SIZE = 15;
 const CENTER = 7;
@@ -105,6 +107,7 @@ interface GameState {
 const FLASH_DURATION_MS = 2800;
 
 export default function ScrabbleBoardClient({ gameId }: { gameId: string }) {
+  const t = useT();
   const [game, setGame] = useState<GameState | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [pending, setPending] = useState<Pending[]>([]);
@@ -130,7 +133,7 @@ export default function ScrabbleBoardClient({ gameId }: { gameId: string }) {
     const res = await fetch(`/api/scrabble/${gameId}`);
     if (!res.ok) {
       const body = await res.json().catch(() => ({}));
-      setLoadError(body.error ?? "Kon het spel niet laden.");
+      setLoadError(body.error ?? t("scrabble.loadFailed"));
       return;
     }
     const data: GameState = await res.json();
@@ -160,8 +163,8 @@ export default function ScrabbleBoardClient({ gameId }: { gameId: string }) {
       if (hintIndices.length > 0) setHintIndices([]);
       return;
     }
-    const t = setTimeout(() => setHintSecondsLeft((s) => s - 1), 1000);
-    return () => clearTimeout(t);
+    const timer = setTimeout(() => setHintSecondsLeft((s) => s - 1), 1000);
+    return () => clearTimeout(timer);
   }, [hintSecondsLeft, hintIndices.length]);
 
   useEffect(() => {
@@ -190,12 +193,12 @@ export default function ScrabbleBoardClient({ gameId }: { gameId: string }) {
       <div className="max-w-md mx-auto card text-center flex flex-col gap-3">
         <p className="text-red-600 dark:text-red-400 font-semibold">{loadError}</p>
         <Link href="/scrabble" className="btn-secondary self-center">
-          Terug naar woordspellen
+          {t("scrabble.backToGames")}
         </Link>
       </div>
     );
   }
-  if (!game) return <p className="text-slate-400 dark:text-slate-500 text-center">Laden...</p>;
+  if (!game) return <p className="text-slate-400 dark:text-slate-500 text-center">{t("common.loading")}</p>;
 
   const usedRackIndices = new Set(pending.map((p) => p.rackIndex));
   const pendingByCell = new Map(pending.map((p) => [`${p.row},${p.col}`, p]));
@@ -219,7 +222,7 @@ export default function ScrabbleBoardClient({ gameId }: { gameId: string }) {
     let letter = game.myRack[selectedRackIndex];
     const isBlank = letter === BLANK;
     if (isBlank) {
-      const chosen = window.prompt("Welke letter moet de blanco steen voorstellen?", "")?.trim().toUpperCase();
+      const chosen = window.prompt(t("scrabble.blankPrompt"), "")?.trim().toUpperCase();
       if (!chosen || chosen.length !== 1 || !/^[A-Z]$/.test(chosen)) return;
       letter = chosen;
     }
@@ -251,10 +254,10 @@ export default function ScrabbleBoardClient({ gameId }: { gameId: string }) {
     const body = await res.json().catch(() => ({}));
     setBusy(false);
     if (!res.ok) {
-      setMessage(body.error ?? "Deze zet kan niet.");
+      setMessage(body.error ?? t("scrabble.invalidMove"));
       return;
     }
-    setMessage(`+${body.score} punten: ${body.wordsFormed.join(", ")}`);
+    setMessage(t("scrabble.scored", { score: body.score, words: body.wordsFormed.join(", ") }));
     signalOpponent();
     load();
   }
@@ -272,10 +275,10 @@ export default function ScrabbleBoardClient({ gameId }: { gameId: string }) {
     const body = await res.json().catch(() => ({}));
     setBusy(false);
     if (!res.ok) {
-      setMessage(body.error ?? "Kon niet wisselen.");
+      setMessage(body.error ?? t("scrabble.exchangeFailed"));
       return;
     }
-    setMessage("Letters gewisseld.");
+    setMessage(t("scrabble.exchanged"));
     signalOpponent();
     load();
   }
@@ -287,7 +290,7 @@ export default function ScrabbleBoardClient({ gameId }: { gameId: string }) {
     setBusy(false);
     if (!res.ok) {
       const body = await res.json().catch(() => ({}));
-      setMessage(body.error ?? "Kon niet passen.");
+      setMessage(body.error ?? t("scrabble.passFailed"));
       return;
     }
     signalOpponent();
@@ -302,7 +305,7 @@ export default function ScrabbleBoardClient({ gameId }: { gameId: string }) {
     const body = await res.json().catch(() => ({}));
     setBusy(false);
     if (!res.ok) {
-      setMessage(body.error ?? "Kon geen hint geven.");
+      setMessage(body.error ?? t("scrabble.hintFailed"));
       return;
     }
     setHintIndices(body.usedIndices ?? []);
@@ -315,14 +318,14 @@ export default function ScrabbleBoardClient({ gameId }: { gameId: string }) {
   }
 
   async function submitForfeit() {
-    if (!window.confirm("Weet je zeker dat je wil opgeven? Je tegenstander wordt dan automatisch winnaar.")) return;
+    if (!window.confirm(t("challenges.confirmForfeit"))) return;
     setBusy(true);
     setMessage(null);
     const res = await fetch(`/api/scrabble/${gameId}/forfeit`, { method: "POST" });
     setBusy(false);
     if (!res.ok) {
       const body = await res.json().catch(() => ({}));
-      setMessage(body.error ?? "Kon niet opgeven.");
+      setMessage(body.error ?? t("scrabble.forfeitFailed"));
       return;
     }
     signalOpponent();
@@ -335,7 +338,7 @@ export default function ScrabbleBoardClient({ gameId }: { gameId: string }) {
         <div>
           <h1 className="flex items-center gap-2 text-xl font-extrabold text-brand-800 dark:text-brand-300">
             <UserAvatar id={game.opponent.id} handle={game.opponent.displayName} />
-            Tegen {game.opponent.displayName}
+            {t("scrabble.against", { name: game.opponent.displayName })}
           </h1>
         </div>
         <div className="flex items-center gap-3">
@@ -344,7 +347,7 @@ export default function ScrabbleBoardClient({ gameId }: { gameId: string }) {
               {game.myScore} - {game.opponentScore}
             </div>
             <div className="text-xs text-slate-400 dark:text-slate-500">
-              Zak: {game.bagCount} · Tegenstander: {game.opponentRackCount} letters
+              {t("scrabble.bagInfo", { bag: game.bagCount, rack: game.opponentRackCount })}
             </div>
           </div>
         </div>
@@ -352,13 +355,13 @@ export default function ScrabbleBoardClient({ gameId }: { gameId: string }) {
 
       {game.status === "FINISHED" && (
         <div className="card text-center font-bold dark:text-slate-100">
-          {game.tied ? "Gelijkspel!" : game.won ? "🎉 Je hebt gewonnen!" : "Je hebt verloren."}
+          {game.tied ? t("scrabble.tied") : game.won ? t("scrabble.won") : t("scrabble.lost")}
         </div>
       )}
 
       {game.status === "ACTIVE" && (
         <p className={`text-center font-bold ${game.isMyTurn ? "text-brand-600 dark:text-brand-300" : "text-slate-400 dark:text-slate-500"}`}>
-          {game.isMyTurn ? "Jij bent aan de beurt" : `Wachten op ${game.opponent.displayName}...`}
+          {game.isMyTurn ? t("scrabble.yourTurnShort") : t("scrabble.waitingFor", { name: game.opponent.displayName })}
         </p>
       )}
 
@@ -418,7 +421,7 @@ export default function ScrabbleBoardClient({ gameId }: { gameId: string }) {
       <div className="flex items-center justify-center gap-4 text-xs text-slate-500 dark:text-slate-400">
         <span className="flex items-center gap-1.5">
           <span className="h-3.5 w-3.5 rounded-sm bg-violet-600 dark:bg-violet-500 ring-1 ring-violet-800 dark:ring-violet-300" aria-hidden />
-          Jouw letters
+          {t("scrabble.yourTiles")}
         </span>
         <span className="flex items-center gap-1.5">
           <span className="h-3.5 w-3.5 rounded-sm bg-amber-100 dark:bg-amber-800 ring-1 ring-amber-300 dark:ring-amber-600" aria-hidden />
@@ -465,7 +468,7 @@ export default function ScrabbleBoardClient({ gameId }: { gameId: string }) {
               {exchangeMode ? (
                 <>
                   <button className="btn-primary !px-4 !py-2" disabled={busy || exchangeIndices.length === 0} onClick={submitExchange}>
-                    Wissel {exchangeIndices.length || ""} letter(s)
+                    {t("scrabble.exchangeN", { n: exchangeIndices.length || "" })}
                   </button>
                   <button
                     className="btn-secondary !px-4 !py-2"
@@ -474,29 +477,29 @@ export default function ScrabbleBoardClient({ gameId }: { gameId: string }) {
                       setExchangeIndices([]);
                     }}
                   >
-                    Annuleren
+                    {t("activeGames.cancel")}
                   </button>
                 </>
               ) : (
                 <>
                   <button className="btn-primary !px-4 !py-2" disabled={busy || pending.length === 0} onClick={submitMove}>
-                    Speel woord
+                    {t("scrabble.playWord")}
                   </button>
                   <button className="btn-secondary !px-4 !py-2" disabled={busy || pending.length === 0} onClick={() => setPending([])}>
-                    Reset
+                    {t("scrabble.reset")}
                   </button>
                   <button className="btn-secondary !px-4 !py-2" disabled={busy || pending.length > 0} onClick={() => setExchangeMode(true)}>
-                    Wissel letters
+                    {t("scrabble.exchange")}
                   </button>
                   <button className="btn-secondary !px-4 !py-2" disabled={busy || pending.length > 0} onClick={submitPass}>
-                    Pas
+                    {t("scrabble.passTurn")}
                   </button>
                 </>
               )}
             </div>
           ) : (
             <p className="text-center text-sm text-slate-400 dark:text-slate-500">
-              Wacht tot {game.opponent.displayName} heeft gespeeld.
+              {t("scrabble.waitUntilPlayed", { name: game.opponent.displayName })}
             </p>
           )}
 
@@ -506,12 +509,12 @@ export default function ScrabbleBoardClient({ gameId }: { gameId: string }) {
               className="btn-secondary !px-3 !py-1.5"
               disabled={busy || hintSecondsLeft > 0 || game.myHintCredits <= 0}
               onClick={requestHint}
-              title="Highlight letters op je rek waarmee je een woord kan maken"
+              title={t("scrabble.hintTitle")}
             >
-              💡 {hintSecondsLeft > 0 ? `Hint actief... ${hintSecondsLeft}s` : `Hint (${game.myHintCredits})`}
+              💡 {hintSecondsLeft > 0 ? t("scrabble.hintActive", { s: hintSecondsLeft }) : t("scrabble.hintN", { n: game.myHintCredits })}
             </button>
             <button className="btn-secondary !px-3 !py-1.5 !text-red-500 !border-red-200" disabled={busy} onClick={submitForfeit}>
-              Opgeven
+              {t("challenges.forfeit")}
             </button>
           </div>
         </div>
@@ -521,19 +524,21 @@ export default function ScrabbleBoardClient({ gameId }: { gameId: string }) {
 
       {game.moves.length > 0 && (
         <section>
-          <h2 className="font-extrabold mb-2 text-slate-700 dark:text-slate-200">Zetten</h2>
+          <h2 className="font-extrabold mb-2 text-slate-700 dark:text-slate-200">{t("scrabble.moves")}</h2>
           <div className="flex flex-col gap-1 text-sm">
             {[...game.moves].reverse().map((m) => (
               <div key={m.id} className="card !py-2 flex justify-between dark:text-slate-200">
                 <span>
-                  <strong>{m.playerName}</strong>{" "}
-                  {m.type === "PLACE"
-                    ? m.wordsFormed.join(", ")
-                    : m.type === "EXCHANGE"
-                      ? "wisselde letters"
-                      : m.type === "FORFEIT"
-                        ? "gaf op"
-                        : "paste"}
+                  {rich(
+                    m.type === "PLACE"
+                      ? t("scrabble.movePlaced", { words: m.wordsFormed.join(", ") })
+                      : m.type === "EXCHANGE"
+                        ? t("scrabble.moveExchanged")
+                        : m.type === "FORFEIT"
+                          ? t("scrabble.moveForfeited")
+                          : t("scrabble.movePassed"),
+                    { name: <strong>{m.playerName}</strong> }
+                  )}
                 </span>
                 {m.type === "PLACE" && <span className="font-bold">+{m.score}</span>}
               </div>
