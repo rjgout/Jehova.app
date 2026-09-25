@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import Link from "next/link";
 import { ExerciseCard, type Exercise } from "@/components/LessonFlow";
 import PersonCard from "@/components/PersonCard";
+import ChapterPopup from "@/components/ChapterPopup";
 import { ACHIEVEMENT_DISPLAY } from "@/lib/achievementDisplay";
 import { announceXpChanged } from "@/lib/xpBroadcast";
 
@@ -26,7 +27,14 @@ export type ResolvedIntroBlock =
       chapterNumber: number;
       verses: { number: number; text: string }[];
     }
-  | { type: "readMore"; label: string; href: string }
+  | {
+      type: "readMore";
+      label: string;
+      href: string;
+      // Aanwezig als de link naar een echt hoofdstuk gaat: dan opent dat in
+      // een pop-up en blijf je in de les.
+      chapter?: { id: string; title: string; linkLabel: string };
+    }
   | { type: "finalChoices" };
 
 interface Answer {
@@ -386,16 +394,45 @@ function BlockView({ block, onNext }: { block: ResolvedIntroBlock; onNext: () =>
       );
 
     case "readMore":
-      return (
-        <div className="card flex flex-col gap-3 animate-pop items-start">
-          <Link href={block.href} className="btn-secondary">
-            {block.label}
-          </Link>
-          <NextButton onNext={onNext} label="Verder in de les →" />
-        </div>
-      );
+      return <ReadMoreBlock block={block} onNext={onNext} />;
 
     default:
       return null;
   }
+}
+
+function ReadMoreBlock({
+  block,
+  onNext,
+}: {
+  block: Extract<ResolvedIntroBlock, { type: "readMore" }>;
+  onNext: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const close = useCallback(() => setOpen(false), []);
+  const chapter = block.chapter;
+
+  return (
+    <div className="card flex flex-col gap-3 animate-pop items-start">
+      {chapter ? (
+        <button onClick={() => setOpen(true)} className="btn-secondary">
+          {block.label}
+        </button>
+      ) : (
+        <Link href={block.href} className="btn-secondary">
+          {block.label}
+        </Link>
+      )}
+      <NextButton onNext={onNext} label="Verder in de les →" />
+      {chapter && open && (
+        <ChapterPopup
+          chapterId={chapter.id}
+          title={chapter.title}
+          href={block.href}
+          linkLabel={chapter.linkLabel}
+          onClose={close}
+        />
+      )}
+    </div>
+  );
 }

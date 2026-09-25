@@ -63,11 +63,30 @@ export default async function IntroLessonPage({ params }: { params: Promise<{ le
       if (b.type === "chapterLink") {
         const chapter = await prisma.chapter.findFirst({
           where: { number: b.chapterNumber, book: { slug: b.bookSlug } },
+          include: { book: true },
+        });
+        if (!chapter) return { type: "readMore", label: b.label, href: "/courses" };
+        // Het hoofdstuk opent in een pop-up; wie daarna verder wil, gaat naar
+        // het hoofdstuk binnen Vrije keuze, zodat de terugbalk naar die
+        // cursus wijst i.p.v. naar de algemene cursuslijst.
+        const freeChoice = await prisma.course.findFirst({
+          where: {
+            type: "FREE_CHOICE",
+            enabled: true,
+            contentCollectionId: chapter.book.contentCollectionId,
+            chapters: { some: { chapterId: chapter.id } },
+          },
+          select: { id: true, name: true },
         });
         return {
           type: "readMore",
           label: b.label,
-          href: chapter ? `/lesson/${chapter.id}` : "/courses",
+          href: freeChoice ? `/lesson/${chapter.id}?cursus=${freeChoice.id}` : `/lesson/${chapter.id}`,
+          chapter: {
+            id: chapter.id,
+            title: `${chapter.book.name} ${chapter.number}`,
+            linkLabel: freeChoice ? `Lezen en oefenen in ${freeChoice.name} →` : "Hoofdstuk openen →",
+          },
         };
       }
       if (b.type === "scripture") {
