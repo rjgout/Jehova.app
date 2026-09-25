@@ -4,7 +4,21 @@ import { useEffect, useRef, useState, type FormEvent, type ReactNode } from "rea
 import { getSocket } from "@/lib/socketClient";
 import { getDutchVoices, getSelectedDutchVoice } from "@/lib/readAloud";
 import { beginSpeechPlayback, endSpeechPlayback } from "@/lib/speechAudioSession";
-import { AK_ROUND_TITLES, type AkGridCell, type AkStateView } from "@/lib/alleskenner/types";
+import type { AkGridCell, AkPhase, AkStateView } from "@/lib/alleskenner/types";
+import { useT } from "@/components/I18nProvider";
+import type { MessageKey } from "@/lib/i18n/core";
+import { rich } from "@/lib/i18n/rich";
+
+const ROUND_TITLE_KEY: Record<AkPhase, MessageKey> = {
+  LOBBY: "akRoom.lobby",
+  R369: "alleskenner.rounds.threeSixNine.title",
+  OPEN_DEUR: "alleskenner.rounds.openDoor.title",
+  PUZZLE: "alleskenner.rounds.puzzle.title",
+  GALLERY: "alleskenner.rounds.gallery.title",
+  MEMORY: "alleskenner.rounds.collectiveMemory.title",
+  FINALE: "alleskenner.rounds.final.title",
+  FINISHED: "akGame.end",
+};
 
 const GROUP_STYLES = [
   "bg-sky-200 dark:bg-sky-800 text-sky-950 dark:text-white",
@@ -89,6 +103,7 @@ function abilities(state: AkStateView): Abilities {
 
 export default function AlleskennerGame({ state, receivedAt }: { state: AkStateView; receivedAt: number }) {
   const socket = getSocket();
+  const t = useT();
   const ticking = state.clockRunning || state.turnDeadline !== null;
   const now = useNow(ticking);
   const elapsed = ticking ? Math.max(0, (now - receivedAt) / 1000) : 0;
@@ -109,10 +124,10 @@ export default function AlleskennerGame({ state, receivedAt }: { state: AkStateV
   const showPass = state.activeId !== null && !choosingDoor && (can.myTurn || can.isQuizmaster);
   const passLabel =
     state.phase === "GALLERY"
-      ? "Overslaan"
+      ? t("akGame.skip")
       : can.isQuizmaster && !can.myTurn
-        ? `Beurt van ${active?.name ?? ""} beëindigen (pas)`
-        : "PAS";
+        ? t("akGame.endTurnOf", { name: active?.name ?? "" })
+        : t("akGame.passTurn");
 
   return (
     <>
@@ -141,13 +156,19 @@ export default function AlleskennerGame({ state, receivedAt }: { state: AkStateV
               <span className="text-xs font-bold truncate max-w-full flex items-center gap-1">
                 {state.teamMode && <span className={`h-2 w-2 shrink-0 rounded-full ${TEAM_DOTS[c.color % TEAM_DOTS.length]}`} aria-hidden />}
                 <span className="truncate">{c.name}</span>
-                {isMine && !state.teamMode && <span className="shrink-0">(jij)</span>}
+                {isMine && !state.teamMode && <span className="shrink-0">{t("lobby.you")}</span>}
               </span>
               <span className={`text-3xl font-extrabold tabular-nums ${isActive && state.clockRunning ? "text-gold-400" : ""}`}>
                 {Math.ceil(seconds)}
               </span>
               <span className={`text-[10px] font-bold uppercase tracking-wider ${isActive ? "text-brand-100" : "text-slate-400"}`}>
-                {isActive ? (state.clockRunning ? "⏱ klok loopt" : "aan de beurt") : isMine && state.teamMode ? "jouw team" : "seconden"}
+                {isActive
+                  ? state.clockRunning
+                    ? t("akGame.clockRunning")
+                    : t("akGame.onTurn")
+                  : isMine && state.teamMode
+                    ? t("akGame.yourTeam")
+                    : t("akGame.seconds")}
               </span>
               {state.teamMode && (
                 <span className={`text-[10px] truncate max-w-full ${isActive ? "text-brand-100" : "text-slate-400"}`}>
@@ -161,7 +182,7 @@ export default function AlleskennerGame({ state, receivedAt }: { state: AkStateV
 
       {state.personal && state.personal.mine !== null && (
         <p className="text-center text-xs font-bold text-slate-500 dark:text-slate-400">
-          Jouw persoonlijke punten: <span className="text-brand-700 dark:text-brand-300">{state.personal.mine}</span>
+          {t("akGame.yourPoints")} <span className="text-brand-700 dark:text-brand-300">{state.personal.mine}</span>
         </p>
       )}
 
@@ -192,14 +213,14 @@ export default function AlleskennerGame({ state, receivedAt }: { state: AkStateV
           onClick={() =>
             window.confirm(
               state.solo?.mode === "DAILY"
-                ? "Nu stoppen? Je poging van vandaag is dan op en telt niet mee."
+                ? t("akGame.confirmStopDaily")
                 : state.solo
-                  ? "Nu stoppen? Dit potje telt dan niet mee."
-                  : "Het spel nu stoppen?"
+                  ? t("akGame.confirmStopPractice")
+                  : t("akGame.confirmStop")
             ) && socket.emit("ak:stop")
           }
         >
-          Spel stoppen
+          {t("akGame.stop")}
         </button>
       )}
     </>
@@ -212,13 +233,14 @@ function leaderName(state: AkStateView): string | null {
 }
 
 function Header({ state, deadlineLeft }: { state: AkStateView; deadlineLeft: number | null }) {
+  const t = useT();
   let detail = "";
-  if (state.r369) detail = `Vraag ${state.r369.number} van ${state.r369.total}`;
-  else if (state.openDeur) detail = `Onderwerp ${state.openDeur.number} van ${state.openDeur.total}`;
-  else if (state.puzzle) detail = `Puzzel ${state.puzzle.number} van ${state.puzzle.total}`;
-  else if (state.gallery) detail = `Galerij ${state.gallery.number} van ${state.gallery.total}`;
-  else if (state.memory) detail = `Fragment ${state.memory.number} van ${state.memory.total}`;
-  else if (state.finale) detail = `Onderwerp ${state.finale.number} van ${state.finale.total}`;
+  if (state.r369) detail = t("akGame.questionOf", { n: state.r369.number, total: state.r369.total });
+  else if (state.openDeur) detail = t("akGame.subjectOf", { n: state.openDeur.number, total: state.openDeur.total });
+  else if (state.puzzle) detail = t("akGame.puzzleOf", { n: state.puzzle.number, total: state.puzzle.total });
+  else if (state.gallery) detail = t("akGame.galleryOf", { n: state.gallery.number, total: state.gallery.total });
+  else if (state.memory) detail = t("akGame.fragmentOf", { n: state.memory.number, total: state.memory.total });
+  else if (state.finale) detail = t("akGame.subjectOf", { n: state.finale.number, total: state.finale.total });
   // Tijdens het lezen bij Collectief Geheugen staat de teller al bij de tekst zelf.
   // Tijdens het lezen (Collectief Geheugen) of luisteren (luistervraag) staat
   // er geen bedenktijd: de teller daar is alleen een vangnet.
@@ -228,10 +250,11 @@ function Header({ state, deadlineLeft }: { state: AkStateView; deadlineLeft: num
     <div className="flex items-center justify-between gap-3">
       <div>
         <p className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
-          De Alleskenner{state.phase !== "FINALE" && ` · ronde ${state.round.number} van ${state.round.total}`}
+          {t("pages.alleskenner")}
+          {state.phase !== "FINALE" && ` · ${t("akGame.roundOf", { n: state.round.number, total: state.round.total })}`}
         </p>
         <h1 className="text-xl font-extrabold text-brand-800 dark:text-brand-300">
-          {AK_ROUND_TITLES[state.phase]} <span className="text-sm font-bold text-slate-400 dark:text-slate-500">{detail}</span>
+          {t(ROUND_TITLE_KEY[state.phase])} <span className="text-sm font-bold text-slate-400 dark:text-slate-500">{detail}</span>
         </h1>
       </div>
       {showDeadline && (
@@ -241,7 +264,7 @@ function Header({ state, deadlineLeft }: { state: AkStateView; deadlineLeft: num
               ? "bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-300"
               : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300"
           }`}
-          title="Bedenktijd"
+          title={t("akGame.thinkingTime")}
         >
           ⏳ {deadlineLeft}
         </span>
@@ -284,18 +307,19 @@ function TurnBanner({
   activeName: string | null;
   leaderName: string | null;
 }) {
+  const t = useT();
   if (!state.activeId) return null;
   let text: string;
   if (can.myTurn) {
-    text = state.teamMode ? "🟢 Jouw team is aan de beurt — jij antwoordt" : "🟢 Jij bent aan de beurt";
-    if (!can.tapMode) text += " — zeg het hardop";
+    text = state.teamMode ? t("akGame.turnMyTeamMe") : t("akGame.turnMe");
+    if (!can.tapMode) text += t("akGame.sayItAloud");
   } else if (can.inActiveTeam) {
-    text = `🟢 Jouw team is aan de beurt — ${leaderName} antwoordt. Kies stil je eigen antwoord.`;
+    text = t("akGame.turnMyTeamLeader", { name: leaderName ?? "" });
   } else if (can.isQuizmaster) {
-    text = `🎙️ ${activeName} is aan de beurt — keur het antwoord goed of fout`;
+    text = t("akGame.turnQuizmaster", { name: activeName ?? "" });
   } else {
-    text = `${activeName} is aan de beurt`;
-    if (can.canSilent) text += " — kies stil mee voor je persoonlijke punten";
+    text = t("akGame.turnOther", { name: activeName ?? "" });
+    if (can.canSilent) text += t("akGame.chooseSilently");
   }
   return (
     <p
@@ -334,6 +358,7 @@ function OptionButtons({
   wrong?: string[];
   onPick: (option: string) => void;
 }) {
+  const t = useT();
   return (
     <div className="grid gap-2 sm:grid-cols-2">
       {options.map((option) => {
@@ -356,7 +381,7 @@ function OptionButtons({
             } disabled:cursor-default`}
           >
             {option}
-            {picked && <span className="ml-2 text-xs font-extrabold text-gold-700 dark:text-gold-400">jouw keuze</span>}
+            {picked && <span className="ml-2 text-xs font-extrabold text-gold-700 dark:text-gold-400">{t("akGame.yourPick")}</span>}
           </button>
         );
       })}
@@ -366,13 +391,14 @@ function OptionButtons({
 
 function GridCells({ cells, can, hint }: { cells: AkGridCell[]; can: Abilities; hint: string }) {
   const socket = getSocket();
+  const t = useT();
   return (
     <>
       {(can.canAct || can.canSilent) && (
         <p className="text-xs text-slate-500 dark:text-slate-400">
           {can.canAct
             ? hint
-            : "Tik stil de antwoorden aan die jij goed denkt; die tellen bij de onthulling voor je persoonlijke punten."}
+            : t("akGame.silentHint")}
         </p>
       )}
       <div className="grid grid-cols-2 gap-2">
@@ -429,9 +455,10 @@ function FoundList({ found }: { found: string[] }) {
 }
 
 function RevealedList({ all, found }: { all: string[]; found: string[] }) {
+  const t = useT();
   return (
     <div className="rounded-2xl bg-slate-50 dark:bg-slate-900/50 p-3">
-      <p className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-1">Alle antwoorden</p>
+      <p className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-1">{t("akGame.allAnswers")}</p>
       <ul className="flex flex-col gap-1">
         {all.map((text) => (
           <li
@@ -448,10 +475,11 @@ function RevealedList({ all, found }: { all: string[]; found: string[] }) {
 
 function QuizmasterAnswers({ state }: { state: AkStateView }) {
   const socket = getSocket();
+  const t = useT();
   const answers = state.quizmaster?.answers;
   if (!answers) return null;
   return (
-    <QuizmasterBox title="Tik een antwoord aan zodra het genoemd is:">
+    <QuizmasterBox title={t("akGame.qmTapAnswer")}>
       {answers.map((answer, index) => (
         <button
           key={answer.text}
@@ -464,7 +492,7 @@ function QuizmasterAnswers({ state }: { state: AkStateView }) {
             {answer.text}
           </span>
           {answer.accept.length > 0 && (
-            <span className="block text-xs text-slate-500 dark:text-slate-400">Ook goed: {answer.accept.join(", ")}</span>
+            <span className="block text-xs text-slate-500 dark:text-slate-400">{t("akGame.alsoGood", { list: answer.accept.join(", ") })}</span>
           )}
         </button>
       ))}
@@ -476,6 +504,7 @@ function QuizmasterAnswers({ state }: { state: AkStateView }) {
 
 function Round369({ state, can }: { state: AkStateView; can: Abilities }) {
   const socket = getSocket();
+  const t = useT();
   const q = state.r369!;
   // De luistervraag wordt maar op één apparaat voorgelezen (quizmaster, of
   // zonder quizmaster degene die namens de beurt antwoordt): anders praat
@@ -497,7 +526,7 @@ function Round369({ state, can }: { state: AkStateView; can: Abilities }) {
     <div className="card flex flex-col gap-4">
       {q.isPointQuestion && (
         <span className="self-start rounded-full bg-gold-50 dark:bg-slate-700 px-3 py-1 text-xs font-extrabold text-gold-700 dark:text-gold-400">
-          ⭐ Goed = +10 seconden
+          {t("akGame.pointQuestion")}
         </span>
       )}
       {q.listenText && (
@@ -506,19 +535,19 @@ function Round369({ state, can }: { state: AkStateView; can: Abilities }) {
             🔊
           </span>
           <p className="flex-1 text-sm font-semibold text-brand-800 dark:text-brand-200">
-            Luistervraag —{" "}
+            {t("akGame.listenQuestion")}{" "}
             {q.listening
               ? speaker
-                ? "het vers wordt op dit apparaat voorgelezen. Hoor je niets? Tik op Voorlezen. De bedenktijd start daarna."
-                : "luister goed. De bedenktijd start zodra het vers is voorgelezen."
-              : "het vers is voorgelezen."}
+                ? t("akGame.listenSpeaker")
+                : t("akGame.listenOthers")
+              : t("akGame.listenDone")}
           </p>
           {(speaker || !q.listening) && (
             <button
               className="btn-secondary !px-3 !py-1.5 !text-xs shrink-0"
               onClick={() => speak(q.listenText!, q.listening && speaker ? listenDone : undefined)}
             >
-              {q.listening ? "Voorlezen" : "Nog eens"}
+              {q.listening ? t("akGame.readAloud") : t("akGame.again")}
             </button>
           )}
         </div>
@@ -527,8 +556,12 @@ function Round369({ state, can }: { state: AkStateView; can: Abilities }) {
 
       {q.wrongOptions.length > 0 && !q.reveal && (
         <p className="text-sm font-semibold text-slate-500 dark:text-slate-400">
-          Nog niet goed —{" "}
-          {can.myTurn ? "nu mag jij het proberen." : activeName ? `nu mag ${activeName} het proberen.` : "de volgende mag het proberen."}
+          {t("akGame.notYet")}{" "}
+          {can.myTurn
+            ? t("akGame.yourTry")
+            : activeName
+              ? t("akGame.theirTry", { name: activeName })
+              : t("akGame.nextTry")}
         </p>
       )}
 
@@ -545,18 +578,18 @@ function Round369({ state, can }: { state: AkStateView; can: Abilities }) {
 
       {q.reveal && (
         <p className={`text-center font-extrabold ${q.reveal.correct ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}`}>
-          {q.reveal.correct ? "✓ Goed!" : "✗ Niet goed"} — het antwoord is: {q.reveal.answer}
+          {q.reveal.correct ? t("akGame.revealCorrect") : t("akGame.revealWrong")} — {t("akGame.answerIs", { answer: q.reveal.answer })}
         </p>
       )}
 
       {can.isQuizmaster && state.quizmaster?.answer369 && !q.reveal && (
-        <QuizmasterBox title={`Antwoord: ${state.quizmaster.answer369}`}>
+        <QuizmasterBox title={t("akGame.answer", { answer: state.quizmaster.answer369 })}>
           <div className="grid grid-cols-2 gap-2">
             <button className="btn-primary !bg-green-600" onClick={() => socket.emit("ak:qm_369", { correct: true })}>
-              ✓ Goed
+              {t("akGame.markCorrect")}
             </button>
             <button className="btn-primary !bg-red-500" onClick={() => socket.emit("ak:qm_369", { correct: false })}>
-              ✗ Fout
+              {t("akGame.markWrong")}
             </button>
           </div>
         </QuizmasterBox>
@@ -567,6 +600,7 @@ function Round369({ state, can }: { state: AkStateView; can: Abilities }) {
 
 function RoundOpenDeur({ state, can }: { state: AkStateView; can: Abilities }) {
   const socket = getSocket();
+  const t = useT();
   const round = state.openDeur!;
   const chooser = state.contestants.find((c) => c.id === state.activeId)?.name;
 
@@ -575,7 +609,7 @@ function RoundOpenDeur({ state, can }: { state: AkStateView; can: Abilities }) {
     return (
       <div className="card flex flex-col gap-4">
         <h2 className="text-xl font-extrabold dark:text-slate-100">
-          {can.myTurn ? "Kies een onderwerp" : `${chooser} kiest een onderwerp`}
+          {can.myTurn ? t("akGame.chooseSubject") : t("akGame.choosesSubject", { name: chooser ?? "" })}
         </h2>
         <div className="grid gap-3 sm:grid-cols-3">
           {round.doors.map((door) => (
@@ -603,7 +637,7 @@ function RoundOpenDeur({ state, can }: { state: AkStateView; can: Abilities }) {
   if (!round.subject) return null;
   return (
     <div className="card flex flex-col gap-4">
-      <h2 className="text-2xl font-extrabold text-brand-800 dark:text-brand-300">Wat weet je van {round.subject}?</h2>
+      <h2 className="text-2xl font-extrabold text-brand-800 dark:text-brand-300">{t("akGame.whatDoYouKnow", { subject: round.subject })}</h2>
       <AnswerProgress found={round.found.length} total={round.answerCount} />
       {!round.revealed && <FoundList found={round.found} />}
       {round.revealed && <RevealedList all={round.revealed} found={round.found} />}
@@ -611,7 +645,7 @@ function RoundOpenDeur({ state, can }: { state: AkStateView; can: Abilities }) {
         <GridCells
           cells={round.grid}
           can={round.tapOnly ? { ...can, canAct: can.myTurn } : can}
-          hint="Tik de antwoorden aan die hierbij horen. Elk goed antwoord +20 seconden; een fout antwoord beëindigt je beurt."
+          hint={t("akGame.openDoorHint")}
         />
       )}
       {can.isQuizmaster && !round.revealed && <QuizmasterAnswers state={state} />}
@@ -621,6 +655,7 @@ function RoundOpenDeur({ state, can }: { state: AkStateView; can: Abilities }) {
 
 function RoundPuzzle({ state, can }: { state: AkStateView; can: Abilities }) {
   const socket = getSocket();
+  const t = useT();
   const puzzle = state.puzzle!;
   const [answer, setAnswer] = useState("");
   const silentLeft = puzzle.myGuesses ? 3 - puzzle.myGuesses.length : 0;
@@ -636,7 +671,7 @@ function RoundPuzzle({ state, can }: { state: AkStateView; can: Abilities }) {
   return (
     <div className="card flex flex-col gap-4">
       <p className="text-sm text-slate-500 dark:text-slate-400">
-        Er horen telkens vier omschrijvingen bij elkaar. Noem het woord dat ze verbindt. Elke groep: +30 seconden.
+        {t("akGame.puzzleIntro")}
       </p>
       <div className={`grid gap-2 ${puzzle.clues.some((c) => c.text.length > 32) ? "grid-cols-2 sm:grid-cols-3" : "grid-cols-3"}`}>
         {puzzle.clues.map((clue) => (
@@ -665,7 +700,7 @@ function RoundPuzzle({ state, can }: { state: AkStateView; can: Abilities }) {
         <form onSubmit={submit} className="flex gap-2">
           <input
             className="input flex-1"
-            placeholder={can.canAct ? "Typ het verbindende woord" : `Stil gokken (nog ${silentLeft})`}
+            placeholder={can.canAct ? t("akGame.typeConnecting") : t("akGame.silentGuess", { n: silentLeft })}
             value={answer}
             onChange={(e) => setAnswer(e.target.value)}
             autoFocus={can.canAct}
@@ -673,18 +708,18 @@ function RoundPuzzle({ state, can }: { state: AkStateView; can: Abilities }) {
             autoCapitalize="off"
           />
           <button className="btn-primary" type="submit">
-            {can.canAct ? "Controleer" : "Gok"}
+            {can.canAct ? t("lesson.check") : t("akGame.guess")}
           </button>
         </form>
       )}
       {puzzle.myGuesses && puzzle.myGuesses.length > 0 && (
         <p className="text-xs text-slate-500 dark:text-slate-400">
-          Jouw stille gokken: <span className="font-bold">{puzzle.myGuesses.join(", ")}</span> — beoordeeld bij de onthulling.
+          {rich(t("akGame.yourSilentGuesses"), { guesses: <span className="font-bold">{puzzle.myGuesses.join(", ")}</span> })}
         </p>
       )}
 
       {can.isQuizmaster && state.quizmaster?.puzzleGroups && !puzzle.revealed && (
-        <QuizmasterBox title="Tik een groep aan zodra die genoemd is:">
+        <QuizmasterBox title={t("akGame.qmTapGroup")}>
           {state.quizmaster.puzzleGroups.map((group, index) => (
             <button
               key={group.answer}
@@ -696,7 +731,7 @@ function RoundPuzzle({ state, can }: { state: AkStateView; can: Abilities }) {
                 {group.found ? "✓ " : ""}
                 {group.answer}
               </span>
-              {group.accept.length > 0 && <span className="text-xs"> (ook goed: {group.accept.join(", ")})</span>}
+              {group.accept.length > 0 && <span className="text-xs"> {t("akGame.alsoGoodParen", { list: group.accept.join(", ") })}</span>}
               <span className="block text-xs opacity-80">{group.clues.join(" · ")}</span>
             </button>
           ))}
@@ -708,13 +743,14 @@ function RoundPuzzle({ state, can }: { state: AkStateView; can: Abilities }) {
 
 function RoundGallery({ state, can }: { state: AkStateView; can: Abilities }) {
   const socket = getSocket();
+  const t = useT();
   const gallery = state.gallery!;
-  const question = gallery.variant === "QUOTES" ? "Uit welk boek komt dit vers?" : "Bij welk verhaal hoort deze illustratie?";
+  const question = gallery.variant === "QUOTES" ? t("akGame.galleryQuotes") : t("akGame.galleryImages");
 
   if (gallery.revealed) {
     return (
       <div className="card flex flex-col gap-3">
-        <h2 className="text-lg font-extrabold dark:text-slate-100">Alle antwoorden</h2>
+        <h2 className="text-lg font-extrabold dark:text-slate-100">{t("akGame.allAnswers")}</h2>
         <div className={`grid gap-2 ${gallery.variant === "IMAGES" ? "grid-cols-2 sm:grid-cols-4" : ""}`}>
           {gallery.revealed.map((entry, i) => (
             <div
@@ -757,7 +793,7 @@ function RoundGallery({ state, can }: { state: AkStateView; can: Abilities }) {
       )}
       {gallery.item?.image && (
         // eslint-disable-next-line @next/next/no-img-element
-        <img src={gallery.item.image} alt="Illustratie" className="w-full max-h-[50vh] object-contain rounded-2xl bg-white" />
+        <img src={gallery.item.image} alt={t("akGame.illustration")} className="w-full max-h-[50vh] object-contain rounded-2xl bg-white" />
       )}
       {gallery.options && (
         <OptionButtons
@@ -769,13 +805,13 @@ function RoundGallery({ state, can }: { state: AkStateView; can: Abilities }) {
         />
       )}
       {can.isQuizmaster && state.quizmaster?.galleryAnswer && (
-        <QuizmasterBox title={`Antwoord: ${state.quizmaster.galleryAnswer}`}>
+        <QuizmasterBox title={t("akGame.answer", { answer: state.quizmaster.galleryAnswer })}>
           <div className="grid grid-cols-2 gap-2">
             <button className="btn-primary !bg-green-600" onClick={() => socket.emit("ak:qm_gallery", { correct: true })}>
-              ✓ Goed
+              {t("akGame.markCorrect")}
             </button>
             <button className="btn-primary !bg-red-500" onClick={() => socket.emit("ak:qm_gallery", { correct: false })}>
-              ✗ Fout / volgende
+              {t("akGame.markWrongNext")}
             </button>
           </div>
         </QuizmasterBox>
@@ -785,6 +821,7 @@ function RoundGallery({ state, can }: { state: AkStateView; can: Abilities }) {
 }
 
 function RoundMemory({ state, can, deadlineLeft }: { state: AkStateView; can: Abilities; deadlineLeft: number | null }) {
+  const t = useT();
   const memory = state.memory!;
   const owner = state.contestants.find((c) => c.id === state.activeId);
 
@@ -801,7 +838,7 @@ function RoundMemory({ state, can, deadlineLeft }: { state: AkStateView; can: Ab
             </span>
           )}
         </div>
-        <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Lees goed — straks is de tekst weg</p>
+        <p className="text-xs font-bold uppercase tracking-wider text-slate-400">{t("akGame.readCarefully")}</p>
         <div className="flex flex-col gap-2 text-[15px] leading-relaxed dark:text-slate-100">
           {memory.verses?.map((v) =>
             // Versnummer 0 = een hoofdstukkop: de delen (gescheiden door " — ") onder elkaar.
@@ -826,11 +863,13 @@ function RoundMemory({ state, can, deadlineLeft }: { state: AkStateView; can: Ab
   return (
     <div className="card flex flex-col gap-4">
       <h2 className="text-2xl font-extrabold text-brand-800 dark:text-brand-300">
-        Wat weet je nog van {memory.title}? <span className="text-sm font-bold text-slate-400">{memory.passage}</span>
+        {t("akGame.whatDoYouRemember", { title: memory.title })} <span className="text-sm font-bold text-slate-400">{memory.passage}</span>
       </h2>
       {!memory.revealed && memory.found.length < memory.answerCount && (
         <span className="self-start rounded-full bg-gold-50 dark:bg-slate-700 px-3 py-1 text-xs font-extrabold text-gold-700 dark:text-gold-400">
-          Volgend goed antwoord: +{memory.nextValue} seconden{owner ? ` voor ${owner.name}` : ""}
+          {owner
+            ? t("akGame.nextValueFor", { n: memory.nextValue, name: owner.name })
+            : t("akGame.nextValue", { n: memory.nextValue })}
         </span>
       )}
       <AnswerProgress found={memory.found.length} total={memory.answerCount} />
@@ -848,7 +887,7 @@ function RoundMemory({ state, can, deadlineLeft }: { state: AkStateView; can: Ab
         <GridCells
           cells={memory.grid}
           can={can}
-          hint="Tik aan wat in de passage stond. Elk volgend goed antwoord is meer waard; een fout antwoord beëindigt je beurt."
+          hint={t("akGame.memoryHint")}
         />
       )}
       {can.isQuizmaster && !memory.revealed && <QuizmasterAnswers state={state} />}
@@ -857,10 +896,11 @@ function RoundMemory({ state, can, deadlineLeft }: { state: AkStateView; can: Ab
 }
 
 function RoundFinale({ state, can }: { state: AkStateView; can: Abilities }) {
+  const t = useT();
   const finale = state.finale!;
   return (
     <div className="card flex flex-col gap-4">
-      <h2 className="text-2xl font-extrabold text-brand-800 dark:text-brand-300">Wat weet je van {finale.subject}?</h2>
+      <h2 className="text-2xl font-extrabold text-brand-800 dark:text-brand-300">{t("akGame.whatDoYouKnow", { subject: finale.subject })}</h2>
       <AnswerProgress found={finale.found.length} total={finale.answerCount} />
       {!finale.revealed && <FoundList found={finale.found} />}
       {finale.revealed && <RevealedList all={finale.revealed} found={finale.found} />}
@@ -868,7 +908,7 @@ function RoundFinale({ state, can }: { state: AkStateView; can: Abilities }) {
         <GridCells
           cells={finale.grid}
           can={finale.tapOnly ? { ...can, canAct: can.myTurn } : can}
-          hint={`Tik de antwoorden aan die bij ${finale.subject} horen. Tik je een fout antwoord aan, dan is je beurt voorbij.`}
+          hint={t("akGame.finaleHint", { subject: finale.subject })}
         />
       )}
       {can.isQuizmaster && !finale.revealed && <QuizmasterAnswers state={state} />}

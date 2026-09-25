@@ -11,6 +11,8 @@ import { AK_MAX_TEAMS, AK_MIN_PLAYERS, AK_MIN_TEAM_PLAYERS } from "@/lib/alleske
 import AlleskennerGame, { TEAM_DOTS } from "@/components/alleskenner/AlleskennerGame";
 import UserAvatar from "@/components/UserAvatar";
 import LobbyInviteCard from "@/components/LobbyInviteCard";
+import { useT } from "@/components/I18nProvider";
+import { rich } from "@/lib/i18n/rich";
 
 interface Friend {
   id: string;
@@ -23,6 +25,7 @@ interface Friend {
  * weergave, dus dit component beslist niets zelf over goed/fout of seconden.
  */
 export default function AlleskennerRoom({ code, soloRunId }: { code: string; soloRunId?: string }) {
+  const t = useT();
   const [state, setState] = useState<AkStateView | null>(null);
   const [receivedAt, setReceivedAt] = useState(0);
   const [error, setError] = useState<string | null>(null);
@@ -62,11 +65,11 @@ export default function AlleskennerRoom({ code, soloRunId }: { code: string; sol
           <>
             <p className="font-semibold text-red-600 dark:text-red-400">{error}</p>
             <Link href={soloRunId ? "/alleskenner/alleen" : "/live"} className="btn-secondary self-center">
-              {soloRunId ? "Terug naar alleen spelen" : "Terug naar Spelen"}
+              {soloRunId ? t("akRoom.backToSolo") : t("akRoom.backToPlay")}
             </Link>
           </>
         ) : (
-          <p className="text-slate-400 dark:text-slate-500">Verbinden met het spel...</p>
+          <p className="text-slate-400 dark:text-slate-500">{t("akRoom.connecting")}</p>
         )}
       </div>
     );
@@ -84,10 +87,11 @@ export default function AlleskennerRoom({ code, soloRunId }: { code: string; sol
   );
 }
 
-const ROLE_LABEL = { player: "Speler", spectator: "Toeschouwer", quizmaster: "Quizmaster" } as const;
+const ROLE_KEY = { player: "player", spectator: "spectator", quizmaster: "quizmaster" } as const;
 
 function Lobby({ state, onLeave }: { state: AkStateView; onLeave: () => void }) {
   const socket = getSocket();
+  const t = useT();
   const isHost = state.me.isHost;
   const [friends, setFriends] = useState<Friend[]>([]);
   const [invited, setInvited] = useState<Set<string>>(new Set());
@@ -111,7 +115,7 @@ function Lobby({ state, onLeave }: { state: AkStateView; onLeave: () => void }) 
   }
 
   function cancel() {
-    if (!window.confirm("Dit spel beëindigen? Dit kan niet ongedaan worden gemaakt.")) return;
+    if (!window.confirm(t("activeGames.confirmEnd"))) return;
     socket.emit("cancel_game", { code: state.code });
   }
 
@@ -119,27 +123,29 @@ function Lobby({ state, onLeave }: { state: AkStateView; onLeave: () => void }) 
     <>
       <div className="card !bg-gradient-to-br from-brand-600 to-brand-800 text-white !border-0 flex flex-col gap-1">
         <p className="text-xs font-bold uppercase tracking-wider text-brand-100">
-          {season ? (season.isLast ? "Laatste seizoensfinale-avond" : season.isFinale ? "Seizoensfinale-avond" : "Seizoensavond") : "Lobby"}
+          {season
+            ? t(season.isLast ? "akRoom.lastSeasonFinaleEvening" : season.isFinale ? "akRoom.seasonFinaleEvening" : "akRoom.seasonEvening")
+            : t("akRoom.lobby")}
         </p>
-        <h1 className="text-2xl font-extrabold">De Alleskenner</h1>
+        <h1 className="text-2xl font-extrabold">{t("pages.alleskenner")}</h1>
         <p className="text-sm text-brand-100">
           {isHost
-            ? "Nodig je vrienden uit, kies wie meespeelt en wie de quizmaster is, en start het spel."
-            : `Je doet mee als ${ROLE_LABEL[state.me.role].toLowerCase()}. Wachten tot de host het spel start...`}
+            ? t("akRoom.hostIntro")
+            : t("akRoom.joinedAs", { role: t(`akRoom.roles.${ROLE_KEY[state.me.role]}`).toLowerCase() })}
         </p>
         {season && (
           <p className="text-sm text-white mt-1">
-            Vanavond spelen: <strong>{season.lineup.map((p) => p.name).join(", ")}</strong>. De rest van het seizoen kijkt mee.
+            {rich(t("akRoom.tonightPlaying"), { names: <strong>{season.lineup.map((p) => p.name).join(", ")}</strong> })}
           </p>
         )}
         <p className="text-xs font-bold text-gold-400 mt-1">
-          {state.length === "FULL" ? "Volledig spel: zes rondes" : "Kort spel: 3-6-9, Puzzel en Finale"}
-          {teams ? ` · ${teams.length} teams` : ""}
+          {state.length === "FULL" ? t("akRoom.fullGame") : t("akRoom.shortGame")}
+          {teams ? ` · ${t("akRoom.teamsN", { n: teams.length })}` : ""}
         </p>
       </div>
 
       <div className="card flex flex-col gap-3">
-        <h2 className="font-extrabold dark:text-slate-100">Deelnemers</h2>
+        <h2 className="font-extrabold dark:text-slate-100">{t("akRoom.participants")}</h2>
         <ul className="flex flex-col divide-y divide-slate-100 dark:divide-slate-700">
           {state.participants.map((p) => {
             const team = teams && p.teamIndex !== null ? teams[p.teamIndex] : null;
@@ -155,8 +161,8 @@ function Lobby({ state, onLeave }: { state: AkStateView; onLeave: () => void }) 
                 />
                 <span className="flex-1 min-w-[8rem] truncate font-semibold dark:text-slate-100">
                   {p.name}
-                  {p.userId === state.hostId && <span className="ml-1.5 text-xs text-slate-400">(host)</span>}
-                  {isLeader && <span className="ml-1.5 text-xs font-bold text-gold-600 dark:text-gold-400">★ teamleider</span>}
+                  {p.userId === state.hostId && <span className="ml-1.5 text-xs text-slate-400">{t("akRoom.hostTag")}</span>}
+                  {isLeader && <span className="ml-1.5 text-xs font-bold text-gold-600 dark:text-gold-400">{t("akRoom.leaderTag")}</span>}
                 </span>
                 {teams && p.teamIndex !== null && !isHost && (
                   <span className="flex items-center gap-1.5 text-sm text-slate-500 dark:text-slate-400">
@@ -171,9 +177,9 @@ function Lobby({ state, onLeave }: { state: AkStateView; onLeave: () => void }) 
                       value={p.teamIndex}
                       onChange={(e) => socket.emit("ak:set_team", { userId: p.userId, team: Number(e.target.value) })}
                     >
-                      {teams.map((t, i) => (
-                        <option key={t.name} value={i}>
-                          {t.name}
+                      {teams.map((team, i) => (
+                        <option key={team.name} value={i}>
+                          {team.name}
                         </option>
                       ))}
                     </select>
@@ -185,7 +191,7 @@ function Lobby({ state, onLeave }: { state: AkStateView; onLeave: () => void }) 
                       }`}
                       disabled={isLeader}
                       onClick={() => socket.emit("ak:set_leader", { userId: p.userId })}
-                      title="Maak teamleider"
+                      title={t("akRoom.makeLeader")}
                     >
                       ★
                     </button>
@@ -197,11 +203,11 @@ function Lobby({ state, onLeave }: { state: AkStateView; onLeave: () => void }) 
                     value={p.role}
                     onChange={(e) => socket.emit("ak:set_role", { userId: p.userId, role: e.target.value })}
                   >
-                    <option value="player">Speler</option>
-                    <option value="spectator">Toeschouwer</option>
+                    <option value="player">{t("akRoom.roles.player")}</option>
+                    <option value="spectator">{t("akRoom.roles.spectator")}</option>
                   </select>
                 ) : (
-                  <span className="text-sm text-slate-500 dark:text-slate-400">{ROLE_LABEL[p.role]}</span>
+                  <span className="text-sm text-slate-500 dark:text-slate-400">{t(`akRoom.roles.${ROLE_KEY[p.role]}`)}</span>
                 )}
               </li>
             );
@@ -211,12 +217,12 @@ function Lobby({ state, onLeave }: { state: AkStateView; onLeave: () => void }) 
 
       {isHost && (
         <div className="card flex flex-col gap-3">
-          <h2 className="font-extrabold dark:text-slate-100">Spelduur</h2>
+          <h2 className="font-extrabold dark:text-slate-100">{t("akRoom.length")}</h2>
           <div className="grid grid-cols-2 gap-2">
             {(
               [
-                { value: "SHORT", title: "Kort", text: "3-6-9, Puzzel, Finale" },
-                { value: "FULL", title: "Volledig", text: "Alle zes rondes" },
+                { value: "SHORT", title: t("akRoom.short"), text: t("akRoom.shortText") },
+                { value: "FULL", title: t("akRoom.full"), text: t("akRoom.fullText") },
               ] as const
             ).map((option) => (
               <button
@@ -238,45 +244,44 @@ function Lobby({ state, onLeave }: { state: AkStateView; onLeave: () => void }) 
 
       {isHost && (
         <div className="card flex flex-col gap-3">
-          <h2 className="font-extrabold dark:text-slate-100">Quizmaster</h2>
+          <h2 className="font-extrabold dark:text-slate-100">{t("akRoom.roles.quizmaster")}</h2>
           <select
             className="input"
             value={state.quizmasterId ?? ""}
             onChange={(e) => socket.emit("ak:set_quizmaster", { userId: e.target.value || null })}
           >
-            <option value="">Zonder quizmaster — iedereen tikt zijn antwoord</option>
+            <option value="">{t("akRoom.noQuizmaster")}</option>
             {state.participants
               .filter((p) => !season?.lineup.some((l) => l.userId === p.userId))
               .map((p) => (
               <option key={p.userId} value={p.userId}>
-                {p.name} is quizmaster (speelt niet mee)
+                {t("akRoom.isQuizmaster", { name: p.name })}
               </option>
               ))}
           </select>
           <p className="text-xs text-slate-500 dark:text-slate-400">
-            Met quizmaster antwoord je hardop en keurt de quizmaster het goed of fout. Zonder quizmaster tikt iedereen zelf.
+            {t("akRoom.quizmasterHint")}
           </p>
         </div>
       )}
 
       {isHost && !season && (playerCount >= AK_MIN_TEAM_PLAYERS || teams) && (
         <div className="card flex flex-col gap-3">
-          <h2 className="font-extrabold dark:text-slate-100">Teams</h2>
+          <h2 className="font-extrabold dark:text-slate-100">{t("akRoom.teams")}</h2>
           <select
             className="input"
             value={teams?.length ?? 0}
             onChange={(e) => socket.emit("ak:set_teams", { count: Number(e.target.value) })}
           >
-            <option value={0}>Iedereen voor zich</option>
+            <option value={0}>{t("akRoom.everyoneForThemselves")}</option>
             {Array.from({ length: AK_MAX_TEAMS - 1 }, (_, i) => i + 2).map((count) => (
               <option key={count} value={count}>
-                {count} teams
+                {t("akRoom.teamsN", { n: count })}
               </option>
             ))}
           </select>
           <p className="text-xs text-slate-500 dark:text-slate-400">
-            Alleen het antwoord van de teamleider (★) telt voor het team. De andere teamleden kiezen stil hun eigen antwoord
-            voor persoonlijke punten; aan het eind is er naast het winnende team ook een beste speler.
+            {t("akRoom.teamsHint")}
           </p>
         </div>
       )}
@@ -293,20 +298,20 @@ function Lobby({ state, onLeave }: { state: AkStateView; onLeave: () => void }) 
       {isHost && (
         <div className="flex flex-col items-center gap-2">
           <button className="btn-primary" disabled={playerCount < minPlayers} onClick={() => socket.emit("ak:start")}>
-            Start het spel ({playerCount} {playerCount === 1 ? "speler" : "spelers"})
+            {playerCount === 1 ? t("akRoom.startOne", { n: playerCount }) : t("akRoom.startMany", { n: playerCount })}
           </button>
           {playerCount < minPlayers && (
-            <p className="text-xs text-slate-500 dark:text-slate-400">Er zijn minstens {minPlayers} spelers nodig.</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400">{t("akRoom.minPlayers", { n: minPlayers })}</p>
           )}
           <button className="text-sm text-red-500 hover:underline" onClick={cancel}>
-            Spel beëindigen
+            {t("lobby.end")}
           </button>
         </div>
       )}
 
       {!isHost && (
         <button className="self-center text-sm font-semibold text-slate-500 dark:text-slate-400 hover:underline" onClick={onLeave}>
-          Lobby verlaten
+          {t("lobby.leave")}
         </button>
       )}
     </>
@@ -316,6 +321,11 @@ function Lobby({ state, onLeave }: { state: AkStateView; onLeave: () => void }) 
 function Finished({ state }: { state: AkStateView }) {
   if (state.season && state.winnerId) return <SeasonFinished state={state} />;
   if (state.solo) return <SoloFinished state={state} solo={state.solo} />;
+  return <GameFinished state={state} />;
+}
+
+function GameFinished({ state }: { state: AkStateView }) {
+  const t = useT();
   const winner = state.contestants.find((c) => c.id === state.winnerId);
   const standings = [...state.contestants].sort((a, b) => b.seconds - a.seconds);
   const best = state.personal?.ranking?.[0] ?? null;
@@ -329,20 +339,22 @@ function Finished({ state }: { state: AkStateView }) {
         {winner ? (
           <h1 className="text-2xl font-extrabold">
             {state.teamMode
-              ? `${winner.name}${mine ? " (jouw team)" : ""} is de Alleskenner!`
-              : `${mine ? "Jij bent" : `${winner.name} is`} de Alleskenner!`}
+              ? t(mine ? "akRoom.teamWinnerMine" : "akRoom.teamWinner", { name: winner.name })
+              : mine
+                ? t("akRoom.youWin")
+                : t("akRoom.winner", { name: winner.name })}
           </h1>
         ) : (
-          <h1 className="text-2xl font-extrabold">Het spel is gestopt</h1>
+          <h1 className="text-2xl font-extrabold">{t("akRoom.stopped")}</h1>
         )}
         {best && best.points > 0 && (
           <p className="font-bold">
-            Beste speler: {best.userId === state.me.userId ? "jij" : best.name} ({best.points} punten)
+            {t("akRoom.bestPlayer", { name: best.userId === state.me.userId ? t("akRoom.youLower") : best.name, n: best.points })}
           </p>
         )}
       </div>
       <div className="card flex flex-col gap-2">
-        <h2 className="font-extrabold dark:text-slate-100">Eindstand</h2>
+        <h2 className="font-extrabold dark:text-slate-100">{t("akRoom.finalStandings")}</h2>
         <ol className="flex flex-col divide-y divide-slate-100 dark:divide-slate-700">
           {standings.map((c, i) => (
             <li key={c.id} className="flex items-center gap-3 py-2">
@@ -362,7 +374,7 @@ function Finished({ state }: { state: AkStateView }) {
       </div>
       {state.personal?.ranking && (
         <div className="card flex flex-col gap-2">
-          <h2 className="font-extrabold dark:text-slate-100">Persoonlijke punten</h2>
+          <h2 className="font-extrabold dark:text-slate-100">{t("akRoom.personalPoints")}</h2>
           <ol className="flex flex-col divide-y divide-slate-100 dark:divide-slate-700">
             {state.personal.ranking.map((p, i) => (
               <li key={p.userId} className="flex items-center gap-3 py-1.5">
@@ -376,7 +388,7 @@ function Finished({ state }: { state: AkStateView }) {
         </div>
       )}
       <Link href="/live" className="btn-secondary self-center">
-        Terug naar Spelen
+        {t("akRoom.backToPlay")}
       </Link>
     </>
   );
@@ -384,8 +396,8 @@ function Finished({ state }: { state: AkStateView }) {
 
 function SeasonFinished({ state }: { state: AkStateView }) {
   const season = state.season!;
-  const name = (id: string | null) =>
-    id === state.me.userId ? "Jij" : (state.contestants.find((c) => c.id === id)?.name ?? "");
+  const t = useT();
+  const name = (id: string | null) => state.contestants.find((c) => c.id === id)?.name ?? "";
   const loser = state.finalists?.find((id) => id !== state.winnerId) ?? null;
   const standings = [...state.contestants].sort((a, b) => b.seconds - a.seconds);
   return (
@@ -395,22 +407,31 @@ function SeasonFinished({ state }: { state: AkStateView }) {
           {season.isLast ? "👑" : "🏆"}
         </p>
         {season.isLast ? (
-          <h1 className="text-2xl font-extrabold">{name(state.winnerId)} {state.winnerId === state.me.userId ? "bent" : "is"} de Alleskenner van het seizoen!</h1>
+          <h1 className="text-2xl font-extrabold">
+            {state.winnerId === state.me.userId
+              ? t("akRoom.youSeasonChampion")
+              : t("akRoom.seasonChampion", { name: name(state.winnerId) })}
+          </h1>
         ) : (
           <>
             {season.safeId && (
               <h1 className="text-2xl font-extrabold">
-                {name(season.safeId)} {season.safeId === state.me.userId ? "bent" : "is"} Alleskenner van de avond!
+                {season.safeId === state.me.userId
+                  ? t("akRoom.youEveningChampion")
+                  : t("akRoom.eveningChampion", { name: name(season.safeId) })}
               </h1>
             )}
             <p className="font-bold">
-              {name(state.winnerId)} wint de finale en is door. {name(loser)} ligt eruit.
+              {state.winnerId === state.me.userId
+                ? t("akRoom.youWinFinal")
+                : t("akRoom.winsFinal", { name: name(state.winnerId) })}{" "}
+              {loser === state.me.userId ? t("akRoom.youAreOut") : t("akRoom.isOut", { name: name(loser) })}
             </p>
           </>
         )}
       </div>
       <div className="card flex flex-col gap-2">
-        <h2 className="font-extrabold dark:text-slate-100">Stand van vanavond</h2>
+        <h2 className="font-extrabold dark:text-slate-100">{t("akRoom.tonightStandings")}</h2>
         <ol className="flex flex-col divide-y divide-slate-100 dark:divide-slate-700">
           {standings.map((c, i) => (
             <li key={c.id} className="flex items-center gap-3 py-2">
@@ -423,7 +444,7 @@ function SeasonFinished({ state }: { state: AkStateView }) {
         </ol>
       </div>
       <Link href={`/alleskenner/seizoen/${season.seasonId}`} className="btn-primary self-center">
-        Naar het seizoen
+        {t("akRoom.toSeason")}
       </Link>
     </>
   );
@@ -431,6 +452,7 @@ function SeasonFinished({ state }: { state: AkStateView }) {
 
 function SoloFinished({ state, solo }: { state: AkStateView; solo: NonNullable<AkStateView["solo"]> }) {
   const router = useRouter();
+  const t = useT();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const seconds = Math.round(state.contestants[0]?.seconds ?? 0);
@@ -447,7 +469,7 @@ function SoloFinished({ state, solo }: { state: AkStateView; solo: NonNullable<A
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
       setBusy(false);
-      setError(data.error ?? "Kon geen nieuw potje beginnen.");
+      setError(data.error ?? t("gamesHub.createFailed"));
       return;
     }
     router.push(`/alleskenner/alleen/${data.runId}`);
@@ -457,23 +479,23 @@ function SoloFinished({ state, solo }: { state: AkStateView; solo: NonNullable<A
     <>
       <div className="card !bg-gradient-to-br from-gold-500 to-gold-700 !border-0 text-brand-900 text-center flex flex-col items-center gap-2 animate-pop">
         <p className="text-xs font-bold uppercase tracking-wider">
-          {solo.mode === "DAILY" ? "Alleskenner van de dag" : "Vrij oefenen"}
+          {solo.mode === "DAILY" ? t("alleskenner.dailyTitle") : t("alleskenner.practiceTitle")}
         </p>
         {stopped ? (
           <>
-            <h1 className="text-2xl font-extrabold">Je bent gestopt</h1>
+            <h1 className="text-2xl font-extrabold">{t("akRoom.youStopped")}</h1>
             <p className="font-semibold">
-              {solo.mode === "DAILY" ? "Deze poging telt niet mee. Morgen staat er een nieuwe klaar." : "Dit potje telt niet mee."}
+              {solo.mode === "DAILY" ? t("akRoom.dailyNotCounted") : t("akRoom.practiceNotCounted")}
             </p>
           </>
         ) : (
           <>
             <p className="text-6xl font-extrabold tabular-nums">{seconds}</p>
-            <p className="font-bold">seconden over</p>
+            <p className="font-bold">{t("akRoom.secondsLeft")}</p>
             <p className="text-sm font-semibold">
               {solo.xpEarned === null
-                ? "Resultaat opslaan..."
-                : `+${solo.xpEarned} XP${solo.rank !== null ? ` · plek ${solo.rank} van vandaag` : ""}`}
+                ? t("akRoom.saving")
+                : `+${solo.xpEarned} XP${solo.rank !== null ? ` · ${t("akRoom.placeToday", { n: solo.rank })}` : ""}`}
             </p>
           </>
         )}
@@ -481,10 +503,10 @@ function SoloFinished({ state, solo }: { state: AkStateView; solo: NonNullable<A
       {error && <p className="card !py-3 text-sm font-semibold text-red-600 dark:text-red-400">{error}</p>}
       <div className="flex flex-wrap justify-center gap-2">
         <Link href="/alleskenner/alleen" className="btn-primary">
-          {solo.mode === "DAILY" ? "Naar het klassement" : "Terug"}
+          {solo.mode === "DAILY" ? t("akRoom.toLeaderboard") : t("wordOfTheDay.back")}
         </Link>
         <button className="btn-secondary" onClick={practice} disabled={busy}>
-          {busy ? "Bezig..." : solo.mode === "DAILY" ? "Vrij oefenen" : "Nog een potje"}
+          {busy ? t("courses.busy") : solo.mode === "DAILY" ? t("alleskenner.practiceTitle") : t("akRoom.anotherRound")}
         </button>
       </div>
     </>

@@ -3,6 +3,7 @@
 import { useEffect, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useT } from "@/components/I18nProvider";
 
 interface SeasonSummary {
   id: string;
@@ -14,9 +15,10 @@ interface SeasonSummary {
   evenings: number;
 }
 
-export const SEASON_STATUS_LABEL = { REGULAR: "Gewone avonden", FINALE: "Seizoensfinale", FINISHED: "Afgelopen" } as const;
+export const SEASON_STATUS_KEY = { REGULAR: "regular", FINALE: "finale", FINISHED: "finished" } as const;
 
 export default function SeasonListClient() {
+  const t = useT();
   const router = useRouter();
   const [seasons, setSeasons] = useState<SeasonSummary[] | null>(null);
   const [name, setName] = useState("");
@@ -43,7 +45,7 @@ export default function SeasonListClient() {
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
       setBusy(false);
-      setError(data.error ?? "Kon het seizoen niet maken.");
+      setError(data.error ?? t("season.createFailed"));
       return;
     }
     router.push(`/alleskenner/seizoen/${data.id}`);
@@ -53,20 +55,20 @@ export default function SeasonListClient() {
     <div className="max-w-5xl mx-auto flex flex-col gap-6">
       <div className="flex items-center justify-between gap-3">
         <div>
-          <p className="text-xs font-bold uppercase tracking-wider text-slate-400">De Alleskenner</p>
-          <h1 className="text-3xl font-extrabold text-brand-800 dark:text-brand-300">Seizoenen</h1>
+          <p className="text-xs font-bold uppercase tracking-wider text-slate-400">{t("pages.alleskenner")}</p>
+          <h1 className="text-3xl font-extrabold text-brand-800 dark:text-brand-300">{t("pages.seasons")}</h1>
         </div>
         <Link href="/alleskenner" className="btn-secondary !px-3 !py-1.5 !text-sm">
-          Los spel
+          {t("season.singleGame")}
         </Link>
       </div>
 
       <div className="grid gap-6 md:grid-cols-[1fr_20rem]">
         <div className="flex flex-col gap-3">
-          {seasons === null && <p className="text-slate-400">Laden...</p>}
+          {seasons === null && <p className="text-slate-400">{t("common.loading")}</p>}
           {seasons?.length === 0 && (
             <div className="card text-slate-500 dark:text-slate-400">
-              Je zit nog in geen enkel seizoen. Maak er een voor je vaste quizavond met vrienden.
+              {t("season.none")}
             </div>
           )}
           {seasons?.map((s) => (
@@ -77,35 +79,35 @@ export default function SeasonListClient() {
               <span className="flex-1 min-w-0">
                 <span className="block font-extrabold truncate dark:text-slate-100">{s.name}</span>
                 <span className="block text-sm text-slate-500 dark:text-slate-400">
-                  {SEASON_STATUS_LABEL[s.status]} · {s.members} leden · {s.evenings} {s.evenings === 1 ? "avond" : "avonden"} · host {s.host}
+                  {t(`season.status.${SEASON_STATUS_KEY[s.status]}`)} · {t("season.membersN", { n: s.members })} ·{" "}
+                  {s.evenings === 1 ? t("season.eveningsOne", { n: s.evenings }) : t("season.eveningsMany", { n: s.evenings })} ·{" "}
+                  {t("season.hostName", { name: s.host })}
                 </span>
-                {s.champion && <span className="block text-sm font-bold text-gold-600 dark:text-gold-400">Alleskenner: {s.champion}</span>}
+                {s.champion && <span className="block text-sm font-bold text-gold-600 dark:text-gold-400">{t("season.championShort", { name: s.champion })}</span>}
               </span>
             </Link>
           ))}
         </div>
 
         <form onSubmit={create} className="card flex flex-col gap-3 self-start">
-          <h2 className="font-extrabold dark:text-slate-100">Nieuw seizoen</h2>
+          <h2 className="font-extrabold dark:text-slate-100">{t("season.newSeason")}</h2>
           <input
             className="input"
-            placeholder="Naam, bv. Quizavond najaar"
+            placeholder={t("season.namePlaceholder")}
             value={name}
             maxLength={60}
             onChange={(e) => setName(e.target.value)}
           />
           <label className="flex items-center gap-2 text-sm dark:text-slate-200">
             <input type="checkbox" checked={joinAsPlayer} onChange={(e) => setJoinAsPlayer(e.target.checked)} />
-            Ik speel zelf ook mee
+            {t("season.joinAsPlayer")}
           </label>
           <button className="btn-primary" disabled={busy || !name.trim()}>
-            {busy ? "Bezig..." : "Seizoen maken"}
+            {busy ? t("courses.busy") : t("season.create")}
           </button>
           {error && <p className="text-sm font-semibold text-red-600 dark:text-red-400">{error}</p>}
           <p className="text-xs text-slate-500 dark:text-slate-400">
-            Elke avond spelen drie leden. De winnaar van de avond en de winnaar van de finale blijven zitten, de verliezer
-            ligt eruit. Na drie avonden stop je ongeslagen. Aan het eind strijden de ongeslagenen om de titel Alleskenner
-            van het seizoen.
+            {t("season.rules")}
           </p>
         </form>
       </div>

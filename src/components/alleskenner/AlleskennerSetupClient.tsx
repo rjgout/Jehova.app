@@ -3,17 +3,19 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useT } from "@/components/I18nProvider";
 
 const ROUNDS = [
-  { icon: "3️⃣", title: "3-6-9", text: "Vijftien vragen. Goed = je mag door. Bij vraag 3, 6, 9, 12 en 15 verdien je 10 seconden.", full: false },
-  { icon: "🚪", title: "Open Deur", text: "Kies een onderwerp en noem vier antwoorden. Elk antwoord levert 20 seconden op.", full: true },
-  { icon: "🧩", title: "Puzzel", text: "Twaalf omschrijvingen, drie groepen van vier. Elk verbindend woord levert 30 seconden op.", full: false },
-  { icon: "🖼️", title: "Galerij", text: "Acht citaten of illustraties: noem het boek of het verhaal. 15 seconden per goed antwoord.", full: true },
-  { icon: "📖", title: "Collectief Geheugen", text: "Lees een passage, daarna vijf antwoorden. Elk volgend antwoord is meer waard: 10 tot 50 seconden.", full: true },
-  { icon: "🏁", title: "Finale", text: "De twee met de meeste seconden. Elk goed antwoord kost je tegenstander 20 seconden.", full: false },
-];
+  { icon: "3️⃣", key: "threeSixNine", full: false },
+  { icon: "🚪", key: "openDoor", full: true },
+  { icon: "🧩", key: "puzzle", full: false },
+  { icon: "🖼️", key: "gallery", full: true },
+  { icon: "📖", key: "collectiveMemory", full: true },
+  { icon: "🏁", key: "final", full: false },
+] as const;
 
 export default function AlleskennerSetupClient() {
+  const t = useT();
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -25,7 +27,7 @@ export default function AlleskennerSetupClient() {
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
       setBusy(false);
-      setError(data.error ?? "Kon geen spel maken.");
+      setError(data.error ?? t("gamesHub.createFailed"));
       return;
     }
     router.push(`/live/${data.code}`);
@@ -37,13 +39,12 @@ export default function AlleskennerSetupClient() {
         <p className="text-4xl" aria-hidden>
           🧠
         </p>
-        <h1 className="text-3xl font-extrabold">De Alleskenner</h1>
+        <h1 className="text-3xl font-extrabold">{t("pages.alleskenner")}</h1>
         <p className="text-brand-100">
-          Een quizavond voor als je bij elkaar bent. Iedereen speelt op zijn eigen telefoon; seconden zijn de enige
-          score. Wie in de finale de ander op nul zet, is de Alleskenner.
+          {t("alleskenner.setupIntro")}
         </p>
         <button className="btn-primary !bg-gold-500 !text-brand-900 self-start mt-1" onClick={create} disabled={busy}>
-          {busy ? "Bezig..." : "Nieuw spel maken"}
+          {busy ? t("courses.busy") : t("alleskenner.createGame")}
         </button>
         {error && <p className="text-sm font-semibold text-red-200">{error}</p>}
       </div>
@@ -53,9 +54,9 @@ export default function AlleskennerSetupClient() {
           🧠
         </span>
         <span className="flex-1">
-          <span className="block font-extrabold dark:text-slate-100">Alleen spelen</span>
+          <span className="block font-extrabold dark:text-slate-100">{t("pages.playAlone")}</span>
           <span className="block text-sm text-slate-500 dark:text-slate-400">
-            De Alleskenner van de dag met een klassement, of vrij oefenen. Levert XP op en houdt je reeks vast.
+            {t("alleskenner.soloCardText")}
           </span>
         </span>
         <span className="text-slate-400" aria-hidden>
@@ -68,10 +69,9 @@ export default function AlleskennerSetupClient() {
           📅
         </span>
         <span className="flex-1">
-          <span className="block font-extrabold dark:text-slate-100">Seizoen spelen</span>
+          <span className="block font-extrabold dark:text-slate-100">{t("alleskenner.seasonCardTitle")}</span>
           <span className="block text-sm text-slate-500 dark:text-slate-400">
-            Vaste quizavond met vrienden: elke avond drie spelers, een klassement en aan het eind de Alleskenner van het
-            seizoen.
+            {t("alleskenner.seasonCardText")}
           </span>
         </span>
         <span className="text-slate-400" aria-hidden>
@@ -81,34 +81,31 @@ export default function AlleskennerSetupClient() {
 
       <div className="grid gap-3 sm:grid-cols-3">
         {ROUNDS.map((round) => (
-          <div key={round.title} className="card flex flex-col gap-1">
+          <div key={round.key} className="card flex flex-col gap-1">
             <p className="text-2xl" aria-hidden>
               {round.icon}
             </p>
-            <h2 className="font-extrabold dark:text-slate-100">{round.title}</h2>
-            <p className="text-sm text-slate-500 dark:text-slate-400">{round.text}</p>
+            <h2 className="font-extrabold dark:text-slate-100">{t(`alleskenner.rounds.${round.key}.title`)}</h2>
+            <p className="text-sm text-slate-500 dark:text-slate-400">{t(`alleskenner.rounds.${round.key}.text`)}</p>
             <p className="mt-auto pt-1 text-[11px] font-bold uppercase tracking-wider text-slate-400">
-              {round.full ? "Alleen volledig spel" : "Kort en volledig spel"}
+              {round.full ? t("alleskenner.fullOnly") : t("alleskenner.shortAndFull")}
             </p>
           </div>
         ))}
       </div>
 
       <div className="card flex flex-col gap-2 text-sm text-slate-600 dark:text-slate-300">
-        <h2 className="font-extrabold text-base dark:text-slate-100">Met of zonder quizmaster</h2>
+        <h2 className="font-extrabold text-base dark:text-slate-100">{t("alleskenner.hostTitle")}</h2>
         <p>
-          <strong>Met quizmaster:</strong> je antwoordt hardop en de quizmaster (standaard de maker van het spel) keurt
-          je antwoord goed of fout op zijn eigen scherm. Hij speelt zelf niet mee.
+          <strong>{t("alleskenner.withHostLabel")}</strong> {t("alleskenner.withHostText")}
         </p>
         <p>
-          <strong>Zonder quizmaster:</strong> iedereen tikt zijn antwoord op zijn eigen telefoon. Handig met twee of drie
-          spelers.
+          <strong>{t("alleskenner.withoutHostLabel")}</strong> {t("alleskenner.withoutHostText")}
         </p>
         <p>
-          <strong>Teams:</strong> vanaf zes spelers kun je in teams spelen. Alleen het antwoord van de teamleider telt voor
-          het team; de anderen kiezen stil mee voor hun persoonlijke punten.
+          <strong>{t("alleskenner.teamsLabel")}</strong> {t("alleskenner.teamsText")}
         </p>
-        <p>Wie niet meespeelt, kan meekijken als toeschouwer.</p>
+        <p>{t("alleskenner.spectators")}</p>
       </div>
     </div>
   );

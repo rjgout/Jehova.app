@@ -5,14 +5,11 @@ import { useRouter } from "next/navigation";
 import type { SoloLeaderboardEntry, SoloOverview } from "@/lib/alleskenner/solo";
 import UserTag from "@/components/UserTag";
 import UserAvatar from "@/components/UserAvatar";
+import { useT } from "@/components/I18nProvider";
 
 type Board = "today" | "week" | "friends";
 
-const BOARDS: { key: Board; label: string; empty: string }[] = [
-  { key: "today", label: "Vandaag", empty: "Nog niemand heeft de Alleskenner van vandaag gespeeld. Wees de eerste!" },
-  { key: "week", label: "Deze week", empty: "Deze week heeft nog niemand gespeeld." },
-  { key: "friends", label: "Vrienden", empty: "Nog geen van je vrienden heeft vandaag gespeeld." },
-];
+const BOARDS: Board[] = ["today", "week", "friends"];
 
 /**
  * Alleen spelen: de Alleskenner van de dag (één poging, klassement) en vrij
@@ -20,6 +17,7 @@ const BOARDS: { key: Board; label: string; empty: string }[] = [
  * een quizavond behalve de finale.
  */
 export default function SoloClient({ myUserId }: { myUserId: string }) {
+  const t = useT();
   const router = useRouter();
   const [overview, setOverview] = useState<SoloOverview | null>(null);
   const [loadError, setLoadError] = useState(false);
@@ -45,7 +43,7 @@ export default function SoloClient({ myUserId }: { myUserId: string }) {
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
       setBusy(null);
-      setError(data.error ?? "Kon het spel niet starten.");
+      setError(data.error ?? t("gamesHub.createFailed"));
       return;
     }
     router.push(`/alleskenner/alleen/${data.runId}`);
@@ -61,27 +59,26 @@ export default function SoloClient({ myUserId }: { myUserId: string }) {
           <p className="text-4xl" aria-hidden>
             🧠
           </p>
-          <h1 className="text-2xl font-extrabold">Alleskenner van de dag</h1>
+          <h1 className="text-2xl font-extrabold">{t("alleskenner.dailyTitle")}</h1>
           <p className="text-brand-100 text-sm">
-            Elke dag dezelfde vragen voor iedereen, en je hebt één poging. 3-6-9, Open Deur, Puzzel, Galerij en Collectief
-            Geheugen: de seconden die je overhoudt zijn je score.
+            {t("alleskenner.dailyText")}
           </p>
           {!overview ? (
-            <p className="text-sm text-brand-100">{loadError ? "Kon je stand niet laden." : "Laden..."}</p>
+            <p className="text-sm text-brand-100">{loadError ? t("alleskenner.standingFailed") : t("common.loading")}</p>
           ) : today!.status === "FINISHED" ? (
             <div className="rounded-2xl bg-white/15 px-4 py-3 flex items-center justify-between gap-3">
               <span>
-                <span className="block text-xs font-bold uppercase tracking-wider text-brand-100">Vandaag gespeeld</span>
-                <span className="text-2xl font-extrabold tabular-nums">{today!.seconds} seconden</span>
+                <span className="block text-xs font-bold uppercase tracking-wider text-brand-100">{t("alleskenner.playedToday")}</span>
+                <span className="text-2xl font-extrabold tabular-nums">{t("alleskenner.secondsN", { n: today!.seconds })}</span>
               </span>
               <span className="text-right text-sm font-bold">
-                {today!.rank !== null && <span className="block">Plek {today!.rank}</span>}
+                {today!.rank !== null && <span className="block">{t("alleskenner.place", { n: today!.rank })}</span>}
                 <span className="text-gold-400">+{today!.xpEarned} XP</span>
               </span>
             </div>
           ) : today!.status === "ABANDONED" ? (
             <p className="rounded-2xl bg-white/15 px-4 py-3 text-sm font-semibold">
-              Je bent vandaag gestopt; die poging telt niet mee. Morgen staat er een nieuwe klaar.
+              {t("alleskenner.abandonedToday")}
             </p>
           ) : (
             <button
@@ -89,7 +86,11 @@ export default function SoloClient({ myUserId }: { myUserId: string }) {
               onClick={() => start("DAILY")}
               disabled={busy !== null}
             >
-              {busy === "DAILY" ? "Bezig..." : today!.status === "IN_PROGRESS" ? "Verder spelen" : "Speel de Alleskenner van vandaag"}
+              {busy === "DAILY"
+                ? t("courses.busy")
+                : today!.status === "IN_PROGRESS"
+                  ? t("alleskenner.continuePlaying")
+                  : t("alleskenner.playToday")}
             </button>
           )}
         </div>
@@ -98,20 +99,19 @@ export default function SoloClient({ myUserId }: { myUserId: string }) {
           <p className="text-4xl" aria-hidden>
             🎯
           </p>
-          <h2 className="text-2xl font-extrabold dark:text-slate-100">Vrij oefenen</h2>
+          <h2 className="text-2xl font-extrabold dark:text-slate-100">{t("alleskenner.practiceTitle")}</h2>
           <p className="text-sm text-slate-500 dark:text-slate-400">
-            Zo vaak je wilt, met vragen die je nog niet eerder had. Telt niet mee voor het klassement, maar levert wel XP op
-            en houdt je reeks vast.
+            {t("alleskenner.practiceText")}
           </p>
           <button className="btn-secondary self-start mt-auto" onClick={() => start("PRACTICE")} disabled={busy !== null}>
-            {busy === "PRACTICE" ? "Bezig..." : overview?.practiceRunId ? "Nieuw oefenpotje" : "Begin met oefenen"}
+            {busy === "PRACTICE" ? t("courses.busy") : overview?.practiceRunId ? t("alleskenner.newPractice") : t("alleskenner.startPractice")}
           </button>
           {overview?.practiceRunId && (
             <button
               className="text-sm font-semibold text-brand-700 dark:text-brand-300 hover:underline self-start"
               onClick={() => router.push(`/alleskenner/alleen/${overview.practiceRunId}`)}
             >
-              Of ga verder met je vorige oefenpotje →
+              {t("alleskenner.continuePractice")}
             </button>
           )}
         </div>
@@ -121,32 +121,36 @@ export default function SoloClient({ myUserId }: { myUserId: string }) {
 
       <div className="card flex flex-col gap-3">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <h2 className="font-extrabold text-lg dark:text-slate-100">Klassement</h2>
+          <h2 className="font-extrabold text-lg dark:text-slate-100">{t("alleskenner.leaderboard")}</h2>
           <div className="flex rounded-full bg-slate-100 dark:bg-slate-700 p-1">
             {BOARDS.map((b) => (
               <button
-                key={b.key}
-                onClick={() => setBoard(b.key)}
+                key={b}
+                onClick={() => setBoard(b)}
                 className={`rounded-full px-3 py-1 text-sm font-bold transition ${
-                  board === b.key
+                  board === b
                     ? "bg-white dark:bg-slate-900 text-brand-700 dark:text-brand-300 shadow-sm"
                     : "text-slate-500 dark:text-slate-300"
                 }`}
               >
-                {b.label}
+                {t(`alleskenner.boards.${b}.label`)}
               </button>
             ))}
           </div>
         </div>
         <p className="text-xs text-slate-500 dark:text-slate-400">
           {board === "week"
-            ? "Alle seconden van de Alleskenner van de dag sinds maandag bij elkaar opgeteld."
-            : `Seconden over bij de Alleskenner van vandaag${overview ? ` · ${overview.playersToday} ${overview.playersToday === 1 ? "speler" : "spelers"}` : ""}.`}
+            ? t("alleskenner.weekExplain")
+            : overview
+              ? overview.playersToday === 1
+                ? t("alleskenner.todayExplainOne", { n: overview.playersToday })
+                : t("alleskenner.todayExplainMany", { n: overview.playersToday })
+              : t("alleskenner.todayExplain")}
         </p>
         {!overview ? (
-          <p className="text-sm text-slate-400">{loadError ? "Kon het klassement niet laden." : "Laden..."}</p>
+          <p className="text-sm text-slate-400">{loadError ? t("alleskenner.leaderboardFailed") : t("common.loading")}</p>
         ) : entries.length === 0 ? (
-          <p className="text-sm text-slate-500 dark:text-slate-400">{BOARDS.find((b) => b.key === board)!.empty}</p>
+          <p className="text-sm text-slate-500 dark:text-slate-400">{t(`alleskenner.boards.${board}.empty`)}</p>
         ) : (
           <ol className="flex flex-col divide-y divide-slate-100 dark:divide-slate-700">
             {entries.map((e) => (
@@ -161,17 +165,18 @@ export default function SoloClient({ myUserId }: { myUserId: string }) {
 
 function LeaderboardRow({ entry, mine, board }: { entry: SoloLeaderboardEntry; mine: boolean; board: Board }) {
   const medal = entry.rank === 1 ? "🥇" : entry.rank === 2 ? "🥈" : entry.rank === 3 ? "🥉" : null;
+  const t = useT();
   return (
     <li className={`flex items-center gap-3 py-2 ${mine ? "rounded-xl bg-brand-50 dark:bg-slate-700/60 px-2 -mx-2" : ""}`}>
       <span className="w-7 text-center font-extrabold text-slate-400">{medal ?? entry.rank}</span>
       <UserAvatar id={entry.userId} handle={entry.handle} />
       <span className="flex-1 min-w-0 truncate font-semibold dark:text-slate-100">
         <UserTag handle={entry.handle} discriminator={entry.discriminator} />
-        {mine && <span className="ml-1.5 text-xs font-bold text-brand-600 dark:text-brand-300">(jij)</span>}
+        {mine && <span className="ml-1.5 text-xs font-bold text-brand-600 dark:text-brand-300">{t("lobby.you")}</span>}
       </span>
       {board === "week" && entry.days !== undefined && (
         <span className="text-xs text-slate-400">
-          {entry.days} {entry.days === 1 ? "dag" : "dagen"}
+          {entry.days === 1 ? t("alleskenner.daysOne", { n: entry.days }) : t("alleskenner.daysMany", { n: entry.days })}
         </span>
       )}
       <span className="font-extrabold tabular-nums dark:text-slate-100">{entry.seconds} s</span>

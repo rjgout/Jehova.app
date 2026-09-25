@@ -3,9 +3,11 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { SEASON_STATUS_LABEL } from "@/components/alleskenner/SeasonListClient";
+import { SEASON_STATUS_KEY } from "@/components/alleskenner/SeasonListClient";
 import UserAvatar from "@/components/UserAvatar";
 import FriendPicker from "@/components/FriendPicker";
+import { useT } from "@/components/I18nProvider";
+import type { TFunction } from "@/lib/i18n/core";
 
 type MemberStatus = "WAITING" | "ACTIVE" | "ELIMINATED" | "RETIRED";
 
@@ -45,31 +47,32 @@ interface Season {
   }[];
 }
 
-function statusLabel(m: Member, season: Season): { text: string; style: string } {
+function statusLabel(m: Member, season: Season, t: TFunction): { text: string; style: string } {
   const seasonStatus = season.status;
   if (season.champion?.id === m.userId) {
-    return { text: "👑 Alleskenner", style: "bg-gold-500 text-brand-900" };
+    return { text: t("season.memberStatus.champion"), style: "bg-gold-500 text-brand-900" };
   }
   if (seasonStatus !== "REGULAR" && m.finaleSeed !== null) {
-    if (m.finaleOut) return { text: "Eruit in de finale", style: "bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400" };
+    if (m.finaleOut) return { text: t("season.memberStatus.finaleOut"), style: "bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400" };
     return {
-      text: m.finaleEntered ? "Finalist · speelt" : "Finalist · wacht",
+      text: m.finaleEntered ? t("season.memberStatus.finalistPlaying") : t("season.memberStatus.finalistWaiting"),
       style: "bg-gold-50 text-gold-700 dark:bg-slate-700 dark:text-gold-400",
     };
   }
   switch (m.status) {
     case "WAITING":
-      return { text: "Wachtrij", style: "bg-sky-100 text-sky-800 dark:bg-sky-900/50 dark:text-sky-200" };
+      return { text: t("season.memberStatus.waiting"), style: "bg-sky-100 text-sky-800 dark:bg-sky-900/50 dark:text-sky-200" };
     case "ACTIVE":
-      return { text: "Blijver", style: "bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-200" };
+      return { text: t("season.memberStatus.active"), style: "bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-200" };
     case "RETIRED":
-      return { text: "Ongeslagen gestopt", style: "bg-gold-50 text-gold-700 dark:bg-slate-700 dark:text-gold-400" };
+      return { text: t("season.memberStatus.retired"), style: "bg-gold-50 text-gold-700 dark:bg-slate-700 dark:text-gold-400" };
     default:
-      return { text: "Eruit", style: "bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400" };
+      return { text: t("season.memberStatus.out"), style: "bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400" };
   }
 }
 
 export default function SeasonClient({ id }: { id: string }) {
+  const t = useT();
   const router = useRouter();
   const [season, setSeason] = useState<Season | null>(null);
   const [notFound, setNotFound] = useState(false);
@@ -102,7 +105,7 @@ export default function SeasonClient({ id }: { id: string }) {
     const data = await res.json().catch(() => ({}));
     setBusy(false);
     if (!res.ok) {
-      setError(data.error ?? "Er ging iets mis.");
+      setError(data.error ?? t("wordOfTheDay.somethingWrong"));
       return null;
     }
     return data;
@@ -114,7 +117,7 @@ export default function SeasonClient({ id }: { id: string }) {
   }
 
   async function startFinale() {
-    if (!window.confirm("De seizoensfinale starten? Daarna kunnen er geen leden meer bij.")) return;
+    if (!window.confirm(t("season.confirmFinale"))) return;
     if (await call(`/api/alleskenner/seasons/${id}/finale`, "POST")) load();
   }
 
@@ -127,21 +130,21 @@ export default function SeasonClient({ id }: { id: string }) {
   }
 
   async function setRoles(body: { hostId?: string; deputyHostId?: string | null }) {
-    if (body.hostId && !window.confirm("De hostrol overdragen? Je kunt daarna zelf geen avonden meer starten.")) return;
+    if (body.hostId && !window.confirm(t("season.confirmTransfer"))) return;
     if (await call(`/api/alleskenner/seasons/${id}`, "PATCH", body)) load();
   }
 
   if (notFound) {
     return (
       <div className="max-w-md mx-auto card text-center flex flex-col gap-3">
-        <p className="font-semibold dark:text-slate-100">Dit seizoen bestaat niet, of je bent er geen lid van.</p>
+        <p className="font-semibold dark:text-slate-100">{t("season.notFound")}</p>
         <Link href="/alleskenner/seizoen" className="btn-secondary self-center">
-          Naar je seizoenen
+          {t("season.toSeasons")}
         </Link>
       </div>
     );
   }
-  if (!season) return <p className="text-center text-slate-400">Laden...</p>;
+  if (!season) return <p className="text-center text-slate-400">{t("common.loading")}</p>;
 
   const byId = new Map(season.members.map((m) => [m.userId, m]));
   const ranked = season.ranking.map((userId) => byId.get(userId)!).filter(Boolean);
@@ -156,15 +159,15 @@ export default function SeasonClient({ id }: { id: string }) {
     <div className="max-w-5xl mx-auto flex flex-col gap-6">
       <div className="card !bg-gradient-to-br from-brand-600 to-brand-800 !border-0 text-white flex flex-col gap-1">
         <Link href="/alleskenner/seizoen" className="text-xs font-bold uppercase tracking-wider text-brand-100 hover:underline">
-          De Alleskenner · seizoenen
+          {t("season.breadcrumb")}
         </Link>
         <h1 className="text-3xl font-extrabold">{season.name}</h1>
         <p className="text-sm text-brand-100">
-          {SEASON_STATUS_LABEL[season.status]} · host {season.host.handle}
-          {season.deputyHost ? ` · vervangend host ${season.deputyHost.handle}` : ""}
+          {t(`season.status.${SEASON_STATUS_KEY[season.status]}`)} · {t("season.hostName", { name: season.host.handle })}
+          {season.deputyHost ? ` · ${t("season.deputyName", { name: season.deputyHost.handle })}` : ""}
         </p>
         {season.champion && (
-          <p className="mt-2 text-lg font-extrabold text-gold-400">👑 Alleskenner van het seizoen: {season.champion.handle}</p>
+          <p className="mt-2 text-lg font-extrabold text-gold-400">{t("season.champion", { name: season.champion.handle })}</p>
         )}
       </div>
 
@@ -179,9 +182,9 @@ export default function SeasonClient({ id }: { id: string }) {
             🎙️
           </span>
           <span className="flex-1 font-extrabold dark:text-slate-100">
-            {season.openEvening.isFinale ? "Finaleavond" : "Avond"} {season.openEvening.number} is bezig — doe mee of kijk mee
+            {t(season.openEvening.isFinale ? "season.finaleEveningInProgress" : "season.eveningInProgress", { n: season.openEvening.number })}
           </span>
-          <span className="btn-primary !px-3 !py-1.5 !text-sm">Openen</span>
+          <span className="btn-primary !px-3 !py-1.5 !text-sm">{t("season.open")}</span>
         </Link>
       )}
 
@@ -189,21 +192,21 @@ export default function SeasonClient({ id }: { id: string }) {
         {/* min-w-0: anders rekt de brede tabel de gridkolom op mobiel op. */}
         <div className="flex flex-col gap-6 min-w-0">
           <div className="card flex flex-col gap-2 overflow-x-auto">
-            <h2 className="font-extrabold dark:text-slate-100">Klassement</h2>
+            <h2 className="font-extrabold dark:text-slate-100">{t("alleskenner.leaderboard")}</h2>
             <table className="w-full text-sm">
               <thead>
                 <tr className="text-left text-xs uppercase tracking-wider text-slate-400">
                   <th className="py-1 pr-2">#</th>
-                  <th className="py-1 pr-2">Naam</th>
-                  <th className="py-1 pr-2">Status</th>
-                  <th className="py-1 pr-2 text-right hidden sm:table-cell">Avonden</th>
-                  <th className="py-1 pr-2 text-right">Punten</th>
-                  <th className="py-1 text-right">Sec.</th>
+                  <th className="py-1 pr-2">{t("season.colName")}</th>
+                  <th className="py-1 pr-2">{t("season.colStatus")}</th>
+                  <th className="py-1 pr-2 text-right hidden sm:table-cell">{t("season.colEvenings")}</th>
+                  <th className="py-1 pr-2 text-right">{t("season.colPoints")}</th>
+                  <th className="py-1 text-right">{t("season.colSeconds")}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
                 {ranked.map((m, i) => {
-                  const label = statusLabel(m, season);
+                  const label = statusLabel(m, season, t);
                   return (
                     <tr key={m.userId} className="dark:text-slate-100">
                       <td className="py-2 pr-2 font-extrabold text-slate-400">{i + 1}</td>
@@ -225,26 +228,28 @@ export default function SeasonClient({ id }: { id: string }) {
               </tbody>
             </table>
             <p className="text-xs text-slate-500 dark:text-slate-400">
-              Per avond: 3 punten voor de Alleskenner van de avond, 2 voor de winnaar van de finale, 1 voor de verliezer. Bij
-              gelijke punten telt het totaal verdiende seconden.
+              {t("season.pointsExplain")}
             </p>
           </div>
 
           {season.evenings.length > 0 && (
             <div className="card flex flex-col gap-3">
-              <h2 className="font-extrabold dark:text-slate-100">Gespeelde avonden</h2>
+              <h2 className="font-extrabold dark:text-slate-100">{t("season.playedEvenings")}</h2>
               <ul className="flex flex-col gap-3">
                 {[...season.evenings].reverse().map((e) => (
                   <li key={e.number} className="rounded-2xl bg-slate-50 dark:bg-slate-900/50 px-3 py-2">
                     <p className="text-xs font-bold uppercase tracking-wider text-slate-400">
-                      {e.isLast ? "Laatste finaleavond" : e.isFinale ? "Finaleavond" : "Avond"} {e.number}
+                      {t(e.isLast ? "season.lastFinaleEvening" : e.isFinale ? "season.finaleEvening" : "season.evening", { n: e.number })}
                     </p>
                     <ol className="text-sm dark:text-slate-100">
                       {e.results.map((r) => (
                         <li key={r.userId}>
                           {r.place}. <span className="font-semibold">{r.name}</span>{" "}
                           <span className="text-slate-500 dark:text-slate-400">
-                            {r.seconds} s{r.points > 0 ? ` · +${r.points} ${r.points === 1 ? "punt" : "punten"}` : ""}
+                            {r.seconds} s
+                            {r.points > 0
+                              ? ` · ${r.points === 1 ? t("season.pointsOne", { n: r.points }) : t("season.pointsMany", { n: r.points })}`
+                              : ""}
                           </span>
                         </li>
                       ))}
@@ -260,11 +265,17 @@ export default function SeasonClient({ id }: { id: string }) {
           {managing && !season.openEvening && (
             <div className="card flex flex-col gap-3">
               <h2 className="font-extrabold dark:text-slate-100">
-                Volgende {season.nextEvening.isLast ? "(laatste) finaleavond" : season.nextEvening.isFinale ? "finaleavond" : "avond"}
+                {t(
+                  season.nextEvening.isLast
+                    ? "season.nextLastFinaleEvening"
+                    : season.nextEvening.isFinale
+                      ? "season.nextFinaleEvening"
+                      : "season.nextEvening"
+                )}
               </h2>
               {absentCandidates.length > 0 && (
                 <div className="flex flex-col gap-1">
-                  <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Wie is er niet?</p>
+                  <p className="text-xs font-bold uppercase tracking-wider text-slate-400">{t("season.whoIsAbsent")}</p>
                   {absentCandidates.map((m) => (
                     <label key={m.userId} className="flex items-center gap-2 text-sm dark:text-slate-200">
                       <input
@@ -274,14 +285,14 @@ export default function SeasonClient({ id }: { id: string }) {
                           setAbsent((prev) => (e.target.checked ? [...prev, m.userId] : prev.filter((x) => x !== m.userId)))
                         }
                       />
-                      {m.name} is afwezig
+                      {t("season.isAbsent", { name: m.name })}
                     </label>
                   ))}
                 </div>
               )}
               {season.nextEvening.lineup.length > 0 && (
                 <p className="text-sm dark:text-slate-200">
-                  Spelen: <strong>{season.nextEvening.lineup.map((p) => p.name).join(", ")}</strong>
+                  {t("season.playing")} <strong>{season.nextEvening.lineup.map((p) => p.name).join(", ")}</strong>
                 </p>
               )}
               {season.nextEvening.error && !season.finaleReady && (
@@ -289,11 +300,11 @@ export default function SeasonClient({ id }: { id: string }) {
               )}
               {season.finaleReady ? (
                 <button className="btn-primary" disabled={busy} onClick={startFinale}>
-                  Seizoensfinale starten
+                  {t("season.startFinale")}
                 </button>
               ) : (
                 <button className="btn-primary" disabled={busy || season.nextEvening.error !== null} onClick={startEvening}>
-                  Avond starten
+                  {t("season.startEvening")}
                 </button>
               )}
             </div>
@@ -301,9 +312,9 @@ export default function SeasonClient({ id }: { id: string }) {
 
           {season.status === "REGULAR" && (
             <div className="card flex flex-col gap-2">
-              <h2 className="font-extrabold dark:text-slate-100">Wachtrij</h2>
+              <h2 className="font-extrabold dark:text-slate-100">{t("season.queue")}</h2>
               {queue.length === 0 ? (
-                <p className="text-sm text-slate-500 dark:text-slate-400">Niemand meer in de wachtrij.</p>
+                <p className="text-sm text-slate-500 dark:text-slate-400">{t("season.queueEmpty")}</p>
               ) : (
                 <ol className="flex flex-col gap-1 text-sm dark:text-slate-100">
                   {queue.map((m, i) => (
@@ -315,7 +326,7 @@ export default function SeasonClient({ id }: { id: string }) {
                       </span>
                       {managing && m.userId !== season.host.id && m.userId !== season.deputyHost?.id && (
                         <button className="text-xs text-red-500 hover:underline" disabled={busy} onClick={() => removeMember(m.userId)}>
-                          Verwijderen
+                          {t("season.remove")}
                         </button>
                       )}
                     </li>
@@ -324,24 +335,24 @@ export default function SeasonClient({ id }: { id: string }) {
               )}
               {managing && (
                 <>
-                  <p className="mt-2 text-xs font-bold uppercase tracking-wider text-slate-400">Lid toevoegen</p>
+                  <p className="mt-2 text-xs font-bold uppercase tracking-wider text-slate-400">{t("season.addMember")}</p>
                   <div className="flex flex-wrap gap-2">
                     {season.isHost && !byId.has(season.host.id) && (
                       <button className="btn-secondary !px-3 !py-1 !text-sm" disabled={busy} onClick={() => addMember(season.host.id)}>
-                        + Ikzelf
+                        {t("season.addMyself")}
                       </button>
                     )}
                     <button className="btn-secondary !px-3 !py-1 !text-sm" disabled={busy} onClick={() => setPickerOpen(true)}>
-                      + Vrienden toevoegen
+                      {t("season.addFriends")}
                     </button>
                   </div>
                   <FriendPicker
                     open={pickerOpen}
                     onClose={() => setPickerOpen(false)}
-                    title="Leden toevoegen"
+                    title={t("season.addMembersTitle")}
                     subtitle={season.name}
-                    inviteLabel="Voeg toe"
-                    joinedLabel="Lid"
+                    inviteLabel={t("season.addLabel")}
+                    joinedLabel={t("season.memberLabel")}
                     onInvite={(friend) => addMember(friend.id)}
                     stateFor={(id) => (byId.has(id) ? "joined" : "invite")}
                   />
@@ -352,16 +363,16 @@ export default function SeasonClient({ id }: { id: string }) {
 
           {season.isHost && season.status !== "FINISHED" && (
             <div className="card flex flex-col gap-3">
-              <h2 className="font-extrabold dark:text-slate-100">Host</h2>
+              <h2 className="font-extrabold dark:text-slate-100">{t("lobby.host")}</h2>
               <label className="flex flex-col gap-1 text-sm dark:text-slate-200">
-                Vaste vervangende host
+                {t("season.deputyHost")}
                 <select
                   className="input"
                   value={season.deputyHost?.id ?? ""}
                   disabled={busy}
                   onChange={(e) => setRoles({ deputyHostId: e.target.value || null })}
                 >
-                  <option value="">Geen</option>
+                  <option value="">{t("season.none_")}</option>
                   {season.members
                     .filter((m) => m.userId !== season.host.id)
                     .map((m) => (
@@ -372,14 +383,14 @@ export default function SeasonClient({ id }: { id: string }) {
                 </select>
               </label>
               <label className="flex flex-col gap-1 text-sm dark:text-slate-200">
-                Hostrol overdragen aan
+                {t("season.transferTo")}
                 <select
                   className="input"
                   value=""
                   disabled={busy}
                   onChange={(e) => e.target.value && setRoles({ hostId: e.target.value })}
                 >
-                  <option value="">Kies een lid...</option>
+                  <option value="">{t("season.chooseMember")}</option>
                   {season.members
                     .filter((m) => m.userId !== season.host.id)
                     .map((m) => (
@@ -390,7 +401,7 @@ export default function SeasonClient({ id }: { id: string }) {
                 </select>
               </label>
               <p className="text-xs text-slate-500 dark:text-slate-400">
-                Ben je er een avond niet? De vervangende host kan dan de avond starten. De host kan ook zelf meespelen.
+                {t("season.hostHint")}
               </p>
             </div>
           )}
