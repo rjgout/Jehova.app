@@ -41,11 +41,17 @@ const KIND_ICON: Record<ActivityItem["kind"], string> = {
 export default function ActiveGamesBanner() {
   const [status, setStatus] = useState<ActivityStatus | null>(null);
   const [error, setError] = useState<string | null>(null);
+  // Voorkomt dubbel annuleren terwijl het verzoek nog loopt.
+  const [cancelling, setCancelling] = useState<string | null>(null);
 
   function reload() {
+    void load();
+  }
+
+  function load() {
     // no-store: de API stuurt geen cacheheaders mee, en een geïnstalleerde
     // webapp mag hier nooit een oud antwoord uit zijn HTTP-cache gebruiken.
-    fetch("/api/activity-status", { cache: "no-store" })
+    return fetch("/api/activity-status", { cache: "no-store" })
       .then(async (r) => {
         if (!r.ok) throw new Error(`fout ${r.status}`);
         return r.json();
@@ -96,11 +102,25 @@ export default function ActiveGamesBanner() {
     window.location.assign(item.link);
   }
 
-  function cancelGame(code: string) {
-    if (!window.confirm("Dit spel beëindigen? Dit kan niet ongedaan worden gemaakt.")) return;
-    // De banner ververst zichzelf pas via het "game_cancelled"-event
-    // hierboven, zodra de server het spel écht heeft verwijderd.
-    getSocket().emit("cancel_game", { code });
+  async function cancelInvite(item: ActivityItem) {
+    if (item.kind === "live") {
+      if (!window.confirm("Dit spel beëindigen? Dit kan niet ongedaan worden gemaakt.")) return;
+      // De banner ververst zichzelf pas via het "game_cancelled"-event
+      // hierboven, zodra de server het spel écht heeft verwijderd.
+      getSocket().emit("cancel_game", { code: item.code });
+      return;
+    }
+    if (!window.confirm(`De uitnodiging aan ${item.opponentName} annuleren?`)) return;
+    setCancelling(item.id);
+    const url = item.kind === "scrabble" ? `/api/scrabble/${item.id}/cancel` : `/api/challenges/${item.id}/cancel`;
+    const response = await fetch(url, { method: "POST" }).catch(() => null);
+    if (!response?.ok) {
+      // Meestal: de ander heeft net geaccepteerd. Toon dan de actuele stand.
+      const data = await response?.json().catch(() => null);
+      window.alert(data?.error ?? "Annuleren is niet gelukt.");
+    }
+    await load();
+    setCancelling(null);
   }
 
   const heading = <h2 className="text-sm font-extrabold text-slate-700 dark:text-slate-200">Actieve spellen</h2>;
@@ -137,12 +157,6 @@ export default function ActiveGamesBanner() {
       </div>
     );
   }
-
-  // Live-uitnodigingen krijgen een eigen regel mét een knop om te
-  // beëindigen (zie cancelGame) — anders dan Uitdagingen/Woordspel kan een
-  // live-lobby anders eindeloos op een reactie blijven wachten.
-  const liveInvitesSent = invitesSent.filter((i) => i.kind === "live");
-  const otherInvitesSent = invitesSent.filter((i) => i.kind !== "live");
 
   return (
     <div className="card flex flex-col gap-2 !py-3">
@@ -212,26 +226,36 @@ export default function ActiveGamesBanner() {
         </div>
       )}
 
-      {liveInvitesSent.length > 0 && (
-        <div className="flex flex-col gap-1">
-          {liveInvitesSent.map((item) => (
-            <div key={`live-${item.id}-${item.opponentName}`} className="flex items-center justify-between gap-2 text-xs text-slate-400 dark:text-slate-500">
-              <span className="flex items-center gap-1.5">
-                {item.opponentId && <UserAvatar id={item.opponentId} handle={item.opponentName ?? ""} size="xs" />}
+      {invitesSent.length > 0 && (
+        <div className="flex flex-wrap gap-2">
+          {invitesSent.map((item) => (
+            // Een verstuurde uitnodiging blijft anders eindeloos wachten; daarom
+            // naast de knop naar het spel altijd een knop om in te trekken.
+            <div key={`sent-${item.kind}-${item.id}-${item.opponentId}`} className="flex items-stretch">
+              <Link
+                href={item.link}
+                onClick={(event) => openGame(item, event)}
+                className="btn-secondary !rounded-r-none !pr-3"
+              >
+                {item.opponentId ? (
+                  <UserAvatar id={item.opponentId} handle={item.opponentName ?? ""} size="xs" className="mr-1.5 -my-1" />
+                ) : (
+                  <span className="mr-1.5">{KIND_ICON[item.kind]}</span>
+                )}
                 Wachten op {item.opponentName} — {item.label}
-              </span>
-              <button className="text-red-500 dark:text-red-400 font-semibold hover:underline" onClick={() => cancelGame(item.code!)}>
-                Beëindig
+              </Link>
+              <button
+                onClick={() => cancelInvite(item)}
+                disabled={cancelling === item.id}
+                aria-label={item.kind === "live" ? `Spel met ${item.opponentName} beëindigen` : `Uitnodiging aan ${item.opponentName} annuleren`}
+                title={item.kind === "live" ? "Beëindigen" : "Annuleren"}
+                className="btn-secondary !rounded-l-none !border-l-0 !px-3 !text-red-500 dark:!text-red-400"
+              >
+                ✕
               </button>
             </div>
           ))}
         </div>
-      )}
-
-      {otherInvitesSent.length > 0 && (
-        <p className="text-xs text-slate-400 dark:text-slate-500">
-          Wachten op reactie: {otherInvitesSent.map((i) => i.opponentName).join(", ")}
-        </p>
       )}
     </div>
   );
