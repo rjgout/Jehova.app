@@ -99,6 +99,14 @@ async function syncReadingLessons(
   });
 }
 
+// Collectienamen zoals ze midden in een zin staan ("Lees de Leer en
+// Verbonden"). Letterlijke id's: contentCollections.ts trekt de
+// databaseclient van Next mee, en dit bestand draait ook los via tsx.
+const NAME_IN_SENTENCE: Record<string, string> = {
+  content_dc: "de Leer en Verbonden",
+  content_pgp: "de Parel van Grote Waarde",
+};
+
 interface ScriptureCollection {
   id: string;
   slug: string;
@@ -226,7 +234,7 @@ export async function syncCourses(db: PrismaClient): Promise<void> {
       frontToBack: `Eén vaste volgorde${across} ${term.singular} na ${term.singular}.`,
       // "Afdeling voor afdeling" bij de Leer en Verbonden.
       frontToBackName: `${capitalize(term.singular)} voor ${term.singular}`,
-      readingLessons: `Lees ${collection.name} helemaal door, in korte stappen van ongeveer 5 tot 10 verzen.`,
+      readingLessons: `Lees ${NAME_IN_SENTENCE[collection.id] ?? collection.name} helemaal door, in korte stappen van ongeveer 5 tot 10 verzen.`,
     });
   }
 
