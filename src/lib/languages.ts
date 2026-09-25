@@ -27,7 +27,7 @@ export interface Language {
 
 export const LANGUAGES: Language[] = [
   { code: "nl", nativeName: "Nederlands", badge: "NL", churchCode: "nld", intlLocale: "nl-NL", uiReady: true },
-  { code: "en", nativeName: "English", badge: "EN", churchCode: "eng", intlLocale: "en-US", uiReady: false },
+  { code: "en", nativeName: "English", badge: "EN", churchCode: "eng", intlLocale: "en-US", uiReady: true },
   { code: "de", nativeName: "Deutsch", badge: "DE", churchCode: "deu", intlLocale: "de-DE", uiReady: false },
   { code: "fr", nativeName: "Français", badge: "FR", churchCode: "fra", intlLocale: "fr-FR", uiReady: false },
 ];

@@ -11,6 +11,7 @@ import { verifyEmailTemplate } from "@/lib/emailTemplates";
 import { getT } from "@/lib/i18n";
 import { getBaseUrl } from "@/lib/baseUrl";
 import { FRONT_TO_BACK_SLUG, subscribeUserToCourse } from "@/lib/courses";
+import { BOFM_WORK, resolveEditionId } from "@/lib/contentCollections";
 import { becomeFriendsViaInvite } from "@/lib/friendInvite";
 import { apiError, apiErrorText } from "@/lib/apiError";
 
@@ -53,7 +54,16 @@ export async function POST(req: NextRequest) {
   // Standaard-cursus voor nieuwe accounts: "van voor naar achter". Bestaat
   // die nog niet (content nog niet geïmporteerd), dan blijft dit gewoon leeg
   // — dashboard/page.tsx vangt dat later alsnog af.
-  const defaultCourse = await prisma.course.findUnique({ where: { slug: FRONT_TO_BACK_SLUG } });
+  // Taal van het apparaat (zie requestLanguage): bepaalt de taal van de app
+  // en welke uitgave iemand leest. De startcursus is die van die uitgave.
+  const language = await anonymousLanguage();
+  const editionId = await resolveEditionId(BOFM_WORK, language);
+  const edition = editionId
+    ? await prisma.contentCollection.findUnique({ where: { id: editionId }, select: { language: true } })
+    : null;
+  const defaultCourse =
+    (editionId && (await prisma.course.findFirst({ where: { type: "FRONT_TO_BACK", contentCollectionId: editionId } }))) ||
+    (await prisma.course.findUnique({ where: { slug: FRONT_TO_BACK_SLUG } }));
 
   // handle+discriminator is uniek, handle alleen niet — bij een botsing
   // (1 op 100 voor exact dezelfde combinatie) proberen we gewoon een
@@ -70,7 +80,8 @@ export async function POST(req: NextRequest) {
           isAdmin: isFirstUser,
           activeCourseId: defaultCourse?.id,
           // De taal waarin de bezoeker de app tot nu toe zag (zie requestLanguage).
-          uiLanguage: await anonymousLanguage(),
+          uiLanguage: language,
+          contentLanguage: edition?.language ?? "nl",
         },
       });
 
