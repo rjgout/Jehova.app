@@ -54,7 +54,8 @@ export function useReadAloudPlayer(): ReadAloudPlayerContextValue {
   return ctx;
 }
 
-function getVoice(language?: string): SpeechSynthesisVoice | null {
+/** Computerstem voor een taal; bij Nederlands de stem die in het profiel gekozen is. */
+export function getVoice(language?: string): SpeechSynthesisVoice | null {
   const { code, intlLocale } = getLanguage(language);
   if (code !== "nl") {
     // Andere talen: de stemkeuze in het profiel geldt alleen voor Nederlands.

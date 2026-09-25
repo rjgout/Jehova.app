@@ -4,7 +4,15 @@ import { dayKey, weekStartKey } from "@/lib/dates";
 import { getAcceptedFriendIds } from "@/lib/presence";
 import { completeAlleskennerSolo } from "@/lib/streak";
 import type { AlleskennerDataFor } from "@/lib/alleskenner/content";
-import { ensureAlleskennerContent, interleave, markSeen, pickItems } from "@/lib/alleskenner/pool";
+import {
+  alleskennerLanguageFor,
+  alleskennerLanguages,
+  ensureAlleskennerContent,
+  interleave,
+  markSeen,
+  pickItems,
+} from "@/lib/alleskenner/pool";
+import { DEFAULT_LANGUAGE } from "@/lib/languages";
 
 // De Alleskenner alleen spelen (zie docs/ALLESKENNER.md, "Alleen spelen"). Het
 // spel zelf draait in dezelfde spelserver als een quizavond
@@ -80,14 +88,20 @@ async function chooseDailyItems(): Promise<SoloItems> {
   };
 }
 
+// Oefenen: alleen onderdelen die in de taal van de speler bestaan. De
+// Alleskenner van de dag is voor iedereen dezelfde rij; daar valt een speler
+// in een andere taal bij een onvertaald onderdeel terug op het Nederlands.
 async function choosePracticeItems(userId: string): Promise<SoloItems> {
-  const listen = await pickItems("QUESTION", 1, [userId], (d) => Boolean(d.listen));
-  const normal = await pickItems("QUESTION", SOLO_QUESTIONS - listen.length, [userId], (d) => !d.listen);
+  const user = await prisma.user.findUnique({ where: { id: userId }, select: { contentLanguage: true } });
+  const language = alleskennerLanguageFor(user?.contentLanguage, await alleskennerLanguages());
+  const languages = language === DEFAULT_LANGUAGE ? [] : [language];
+  const listen = await pickItems("QUESTION", 1, [userId], (d) => Boolean(d.listen), languages);
+  const normal = await pickItems("QUESTION", SOLO_QUESTIONS - listen.length, [userId], (d) => !d.listen, languages);
   const questions = shuffle(normal.map((q) => q.id));
   // De luistervraag nooit als eerste, net als bij een quizavond.
   if (listen[0]) questions.splice(1 + Math.floor(Math.random() * Math.max(1, questions.length - 1)), 0, listen[0].id);
   const ids = async <K extends AlleskennerItemKind>(kind: K, count: number, accept?: (d: AlleskennerDataFor<K>) => boolean) =>
-    (await pickItems(kind, count, [userId], accept)).map((i) => i.id);
+    (await pickItems(kind, count, [userId], accept, languages)).map((i) => i.id);
   return {
     questions,
     doors: await ids("TOPIC", SOLO_DOORS, (d) => d.answers.length >= 4),

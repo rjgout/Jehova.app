@@ -860,7 +860,7 @@ export const en: PartialMessages = {
     endTurnOf: "End {name}'s turn (pass)",
     passTurn: "PASS",
     clockRunning: "⏱ clock running",
-    onTurn: "their turn",
+    onTurn: "up now",
     yourTeam: "your team",
     seconds: "seconds",
     yourPoints: "Your personal points:",

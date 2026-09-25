@@ -2,7 +2,8 @@
 
 import { useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
 import { getSocket } from "@/lib/socketClient";
-import { getDutchVoices, getSelectedDutchVoice } from "@/lib/readAloud";
+import { getVoice } from "@/lib/readAloudPlayerContext";
+import { getLanguage } from "@/lib/languages";
 import { beginSpeechPlayback, endSpeechPlayback } from "@/lib/speechAudioSession";
 import type { AkGridCell, AkPhase, AkStateView } from "@/lib/alleskenner/types";
 import { useT } from "@/components/I18nProvider";
@@ -42,8 +43,8 @@ function useNow(active: boolean) {
 
 let speechId = 0;
 
-/** Leest een vers voor met een Nederlandse stem (alleen op één apparaat, zie hieronder). */
-function speak(text: string, onDone?: () => void) {
+/** Leest een vers voor in de taal van deze speler (alleen op één apparaat, zie hieronder). */
+function speak(text: string, language: string, onDone?: () => void) {
   if (typeof window === "undefined" || !("speechSynthesis" in window)) {
     // Geen spraak op dit apparaat: niet eeuwig laten wachten op het voorlezen.
     onDone?.();
@@ -51,8 +52,8 @@ function speak(text: string, onDone?: () => void) {
   }
   window.speechSynthesis.cancel();
   const utterance = new SpeechSynthesisUtterance(text);
-  utterance.lang = "nl-NL";
-  const voice = getSelectedDutchVoice() ?? getDutchVoices()[0];
+  utterance.lang = getLanguage(language).intlLocale;
+  const voice = getVoice(language);
   if (voice) utterance.voice = voice;
   utterance.rate = 0.95;
   // cancel() hierboven kan het vorige vers pas later laten afbreken: alleen
@@ -519,8 +520,8 @@ function Round369({ state, can }: { state: AkStateView; can: Abilities }) {
     const key = `${q.number}`;
     if (spokenFor.current === key) return;
     spokenFor.current = key;
-    speak(q.listenText, () => socket.emit("ak:listen_done", { number: q.number }));
-  }, [q.listenText, q.number, q.listening, speaker, socket]);
+    speak(q.listenText, state.me.language, () => socket.emit("ak:listen_done", { number: q.number }));
+  }, [q.listenText, q.number, q.listening, speaker, socket, state.me.language]);
   const activeName = state.contestants.find((c) => c.id === state.activeId)?.name;
 
   return (
@@ -546,7 +547,7 @@ function Round369({ state, can }: { state: AkStateView; can: Abilities }) {
           {(speaker || !q.listening) && (
             <button
               className="btn-secondary !px-3 !py-1.5 !text-xs shrink-0"
-              onClick={() => speak(q.listenText!, q.listening && speaker ? listenDone : undefined)}
+              onClick={() => speak(q.listenText!, state.me.language, q.listening && speaker ? listenDone : undefined)}
             >
               {q.listening ? t("akGame.readAloud") : t("akGame.again")}
             </button>

@@ -1,6 +1,7 @@
 import bomContent from "./bomContent.json";
 import bomChapterHeadings from "./bomChapterHeadings.json";
 import bomContentEn from "./bomContent.en.json";
+import { alleskennerItemsEn } from "./alleskennerContent.en";
 import { BOOK_KEYS_BY_SLUG } from "./bookKeys";
 import type { SeedBook } from "./content";
 import { containsWord, headingParts } from "./alleskennerGenerated";
@@ -221,7 +222,7 @@ function translateItem(edition: Edition, item: AlleskennerSeedItem): unknown | n
     if (!nl || !own || !bookName || nl.length !== own.length || own.some((p) => p.length > 160)) return null;
     const answers = data.answers.map((a) => own[nl.indexOf(a.text)]);
     const distractors = data.distractors.map((d) => mapPart(edition, d)?.text).filter((d): d is string => Boolean(d) && !own.includes(d!));
-    if (answers.some((a) => !a) || distractors.length < 5) return null;
+    if (answers.some((a) => !a) || distractors.length < 6) return null;
     return {
       ...data,
       title: `${bookName} ${match[2]}`,
@@ -231,7 +232,7 @@ function translateItem(edition: Edition, item: AlleskennerSeedItem): unknown | n
       distractors,
     } satisfies MemoryData;
   }
-  if (item.id.startsWith("gen-galerij-citaat-")) {
+  if (item.kind === "GALLERY") {
     const data = item.data as GalleryData;
     if (data.variant !== "QUOTES") return null;
     const refs = data.refs.map((r) => mapVerse(edition, r)?.ref);
@@ -264,14 +265,18 @@ export function translateGeneratedItems(
   return result;
 }
 
-// Uitgaven waarvoor vertalingen gemaakt worden. Duits en Frans komen erbij
-// zodra die uitgaven in de app staan (scripts/church-text/fetch_scripture.py).
-const EDITIONS: [LanguageCode, SeedBook[]][] = [["en", bomContentEn as SeedBook[]]];
+// Uitgaven waarvoor vertalingen gemaakt worden, met de handgeschreven
+// vertalingen per ID. Duits en Frans komen erbij zodra die uitgaven in de app
+// staan (scripts/church-text/fetch_scripture.py).
+const EDITIONS: [LanguageCode, SeedBook[], Record<string, unknown>][] = [["en", bomContentEn as SeedBook[], alleskennerItemsEn]];
 
 let cache: AlleskennerTranslationSeed[] | null = null;
 
 /** Alle vertalingen van Alleskenner-onderdelen (eenmaal berekend per proces). */
 export function alleskennerTranslations(items: AlleskennerSeedItem[]): AlleskennerTranslationSeed[] {
-  cache ??= EDITIONS.flatMap(([language, books]) => translateGeneratedItems(items, language, books));
+  cache ??= EDITIONS.flatMap(([language, books, handwritten]) => [
+    ...translateGeneratedItems(items, language, books),
+    ...items.flatMap((item) => (item.id in handwritten ? [{ itemId: item.id, language, data: handwritten[item.id] }] : [])),
+  ]);
   return cache;
 }

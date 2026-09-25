@@ -153,6 +153,28 @@ de minste seconden; na een pas of als je klaar bent, mag de volgende aanvullen.
   tegen de verzen in de database.
 - Geen merknamen van bestaande tv-programma's in de app.
 
+## Talen
+
+- Spelers in verschillende contenttalen spelen samen op **dezelfde vragen**.
+  Elk onderdeel kan een vertaling per taal hebben (`AlleskennerItemTranslation`,
+  zelfde vorm als het Nederlandse onderdeel, opties in dezelfde volgorde).
+- Automatisch samengestelde onderdelen worden omgezet via hun bron (kopdeel,
+  vers of boek in de uitgave van die taal), nooit door Nederlandse tekst te
+  vertalen: `prisma/alleskennerTranslate.ts`. Past de bron niet, dan heeft
+  dat onderdeel in die taal geen vertaling. Handgeschreven vertalingen staan
+  per ID in `prisma/alleskennerContent.<taal>.ts`, met letterlijke citaten uit
+  die uitgave; `npm run alleskenner:check` controleert ze ook.
+- De server rekent intern met de Nederlandse teksten en vertaalt per kijker
+  via een woordenboek (`src/lib/alleskenner/localize.ts`); wat een speler in
+  de eigen taal aantikt, gaat terug naar het Nederlands. Getypte antwoorden
+  zijn goed in elke taal van het spel.
+- Speelt er iemand in een andere taal mee (quizavond, of alleen oefenen), dan
+  kiest het spel alleen onderdelen die in die taal bestaan; een Nederlands
+  spel verandert niet. De Alleskenner van de dag is voor iedereen dezelfde rij;
+  een onvertaald onderdeel ziet een speler in een andere taal in het Nederlands.
+- Een onderdeel dat in de beheeromgeving is aangepast, gebruikt geen
+  vertalingen meer (die horen bij de oorspronkelijke tekst).
+
 ## Techniek
 
 - Een potje is een `LiveGame` met `mode = ALLESKENNER`, zodat uitnodigingen

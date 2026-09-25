@@ -140,7 +140,8 @@ export interface AkQuizmasterView {
 export interface AkStateView {
   code: string;
   phase: AkPhase;
-  me: { userId: string; role: AkRole; isHost: boolean; contestantId: string | null; actsForContestant: boolean };
+  // language: de taal waarin deze kijker speelt (voorlezen, zie src/lib/alleskenner/localize.ts).
+  me: { userId: string; role: AkRole; isHost: boolean; contestantId: string | null; actsForContestant: boolean; language: string };
   hostId: string;
   quizmasterId: string | null;
   length: AkLength;

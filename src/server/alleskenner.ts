@@ -7,12 +7,18 @@ import {
   answerMatches,
   bookOfRef,
   type GalleryData,
+  type MemoryData,
   type PuzzleData,
   type QuestionData,
   type TopicAnswer,
 } from "@/lib/alleskenner/content";
 import {
+  alleskennerLanguageFor,
+  alleskennerLanguages,
+  bookNamePairs,
+  editionCollectionId,
   ensureAlleskennerContent,
+  itemTranslations,
   itemsByIds,
   kidsStory,
   markSeen,
@@ -22,6 +28,17 @@ import {
   verseTextByRef,
   type PickedItem,
 } from "@/lib/alleskenner/pool";
+import {
+  addItemPairs,
+  addPair,
+  canonicalText,
+  emptyDictionary,
+  localizeFeedback,
+  localizeText,
+  type AkDictionary,
+} from "@/lib/alleskenner/localize";
+import type { AlleskennerItemKind } from "@prisma/client";
+import { DEFAULT_LANGUAGE } from "@/lib/languages";
 import {
   AK_369_POINTS,
   AK_369_THINK_MS,
@@ -202,6 +219,10 @@ interface Room {
   finale: (GridRound & { finalists: [string, string] }) | null;
   winnerId: string | null;
   feedback: AkStateView["feedback"];
+  // Taal waarin elke deelnemer speelt, en per taal (behalve Nederlands) het
+  // woordenboek van dit spel (zie src/lib/alleskenner/localize.ts).
+  languages: Map<string, string>;
+  dictionaries: Map<string, AkDictionary>;
   starting: boolean;
   lastTick: number;
   lastBroadcast: number;
@@ -218,6 +239,22 @@ function shuffle<T>(items: T[]): T[] {
     [copy[i], copy[j]] = [copy[j], copy[i]];
   }
   return copy;
+}
+
+function dictionaryFor(room: Room, userId: string): AkDictionary | null {
+  return room.dictionaries.get(room.languages.get(userId) ?? DEFAULT_LANGUAGE) ?? null;
+}
+
+/** Legt de speltaal van deze deelnemers vast (hun contenttaal, anders de terugvaltaal). */
+async function assignLanguages(room: Room, userIds: string[]) {
+  const available = await alleskennerLanguages();
+  const users = await prisma.user.findMany({ where: { id: { in: userIds } }, select: { id: true, contentLanguage: true } });
+  for (const user of users) room.languages.set(user.id, alleskennerLanguageFor(user.contentLanguage, available));
+}
+
+/** Talen van de deelnemers, behalve Nederlands: elk gekozen onderdeel moet daarin bestaan. */
+function roomLanguages(room: Room): string[] {
+  return [...new Set([...room.languages.values()].filter((l) => l !== DEFAULT_LANGUAGE))];
 }
 
 function nameOf(room: Room, userId: string): string {
@@ -305,7 +342,7 @@ function leaderOfActive(room: Room): string | null {
 
 // --- Weergave per deelnemer -------------------------------------------------
 
-function gridCells(room: Room, round: GridRound, viewerId: string, answerCount: number): AkGridCell[] | null {
+function gridCells(room: Room, round: GridRound, viewerId: string, answerCount: number, L: (text: string) => string): AkGridCell[] | null {
   const item = round.items[round.index];
   const showGrid = room.quizmasterId === null || room.teamMode || item.tapOnly;
   if (!showGrid) return null;
@@ -315,7 +352,7 @@ function gridCells(room: Room, round: GridRound, viewerId: string, answerCount: 
     const answerIndex = answers.findIndex((a) => a.text === text);
     const state: AkGridCell["state"] =
       answerIndex >= 0 && round.found[answerIndex] ? "found" : round.wrong.has(text) ? "wrong" : "open";
-    return { text, state, mine: mine?.has(text) ?? false };
+    return { text: L(text), state, mine: mine?.has(text) ?? false };
   });
 }
 
@@ -324,9 +361,9 @@ function currentGridItem(round: GridRound | null): GridItem | null {
   return round.items[round.index];
 }
 
-function foundTexts(round: GridRound): string[] {
+function foundTexts(round: GridRound, L: (text: string) => string): string[] {
   const item = round.items[round.index];
-  return round.foundOrder.map((f) => item.answers[f.index].text);
+  return round.foundOrder.map((f) => L(item.answers[f.index].text));
 }
 
 function buildView(room: Room, viewerId: string): AkStateView {
@@ -334,6 +371,10 @@ function buildView(room: Room, viewerId: string): AkStateView {
   const isQuizmaster = room.quizmasterId === viewerId;
   const showOptions = room.quizmasterId === null || room.teamMode;
   const myContestant = contestantOf(room, viewerId);
+  // Teksten van onderdelen in de taal van deze kijker; intern blijft alles Nederlands.
+  const dictionary = dictionaryFor(room, viewerId);
+  const L = (text: string) => localizeText(dictionary, text);
+  const Lmaybe = (text: string | null) => (text === null ? null : L(text));
 
   let r369: AkStateView["r369"] = null;
   if (room.phase === "R369" && room.r369 && room.r369.index < room.r369.items.length) {
@@ -343,13 +384,13 @@ function buildView(room: Room, viewerId: string): AkStateView {
       number,
       total: room.r369.items.length,
       isPointQuestion: number % 3 === 0,
-      prompt: current.data.prompt,
-      listenText: current.listenText,
-      options: showOptions ? current.data.options : null,
-      myPick: room.r369.picks.get(viewerId) ?? null,
-      wrongOptions: room.r369.wrongOptions,
+      prompt: L(current.data.prompt),
+      listenText: Lmaybe(current.listenText),
+      options: showOptions ? current.data.options.map(L) : null,
+      myPick: Lmaybe(room.r369.picks.get(viewerId) ?? null),
+      wrongOptions: room.r369.wrongOptions.map(L),
       listening: room.r369.listening,
-      reveal: room.r369.reveal ? { correct: room.r369.reveal.correct, answer: current.data.answer } : null,
+      reveal: room.r369.reveal ? { correct: room.r369.reveal.correct, answer: L(current.data.answer) } : null,
     };
   }
 
@@ -361,13 +402,13 @@ function buildView(room: Room, viewerId: string): AkStateView {
       number: state.owners.length,
       total: Math.min(state.items.length, room.contestants.length),
       choosing: state.choosing,
-      doors: state.items.map((it, index) => ({ index, subject: it.subject, taken: state.taken[index] })),
-      subject: item?.subject ?? null,
-      found: item ? foundTexts(state) : [],
+      doors: state.items.map((it, index) => ({ index, subject: L(it.subject), taken: state.taken[index] })),
+      subject: item ? L(item.subject) : null,
+      found: item ? foundTexts(state, L) : [],
       answerCount: OPEN_DEUR_ANSWERS,
-      grid: item && !state.revealed ? gridCells(room, state, viewerId, OPEN_DEUR_ANSWERS) : null,
+      grid: item && !state.revealed ? gridCells(room, state, viewerId, OPEN_DEUR_ANSWERS, L) : null,
       tapOnly: item?.tapOnly ?? false,
-      revealed: item && state.revealed ? item.answers.slice(0, OPEN_DEUR_ANSWERS).map((a) => a.text) : null,
+      revealed: item && state.revealed ? item.answers.slice(0, OPEN_DEUR_ANSWERS).map((a) => L(a.text)) : null,
     };
   }
 
@@ -378,9 +419,9 @@ function buildView(room: Room, viewerId: string): AkStateView {
     puzzle = {
       number: room.puzzle.index + 1,
       total: room.puzzle.items.length,
-      clues: current.clues.map((c) => ({ text: c.text, group: found[c.group] || revealed ? c.group : null })),
+      clues: current.clues.map((c) => ({ text: L(c.text), group: found[c.group] || revealed ? c.group : null })),
       found: current.data.groups
-        .map((g, group) => ({ group, answer: g.answer }))
+        .map((g, group) => ({ group, answer: L(g.answer) }))
         .filter(({ group }) => found[group] || revealed),
       revealed,
       myGuesses: room.teamMode ? (room.puzzle.guesses.get(viewerId) ?? []) : null,
@@ -399,15 +440,15 @@ function buildView(room: Room, viewerId: string): AkStateView {
       variant: current.variant,
       itemIndex: entryIndex,
       itemCount: current.entries.length,
-      item: entry ? { text: entry.text, image: entry.image } : null,
-      options: entry && showOptions ? entry.options : null,
-      myPick: entryIndex >= 0 ? (state.picks.get(viewerId)?.get(entryIndex) ?? null) : null,
+      item: entry ? { text: Lmaybe(entry.text), image: entry.image } : null,
+      options: entry && showOptions ? entry.options.map(L) : null,
+      myPick: entryIndex >= 0 ? Lmaybe(state.picks.get(viewerId)?.get(entryIndex) ?? null) : null,
       results: current.entries.map((e, i) => ({
         found: state.found[i],
-        answer: state.found[i] || state.revealed ? e.answer : null,
+        answer: state.found[i] || state.revealed ? L(e.answer) : null,
       })),
       revealed: state.revealed
-        ? current.entries.map((e, i) => ({ text: e.text, image: e.image, answer: e.answer, found: state.found[i] }))
+        ? current.entries.map((e, i) => ({ text: Lmaybe(e.text), image: e.image, answer: L(e.answer), found: state.found[i] }))
         : null,
     };
   }
@@ -420,15 +461,15 @@ function buildView(room: Room, viewerId: string): AkStateView {
       memory = {
         number: state.owners.length,
         total: Math.min(state.items.length, room.contestants.length),
-        title: item.subject,
-        passage: item.passage ?? "",
+        title: L(item.subject),
+        passage: L(item.passage ?? ""),
         reading: state.reading,
-        verses: state.reading ? (item.verses ?? []) : null,
+        verses: state.reading ? (item.verses ?? []).map((v) => ({ number: v.number, text: L(v.text) })) : null,
         nextValue: (state.foundOrder.length + 1) * AK_MEMORY_STEP,
-        found: state.foundOrder.map((f) => ({ text: item.answers[f.index].text, value: f.value })),
+        found: state.foundOrder.map((f) => ({ text: L(item.answers[f.index].text), value: f.value })),
         answerCount: MEMORY_ANSWERS,
-        grid: !state.reading && !state.revealed ? gridCells(room, state, viewerId, MEMORY_ANSWERS) : null,
-        revealed: state.revealed ? item.answers.slice(0, MEMORY_ANSWERS).map((a) => a.text) : null,
+        grid: !state.reading && !state.revealed ? gridCells(room, state, viewerId, MEMORY_ANSWERS, L) : null,
+        revealed: state.revealed ? item.answers.slice(0, MEMORY_ANSWERS).map((a) => L(a.text)) : null,
       };
     }
   }
@@ -441,12 +482,12 @@ function buildView(room: Room, viewerId: string): AkStateView {
       finale = {
         number: state.index + 1,
         total: state.items.length,
-        subject: item.subject,
-        found: foundTexts(state),
+        subject: L(item.subject),
+        found: foundTexts(state, L),
         answerCount: Math.min(FINALE_ANSWERS, item.answers.length),
-        grid: !state.revealed ? gridCells(room, state, viewerId, FINALE_ANSWERS) : null,
+        grid: !state.revealed ? gridCells(room, state, viewerId, FINALE_ANSWERS, L) : null,
         tapOnly: item.tapOnly ?? false,
-        revealed: state.revealed ? item.answers.slice(0, FINALE_ANSWERS).map((a) => a.text) : null,
+        revealed: state.revealed ? item.answers.slice(0, FINALE_ANSWERS).map((a) => L(a.text)) : null,
       };
     }
   }
@@ -466,18 +507,25 @@ function buildView(room: Room, viewerId: string): AkStateView {
     const gridItem = gridRound ? currentGridItem(gridRound.round) : null;
     const g = room.phase === "GALLERY" && room.gallery ? room.gallery : null;
     const galleryEntry = g && g.index >= 0 && g.index < g.items.length ? g.items[g.index].entries[g.turnEntries[g.turnPos]] : null;
+    // De quizmaster beoordeelt in de eigen taal: antwoord en andere geldige formuleringen daarin.
+    const acceptFor = (answer: string, accept: string[]) => dictionary?.accept.get(answer)?.slice(1) ?? accept;
     quizmaster = {
-      answer369: q?.data.answer ?? null,
+      answer369: q ? L(q.data.answer) : null,
       puzzleGroups: p
-        ? p.data.groups.map((group, i) => ({ answer: group.answer, accept: group.accept, clues: group.clues, found: room.puzzle!.found[i] }))
+        ? p.data.groups.map((group, i) => ({
+            answer: L(group.answer),
+            accept: acceptFor(group.answer, group.accept),
+            clues: group.clues.map(L),
+            found: room.puzzle!.found[i],
+          }))
         : null,
       answers:
         gridRound && gridItem
           ? gridItem.answers
               .slice(0, gridRound.count)
-              .map((a, i) => ({ text: a.text, accept: a.accept, found: gridRound.round.found[i] }))
+              .map((a, i) => ({ text: L(a.text), accept: acceptFor(a.text, a.accept), found: gridRound.round.found[i] }))
           : null,
-      galleryAnswer: galleryEntry?.answer ?? null,
+      galleryAnswer: galleryEntry ? L(galleryEntry.answer) : null,
     };
   }
 
@@ -498,6 +546,7 @@ function buildView(room: Room, viewerId: string): AkStateView {
       isHost: room.hostId === viewerId,
       contestantId: myContestant?.id ?? null,
       actsForContestant: myContestant?.leaderId === viewerId,
+      language: room.languages.get(viewerId) ?? DEFAULT_LANGUAGE,
     },
     hostId: room.hostId,
     quizmasterId: room.quizmasterId,
@@ -549,7 +598,7 @@ function buildView(room: Room, viewerId: string): AkStateView {
     solo: room.solo
       ? { mode: room.solo.mode, xpEarned: room.solo.result?.xpEarned ?? null, rank: room.solo.result?.rank ?? null }
       : null,
-    feedback: room.feedback,
+    feedback: room.feedback ? { ...room.feedback, text: localizeFeedback(dictionary, room.feedback.text) } : null,
   };
 }
 
@@ -705,6 +754,61 @@ async function buildGallery(id: string, data: GalleryData) {
   return { id, variant: data.variant, entries };
 }
 
+/**
+ * Woordenboeken per speltaal voor de gekozen onderdelen. Verzen (luistervraag,
+ * citaten, passage) komen uit de uitgave van die taal: dezelfde verwijzing,
+ * de tekst zoals die daar staat.
+ */
+async function buildDictionaries(room: Room, content: GameContent) {
+  room.dictionaries = new Map();
+  const languages = roomLanguages(room);
+  if (languages.length === 0) return;
+  const items: { id: string; kind: AlleskennerItemKind; data: unknown }[] = [
+    ...content.questions.map((i) => ({ ...i, kind: "QUESTION" as const })),
+    ...[...content.doors, ...content.finaleTopics].map((i) => ({ ...i, kind: "TOPIC" as const })),
+    ...content.puzzles.map((i) => ({ ...i, kind: "PUZZLE" as const })),
+    ...content.galleries.map((i) => ({ ...i, kind: "GALLERY" as const })),
+    ...content.memories.map((i) => ({ ...i, kind: "MEMORY" as const })),
+  ];
+  const translations = await itemTranslations(
+    items.map((i) => i.id),
+    languages
+  );
+  for (const language of languages) {
+    const dictionary = emptyDictionary();
+    const collectionId = await editionCollectionId(language);
+    for (const [nl, own] of await bookNamePairs(collectionId)) addPair(dictionary, nl, own);
+    for (const item of items) {
+      const translated = translations.get(language)?.get(item.id);
+      if (!translated) continue;
+      addItemPairs(dictionary, item.kind, item.data, translated);
+      if (item.kind === "QUESTION") {
+        const nl = item.data as QuestionData;
+        const own = translated as QuestionData;
+        if (nl.listen && own.listen) {
+          addPair(dictionary, await verseTextByRef(nl.listen.ref), await verseTextByRef(own.listen.ref, collectionId));
+        }
+      } else if (item.kind === "GALLERY") {
+        const nl = item.data as GalleryData;
+        const own = translated as GalleryData;
+        if (nl.variant === "QUOTES" && own.variant === "QUOTES") {
+          for (let i = 0; i < nl.refs.length; i++) {
+            addPair(dictionary, await verseTextByRef(nl.refs[i]), own.refs[i] ? await verseTextByRef(own.refs[i], collectionId) : null);
+          }
+        }
+      } else if (item.kind === "MEMORY") {
+        const nl = item.data as MemoryData;
+        const own = translated as MemoryData;
+        if (!nl.readText && !own.readText) {
+          const [nlVerses, ownVerses] = await Promise.all([passageVerses(nl.passage), passageVerses(own.passage, collectionId)]);
+          nlVerses.forEach((verse, i) => addPair(dictionary, verse.text, ownVerses[i]?.text));
+        }
+      }
+    }
+    room.dictionaries.set(language, dictionary);
+  }
+}
+
 interface GameContent {
   questions: PickedItem<"QUESTION">[]; // in speelvolgorde
   doors: PickedItem<"TOPIC">[];
@@ -721,10 +825,14 @@ async function startGame(room: Room): Promise<string | null> {
   const full = room.length === "FULL";
 
   await ensureAlleskennerContent();
+  // Speltaal van iedereen die er nu is; spelen er mensen in een andere taal
+  // mee, dan kiezen we alleen onderdelen die ook in hun taal bestaan.
+  await assignLanguages(room, [...room.participants.keys()]);
+  const languages = roomLanguages(room);
   // Binnen een seizoen komt niets terug: alle leden tellen mee, ook wie er vanavond niet is.
   const everyone = [...new Set([...room.participants.keys(), ...(room.season?.memberIds ?? [])])];
-  const listen = await pickItems("QUESTION", 1, everyone, (d) => Boolean(d.listen));
-  const normal = await pickItems("QUESTION", QUESTIONS_369 - listen.length, everyone, (d) => !d.listen);
+  const listen = await pickItems("QUESTION", 1, everyone, (d) => Boolean(d.listen), languages);
+  const normal = await pickItems("QUESTION", QUESTIONS_369 - listen.length, everyone, (d) => !d.listen, languages);
   if (normal.length + listen.length < 3) return "Er zijn nog te weinig vragen om te spelen.";
   // Handgeschreven vragen komen bij het kiezen voorop (zie pickItems); de
   // volgorde in het spel zelf is willekeurig.
@@ -732,16 +840,16 @@ async function startGame(room: Room): Promise<string | null> {
   // De luistervraag nooit als eerste: dan is iedereen er nog niet klaar voor.
   if (listen[0]) questions.splice(1 + Math.floor(Math.random() * Math.max(1, questions.length - 1)), 0, listen[0]);
 
-  const puzzles = await pickItems("PUZZLE", n, everyone);
-  const topics = await pickItems("TOPIC", (full ? n : 0) + FINALE_TOPICS, everyone, (d) => d.answers.length >= FINALE_ANSWERS);
+  const puzzles = await pickItems("PUZZLE", n, everyone, undefined, languages);
+  const topics = await pickItems("TOPIC", (full ? n : 0) + FINALE_TOPICS, everyone, (d) => d.answers.length >= FINALE_ANSWERS, languages);
   // Open Deur krijgt één onderwerp per deelnemer, maar de finale gaat voor:
   // die houdt er altijd minstens drie over.
   const doorCount = full ? Math.min(n, Math.max(0, topics.length - 3)) : 0;
   const doors = topics.slice(0, doorCount);
   const finaleTopics = topics.slice(doorCount, doorCount + FINALE_TOPICS);
   if (finaleTopics.length === 0) return "Er zijn nog geen onderwerpen voor de finale.";
-  const galleries = full ? await pickItems("GALLERY", n, everyone) : [];
-  const memories = full ? await pickItems("MEMORY", n, everyone) : [];
+  const galleries = full ? await pickItems("GALLERY", n, everyone, undefined, languages) : [];
+  const memories = full ? await pickItems("MEMORY", n, everyone, undefined, languages) : [];
 
   await markSeen([...questions, ...puzzles, ...doors, ...finaleTopics, ...galleries, ...memories].map((i) => i.id), everyone);
   await setupGame(room, contestants, { questions, doors, puzzles, galleries, memories, finaleTopics });
@@ -820,6 +928,7 @@ async function setupGame(room: Room, contestants: Contestant[], content: GameCon
     });
   }
   room.memory = { ...emptyGridRound(memoryItems), owners: [], reading: false };
+  await buildDictionaries(room, content);
   // Een finale heeft twee deelnemers nodig; alleen spelen heeft er geen.
   room.finale =
     contestants.length >= 2 && finaleTopics.length > 0
@@ -1566,6 +1675,8 @@ function newRoom(
     finale: null,
     winnerId: null,
     feedback: null,
+    languages: new Map(),
+    dictionaries: new Map(),
     starting: false,
     lastTick: Date.now(),
     lastBroadcast: 0,
@@ -1608,6 +1719,7 @@ async function loadSoloRoom(runId: string, user: { id: string; handle: string })
     participants: new Map([[user.id, { userId: user.id, name: user.handle, role: "player" as AkRole, team: null }]]),
     length: "SOLO",
   });
+  await assignLanguages(room, [user.id]);
   await setupGame(room, [{ id: user.id, name: user.handle, members: [user.id], leaderId: user.id, color: 0 }], content);
   rooms.set(room.code, room);
   return room;
@@ -1685,6 +1797,7 @@ async function joinRoom(socket: Socket, user: { id: string; handle: string }, co
       })
       .catch(() => {});
   }
+  if (!room.languages.has(user.id)) await assignLanguages(room, [user.id]);
   const sockets = room.sockets.get(user.id) ?? new Set<string>();
   sockets.add(socket.id);
   room.sockets.set(user.id, sockets);
@@ -1893,10 +2006,12 @@ export function registerAlleskennerHandlers(server: SocketIOServer, socket: Sock
     broadcast(room);
   });
 
-  socket.on("ak:tap_369", ({ option }: { option?: unknown }) => {
+  socket.on("ak:tap_369", ({ option: tapped }: { option?: unknown }) => {
     const room = activeRoom();
-    if (!room || room.phase !== "R369" || typeof option !== "string" || !room.r369 || room.r369.reveal) return;
+    if (!room || room.phase !== "R369" || typeof tapped !== "string" || !room.r369 || room.r369.reveal) return;
     const current369 = room.r369.items[room.r369.index];
+    // Getikt in de eigen taal; het spel rekent met de Nederlandse optie.
+    const option = canonicalText(dictionaryFor(room, user.id), tapped);
     if (!current369.data.options.includes(option)) return;
     const kind = actorKind(room, user.id);
     if (kind === "team") {
@@ -1917,8 +2032,11 @@ export function registerAlleskennerHandlers(server: SocketIOServer, socket: Sock
     const guess = text.trim().slice(0, 40);
     if (!guess) return;
     const kind = actorKind(room, user.id);
+    // Goed in elke taal van dit spel, dus ook "First Nephi" bij "1 Nephi".
     const group = state.items[state.index].data.groups.findIndex(
-      (g, i) => !state.found[i] && answerMatches(guess, [g.answer, ...g.accept])
+      (g, i) =>
+        !state.found[i] &&
+        answerMatches(guess, [g.answer, ...g.accept, ...[...room.dictionaries.values()].flatMap((d) => d.accept.get(g.answer) ?? [])])
     );
     if (kind === "team") {
       if (group >= 0) puzzleFound(room, group);
@@ -1944,9 +2062,10 @@ export function registerAlleskennerHandlers(server: SocketIOServer, socket: Sock
     return null;
   };
 
-  socket.on("ak:tap_grid", ({ text }: { text?: unknown }) => {
+  socket.on("ak:tap_grid", ({ text: tapped }: { text?: unknown }) => {
     const room = activeRoom();
-    if (!room || typeof text !== "string") return;
+    if (!room || typeof tapped !== "string") return;
+    const text = canonicalText(dictionaryFor(room, user.id), tapped);
     const grid = gridRoundFor(room);
     if (!grid || grid.round.revealed) return;
     const { round, count } = grid;
@@ -1964,12 +2083,13 @@ export function registerAlleskennerHandlers(server: SocketIOServer, socket: Sock
     broadcast(room);
   });
 
-  socket.on("ak:tap_gallery", ({ option }: { option?: unknown }) => {
+  socket.on("ak:tap_gallery", ({ option: tapped }: { option?: unknown }) => {
     const room = activeRoom();
-    if (!room || room.phase !== "GALLERY" || typeof option !== "string" || !room.gallery || room.gallery.revealed) return;
+    if (!room || room.phase !== "GALLERY" || typeof tapped !== "string" || !room.gallery || room.gallery.revealed) return;
     const state = room.gallery;
     const entryIndex = state.turnEntries[state.turnPos];
     const entry = entryIndex === undefined ? null : state.items[state.index].entries[entryIndex];
+    const option = canonicalText(dictionaryFor(room, user.id), tapped);
     if (!entry || !entry.options.includes(option)) return;
     const kind = actorKind(room, user.id);
     if (kind === "team") {
