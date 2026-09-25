@@ -15,8 +15,8 @@ interface Tool {
 
 // Woordenboek, bladwijzers en personages halen hun inhoud uit schriftverzen;
 // bij andere content (podcasts, leerplan) slaan ze nergens op. Woordenboek en
-// bladwijzers horen daarom bij de schriftcollecties, de personages (alleen
-// uit het Boek van Mormon) net als de spellen bij die ene collectie.
+// bladwijzers horen daarom bij de schriftcollecties, de personages alleen bij
+// de collecties waarvoor ze geschreven zijn (Boek van Mormon, Leer en Verbonden).
 const TOOLS: Tool[] = [
   {
     href: "/tools/dictionary",
@@ -41,9 +41,9 @@ const TOOLS: Tool[] = [
   {
     href: "/tools/persons",
     title: "Personages",
-    description: "Wie is wie in het Boek van Mormon, inclusief familieverbanden.",
+    description: "Wie is wie in de tekst, inclusief familieverbanden.",
     icon: "👤",
-    collectionIds: [BOM_COLLECTION_ID],
+    collectionIds: [BOM_COLLECTION_ID, DC_COLLECTION_ID],
   },
 ];
 

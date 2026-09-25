@@ -385,6 +385,7 @@ model ContentCollection {
   gameScopes GameContentScope[]
   users     User[]   @relation("ActiveContentCollection")
   fsyLessons FsyLesson[]
+  persons   Person[]
 }
 
 // Koppelt een spel aan één of meer contentcollecties. gameKey is de stabiele
@@ -937,6 +938,13 @@ model Person {
   mother      Person?       @relation("MothersChildren", fields: [motherId], references: [id], onDelete: SetNull)
   motherChildren Person[]   @relation("MothersChildren")
   verses      VersePerson[]
+  // Bij welk schrift deze persoon hoort (/tools/persons toont die van de
+  // actieve collectie). Bestaande personen komen allemaal uit het Boek van
+  // Mormon, vandaar de standaardwaarde.
+  contentCollectionId String            @default("content_bom")
+  contentCollection   ContentCollection @relation(fields: [contentCollectionId], references: [id], onDelete: Cascade)
+
+  @@index([contentCollectionId])
 }
 
 model Place {

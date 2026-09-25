@@ -18,6 +18,7 @@ import kidsManifest from "../../prisma/kidsManifest.json";
 import { importIntroLessons, importIntroPersons } from "../../prisma/importIntro";
 import { introLessons } from "../../prisma/introContent";
 import { introPersons } from "../../prisma/introPersons";
+import { dcPersons } from "../../prisma/dcPersons";
 import { alleskennerItems } from "../../prisma/alleskennerContent";
 import { generatedAlleskennerItems } from "../../prisma/alleskennerGenerated";
 import { importAlleskennerItems } from "../../prisma/importAlleskenner";
@@ -96,6 +97,9 @@ export async function runSeed(client: PrismaClient, log: (msg: string) => void =
 
   log("Seeding personen voor de introductiecursus...");
   await importIntroPersons(client, introPersons, log);
+
+  log("Seeding personen uit de Leer en Verbonden...");
+  await importIntroPersons(client, dcPersons, log, DC_COLLECTION_ID);
 
   log("Seeding introductiecursus (Ontdek het Boek van Mormon)...");
   await importIntroLessons(client, introLessons, log);

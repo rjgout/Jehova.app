@@ -77,14 +77,17 @@ export async function importIntroLessons(
 export async function importIntroPersons(
   prisma: PrismaClient,
   persons: IntroPersonSeed[],
-  log: (msg: string) => void = console.log
+  log: (msg: string) => void = console.log,
+  // Letterlijk i.p.v. BOM_COLLECTION_ID: src/lib/contentCollections.ts trekt
+  // de Next-databaseclient mee, en dit bestand draait ook los via tsx.
+  contentCollectionId = "content_bom"
 ) {
   // Pass 1: Voeg alle personen in
   for (const p of persons) {
     await prisma.person.upsert({
       where: { slug: p.slug },
-      update: { name: p.name, description: p.description, gender: p.gender },
-      create: { slug: p.slug, name: p.name, description: p.description, gender: p.gender },
+      update: { name: p.name, description: p.description, gender: p.gender, contentCollectionId },
+      create: { slug: p.slug, name: p.name, description: p.description, gender: p.gender, contentCollectionId },
     });
   }
 

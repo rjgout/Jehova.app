@@ -310,8 +310,11 @@ verwerken". Fundamenteel anders dan de rest van de API:
   (`syncCourses`); cursussen per boek bestaan niet meer. Leer en Verbonden
   heeft afdelingen i.p.v. hoofdstukken (`src/lib/chapterTerm.ts`).
   Nederlandse audio is daar (nog) niet voor. Functies die bij het Boek
-  van Mormon horen (spellen, tekst van de dag, personages) filteren expliciet
+  van Mormon horen (spellen, tekst van de dag) filteren expliciet
   op `BOM_COLLECTION_ID`: Book/Chapter/Verse bevatten nu meer dan één schrift.
+  Personages hebben een eigen `Person.contentCollectionId`; die van de Leer en
+  Verbonden staan in `prisma/dcPersons.ts` (slugs met `lv-`), gecontroleerd
+  tegen de verzen en opschriften in `prisma/dcContent.json`.
 - De kindercursus-tekst/illustraties ("Verhalen uit het Boek van Mormon")
   worden met toestemming gebruikt — deel dit dus niet als losstaand
   bestand/export met een instantie die die toestemming niet apart heeft.
