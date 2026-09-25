@@ -2143,6 +2143,8 @@ export const nl = {
     },
   },
   adminGames: {
+    perContent: "Per content: bij welke uitgaven staat dit spel?",
+    perContentHint: "Een spel verschijnt alleen bij de content die hier aangevinkt is. Zet een spel alleen aan bij een uitgave waarvoor het echt werkt: De Alleskenner, Uitdagingen en de live-quiz werken in elke taal; Raad het hoofdstuk, Gezinsavond en de woordspellen nog alleen in het Nederlands.",
     title: "Spelletjes",
     intro: "Uitgezet spelletjes verdwijnen uit het overzicht (/live) van gewone gebruikers — een rechtstreekse link blijft wel werken. Jijzelf blijft, als admin, alles zien.",
     liveExercises: "🏁 Nieuw live spel starten (oefeningen-race)",

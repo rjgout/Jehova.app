@@ -2139,6 +2139,8 @@ export const en: PartialMessages = {
     },
   },
   adminGames: {
+    perContent: "Per content: which editions have this game?",
+    perContentHint: "A game only appears with the content checked here. Only turn a game on for an edition it really works with: The Know-It-All, Challenges and the live quiz work in every language; Guess the Chapter, Family Home Evening and the word games only in Dutch for now.",
     title: "Games",
     intro: "Disabled games disappear from regular users' overview (/live) — a direct link still works. As an admin, you keep seeing everything.",
     liveExercises: "🏁 Start new live game (exercise race)",

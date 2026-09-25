@@ -2139,6 +2139,8 @@ export const fr: PartialMessages = {
     },
   },
   adminGames: {
+    perContent: "Par contenu : quelles éditions proposent ce jeu ?",
+    perContentHint: "Un jeu n’apparaît qu’avec le contenu coché ici. N’active un jeu que pour une édition avec laquelle il fonctionne vraiment : Le Je-sais-tout, les défis et le quiz en direct fonctionnent dans toutes les langues ; Devine le chapitre, Soirée familiale et les jeux de mots uniquement en néerlandais pour l’instant.",
     title: "Jeux",
     intro: "Les jeux désactivés disparaissent de l’aperçu (/live) des utilisateurs ordinaires — un lien direct fonctionne toujours. En tant qu’admin, tu continues à tout voir.",
     liveExercises: "🏁 Lancer une partie en direct (course d’exercices)",

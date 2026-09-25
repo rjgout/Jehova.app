@@ -2139,6 +2139,8 @@ export const de: PartialMessages = {
     },
   },
   adminGames: {
+    perContent: "Pro Inhalt: bei welchen Ausgaben gibt es dieses Spiel?",
+    perContentHint: "Ein Spiel erscheint nur bei den hier angehakten Inhalten. Schalte ein Spiel nur für eine Ausgabe ein, mit der es wirklich funktioniert: Der Alleswisser, Herausforderungen und das Live-Quiz funktionieren in jeder Sprache; Errate das Kapitel, Familienabend und die Wortspiele vorerst nur auf Niederländisch.",
     title: "Spiele",
     intro: "Deaktivierte Spiele verschwinden aus der Übersicht (/live) normaler Benutzer — ein direkter Link funktioniert weiterhin. Du als Admin siehst weiterhin alles.",
     liveExercises: "🏁 Neues Live-Spiel starten (Übungsrennen)",
