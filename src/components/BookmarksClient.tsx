@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useT } from "@/components/I18nProvider";
 
 interface BookmarkItem {
   verseId: string;
@@ -13,6 +14,7 @@ interface BookmarkItem {
 }
 
 export default function BookmarksClient() {
+  const t = useT();
   const [items, setItems] = useState<BookmarkItem[] | null>(null);
 
   useEffect(() => {
@@ -23,14 +25,14 @@ export default function BookmarksClient() {
 
   return (
     <div className="max-w-2xl mx-auto flex flex-col gap-6">
-      <h1 className="text-2xl font-extrabold text-brand-800 dark:text-brand-300">Bladwijzers</h1>
+      <h1 className="text-2xl font-extrabold text-brand-800 dark:text-brand-300">{t("pages.bookmarks")}</h1>
 
-      {!items && <p className="text-slate-400">Laden...</p>}
+      {!items && <p className="text-slate-400">{t("common.loading")}</p>}
 
 
       {items && items.length === 0 && (
         <p className="text-slate-400">
-          Nog geen bladwijzers. Tik op 🔖 bij een vers tijdens het lezen om 'm hier terug te vinden.
+          {t("bookmarks.empty")}
         </p>
       )}
 

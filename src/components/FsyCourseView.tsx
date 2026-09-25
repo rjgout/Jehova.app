@@ -1,4 +1,9 @@
+"use client";
+
 import Link from "next/link";
+import { useT, useUiLanguage } from "@/components/I18nProvider";
+import { getLanguage } from "@/lib/languages";
+import { FSY_CATEGORY_KEYS } from "@/components/FsyLessonView";
 
 interface LessonView {
   id: string;
@@ -14,23 +19,15 @@ interface Props {
   lessons: LessonView[];
 }
 
-const MONTH_NAMES = [
-  "Januari", "Februari", "Maart", "April", "Mei", "Juni",
-  "Juli", "Augustus", "September", "Oktober", "November", "December",
-];
-
-const CATEGORY_LABELS: Record<string, string> = {
-  INTRO: "Maandintroductie",
-  FAST_SUNDAY: "Vastenzondag",
-  SECOND_SUNDAY: "Tweede zondag",
-  THIRD_SUNDAY: "Derde zondag",
-  LAST_SUNDAY_YOUNG_WOMEN: "Laatste zondag · Jongevrouwen",
-  LAST_SUNDAY_AARONIC_PRIESTHOOD: "Laatste zondag · Aäronische priesterschapsquorums",
-  ACTIVITY: "Jongerenactiviteit",
-  OTHER: "Aanvullend",
-};
+// Maandnaam in de taal van de app, met hoofdletter (zoals een kop).
+function monthName(year: number, month: number, intlLocale: string): string {
+  const name = new Date(year, month - 1, 1).toLocaleDateString(intlLocale, { month: "long" });
+  return name.charAt(0).toUpperCase() + name.slice(1);
+}
 
 export default function FsyCourseView({ courseName, lessons }: Props) {
+  const t = useT();
+  const intlLocale = getLanguage(useUiLanguage()).intlLocale;
   const grouped = new Map<string, LessonView[]>();
 
   for (const lesson of lessons) {
@@ -45,13 +42,13 @@ export default function FsyCourseView({ courseName, lessons }: Props) {
       <div>
         <h1 className="text-2xl font-extrabold text-brand-800 dark:text-brand-300">{courseName}</h1>
         <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
-          Wekelijkse lessen en aanvullende ideeën uit de officiële bron. Oefeningen worden later toegevoegd.
+          {t("courseViews.fsyIntro")}
         </p>
       </div>
 
       {lessons.length === 0 ? (
         <div className="card text-center text-slate-500 dark:text-slate-400">
-          Er is nog geen gepubliceerde FSY-content.
+          {t("courseViews.fsyEmpty")}
         </div>
       ) : (
         [...grouped.entries()].map(([key, monthLessons]) => {
@@ -59,7 +56,7 @@ export default function FsyCourseView({ courseName, lessons }: Props) {
           return (
             <section key={key} className="flex flex-col gap-3">
               <h2 className="text-xl font-extrabold text-brand-800 dark:text-brand-300">
-                {MONTH_NAMES[month - 1]} {year}
+                {monthName(year, month, intlLocale)} {year}
               </h2>
 
               <div className="flex flex-col gap-3">
@@ -77,7 +74,9 @@ export default function FsyCourseView({ courseName, lessons }: Props) {
                     )}
                     <div className="min-w-0">
                       <p className="text-xs font-extrabold uppercase tracking-wide text-slate-400 dark:text-slate-500">
-                        {CATEGORY_LABELS[lesson.category] ?? "Les"}
+                        {lesson.category in FSY_CATEGORY_KEYS
+                          ? t(FSY_CATEGORY_KEYS[lesson.category as keyof typeof FSY_CATEGORY_KEYS])
+                          : t("courseViews.fsy.lesson")}
                       </p>
                       <h3 className="font-extrabold dark:text-slate-100">{lesson.title}</h3>
                     </div>

@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db";
 import FsyLessonView from "@/components/FsyLessonView";
 import type { FsyContentBlock } from "@/lib/fsyContent";
 import { isContentCollectionSelectable } from "@/lib/contentCollections";
+import { getT } from "@/lib/i18n";
 
 export default async function FsyLessonPage({ params }: { params: Promise<{ lessonId: string }> }) {
   const user = await getCurrentUser();
@@ -30,7 +31,7 @@ export default async function FsyLessonPage({ params }: { params: Promise<{ less
 
   return (
     <FsyLessonView
-      title={lesson.publishedTitle ?? "Voor de kracht van de jeugd"}
+      title={lesson.publishedTitle ?? getT(user.uiLanguage)("courseNames.fsy")}
       month={lesson.month}
       year={lesson.year}
       category={lesson.category}

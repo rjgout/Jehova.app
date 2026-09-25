@@ -1,8 +1,10 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import { useT } from "@/components/I18nProvider";
 
 export default function PersonsSearch({ persons }: { persons: any[] }) {
+  const t = useT();
   const [searchQuery, setSearchQuery] = useState("");
 
   const filteredPersons = useMemo(() => {
@@ -32,24 +34,24 @@ export default function PersonsSearch({ persons }: { persons: any[] }) {
       <div>
         <input
           type="text"
-          placeholder="Zoek personen op naam of beschrijving..."
+          placeholder={t("persons.search")}
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           className="input w-full"
-          aria-label="Zoek personen"
+          aria-label={t("persons.searchLabel")}
         />
         {searchQuery && (
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">
-            {filteredPersons.length} van {persons.length} personen
+            {t("persons.countOf", { n: filteredPersons.length, total: persons.length })}
           </p>
         )}
       </div>
 
       {filteredPersons.length === 0 && searchQuery && (
-        <p className="text-slate-400 dark:text-slate-500">Geen personen gevonden. Probeer een ander zoekterm.</p>
+        <p className="text-slate-400 dark:text-slate-500">{t("persons.noneFound")}</p>
       )}
       {filteredPersons.length === 0 && !searchQuery && (
-        <p className="text-slate-400 dark:text-slate-500">Geen personages beschikbaar.</p>
+        <p className="text-slate-400 dark:text-slate-500">{t("persons.noneAvailable")}</p>
       )}
 
       {filteredPersons.length > 0 && (
@@ -67,7 +69,7 @@ export default function PersonsSearch({ persons }: { persons: any[] }) {
                 <div className="flex flex-col gap-1 text-sm text-slate-500 dark:text-slate-400 border-t border-slate-100 dark:border-slate-700 pt-2 mt-1">
                   {person.father && (
                     <p>
-                      Vader:{" "}
+                      {t("persons.father")}{" "}
                       <a href={`#${person.father.slug}`} className="font-bold text-brand-600 dark:text-brand-300 hover:underline">
                         {person.father.name}
                       </a>
@@ -75,7 +77,7 @@ export default function PersonsSearch({ persons }: { persons: any[] }) {
                   )}
                   {person.mother && (
                     <p>
-                      Moeder:{" "}
+                      {t("persons.mother")}{" "}
                       <a href={`#${person.mother.slug}`} className="font-bold text-brand-600 dark:text-brand-300 hover:underline">
                         {person.mother.name}
                       </a>
@@ -83,7 +85,7 @@ export default function PersonsSearch({ persons }: { persons: any[] }) {
                   )}
                   {person.children.length > 0 && (
                     <p>
-                      Kinderen:{" "}
+                      {t("persons.children")}{" "}
                       {person.children.map((c: any, i: number) => (
                         <span key={c.slug}>
                           <a href={`#${c.slug}`} className="font-bold text-brand-600 dark:text-brand-300 hover:underline">

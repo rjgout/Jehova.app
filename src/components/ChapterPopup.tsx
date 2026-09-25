@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
+import { useT } from "@/components/I18nProvider";
 
 interface Verse {
   number: number;
@@ -28,6 +29,7 @@ export default function ChapterPopup({
   linkLabel: string;
   onClose: () => void;
 }) {
+  const t = useT();
   const [verses, setVerses] = useState<Verse[] | null>(null);
   const [error, setError] = useState(false);
 
@@ -68,7 +70,7 @@ export default function ChapterPopup({
           <h2 className="font-extrabold text-lg text-brand-800 dark:text-brand-300">{title}</h2>
           <button
             onClick={onClose}
-            aria-label="Sluiten"
+            aria-label={t("common.close")}
             className="w-9 h-9 shrink-0 rounded-full flex items-center justify-center text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-700"
           >
             ✕
@@ -76,8 +78,8 @@ export default function ChapterPopup({
         </div>
 
         <div className="overflow-y-auto px-5 py-4 flex flex-col gap-3">
-          {error && <p className="text-slate-500 dark:text-slate-400">Dit hoofdstuk kon niet worden geladen.</p>}
-          {!error && !verses && <p className="text-slate-400 dark:text-slate-500">Laden…</p>}
+          {error && <p className="text-slate-500 dark:text-slate-400">{t("misc.chapterLoadFailed")}</p>}
+          {!error && !verses && <p className="text-slate-400 dark:text-slate-500">{t("misc.loadingEllipsis")}</p>}
           {verses?.map((v) => (
             <p key={v.number} className="leading-7 dark:text-slate-100">
               <span className="text-xs font-bold text-brand-500 align-super mr-1">{v.number}</span>
@@ -91,7 +93,7 @@ export default function ChapterPopup({
             {linkLabel}
           </Link>
           <button onClick={onClose} className="btn-primary">
-            Terug naar de les
+            {t("misc.backToLesson")}
           </button>
         </div>
       </div>

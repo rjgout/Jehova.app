@@ -6,6 +6,7 @@ import KidsLessonFlow from "@/components/KidsLessonFlow";
 import type { Exercise } from "@/components/LessonFlow";
 import { shuffleForDisplay } from "@/lib/exerciseGen";
 import CourseBackTarget from "@/components/CourseBackTarget";
+import { getT } from "@/lib/i18n";
 
 export default async function KidsStoryPage({ params }: { params: Promise<{ storyId: string }> }) {
   const user = await getCurrentUser();
@@ -33,7 +34,7 @@ export default async function KidsStoryPage({ params }: { params: Promise<{ stor
   const exercises: Exercise[] = story.exercises.map((e) => ({
     id: e.id,
     type: e.type as Exercise["type"],
-    verseRef: `Verhaal ${story.number}`,
+    verseRef: getT(user.uiLanguage)("misc.storyN", { n: story.number }),
     prompt: e.prompt,
     blanks: (JSON.parse(e.answers) as string[]).length,
     wordBank: e.wordBank ? shuffleForDisplay(JSON.parse(e.wordBank) as string[]) : undefined,

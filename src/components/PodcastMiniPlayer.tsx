@@ -1,5 +1,6 @@
 "use client";
 
+import { useT } from "@/components/I18nProvider";
 import { usePodcastPlayer } from "@/lib/podcastPlayerContext";
 
 function formatTime(seconds: number): string {
@@ -16,6 +17,7 @@ function formatTime(seconds: number): string {
  * gemonteerde <audio> in PodcastPlayerProvider, dit is puur de bediening.
  */
 export default function PodcastMiniPlayer() {
+  const t = useT();
   const { episode, isPlaying, currentTime, duration, isSuppressed, togglePlay, seek, close } = usePodcastPlayer();
 
   if (!episode || isSuppressed) return null;
@@ -26,14 +28,14 @@ export default function PodcastMiniPlayer() {
         <button
           onClick={togglePlay}
           className="shrink-0 w-9 h-9 rounded-full bg-brand-500 text-white flex items-center justify-center text-lg"
-          aria-label={isPlaying ? "Pauzeren" : "Afspelen"}
+          aria-label={isPlaying ? t("player.pause") : t("player.play")}
         >
           {isPlaying ? "⏸" : "▶"}
         </button>
 
         <div className="min-w-0 flex-1">
           <p className="text-xs font-bold text-brand-700 dark:text-brand-300 truncate">
-            🎙️ Aflevering {episode.number} — {episode.title}
+            {t("player.episode", { n: episode.number, title: episode.title })}
           </p>
           <div className="flex items-center gap-2 mt-1">
             <span className="text-[10px] text-slate-400 dark:text-slate-500 tabular-nums shrink-0">{formatTime(currentTime)}</span>
@@ -45,7 +47,7 @@ export default function PodcastMiniPlayer() {
               value={Math.min(currentTime, duration || 0)}
               onChange={(e) => seek(Number(e.target.value))}
               className="w-full accent-brand-500 h-1"
-              aria-label="Afspeelpositie"
+              aria-label={t("player.position")}
             />
             <span className="text-[10px] text-slate-400 dark:text-slate-500 tabular-nums shrink-0">{formatTime(duration)}</span>
           </div>
@@ -54,8 +56,8 @@ export default function PodcastMiniPlayer() {
         <button
           onClick={close}
           className="shrink-0 w-7 h-7 rounded-full text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 flex items-center justify-center"
-          aria-label="Mini-player sluiten"
-          title="Sluiten (je positie blijft bewaard)"
+          aria-label={t("player.closeMini")}
+          title={t("player.closeKeep")}
         >
           ✕
         </button>

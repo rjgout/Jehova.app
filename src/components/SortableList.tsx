@@ -1,6 +1,7 @@
 "use client";
 
 import { type ReactNode } from "react";
+import { useT } from "@/components/I18nProvider";
 import {
   DndContext,
   closestCenter,
@@ -96,13 +97,14 @@ function SortableRow({ id, children }: { id: string; children: (handle: DragHand
 
 /** Het greep-icoontje zelf — spreidt de sleep-luisteraars alleen hierop uit. */
 export function DragHandle({ attributes, listeners }: DragHandleProps) {
+  const t = useT();
   return (
     <button
       type="button"
       {...attributes}
       {...listeners}
       className="shrink-0 touch-none cursor-grab active:cursor-grabbing text-slate-300 dark:text-slate-600 hover:text-slate-400 px-1 -ml-1 select-none"
-      aria-label="Verslepen om te herordenen"
+      aria-label={t("misc.dragToReorder")}
       onClick={(e) => e.preventDefault()}
     >
       ⠿

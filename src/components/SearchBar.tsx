@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { useT } from "@/components/I18nProvider";
 
 interface SearchResult {
   chapterId: string;
@@ -12,6 +13,7 @@ interface SearchResult {
 }
 
 export default function SearchBar() {
+  const t = useT();
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SearchResult[] | null>(null);
   const [open, setOpen] = useState(false);
@@ -42,7 +44,7 @@ export default function SearchBar() {
     <div ref={containerRef} className="relative">
       <input
         className="input !py-2.5"
-        placeholder="🔍 Zoek in de tekst..."
+        placeholder={t("misc.searchText")}
         value={query}
         onChange={(e) => setQuery(e.target.value)}
         onFocus={() => setOpen(true)}
@@ -65,7 +67,7 @@ export default function SearchBar() {
         </div>
       )}
       {open && results && results.length === 0 && query.trim().length >= 2 && (
-        <div className="absolute z-10 mt-2 w-full card !p-3 text-sm text-slate-400">Niets gevonden.</div>
+        <div className="absolute z-10 mt-2 w-full card !p-3 text-sm text-slate-400">{t("misc.nothingFound")}</div>
       )}
     </div>
   );

@@ -3,12 +3,14 @@ import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/session";
 import { prisma } from "@/lib/db";
 import QuickPracticeFlow from "@/components/QuickPracticeFlow";
+import { getT } from "@/lib/i18n";
 
 const PRACTICE_SIZE = 5;
 
 export default async function PracticePage() {
   const user = await getCurrentUser();
   if (!user) redirect("/login");
+  const t = getT(user.uiLanguage);
 
   const completedChapters = await prisma.chapterProgress.findMany({
     where: { userId: user.id, completed: true },
@@ -20,13 +22,12 @@ export default async function PracticePage() {
     return (
       <div className="max-w-md mx-auto card text-center flex flex-col gap-4">
         <div className="text-5xl">⚡</div>
-        <h1 className="text-xl font-extrabold text-brand-800 dark:text-brand-300">Nog niks om te herhalen</h1>
+        <h1 className="text-xl font-extrabold text-brand-800 dark:text-brand-300">{t("misc.practiceEmptyTitle")}</h1>
         <p className="text-slate-500 dark:text-slate-400 text-sm">
-          Rond eerst een hoofdstuk af — dan komen die oefeningen hier terug voor een snelle herhalingsronde die ook je
-          streak redt.
+          {t("misc.practiceEmptyText")}
         </p>
         <Link href="/dashboard" className="btn-primary self-center">
-          Naar de lessen
+          {t("misc.toLessons")}
         </Link>
       </div>
     );
@@ -53,7 +54,7 @@ export default async function PracticePage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-2xl font-extrabold text-brand-800 dark:text-brand-300 text-center">⚡ Snelle ronde</h1>
+      <h1 className="text-2xl font-extrabold text-brand-800 dark:text-brand-300 text-center">{t("misc.practiceTitle")}</h1>
       <QuickPracticeFlow exercises={exercises} />
     </div>
   );

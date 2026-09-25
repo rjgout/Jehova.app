@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useT } from "@/components/I18nProvider";
 
 interface PersonInfo {
   slug: string;
@@ -27,6 +28,7 @@ interface PersonInfo {
  * kern op i.p.v. het te symptoombestrijden.
  */
 export default function PersonCard({ slug, name }: { slug: string; name: string }) {
+  const t = useT();
   const [info, setInfo] = useState<PersonInfo | null>(null);
   const [loading, setLoading] = useState(false);
   const [opened, setOpened] = useState(false);
@@ -52,19 +54,19 @@ export default function PersonCard({ slug, name }: { slug: string; name: string 
         {name}
       </summary>
       <div className="mt-2 card !p-4 max-w-xs text-sm flex flex-col gap-2 animate-pop">
-        {loading && <p className="text-slate-400 dark:text-slate-500">Laden...</p>}
+        {loading && <p className="text-slate-400 dark:text-slate-500">{t("common.loading")}</p>}
         {!loading && info && (
           <>
             <p className="font-extrabold dark:text-slate-100">{info.name}</p>
             {info.description && <p className="text-slate-600 dark:text-slate-300">{info.description}</p>}
             {info.father && (
               <p className="text-slate-500 dark:text-slate-400">
-                Vader: <PersonCard slug={info.father.slug} name={info.father.name} />
+                {t("persons.father")} <PersonCard slug={info.father.slug} name={info.father.name} />
               </p>
             )}
             {info.children.length > 0 && (
               <p className="text-slate-500 dark:text-slate-400">
-                Kinderen:{" "}
+                {t("persons.children")}{" "}
                 {info.children.map((c, i) => (
                   <span key={c.slug}>
                     <PersonCard slug={c.slug} name={c.name} />
@@ -75,7 +77,7 @@ export default function PersonCard({ slug, name }: { slug: string; name: string 
             )}
           </>
         )}
-        {!loading && !info && <p className="text-slate-400 dark:text-slate-500">Niet gevonden.</p>}
+        {!loading && !info && <p className="text-slate-400 dark:text-slate-500">{t("persons.notFound")}</p>}
       </div>
     </details>
   );

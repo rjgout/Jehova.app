@@ -1,13 +1,10 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useT, useUiLanguage } from "@/components/I18nProvider";
+import { getLanguage } from "@/lib/languages";
 
-const STATUS_LABELS: Record<string, string> = {
-  NEW: "Nieuw",
-  IN_PROGRESS: "Bezig",
-  DONE: "Klaar",
-  WONT_DO: "Wordt niet uitgevoerd",
-};
+const STATUSES = ["NEW", "IN_PROGRESS", "DONE", "WONT_DO"] as const;
 const STATUS_CLASSES: Record<string, string> = {
   NEW: "bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300",
   IN_PROGRESS: "bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-200",
@@ -27,6 +24,8 @@ const MAX_DIMENSION = 1400;
 const JPEG_QUALITY = 0.8;
 
 export default function FeedbackClient() {
+  const t = useT();
+  const intlLocale = getLanguage(useUiLanguage()).intlLocale;
   const [reports, setReports] = useState<ReportView[] | null>(null);
   const [message, setMessage] = useState("");
   const [screenshot, setScreenshot] = useState<string | null>(null);
@@ -92,10 +91,10 @@ export default function FeedbackClient() {
     const body = await res.json().catch(() => ({}));
     setSubmitting(false);
     if (!res.ok) {
-      setError(body.error ?? "Kon de melding niet versturen.");
+      setError(body.error ?? t("feedback.sendFailed"));
       return;
     }
-    setSuccessMsg("Bedankt! Je melding is verstuurd.");
+    setSuccessMsg(t("feedback.sent"));
     setMessage("");
     setScreenshot(null);
     if (fileInputRef.current) fileInputRef.current.value = "";
@@ -105,30 +104,30 @@ export default function FeedbackClient() {
   return (
     <div className="max-w-2xl mx-auto flex flex-col gap-8">
       <div>
-        <h1 className="text-2xl font-extrabold text-brand-800 dark:text-brand-300">Feedback</h1>
+        <h1 className="text-2xl font-extrabold text-brand-800 dark:text-brand-300">{t("pages.feedback")}</h1>
         <p className="text-slate-500 dark:text-slate-400 text-sm">
-          Werkt iets niet, of heb je een idee? Laat het weten — een screenshot helpt enorm.
+          {t("feedback.intro")}
         </p>
       </div>
 
       <div className="card flex flex-col gap-3" onPaste={onPaste}>
         <textarea
           className="input min-h-[120px]"
-          placeholder="Beschrijf wat je bent tegengekomen of wat je zou willen zien..."
+          placeholder={t("feedback.placeholder")}
           value={message}
           onChange={(e) => setMessage(e.target.value)}
         />
         <div className="flex items-center gap-3 flex-wrap">
           <button type="button" className="btn-secondary !px-3 !py-1.5" onClick={() => fileInputRef.current?.click()}>
-            📎 Screenshot toevoegen
+            {t("feedback.addScreenshot")}
           </button>
           <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={onFileChange} />
-          <span className="text-xs text-slate-400 dark:text-slate-500">of plak 'm hierboven (Ctrl+V)</span>
+          <span className="text-xs text-slate-400 dark:text-slate-500">{t("feedback.orPaste")}</span>
         </div>
         {screenshot && (
           <div className="relative self-start">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={screenshot} alt="Screenshot" className="max-h-40 rounded-lg border border-slate-200 dark:border-slate-700" />
+            <img src={screenshot} alt={t("feedback.screenshot")} className="max-h-40 rounded-lg border border-slate-200 dark:border-slate-700" />
             <button
               type="button"
               className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold"
@@ -141,16 +140,16 @@ export default function FeedbackClient() {
         {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
         {successMsg && <p className="text-sm font-semibold text-brand-600 dark:text-brand-300">{successMsg}</p>}
         <button className="btn-primary self-start" disabled={submitting || !message.trim()} onClick={submit}>
-          {submitting ? "Bezig..." : "Versturen"}
+          {submitting ? t("feedback.busy") : t("feedback.send")}
         </button>
       </div>
 
       <section>
-        <h2 className="font-extrabold mb-2 text-slate-700 dark:text-slate-200">Jouw meldingen</h2>
+        <h2 className="font-extrabold mb-2 text-slate-700 dark:text-slate-200">{t("feedback.yourReports")}</h2>
         {!reports ? (
-          <p className="text-slate-400 dark:text-slate-500">Laden...</p>
+          <p className="text-slate-400 dark:text-slate-500">{t("common.loading")}</p>
         ) : reports.length === 0 ? (
-          <p className="text-slate-400 dark:text-slate-500">Nog geen meldingen verstuurd.</p>
+          <p className="text-slate-400 dark:text-slate-500">{t("feedback.none")}</p>
         ) : (
           <div className="flex flex-col gap-2">
             {reports.map((r) => (
@@ -160,19 +159,19 @@ export default function FeedbackClient() {
                   <span
                     className={`text-xs font-bold uppercase rounded-full px-2 py-1 shrink-0 ${STATUS_CLASSES[r.status] ?? STATUS_CLASSES.NEW}`}
                   >
-                    {STATUS_LABELS[r.status] ?? r.status}
+                    {(STATUSES as readonly string[]).includes(r.status) ? t(`feedback.status.${r.status as (typeof STATUSES)[number]}`) : r.status}
                   </span>
                 </div>
                 {r.screenshot && (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
                     src={r.screenshot}
-                    alt="Screenshot"
+                    alt={t("feedback.screenshot")}
                     className="max-h-32 rounded-lg border border-slate-200 dark:border-slate-700 self-start"
                   />
                 )}
                 <p className="text-xs text-slate-400 dark:text-slate-500">
-                  {new Date(r.createdAt).toLocaleDateString("nl-NL", { day: "numeric", month: "long", year: "numeric" })}
+                  {new Date(r.createdAt).toLocaleDateString(intlLocale, { day: "numeric", month: "long", year: "numeric" })}
                 </p>
               </div>
             ))}

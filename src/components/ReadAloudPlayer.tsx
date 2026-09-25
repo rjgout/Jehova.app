@@ -1,5 +1,6 @@
 "use client";
 
+import { useT } from "@/components/I18nProvider";
 import { useReadAloudPlayer, type ReadAloudSource, type ReadAloudVerse } from "@/lib/readAloudPlayerContext";
 
 interface Props {
@@ -13,7 +14,8 @@ interface Props {
   language?: string;
 }
 
-export default function ReadAloudPlayer({ sourceId, title, verses, audio, startVerse = 0, subtitle = "Luister naar dit hoofdstuk", language }: Props) {
+export default function ReadAloudPlayer({ sourceId, title, verses, audio, startVerse = 0, subtitle, language }: Props) {
+  const t = useT();
   const { source, start } = useReadAloudPlayer();
 
   if (source?.id === sourceId) return null;
@@ -27,8 +29,8 @@ export default function ReadAloudPlayer({ sourceId, title, verses, audio, startV
         ▶
       </span>
       <span className="min-w-0">
-        <span className="block text-sm font-bold text-brand-700 dark:text-brand-300">Voorlezen</span>
-        <span className="block text-xs text-slate-400 dark:text-slate-500">{subtitle}</span>
+        <span className="block text-sm font-bold text-brand-700 dark:text-brand-300">{t("player.readAloud")}</span>
+        <span className="block text-xs text-slate-400 dark:text-slate-500">{subtitle ?? t("player.listenChapter")}</span>
       </span>
     </button>
   );

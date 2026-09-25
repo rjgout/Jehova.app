@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ExerciseCard, type Exercise } from "@/components/LessonFlow";
 import { useActivityStatus } from "@/lib/useActivity";
 import { announceXpChanged } from "@/lib/xpBroadcast";
+import { useT } from "@/components/I18nProvider";
 
 interface Answer {
   exerciseId: string;
@@ -25,6 +26,7 @@ interface Summary {
 }
 
 export default function QuickPracticeFlow({ exercises }: { exercises: Exercise[] }) {
+  const t = useT();
   useActivityStatus("✏️", "Aan het oefenen");
   const [index, setIndex] = useState(0);
   const [answers, setAnswers] = useState<Answer[]>([]);
@@ -62,7 +64,7 @@ export default function QuickPracticeFlow({ exercises }: { exercises: Exercise[]
       <div className="max-w-md mx-auto card flex flex-col items-center gap-4 text-center animate-pop">
         <div className="text-5xl">⚡</div>
         <h2 className="text-2xl font-extrabold text-brand-800 dark:text-brand-300">
-          {summary.correctCount} / {summary.total} goed
+          {t("readingLesson.score", { correct: summary.correctCount, total: summary.total })}
         </h2>
         <p className="text-gold-600 dark:text-gold-400 font-extrabold text-lg">+{summary.xpEarned} XP</p>
         {!summary.alreadyStudiedToday && (
@@ -71,17 +73,17 @@ export default function QuickPracticeFlow({ exercises }: { exercises: Exercise[]
 
         {summary.freezeUsed && (
           <p className="text-sm bg-ice-50 dark:bg-slate-700 text-ice-600 dark:text-ice-400 rounded-xl px-3 py-2">
-            Je hebt een dag gemist, maar een streak freeze heeft je streak gered! 🧊
+            {t("lesson.freezeUsed")}
           </p>
         )}
         {summary.freezesEarned > 0 && (
           <p className="text-sm bg-gold-50 dark:bg-slate-700 text-gold-600 dark:text-gold-400 rounded-xl px-3 py-2">
-            Mijlpaal gehaald! Je hebt {summary.freezesEarned} streak freeze{summary.freezesEarned > 1 ? "s" : ""} verdiend. 🧊
+            {t(summary.freezesEarned > 1 ? "lesson.freezesEarnedMany" : "lesson.freezesEarnedOne", { n: summary.freezesEarned })}
           </p>
         )}
 
         <Link href="/dashboard" className="btn-primary mt-2">
-          Terug naar dashboard
+          {t("misc.backToDashboard")}
         </Link>
       </div>
     );

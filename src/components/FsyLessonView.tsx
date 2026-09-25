@@ -13,7 +13,7 @@ interface Props {
   sourceUrl: string;
 }
 
-const CATEGORY_KEYS = {
+export const FSY_CATEGORY_KEYS = {
   INTRO: "courseViews.fsy.intro",
   FAST_SUNDAY: "courseViews.fsy.fastSunday",
   SECOND_SUNDAY: "courseViews.fsy.secondSunday",
@@ -26,7 +26,7 @@ const CATEGORY_KEYS = {
 
 export default function FsyLessonView({ title, month, year, category, blocks, sourceUrl }: Props) {
   const t = useT();
-  const categoryKey = CATEGORY_KEYS[category as keyof typeof CATEGORY_KEYS];
+  const categoryKey = FSY_CATEGORY_KEYS[category as keyof typeof FSY_CATEGORY_KEYS];
   return (
     <div className="max-w-3xl mx-auto flex flex-col gap-6">
       <div>

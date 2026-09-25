@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useT, useUiLanguage } from "@/components/I18nProvider";
+import { getLanguage } from "@/lib/languages";
 
 interface DictionaryEntry {
   word: string;
@@ -17,6 +19,8 @@ interface VerseMatch {
 type FilterMode = "letter" | "length";
 
 export default function DictionaryClient() {
+  const t = useT();
+  const intlLocale = getLanguage(useUiLanguage()).intlLocale;
   const [entries, setEntries] = useState<DictionaryEntry[] | null>(null);
   const [collectionName, setCollectionName] = useState("");
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -32,14 +36,14 @@ export default function DictionaryClient() {
     fetch("/api/dictionary")
       .then(async (r) => {
         const data = await r.json().catch(() => null);
-        if (!r.ok) throw new Error(data?.error ?? `Er ging iets mis (${r.status}).`);
+        if (!r.ok) throw new Error(data?.error ?? t("courses.errorStatus", { status: r.status }));
         return data;
       })
       .then((d) => {
         setCollectionName(d.collectionName ?? "");
         setEntries(d.entries ?? []);
       })
-      .catch((e) => setLoadError(e instanceof Error ? e.message : "Er ging iets mis."));
+      .catch((e) => setLoadError(e instanceof Error ? e.message : t("courses.error")));
   }, []);
 
   // Alle beschikbare woordlengtes, aflopend uit de data i.p.v. een geraden
@@ -98,10 +102,10 @@ export default function DictionaryClient() {
     try {
       const res = await fetch(`/api/dictionary/${encodeURIComponent(word)}`);
       const data = await res.json().catch(() => null);
-      if (!res.ok) throw new Error(data?.error ?? `Er ging iets mis (${res.status}).`);
+      if (!res.ok) throw new Error(data?.error ?? t("courses.errorStatus", { status: res.status }));
       setVerses(data.verses ?? []);
     } catch (e) {
-      setVersesError(e instanceof Error ? e.message : "Er ging iets mis.");
+      setVersesError(e instanceof Error ? e.message : t("courses.error"));
     }
   }
 
@@ -110,24 +114,23 @@ export default function DictionaryClient() {
       <div className="max-w-md mx-auto card text-center flex flex-col gap-3">
         <p className="text-red-600 dark:text-red-400 font-semibold">{loadError}</p>
         <button className="btn-secondary self-center" onClick={() => window.location.reload()}>
-          Opnieuw proberen
+          {t("courses.retry")}
         </button>
       </div>
     );
   }
 
   if (!entries) {
-    return <p className="text-center text-slate-400 dark:text-slate-500">Laden...</p>;
+    return <p className="text-center text-slate-400 dark:text-slate-500">{t("common.loading")}</p>;
   }
 
   return (
     <div className="max-w-2xl mx-auto flex flex-col gap-4">
 
       <div>
-        <h1 className="text-2xl font-extrabold text-brand-800 dark:text-brand-300">Woordenboek</h1>
+        <h1 className="text-2xl font-extrabold text-brand-800 dark:text-brand-300">{t("pages.dictionary")}</h1>
         <p className="text-slate-500 dark:text-slate-400 text-sm">
-          Alle {entries.length.toLocaleString("nl")} woorden uit {collectionName || "de tekst"}. Het getal tussen
-          haakjes is hoe vaak het woord voorkomt — ook handig bij woordspelletjes.
+          {t("dictionary.intro", { n: entries.length.toLocaleString(intlLocale), source: collectionName || t("dictionary.theText") })}
         </p>
       </div>
 
@@ -135,9 +138,9 @@ export default function DictionaryClient() {
         type="text"
         value={query}
         onChange={(e) => setQuery(e.target.value)}
-        placeholder="Zoek een woord..."
+        placeholder={t("dictionary.search")}
         className="input"
-        aria-label="Zoek een woord"
+        aria-label={t("dictionary.searchLabel")}
       />
 
       <div className="flex gap-2 text-xs font-bold uppercase">
@@ -145,13 +148,13 @@ export default function DictionaryClient() {
           className={`px-3 py-1.5 rounded-lg ${mode === "letter" ? "bg-brand-600 text-white" : "bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400"}`}
           onClick={() => selectMode("letter")}
         >
-          Op letter
+          {t("dictionary.byLetter")}
         </button>
         <button
           className={`px-3 py-1.5 rounded-lg ${mode === "length" ? "bg-brand-600 text-white" : "bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400"}`}
           onClick={() => selectMode("length")}
         >
-          Op lengte
+          {t("dictionary.byLength")}
         </button>
       </div>
 
@@ -168,7 +171,7 @@ export default function DictionaryClient() {
               setLetter(null);
             }}
           >
-            Alle
+            {t("dictionary.all")}
           </button>
           {letters.map((l) => (
             <button
@@ -200,7 +203,7 @@ export default function DictionaryClient() {
               setLength(null);
             }}
           >
-            Alle
+            {t("dictionary.all")}
           </button>
           {lengths.map((n) => (
             <button
@@ -222,7 +225,7 @@ export default function DictionaryClient() {
       )}
 
       <p className="text-xs text-slate-400 dark:text-slate-500">
-        {filtered.length.toLocaleString("nl")} {filtered.length === 1 ? "woord" : "woorden"}
+        {t(filtered.length === 1 ? "dictionary.wordsOne" : "dictionary.wordsMany", { n: filtered.length.toLocaleString(intlLocale) })}
       </p>
 
       <div className="card !p-0 overflow-hidden">
@@ -244,7 +247,7 @@ export default function DictionaryClient() {
             </li>
           ))}
           {filtered.length === 0 && (
-            <li className="px-4 py-6 text-center text-sm text-slate-400 dark:text-slate-500">Geen woorden gevonden.</li>
+            <li className="px-4 py-6 text-center text-sm text-slate-400 dark:text-slate-500">{t("dictionary.noWords")}</li>
           )}
         </ul>
       </div>
@@ -252,7 +255,7 @@ export default function DictionaryClient() {
       {selectedWord && (
         <div className="flex flex-col gap-1">
           <h2 className="font-extrabold dark:text-slate-100">
-            📖 Waar &ldquo;{selectedWord}&rdquo; voorkomt{verses ? ` (${verses.length})` : ""}
+            {t("dictionary.whereTitle", { word: selectedWord })}{verses ? ` (${verses.length})` : ""}
           </h2>
           {/* Het getal achter het woord hierboven is het totaal aantal keer dat
               het voorkomt; hier gaat het om het aantal verzen — die twee
@@ -260,15 +263,14 @@ export default function DictionaryClient() {
               staat (bv. "en"), dus dat hoort geen tegenstrijdigheid te lijken. */}
           {verses && selectedTotalCount !== null && selectedTotalCount !== verses.length && (
             <p className="text-xs text-slate-400 dark:text-slate-500">
-              {selectedTotalCount}x in totaal, verspreid over {verses.length}{" "}
-              {verses.length === 1 ? "vers" : "verzen"} (in sommige verzen dus vaker dan één keer).
+              {t(verses.length === 1 ? "dictionary.spreadOne" : "dictionary.spreadMany", { total: selectedTotalCount, n: verses.length })}
             </p>
           )}
           <div className="flex flex-col gap-3 mt-2">
             {versesError && <p className="text-red-600 dark:text-red-400 text-sm font-semibold">{versesError}</p>}
-            {!versesError && !verses && <p className="text-sm text-slate-400 dark:text-slate-500">Laden...</p>}
+            {!versesError && !verses && <p className="text-sm text-slate-400 dark:text-slate-500">{t("common.loading")}</p>}
             {verses && verses.length === 0 && (
-              <p className="text-sm text-slate-400 dark:text-slate-500">Geen verzen gevonden.</p>
+              <p className="text-sm text-slate-400 dark:text-slate-500">{t("dictionary.noVerses")}</p>
             )}
             {verses && verses.length > 0 && (
               <div className="flex flex-col gap-2">

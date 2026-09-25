@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useT, useUiLanguage } from "@/components/I18nProvider";
+import { getLanguage } from "@/lib/languages";
 
 interface EntryView {
   id: string;
@@ -16,6 +18,8 @@ interface EntryView {
 // /api/changelog); staat changelogEnabled uit, dan is hasUnseen server-side
 // altijd false en verschijnt dit nooit.
 export default function ChangelogPopup() {
+  const t = useT();
+  const intlLocale = getLanguage(useUiLanguage()).intlLocale;
   const [newEntries, setNewEntries] = useState<EntryView[] | null>(null);
   const [dismissing, setDismissing] = useState(false);
 
@@ -42,20 +46,20 @@ export default function ChangelogPopup() {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
       <div className="card !p-5 max-w-md w-full max-h-[80vh] overflow-y-auto flex flex-col gap-4 animate-pop">
-        <h2 className="font-extrabold text-lg dark:text-slate-100">🎉 Wat is er nieuw?</h2>
+        <h2 className="font-extrabold text-lg dark:text-slate-100">{t("misc.whatsNew")}</h2>
         <div className="flex flex-col gap-4">
           {newEntries.map((entry) => (
             <div key={entry.id}>
               <p className="font-bold dark:text-slate-100">{entry.title}</p>
               <p className="text-xs text-slate-400 dark:text-slate-500 mb-1">
-                {new Date(entry.createdAt).toLocaleDateString("nl-NL")}
+                {new Date(entry.createdAt).toLocaleDateString(intlLocale)}
               </p>
               <p className="text-sm whitespace-pre-wrap dark:text-slate-200">{entry.body}</p>
             </div>
           ))}
         </div>
         <button className="btn-primary self-end" disabled={dismissing} onClick={dismiss}>
-          Gelezen
+          {t("misc.read")}
         </button>
       </div>
     </div>
