@@ -3,7 +3,8 @@ import { getCurrentUser } from "@/lib/session";
 import { prisma } from "@/lib/db";
 import { advanceCourseProgress } from "@/lib/courses";
 import ReadingChapterView from "@/components/ReadingChapterView";
-import { chapterTerm } from "@/lib/chapterTerm";
+import { chapterTerm, localizeTerm } from "@/lib/chapterTerm";
+import { getT } from "@/lib/i18n";
 
 export default async function ReadingChapterPage({
   params,
@@ -67,7 +68,7 @@ export default async function ReadingChapterPage({
       courseId={courseId}
       bookName={chapter.book.name}
       chapterNumber={chapter.number}
-      thisOne={chapterTerm(chapter.book.slug).thisOne}
+      thisOne={localizeTerm(chapterTerm(chapter.book.slug), getT(user.uiLanguage)).thisOne}
       lessons={lessons.map((lesson) => ({
         id: lesson.id,
         number: firstLesson ? lesson.order - firstLesson.order + 1 : 1,

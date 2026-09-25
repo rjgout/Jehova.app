@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { useT } from "@/components/I18nProvider";
 
 interface ChapterView {
   id: string;
@@ -26,6 +29,7 @@ interface Props {
 }
 
 export default function ReadingCourseView({ courseId, courseName, today, chapters, unitPlural = "hoofdstukken" }: Props) {
+  const t = useT();
   const allDone = chapters.length > 0 && chapters.every((chapter) => chapter.completedLessons === chapter.lessonCount);
   const currentChapterIndex = today
     ? chapters.findIndex((chapter) => chapter.bookName === today.bookName && chapter.number === today.chapterNumber)
@@ -48,8 +52,8 @@ export default function ReadingCourseView({ courseId, courseName, today, chapter
         {chapters.length > 0 && (
           <div className="card flex flex-col gap-2">
             <div className="flex items-center justify-between text-xs font-bold text-slate-500 dark:text-slate-400">
-              <span>Voortgang</span>
-              <span>{progressPosition} / {chapters.length} {unitPlural} · {progressPercent}%</span>
+              <span>{t("courseView.progress")}</span>
+              <span>{t("courseView.progressCount", { pos: progressPosition, total: chapters.length, unit: unitPlural, pct: progressPercent })}</span>
             </div>
             <div className="h-2 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
               <div className="h-full bg-brand-500 transition-all" style={{ width: progressPercent + "%" }} />
@@ -59,24 +63,24 @@ export default function ReadingCourseView({ courseId, courseName, today, chapter
 
         {today && !allDone ? (
           <div className="card bg-gradient-to-br from-brand-500 to-brand-600 text-white flex flex-col gap-3">
-            <p className="text-brand-100 font-bold uppercase text-xs tracking-wide">Vandaag</p>
+            <p className="text-brand-100 font-bold uppercase text-xs tracking-wide">{t("courseView.today")}</p>
             <h2 className="text-2xl font-extrabold">
               📖 {today.bookName} {today.chapterNumber}
             </h2>
             <p className="text-brand-100">
-              Stap {today.lessonNumber} · verzen {today.startVerse}–{today.endVerse} · ongeveer 5 minuten
+              {t("courseView.todayStep", { n: today.lessonNumber, from: today.startVerse, to: today.endVerse })}
             </p>
             <Link
               href={`/reading-lesson/${today.id}`}
               className="btn-primary self-start !bg-white !text-brand-700 !shadow-[0_4px_0_0_theme(colors.brand.800)] hover:!bg-brand-50"
             >
-              Lees verder →
+              {t("courseView.readMore")}
             </Link>
           </div>
         ) : (
           allDone && (
             <div className="card text-center">
-              <p className="font-extrabold text-lg dark:text-slate-100">🎉 Je hebt deze cursus helemaal voltooid!</p>
+              <p className="font-extrabold text-lg dark:text-slate-100">{t("courseView.allDone")}</p>
             </div>
           )
         )}
@@ -117,7 +121,7 @@ export default function ReadingCourseView({ courseId, courseName, today, chapter
                     <div>
                       <div className="font-extrabold dark:text-slate-100">{chapter.bookName} {chapter.number}</div>
                       <div className="text-xs text-slate-400 dark:text-slate-500">
-                        {chapter.completedLessons}/{chapter.lessonCount} stappen voltooid
+                        {t("courseView.stepsDone", { done: chapter.completedLessons, total: chapter.lessonCount })}
                       </div>
                     </div>
                   </Link>

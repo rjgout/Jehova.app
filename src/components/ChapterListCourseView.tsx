@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { useT } from "@/components/I18nProvider";
 
 const WORDS_PER_MINUTE = 130; // rustig lees-/nadenktempo
 
@@ -34,6 +37,7 @@ interface Props {
 // achter, vrije keuze) wordt elk boek een inklapbare sectie — anders werd dit
 // bij het hele Boek van Mormon in één keer een erg lange pagina.
 export default function ChapterListCourseView({ courseId, courseName, currentChapterId, chapters, sequential = true, unitPlural = "hoofdstukken" }: Props) {
+  const t = useT();
   const allDone = chapters.length > 0 && chapters.every((c) => c.completed);
   const todayChapter =
     (currentChapterId && chapters.find((c) => c.id === currentChapterId)) ||
@@ -55,10 +59,17 @@ export default function ChapterListCourseView({ courseId, courseName, currentCha
   }
   const singleBook = books.length <= 1;
 
+  // Vooraf per hoofdstuk bepalen, niet tijdens het renderen van de kaarten:
+  // React kan een component opnieuw renderen (hydratie in de browser), en
+  // een teller die per kaart meeloopt, raakt dan uit de pas.
+  const lockedById = new Map<string, boolean>();
   let previousCompleted = true;
-  function ChapterCard({ chapter }: { chapter: ChapterView }) {
-    const locked = sequential && !previousCompleted;
+  for (const chapter of chapters) {
+    lockedById.set(chapter.id, sequential && !previousCompleted);
     previousCompleted = chapter.completed;
+  }
+  function ChapterCard({ chapter }: { chapter: ChapterView }) {
+    const locked = lockedById.get(chapter.id) ?? false;
     return (
       <Link
         href={locked ? "#" : `/lesson/${chapter.id}?cursus=${courseId}`}
@@ -83,7 +94,8 @@ export default function ChapterListCourseView({ courseId, courseName, currentCha
             {chapter.bookName} {chapter.number}
           </div>
           <div className="text-xs text-slate-400 dark:text-slate-500">
-            {chapter.verseCount} verzen{chapter.bestScore !== null ? ` · beste score ${chapter.bestScore}%` : ""}
+            {t("courseView.verseCount", { n: chapter.verseCount })}
+            {chapter.bestScore !== null ? t("courseView.bestScore", { n: chapter.bestScore }) : ""}
           </div>
         </div>
       </Link>
@@ -98,8 +110,8 @@ export default function ChapterListCourseView({ courseId, courseName, currentCha
         {chapters.length > 0 && (
           <div className="card flex flex-col gap-2">
             <div className="flex items-center justify-between text-xs font-bold text-slate-500 dark:text-slate-400">
-              <span>Voortgang</span>
-              <span>{progressPosition} / {chapters.length} {unitPlural} · {progressPercent}%</span>
+              <span>{t("courseView.progress")}</span>
+              <span>{t("courseView.progressCount", { pos: progressPosition, total: chapters.length, unit: unitPlural, pct: progressPercent })}</span>
             </div>
             <div className="h-2 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
               <div className="h-full bg-brand-500 transition-all" style={{ width: progressPercent + "%" }} />
@@ -109,22 +121,22 @@ export default function ChapterListCourseView({ courseId, courseName, currentCha
 
         {todayChapter && !allDone ? (
           <div className="card bg-gradient-to-br from-brand-500 to-brand-600 text-white flex flex-col gap-3">
-            <p className="text-brand-100 font-bold uppercase text-xs tracking-wide">Vandaag</p>
+            <p className="text-brand-100 font-bold uppercase text-xs tracking-wide">{t("courseView.today")}</p>
             <h2 className="text-2xl font-extrabold">
               📖 {todayChapter.bookName} {todayChapter.number}
             </h2>
-            <p className="text-brand-100">⏱️ ongeveer {estimatedMinutes} minuten · ⭐ {xpAvailable} XP te verdienen</p>
+            <p className="text-brand-100">{t("courseView.estimate", { minutes: estimatedMinutes, xp: xpAvailable })}</p>
             <Link
               href={`/lesson/${todayChapter.id}?cursus=${courseId}`}
               className="btn-primary self-start !bg-white !text-brand-700 !shadow-[0_4px_0_0_theme(colors.brand.800)] hover:!bg-brand-50"
             >
-              Lees verder →
+              {t("courseView.readMore")}
             </Link>
           </div>
         ) : (
           allDone && (
             <div className="card text-center">
-              <p className="font-extrabold text-lg dark:text-slate-100">🎉 Je hebt deze cursus helemaal voltooid!</p>
+              <p className="font-extrabold text-lg dark:text-slate-100">{t("courseView.allDone")}</p>
             </div>
           )
         )}

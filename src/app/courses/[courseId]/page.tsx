@@ -10,7 +10,9 @@ import KidsCourseView from "@/components/KidsCourseView";
 import IntroCourseView from "@/components/IntroCourseView";
 import FsyCourseView from "@/components/FsyCourseView";
 import ReadingCourseView from "@/components/ReadingCourseView";
-import { chapterTerm } from "@/lib/chapterTerm";
+import { chapterTerm, localizeTerm } from "@/lib/chapterTerm";
+import { localizedCourse } from "@/lib/courseText";
+import { getT } from "@/lib/i18n";
 
 export default async function CourseDetailPage({ params }: { params: Promise<{ courseId: string }> }) {
   const user = await getCurrentUser();
@@ -24,6 +26,7 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ c
   const course = await prisma.course.findUnique({
     where: { id: courseId },
     include: {
+      contentCollection: { select: { work: true } },
       chapters: {
         orderBy: { order: "asc" },
         include: {
@@ -41,6 +44,9 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ c
   });
   if (!course) redirect("/courses");
   if (!(await isContentCollectionSelectable(course.contentCollectionId, user.isAdmin))) redirect("/courses");
+  // Naam in de taal van de app; voor Nederlands de databasewaarde.
+  const courseName = localizedCourse({ ...course, work: course.contentCollection.work }, user.uiLanguage).name;
+  const t = getT(user.uiLanguage);
 
   if (course.type === "PODCAST") {
     const [podcast, episodes] = await Promise.all([
@@ -60,8 +66,8 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ c
 
     return (
       <PodcastCourseView
-        courseName={course.name}
-        podcastName={podcast?.name ?? course.name}
+        courseName={courseName}
+        podcastName={podcast?.name ?? courseName}
         episodes={episodes.map((episode) => {
           const contentProgress = episode.progress.find((p) => p.mode === "CONTENT");
           const bomProgress = episode.progress.find((p) => p.mode === "BOM_CONNECTION");
@@ -93,7 +99,7 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ c
 
     return (
       <KidsCourseView
-        courseName={course.name}
+        courseName={courseName}
         stories={stories.map((story) => {
           const images = JSON.parse(story.images) as string[];
           return {
@@ -117,7 +123,7 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ c
 
     return (
       <IntroCourseView
-        courseName={course.name}
+        courseName={courseName}
         lessons={lessons.map((lesson) => ({
           id: lesson.id,
           number: lesson.number,
@@ -138,7 +144,7 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ c
 
     return (
       <FsyCourseView
-        courseName={course.name}
+        courseName={courseName}
         lessons={lessons.map((lesson) => {
           const images = JSON.parse(lesson.publishedImages ?? "[]") as { url: string; alt: string }[];
           return {
@@ -237,8 +243,8 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ c
     return (
       <ReadingCourseView
         courseId={course.id}
-        courseName={course.name}
-        unitPlural={chapterTerm(null, course.contentCollectionId).plural}
+        courseName={courseName}
+        unitPlural={localizeTerm(chapterTerm(null, course.contentCollectionId), t).plural}
         today={
           currentLesson
             ? {
@@ -284,10 +290,10 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ c
   return (
     <ChapterListCourseView
       courseId={course.id}
-      courseName={course.name}
+      courseName={courseName}
       currentChapterId={courseProgress?.currentChapterId ?? null}
       sequential={course.type !== "FREE_CHOICE"}
-      unitPlural={chapterTerm(chapters[0]?.book.slug).plural}
+      unitPlural={localizeTerm(chapterTerm(chapters[0]?.book.slug), t).plural}
       chapters={chapters.map((chapter) => ({
         id: chapter.id,
         number: chapter.number,

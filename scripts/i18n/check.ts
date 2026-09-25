@@ -7,6 +7,8 @@ import { nl } from "../../src/lib/i18n/messages/nl";
 import { en } from "../../src/lib/i18n/messages/en";
 import { de } from "../../src/lib/i18n/messages/de";
 import { fr } from "../../src/lib/i18n/messages/fr";
+import { readdirSync, readFileSync, statSync } from "fs";
+import { join } from "path";
 
 function keys(node: unknown, prefix = ""): string[] {
   if (typeof node === "string") return [prefix];
@@ -26,3 +28,19 @@ for (const [code, messages] of Object.entries({ en, de, fr })) {
     for (const key of unknown) console.log(`  onbekend:  ${key}`);
   }
 }
+
+// useT() is een client-hook: in een servercomponent (geen "use client"
+// bovenaan) gaat dat pas bij het renderen mis, TypeScript ziet het niet.
+// Servercomponenten gebruiken getT(user.uiLanguage).
+function walk(dir: string): string[] {
+  return readdirSync(dir).flatMap((name) => {
+    const path = join(dir, name);
+    return statSync(path).isDirectory() ? walk(path) : path.endsWith(".tsx") ? [path] : [];
+  });
+}
+const wrong = walk("src").filter((path) => {
+  const text = readFileSync(path, "utf8");
+  return /\buseT\(\)/.test(text) && !/^\s*["']use client["']/.test(text);
+});
+for (const path of wrong) console.log(`FOUT: useT() in servercomponent ${path}`);
+if (wrong.length > 0) process.exitCode = 1;

@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { useT } from "@/components/I18nProvider";
 
 interface LessonView {
   id: string;
@@ -21,19 +24,20 @@ interface Props {
 }
 
 export default function ReadingChapterView({ courseId, bookName, chapterNumber, lessons, thisOne = "dit hoofdstuk" }: Props) {
+  const t = useT();
   const completedCount = lessons.filter((lesson) => lesson.completed).length;
 
   return (
     <div className="max-w-2xl mx-auto flex flex-col gap-6">
       <div>
         <p className="text-xs font-bold uppercase tracking-wide text-slate-400 dark:text-slate-500">
-          {completedCount}/{lessons.length} stappen voltooid
+          {t("courseView.stepsDone", { done: completedCount, total: lessons.length })}
         </p>
         <h1 className="text-2xl font-extrabold text-brand-800 dark:text-brand-300 mt-1">
           {bookName} {chapterNumber}
         </h1>
         <p className="text-slate-500 dark:text-slate-400 mt-1">
-          Lees {thisOne} in kleine stukken. Je kunt alleen in de juiste volgorde verder.
+          {t("courseView.readInPieces", { thisOne })}
         </p>
       </div>
 
@@ -57,10 +61,10 @@ export default function ReadingChapterView({ courseId, bookName, chapterNumber, 
               {lesson.completed ? "✓" : lesson.locked ? "🔒" : lesson.number}
             </div>
             <div className="min-w-0 flex-1">
-              <div className="font-extrabold dark:text-slate-100">Stap {lesson.number}</div>
+              <div className="font-extrabold dark:text-slate-100">{t("courseView.stepN", { n: lesson.number })}</div>
               <div className="text-xs text-slate-400 dark:text-slate-500">
-                Verzen {lesson.startVerse}–{lesson.endVerse} · {lesson.verseCount} verzen
-                {lesson.bestScore !== null ? ` · beste score ${lesson.bestScore}%` : ""}
+                {t("courseView.verseRange", { from: lesson.startVerse, to: lesson.endVerse, n: lesson.verseCount })}
+                {lesson.bestScore !== null ? t("courseView.bestScore", { n: lesson.bestScore }) : ""}
               </div>
             </div>
             {!lesson.locked && <span className="text-slate-300 dark:text-slate-600">→</span>}
