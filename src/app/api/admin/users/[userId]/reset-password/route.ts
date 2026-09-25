@@ -6,6 +6,7 @@ import { hashPassword } from "@/lib/auth";
 import { createAuthToken } from "@/lib/authTokens";
 import { isEmailConfigured, sendMail } from "@/lib/email";
 import { adminPasswordResetTemplate } from "@/lib/emailTemplates";
+import { getT } from "@/lib/i18n";
 import { getBaseUrl } from "@/lib/baseUrl";
 
 // Leesbaar tijdelijk wachtwoord — alleen nog als noodgreep wanneer er geen
@@ -39,7 +40,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ use
   if (await isEmailConfigured()) {
     const rawToken = await createAuthToken(userId, "PASSWORD_RESET");
     const link = `${getBaseUrl(req)}/reset-password?token=${rawToken}`;
-    const { subject, html, text } = adminPasswordResetTemplate(link);
+    const { subject, html, text } = adminPasswordResetTemplate(getT(target.uiLanguage), link);
     const result = await sendMail({ to: target.email, subject, html, text });
     if (!result.ok) {
       return NextResponse.json({ error: result.error ?? "Kon de reset-e-mail niet versturen." }, { status: 502 });

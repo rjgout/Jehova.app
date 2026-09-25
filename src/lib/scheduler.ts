@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/db";
 import { addDays, dayKey, weekStartKey, amsterdamNow, type AmsterdamTime } from "@/lib/dates";
-import { tierForWeek, getLeagueSettings, TIER_ORDER, TIER_LABELS } from "@/lib/leagues";
+import { tierForWeek, getLeagueSettings, TIER_ORDER } from "@/lib/leagues";
 import { notifyDailyReminder, notifyDailyText, notifyWeeklyResult, notifySeasonResult, notifyWordGame } from "@/lib/notify";
 import { getTextOfTheDay } from "@/lib/dailyText";
 import { wordGameDayKey } from "@/lib/wordGame";
@@ -126,7 +126,7 @@ async function runWeeklyResultTick(): Promise<void> {
     const newIdx = TIER_ORDER.indexOf(newTier);
     const outcome = newIdx > oldIdx ? "promoted" : newIdx < oldIdx ? "demoted" : "stayed";
 
-    await notifyWeeklyResult(score.userId, outcome, TIER_LABELS[newTier]).catch(() => {});
+    await notifyWeeklyResult(score.userId, outcome, newTier).catch(() => {});
     await prisma.user
       .update({ where: { id: score.userId }, data: { lastWeeklyResultNotifiedWeek: endedWeek } })
       .catch(() => {});
@@ -226,7 +226,7 @@ export async function runSeasonRolloverTick(): Promise<void> {
         },
       });
 
-      await notifySeasonResult(userId, activeSeason.index, TIER_LABELS[last.tier], finalGroupPosition).catch(() => {});
+      await notifySeasonResult(userId, activeSeason.index, last.tier, finalGroupPosition).catch(() => {});
     }
 
     const settings = await getLeagueSettings(tx);

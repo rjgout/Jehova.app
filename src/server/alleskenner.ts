@@ -1649,7 +1649,7 @@ async function inviteSeasonMembers(room: Room, hostName: string) {
       gameLabel: "De Alleskenner",
     });
     // Altijd in het meldingencentrum; een push alleen als de app nergens open staat (zie notifyUser).
-    notifyGameInvite(userId, hostName, "De Alleskenner", room.code).catch(() => {});
+    notifyGameInvite(userId, hostName, (t) => t("pages.alleskenner"), room.code).catch(() => {});
   }
 }
 

@@ -5,6 +5,9 @@ import { getAppUrl } from "@/lib/baseUrl";
 import { APP_NAME } from "@/lib/brand";
 import { emitToUser } from "@/lib/realtime";
 import type { NotificationKind } from "@/lib/notificationGroups";
+import type { LeagueTier } from "@prisma/client";
+import { getT } from "@/lib/i18n";
+import { translateOr, type TFunction } from "@/lib/i18n/core";
 
 // Elke gebeurtenis valt in één categorie, die de gebruiker in zijn profiel
 // apart aan/uit kan zetten (zie User.notify* in schema.prisma) — bovenop,
@@ -19,14 +22,21 @@ const CATEGORY_FIELD: Record<NotifyCategory, "notifyDailyReminder" | "notifyDail
   wordGame: "notifyWordGame",
 };
 
+/** Wat de ontvanger te zien krijgt, in de taal van diens app (User.uiLanguage). */
+interface NotifyContent {
+  subject: string;
+  /** Hoofdtekst van de e-mail (HTML); de knop en de voettekst komen uit emailWrap. */
+  emailBody: string;
+  emailText: string;
+  ctaLabel: string;
+  pushTitle: string;
+  pushBody: string;
+}
+
 interface NotifyInput {
   userId: string;
   category: NotifyCategory;
-  subject: string;
-  emailHtml: string;
-  emailText: string;
-  pushTitle: string;
-  pushBody: string;
+  content: (t: TFunction) => NotifyContent;
   url: string;
   // Voor meldingen die alleen op dat moment zin hebben (bv. een live-
   // uitnodiging): geen e-mail, die komt pas binnen als het spel al voorbij is.
@@ -82,6 +92,7 @@ async function notifyUser(input: NotifyInput): Promise<void> {
     where: { id: input.userId },
     select: {
       email: true,
+      uiLanguage: true,
       emailNotificationsEnabled: true,
       pushNotificationsEnabled: true,
       notifyDailyReminder: true,
@@ -94,9 +105,12 @@ async function notifyUser(input: NotifyInput): Promise<void> {
   });
   if (!user) return;
   if (!user[CATEGORY_FIELD[input.category]]) return;
+  const t = getT(user.uiLanguage);
+  const content = input.content(t);
+  const absoluteUrl = `${await getAppUrl()}${input.url}`;
 
   if (input.kind) {
-    await storeNotification(input.userId, input.kind, input.pushTitle, input.pushBody, input.url).catch(() => {});
+    await storeNotification(input.userId, input.kind, content.pushTitle, content.pushBody, input.url).catch(() => {});
     // Werkt alleen vanuit de socketserver zelf; vanuit een API-route haalt de
     // client het meldingencentrum zelf op (zie NotificationCenter.tsx).
     emitToUser(input.userId, "notifications_changed");
@@ -105,15 +119,22 @@ async function notifyUser(input: NotifyInput): Promise<void> {
 
   const jobs: Promise<unknown>[] = [];
   if (user.emailNotificationsEnabled && !input.pushOnly) {
-    jobs.push(sendMail({ to: user.email, subject: input.subject, html: input.emailHtml, text: input.emailText }));
+    jobs.push(
+      sendMail({
+        to: user.email,
+        subject: content.subject,
+        html: emailWrap(t, content.emailBody, absoluteUrl, content.ctaLabel),
+        text: `${content.emailText} ${absoluteUrl}`,
+      })
+    );
   }
   if (user.pushNotificationsEnabled) {
     // Het getal op het app-icoon is het aantal meldingen in het
     // meldingencentrum: het verdwijnt pas als je ze afhandelt of wist.
     jobs.push(
       sendPushToUser(input.userId, {
-        title: input.pushTitle,
-        body: input.pushBody,
+        title: content.pushTitle,
+        body: content.pushBody,
         url: input.url,
         badge: await notificationCount(input.userId),
       })
@@ -122,54 +143,59 @@ async function notifyUser(input: NotifyInput): Promise<void> {
   await Promise.allSettled(jobs);
 }
 
-function emailWrap(bodyHtml: string, ctaUrl: string, ctaLabel: string): string {
-  return `<p>${bodyHtml}</p><p><a href="${ctaUrl}">${ctaLabel} →</a></p><p style="color:#94a3b8;font-size:12px">${APP_NAME} — je kan e-mailnotificaties uitzetten in je profiel.</p>`;
+function emailWrap(t: TFunction, bodyHtml: string, ctaUrl: string, ctaLabel: string): string {
+  return `<p>${bodyHtml}</p><p><a href="${ctaUrl}">${ctaLabel} →</a></p><p style="color:#94a3b8;font-size:12px">${t("notify.emailFooter", { app: APP_NAME })}</p>`;
+}
+
+/** Zelfde tekst voor e-mail en push; alleen de onderwerpregel/titel en de knop verschillen. */
+function simple(subject: string, pushTitle: string, text: string, ctaLabel: string, emailBody = text): NotifyContent {
+  return { subject, emailBody, emailText: text, ctaLabel, pushTitle, pushBody: text };
 }
 
 export async function notifyFreezeReceived(userId: string, senderDisplayName: string): Promise<void> {
-  const url = `${await getAppUrl()}/friends`;
-  const text = `${senderDisplayName} heeft je een streak freeze gegeven! 🧊`;
   await notifyUser({
     userId,
     category: "social",
     kind: "friends",
-    subject: "Je hebt een streak freeze gekregen! 🧊",
-    emailHtml: emailWrap(text, url, "Bekijk je vrienden"),
-    emailText: `${text} Bekijk je vrienden: ${url}`,
-    pushTitle: "Je hebt een streak freeze gekregen! 🧊",
-    pushBody: `${senderDisplayName} heeft je een streak freeze gegeven.`,
     url: "/friends",
+    content: (t) => ({
+      subject: t("notify.freezeTitle"),
+      emailBody: t("notify.freezeText", { name: senderDisplayName }),
+      emailText: `${t("notify.freezeText", { name: senderDisplayName })} ${t("notify.ctaFriends")}:`,
+      ctaLabel: t("notify.ctaFriends"),
+      pushTitle: t("notify.freezeTitle"),
+      pushBody: t("notify.freezePush", { name: senderDisplayName }),
+    }),
   });
 }
 
-export async function notifyGameInvite(userId: string, hostName: string, gameLabel: string, code: string): Promise<void> {
-  const text = `${hostName} nodigt je uit voor ${gameLabel}. Doe je mee?`;
+/** `gameLabel` in de taal van de ontvanger, bv. t("pages.alleskenner") of een hoofdstuk. */
+export async function notifyGameInvite(userId: string, hostName: string, gameLabel: (t: TFunction) => string, code: string): Promise<void> {
   await notifyUser({
     userId,
     category: "social",
     kind: "games",
-    subject: "Uitnodiging voor een live spel 🎮",
-    emailHtml: "",
-    emailText: "",
-    pushTitle: "Uitnodiging voor een live spel 🎮",
-    pushBody: text,
     url: `/live/${code}`,
     pushOnly: true,
+    content: (t) =>
+      simple(t("notify.gameInviteTitle"), t("notify.gameInviteTitle"), t("notify.gameInviteText", { name: hostName, game: gameLabel(t) }), ""),
   });
 }
 
 export async function notifyFriendRequest(receiverUserId: string, senderDisplayName: string): Promise<void> {
-  const url = `${await getAppUrl()}/friends`;
   await notifyUser({
     userId: receiverUserId,
     category: "social",
     kind: "friends",
-    subject: `${senderDisplayName} stuurde je een vriendschapsverzoek`,
-    emailHtml: emailWrap(`<strong>${senderDisplayName}</strong> wil vrienden met je worden op ${APP_NAME}.`, url, "Bekijk verzoek"),
-    emailText: `${senderDisplayName} wil vrienden met je worden op ${APP_NAME}. Bekijk het verzoek: ${url}`,
-    pushTitle: "Nieuw vriendschapsverzoek",
-    pushBody: `${senderDisplayName} wil vrienden met je worden.`,
     url: "/friends",
+    content: (t) => ({
+      subject: t("notify.friendRequestSubject", { name: senderDisplayName }),
+      emailBody: t("notify.friendRequestEmail", { name: `<strong>${senderDisplayName}</strong>`, app: APP_NAME }),
+      emailText: `${t("notify.friendRequestEmail", { name: senderDisplayName, app: APP_NAME })} ${t("notify.ctaRequestText")}:`,
+      ctaLabel: t("notify.ctaRequest"),
+      pushTitle: t("notify.friendRequestTitle"),
+      pushBody: t("notify.friendRequestPush", { name: senderDisplayName }),
+    }),
   });
 }
 
@@ -178,56 +204,56 @@ export async function notifyInviteAccepted(
   friendDisplayName: string,
   isNewAccount: boolean
 ): Promise<void> {
-  const url = `${await getAppUrl()}/friends`;
-  const text = isNewAccount
-    ? `${friendDisplayName} heeft een account gemaakt via jouw uitnodigingslink en is nu je vriend.`
-    : `${friendDisplayName} is via jouw uitnodigingslink je vriend geworden.`;
   await notifyUser({
     userId: inviterUserId,
     category: "social",
     kind: "friends",
-    subject: `${friendDisplayName} is nu je vriend`,
-    emailHtml: emailWrap(text, url, "Bekijk je vrienden"),
-    emailText: `${text} ${url}`,
-    pushTitle: "Nieuwe vriend 🎉",
-    pushBody: text,
     url: "/friends",
+    content: (t) => {
+      const text = t(isNewAccount ? "notify.inviteAcceptedNew" : "notify.inviteAccepted", { name: friendDisplayName });
+      return simple(t("notify.inviteAcceptedSubject", { name: friendDisplayName }), t("notify.inviteAcceptedTitle"), text, t("notify.ctaFriends"));
+    },
   });
 }
 
-export async function notifyAchievement(userId: string, achievementName: string, achievementIcon: string): Promise<void> {
-  const url = `${await getAppUrl()}/profile`;
+export async function notifyAchievement(userId: string, slug: string, achievementName: string, achievementIcon: string): Promise<void> {
   await notifyUser({
     userId,
     category: "achievements",
     kind: "achievements",
-    subject: `Nieuwe prestatie behaald: ${achievementName}`,
-    emailHtml: emailWrap(`${achievementIcon} Je hebt de prestatie <strong>${achievementName}</strong> behaald!`, url, "Bekijk je profiel"),
-    emailText: `${achievementIcon} Je hebt de prestatie "${achievementName}" behaald! Bekijk je profiel: ${url}`,
-    pushTitle: "Nieuwe prestatie! " + achievementIcon,
-    pushBody: `Je hebt "${achievementName}" behaald.`,
     url: "/profile",
+    content: (t) => {
+      const name = translateOr(t, `achievements.${slug}.name`, achievementName);
+      return {
+        subject: t("notify.achievementSubject", { name }),
+        emailBody: t("notify.achievementEmail", { icon: achievementIcon, name: `<strong>${name}</strong>` }),
+        emailText: `${t("notify.achievementEmail", { icon: achievementIcon, name: `"${name}"` })} ${t("notify.ctaProfile")}:`,
+        ctaLabel: t("notify.ctaProfile"),
+        pushTitle: `${t("notify.achievementTitle")} ${achievementIcon}`,
+        pushBody: t("notify.achievementPush", { name }),
+      };
+    },
   });
 }
 
-export async function notifyWeeklyResult(userId: string, outcome: "promoted" | "demoted" | "stayed", tierLabel: string): Promise<void> {
-  const url = `${await getAppUrl()}/competition`;
-  const text =
-    outcome === "promoted"
-      ? `Gefeliciteerd! Je bent gepromoveerd naar de ${tierLabel}.`
-      : outcome === "demoted"
-        ? `Je bent deze week gedegradeerd naar de ${tierLabel}. Volgende week weer omhoog!`
-        : `Je blijft deze week in de ${tierLabel}.`;
+export async function notifyWeeklyResult(userId: string, outcome: "promoted" | "demoted" | "stayed", tier: LeagueTier): Promise<void> {
   await notifyUser({
     userId,
     category: "achievements",
     kind: "competition",
-    subject: "Je wekelijkse competitie-uitslag",
-    emailHtml: emailWrap(text, url, "Bekijk de competitie"),
-    emailText: `${text} Bekijk de competitie: ${url}`,
-    pushTitle: outcome === "promoted" ? "Gepromoveerd! 🎉" : outcome === "demoted" ? "Gedegradeerd" : "Competitie-uitslag",
-    pushBody: text,
     url: "/competition",
+    content: (t) => {
+      const tierName = t(`tiers.${tier}`);
+      const text =
+        outcome === "promoted"
+          ? t("notify.weeklyPromoted", { tier: tierName })
+          : outcome === "demoted"
+            ? t("notify.weeklyDemoted", { tier: tierName })
+            : t("notify.weeklyStayed", { tier: tierName });
+      const title =
+        outcome === "promoted" ? t("notify.weeklyPromotedTitle") : outcome === "demoted" ? t("notify.weeklyDemotedTitle") : t("notify.weeklyTitle");
+      return { ...simple(t("notify.weeklySubject"), title, text, t("notify.ctaCompetition")), emailText: `${text} ${t("notify.ctaCompetition")}:` };
+    },
   });
 }
 
@@ -235,168 +261,147 @@ export async function notifyWeeklyResult(userId: string, outcome: "promoted" | "
 export async function notifySeasonResult(
   userId: string,
   seasonIndex: number,
-  tierLabel: string,
+  tier: LeagueTier,
   finalPosition: number | null
 ): Promise<void> {
-  const url = `${await getAppUrl()}/profile`;
-  const positionText = finalPosition ? ` (#${finalPosition})` : "";
-  const text = `Seizoen ${seasonIndex} is afgelopen! Je eindigde in de ${tierLabel}${positionText}.`;
   await notifyUser({
     userId,
     category: "achievements",
     kind: "competition",
-    subject: `Seizoen ${seasonIndex} is afgelopen`,
-    emailHtml: emailWrap(text, url, "Bekijk je profiel"),
-    emailText: `${text} Bekijk je profiel: ${url}`,
-    pushTitle: `Seizoen ${seasonIndex} afgesloten`,
-    pushBody: text,
     url: "/profile",
+    content: (t) => {
+      const positionText = finalPosition ? ` (#${finalPosition})` : "";
+      const text = t("notify.seasonText", { n: seasonIndex, tier: t(`tiers.${tier}`), position: positionText });
+      return {
+        ...simple(t("notify.seasonSubject", { n: seasonIndex }), t("notify.seasonTitle", { n: seasonIndex }), text, t("notify.ctaProfile")),
+        emailText: `${text} ${t("notify.ctaProfile")}:`,
+      };
+    },
   });
 }
 
 export async function notifyDailyText(userId: string, text: { href: string; bookName: string; chapterNumber: number; verseNumber: number; content: string }): Promise<void> {
   // Rechtstreeks naar het vers, net als een klik op de tekst van de dag op het dashboard.
-  const url = `${await getAppUrl()}${text.href}`;
   const reference = `${text.bookName} ${text.chapterNumber}:${text.verseNumber}`;
   await notifyUser({
     userId,
     category: "dailyText",
-    subject: "Tekst van de dag",
-    emailHtml: emailWrap(`📖 <strong>${reference}</strong><br />${text.content}`, url, "Lees verder"),
-    emailText: `📖 ${reference} — ${text.content} — ${url}`,
-    pushTitle: "Tekst van de dag 📖",
-    pushBody: `${reference} — ${text.content}`,
     url: text.href,
+    content: (t) => ({
+      subject: t("notify.dailyTextSubject"),
+      emailBody: `📖 <strong>${reference}</strong><br />${text.content}`,
+      emailText: `📖 ${reference} — ${text.content} —`,
+      ctaLabel: t("notify.ctaReadMore"),
+      pushTitle: t("notify.dailyTextTitle"),
+      pushBody: `${reference} — ${text.content}`,
+    }),
   });
 }
 
 export async function notifyDailyReminder(userId: string): Promise<void> {
-  const url = `${await getAppUrl()}/dashboard`;
   await notifyUser({
     userId,
     category: "dailyReminder",
-    subject: "Je hebt vandaag nog niet geoefend",
-    emailHtml: emailWrap(`Je bent vandaag nog niet langs geweest bij ${APP_NAME} — hou je streak in leven!`, url, "Nu oefenen"),
-    emailText: `Je bent vandaag nog niet langs geweest bij ${APP_NAME} — hou je streak in leven! Nu oefenen: ${url}`,
-    pushTitle: "Vergeet je streak niet! 🔥",
-    pushBody: "Je hebt vandaag nog niet geoefend.",
     url: "/dashboard",
+    content: (t) => ({
+      subject: t("notify.reminderSubject"),
+      emailBody: t("notify.reminderEmail", { app: APP_NAME }),
+      emailText: `${t("notify.reminderEmail", { app: APP_NAME })} ${t("notify.ctaPractice")}:`,
+      ctaLabel: t("notify.ctaPractice"),
+      pushTitle: t("notify.reminderTitle"),
+      pushBody: t("notify.reminderPush"),
+    }),
   });
 }
 
 export async function notifyChallengeReceived(receiverUserId: string, senderDisplayName: string, bookName: string, chapterNumber: number): Promise<void> {
-  const url = `${await getAppUrl()}/challenges`;
-  const text = `${senderDisplayName} daagt je uit op ${bookName} ${chapterNumber}!`;
   await notifyUser({
     userId: receiverUserId,
     category: "social",
     kind: "challenges",
-    subject: text,
-    emailHtml: emailWrap(text, url, "Bekijk de uitdaging"),
-    emailText: `${text} Bekijk de uitdaging: ${url}`,
-    pushTitle: "Nieuwe uitdaging! ⚔️",
-    pushBody: text,
     url: "/challenges",
+    content: (t) => {
+      const text = t("notify.challengeText", { name: senderDisplayName, chapter: `${bookName} ${chapterNumber}` });
+      return { ...simple(text, t("notify.challengeTitle"), text, t("notify.ctaChallenge")), emailText: `${text} ${t("notify.ctaChallenge")}:` };
+    },
   });
 }
 
 export async function notifyChallengeDeclined(senderUserId: string, receiverDisplayName: string): Promise<void> {
-  const url = `${await getAppUrl()}/challenges`;
-  const text = `${receiverDisplayName} heeft je uitdaging geweigerd.`;
   await notifyUser({
     userId: senderUserId,
     category: "social",
     kind: "challenges",
-    subject: "Je uitdaging is geweigerd",
-    emailHtml: emailWrap(text, url, "Bekijk uitdagingen"),
-    emailText: `${text} ${url}`,
-    pushTitle: "Uitdaging geweigerd",
-    pushBody: text,
     url: "/challenges",
+    content: (t) =>
+      simple(t("notify.challengeDeclinedSubject"), t("notify.challengeDeclinedTitle"), t("notify.challengeDeclinedText", { name: receiverDisplayName }), t("notify.ctaChallenges")),
   });
 }
 
 export async function notifyChallengeYourTurn(userId: string, opponentDisplayName: string): Promise<void> {
-  const url = `${await getAppUrl()}/challenges`;
-  const text = `${opponentDisplayName} heeft gespeeld — jij bent aan de beurt!`;
   await notifyUser({
     userId,
     category: "social",
     kind: "challenges",
-    subject: text,
-    emailHtml: emailWrap(text, url, "Speel je beurt"),
-    emailText: `${text} ${url}`,
-    pushTitle: "Jij bent aan de beurt! ⚔️",
-    pushBody: text,
     url: "/challenges",
+    content: (t) => {
+      const text = t("notify.yourTurnText", { name: opponentDisplayName });
+      return simple(text, t("notify.yourTurnChallengeTitle"), text, t("notify.ctaPlayTurn"));
+    },
   });
 }
 
 export async function notifyScrabbleInvite(receiverUserId: string, senderDisplayName: string): Promise<void> {
-  const url = `${await getAppUrl()}/scrabble`;
-  const text = `${senderDisplayName} daagt je uit voor een woordspel!`;
   await notifyUser({
     userId: receiverUserId,
     category: "social",
     kind: "wordgame",
-    subject: text,
-    emailHtml: emailWrap(text, url, "Bekijk het woordspel"),
-    emailText: `${text} ${url}`,
-    pushTitle: "Nieuw woordspel! 🔤",
-    pushBody: text,
     url: "/scrabble",
+    content: (t) => {
+      const text = t("notify.scrabbleInviteText", { name: senderDisplayName });
+      return simple(text, t("notify.scrabbleInviteTitle"), text, t("notify.ctaScrabble"));
+    },
   });
 }
 
 export async function notifyScrabbleDeclined(senderUserId: string, receiverDisplayName: string): Promise<void> {
-  const url = `${await getAppUrl()}/scrabble`;
-  const text = `${receiverDisplayName} heeft je woordspel-uitdaging geweigerd.`;
   await notifyUser({
     userId: senderUserId,
     category: "social",
     kind: "wordgame",
-    subject: "Je woordspel-uitdaging is geweigerd",
-    emailHtml: emailWrap(text, url, "Bekijk woordspellen"),
-    emailText: `${text} ${url}`,
-    pushTitle: "Uitdaging geweigerd",
-    pushBody: text,
     url: "/scrabble",
+    content: (t) =>
+      simple(t("notify.scrabbleDeclinedSubject"), t("notify.challengeDeclinedTitle"), t("notify.scrabbleDeclinedText", { name: receiverDisplayName }), t("notify.ctaScrabbles")),
   });
 }
 
 export async function notifyScrabbleYourTurn(userId: string, opponentDisplayName: string): Promise<void> {
-  const url = `${await getAppUrl()}/scrabble`;
-  const text = `${opponentDisplayName} heeft gespeeld — jij bent aan de beurt!`;
   await notifyUser({
     userId,
     category: "social",
     kind: "wordgame",
-    subject: text,
-    emailHtml: emailWrap(text, url, "Speel je beurt"),
-    emailText: `${text} ${url}`,
-    pushTitle: "Jij bent aan de beurt! 🔤",
-    pushBody: text,
     url: "/scrabble",
+    content: (t) => {
+      const text = t("notify.yourTurnText", { name: opponentDisplayName });
+      return simple(text, t("notify.yourTurnScrabbleTitle"), text, t("notify.ctaPlayTurn"));
+    },
   });
 }
 
 export async function notifyScrabbleFinished(userId: string, opponentDisplayName: string, won: boolean, tied: boolean): Promise<void> {
-  const url = `${await getAppUrl()}/scrabble`;
-  const text = tied
-    ? `Gelijkspel tegen ${opponentDisplayName}!`
-    : won
-      ? `Je hebt het woordspel gewonnen van ${opponentDisplayName}! 🎉`
-      : `Je hebt het woordspel verloren van ${opponentDisplayName}.`;
   await notifyUser({
     userId,
     category: "social",
     kind: "wordgame",
-    subject: `Woordspel afgerond: ${text}`,
-    emailHtml: emailWrap(text, url, "Bekijk het resultaat"),
-    emailText: `${text} ${url}`,
-    pushTitle: "Woordspel afgerond",
-    pushBody: text,
     url: "/scrabble",
+    content: (t) => {
+      const text = tied
+        ? t("notify.tiedAgainst", { name: opponentDisplayName })
+        : won
+          ? t("notify.scrabbleWon", { name: opponentDisplayName })
+          : t("notify.scrabbleLost", { name: opponentDisplayName });
+      return simple(t("notify.scrabbleFinishedSubject", { text }), t("notify.scrabbleFinishedTitle"), text, t("notify.ctaResult"));
+    },
   });
 }
 
@@ -404,39 +409,38 @@ export async function notifyScrabbleFinished(userId: string, opponentDisplayName
 export async function notifyNewAchievements(userId: string, slugs: string[]): Promise<void> {
   if (slugs.length === 0) return;
   const achievements = await prisma.achievement.findMany({ where: { slug: { in: slugs } } });
-  await Promise.allSettled(achievements.map((a) => notifyAchievement(userId, a.name, a.icon)));
+  await Promise.allSettled(achievements.map((a) => notifyAchievement(userId, a.slug, a.name, a.icon)));
 }
 
 export async function notifyChallengeFinished(userId: string, opponentDisplayName: string, won: boolean, tied: boolean): Promise<void> {
-  const url = `${await getAppUrl()}/challenges`;
-  const text = tied
-    ? `Gelijkspel tegen ${opponentDisplayName}!`
-    : won
-      ? `Je hebt gewonnen van ${opponentDisplayName}! 🎉`
-      : `Je hebt verloren van ${opponentDisplayName}.`;
   await notifyUser({
     userId,
     category: "social",
     kind: "challenges",
-    subject: `Uitdaging afgerond: ${text}`,
-    emailHtml: emailWrap(text, url, "Bekijk het resultaat"),
-    emailText: `${text} ${url}`,
-    pushTitle: "Uitdaging afgerond",
-    pushBody: text,
     url: "/challenges",
+    content: (t) => {
+      const text = tied
+        ? t("notify.tiedAgainst", { name: opponentDisplayName })
+        : won
+          ? t("notify.challengeWon", { name: opponentDisplayName })
+          : t("notify.challengeLost", { name: opponentDisplayName });
+      return simple(t("notify.challengeFinishedSubject", { text }), t("notify.challengeFinishedTitle"), text, t("notify.ctaResult"));
+    },
   });
 }
 
 export async function notifyWordGame(userId: string): Promise<void> {
-  const url = `${await getAppUrl()}/word-game`;
   await notifyUser({
     userId,
     category: "wordGame",
-    subject: "Het woord van vandaag staat klaar",
-    emailHtml: emailWrap(`Er staat een nieuw woord van de dag voor je klaar bij ${APP_NAME}.`, url, "Raad het woord"),
-    emailText: `Er staat een nieuw woord van de dag voor je klaar bij ${APP_NAME}. Raad het woord: ${url}`,
-    pushTitle: "Nieuw woord van de dag! 🔤",
-    pushBody: "Raad het woord van vandaag in 6 pogingen.",
     url: "/word-game",
+    content: (t) => ({
+      subject: t("notify.wordGameSubject"),
+      emailBody: t("notify.wordGameEmail", { app: APP_NAME }),
+      emailText: `${t("notify.wordGameEmail", { app: APP_NAME })} ${t("notify.ctaGuessWord")}:`,
+      ctaLabel: t("notify.ctaGuessWord"),
+      pushTitle: t("notify.wordGameTitle"),
+      pushBody: t("notify.wordGamePush"),
+    }),
   });
 }

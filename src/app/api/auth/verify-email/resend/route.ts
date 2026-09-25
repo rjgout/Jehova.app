@@ -3,6 +3,7 @@ import { getCurrentUser } from "@/lib/session";
 import { createAuthToken } from "@/lib/authTokens";
 import { isEmailConfigured, sendMail } from "@/lib/email";
 import { verifyEmailTemplate } from "@/lib/emailTemplates";
+import { getT } from "@/lib/i18n";
 import { getBaseUrl } from "@/lib/baseUrl";
 
 export async function POST(req: NextRequest) {
@@ -16,7 +17,7 @@ export async function POST(req: NextRequest) {
 
   const rawToken = await createAuthToken(user.id, "EMAIL_VERIFY");
   const link = `${getBaseUrl(req)}/verify-email?token=${rawToken}`;
-  const { subject, html, text } = verifyEmailTemplate(link);
+  const { subject, html, text } = verifyEmailTemplate(getT(user.uiLanguage), link);
   const result = await sendMail({ to: user.email, subject, html, text });
   if (!result.ok) return NextResponse.json({ error: result.error }, { status: 502 });
 

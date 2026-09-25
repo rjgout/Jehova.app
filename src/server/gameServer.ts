@@ -12,6 +12,8 @@ import { completeLesson, completeChapterGuess } from "@/lib/streak";
 import { checkAndAwardAchievements } from "@/lib/achievements";
 import { notifyGameInvite, notifyNewAchievements, removeNotificationsByUrl } from "@/lib/notify";
 import { setRealtimeServer } from "@/lib/realtime";
+import { getT } from "@/lib/i18n";
+import type { TFunction } from "@/lib/i18n/core";
 import {
   announceCameOnline,
   broadcastPresenceUpdate,
@@ -199,11 +201,11 @@ async function loadExercises(chapterId: string): Promise<GameExercise[]> {
   }));
 }
 
-function liveGameLabel(game: { mode: string; chapter?: { number: number; book: { name: string } } | null }): string {
-  if (game.mode === "CHAPTER_GUESS") return "Raad het hoofdstuk";
-  if (game.mode === "FAMILY_GAME") return "Gezinsavond";
-  if (game.mode === "ALLESKENNER") return "De Alleskenner";
-  return game.chapter ? `${game.chapter.book.name} ${game.chapter.number}` : "een live spel";
+function liveGameLabel(game: { mode: string; chapter?: { number: number; book: { name: string } } | null }, t: TFunction): string {
+  if (game.mode === "CHAPTER_GUESS") return t("pages.chapterGuess");
+  if (game.mode === "FAMILY_GAME") return t("pages.familyNight");
+  if (game.mode === "ALLESKENNER") return t("pages.alleskenner");
+  return game.chapter ? `${game.chapter.book.name} ${game.chapter.number}` : t("notify.aLiveGame");
 }
 
 // Uitgenodigden die nog niet zijn toegetreden laten weten dat de uitnodiging
@@ -1096,7 +1098,9 @@ export function initGameServer(httpServer: HttpServer) {
           update: {},
         })
         .catch(() => {});
-      const gameLabel = liveGameLabel(game);
+      // In de taal van de ontvanger: de melding bovenin toont dit letterlijk.
+      const recipient = await prisma.user.findUnique({ where: { id: toUserId }, select: { uiLanguage: true } });
+      const gameLabel = liveGameLabel(game, getT(recipient?.uiLanguage));
       ioInstance?.to(`user:${toUserId}`).emit("game_invite", {
         code: game.code,
         fromDisplayName: user.handle,
@@ -1107,7 +1111,7 @@ export function initGameServer(httpServer: HttpServer) {
       // Altijd in het meldingencentrum; notifyUser stuurt alleen een push als
       // de app bij de ander nergens open staat (anders zag hij net de melding
       // bovenin al).
-      notifyGameInvite(toUserId, user.handle, gameLabel, game.code).catch(() => {});
+      notifyGameInvite(toUserId, user.handle, (t) => liveGameLabel(game, t), game.code).catch(() => {});
     });
 
     // Alleen de host kan een spel dat nog niet gestart is beëindigen — nodig

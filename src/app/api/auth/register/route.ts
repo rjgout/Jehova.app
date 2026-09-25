@@ -8,6 +8,7 @@ import { generateDiscriminator, formatTag, HANDLE_REGEX, HANDLE_MIN_LENGTH, HAND
 import { createAuthToken } from "@/lib/authTokens";
 import { isEmailConfigured, sendMail } from "@/lib/email";
 import { verifyEmailTemplate } from "@/lib/emailTemplates";
+import { getT } from "@/lib/i18n";
 import { getBaseUrl } from "@/lib/baseUrl";
 import { FRONT_TO_BACK_SLUG, subscribeUserToCourse } from "@/lib/courses";
 import { becomeFriendsViaInvite } from "@/lib/friendInvite";
@@ -85,7 +86,7 @@ export async function POST(req: NextRequest) {
       if (await isEmailConfigured()) {
         const rawToken = await createAuthToken(user.id, "EMAIL_VERIFY");
         const link = `${getBaseUrl(req)}/verify-email?token=${rawToken}`;
-        const { subject, html, text } = verifyEmailTemplate(link);
+        const { subject, html, text } = verifyEmailTemplate(getT(user.uiLanguage), link);
         await sendMail({ to: user.email, subject, html, text });
       }
 

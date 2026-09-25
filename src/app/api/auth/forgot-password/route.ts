@@ -5,6 +5,7 @@ import { parseTag } from "@/lib/handle";
 import { createAuthToken } from "@/lib/authTokens";
 import { isEmailConfigured, sendMail } from "@/lib/email";
 import { resetPasswordTemplate } from "@/lib/emailTemplates";
+import { getT } from "@/lib/i18n";
 import { getBaseUrl } from "@/lib/baseUrl";
 
 const schema = z.object({
@@ -46,7 +47,7 @@ export async function POST(req: NextRequest) {
   if (user) {
     const rawToken = await createAuthToken(user.id, "PASSWORD_RESET");
     const link = `${getBaseUrl(req)}/reset-password?token=${rawToken}`;
-    const { subject, html, text } = resetPasswordTemplate(link);
+    const { subject, html, text } = resetPasswordTemplate(getT(user.uiLanguage), link);
     await sendMail({ to: user.email, subject, html, text });
   }
 
