@@ -3,6 +3,7 @@
 import { useState, FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { useT } from "@/components/I18nProvider";
 
 // Terug naar waar je vandaan kwam (bv. een uitnodigingslink). Alleen een pad
 // binnen de app: "//" of "/\\" zou de browser als ander domein lezen, en dan
@@ -15,6 +16,7 @@ function nextPath(): string {
 
 export default function LoginPage() {
   const router = useRouter();
+  const t = useT();
   const [form, setForm] = useState({ identifier: "", password: "" });
   const [twoFactorCode, setTwoFactorCode] = useState("");
   const [challengeToken, setChallengeToken] = useState<string | null>(null);
@@ -35,7 +37,7 @@ export default function LoginPage() {
       const data = await res.json().catch(() => ({}));
       setLoading(false);
       if (!res.ok) {
-        setError(data.error ?? "De verificatiecode klopt niet.");
+        setError(data.error ?? t("auth.codeWrong"));
         return;
       }
       router.push(nextPath());
@@ -51,7 +53,7 @@ export default function LoginPage() {
     const data = await res.json().catch(() => ({}));
     setLoading(false);
     if (!res.ok) {
-      setError(data.error ?? "Er ging iets mis.");
+      setError(data.error ?? t("wordOfTheDay.somethingWrong"));
       return;
     }
     if (data.requiresTwoFactor) {
@@ -65,12 +67,12 @@ export default function LoginPage() {
 
   return (
     <div className="max-w-md mx-auto card">
-      <h1 className="text-2xl font-extrabold mb-6 text-brand-800 dark:text-brand-300">Inloggen</h1>
+      <h1 className="text-2xl font-extrabold mb-6 text-brand-800 dark:text-brand-300">{t("auth.login")}</h1>
       <form onSubmit={onSubmit} className="flex flex-col gap-4">
         {challengeToken ? (
           <>
             <p className="text-sm text-slate-600 dark:text-slate-300">
-              Open je authenticator-app en voer de 6-cijferige code in. Je kunt ook een herstelcode gebruiken.
+              {t("auth.twoFactorPrompt")}
             </p>
             <input
               className="input"
@@ -80,7 +82,7 @@ export default function LoginPage() {
               autoCorrect="off"
               spellCheck={false}
               autoComplete="one-time-code"
-              placeholder="2FA-code of herstelcode"
+              placeholder={t("auth.twoFactorPlaceholder")}
               required
               value={twoFactorCode}
               onChange={(e) => setTwoFactorCode(e.target.value.slice(0, 16))}
@@ -91,14 +93,14 @@ export default function LoginPage() {
           <>
         <input
           className="input"
-          placeholder="E-mailadres of gebruikersnaam#00"
+          placeholder={t("auth.identifierPlaceholder")}
           required
           value={form.identifier}
           onChange={(e) => setForm({ ...form, identifier: e.target.value })}
         />
         <input
           className="input"
-          placeholder="Wachtwoord"
+          placeholder={t("auth.password")}
           type="password"
           required
           value={form.password}
@@ -108,18 +110,18 @@ export default function LoginPage() {
         )}
         {error && <p className="text-red-600 dark:text-red-400 text-sm font-semibold">{error}</p>}
         <button type="submit" disabled={loading} className="btn-primary mt-2">
-          {loading ? "Bezig..." : "Inloggen"}
+          {loading ? t("courses.busy") : t("auth.login")}
         </button>
       </form>
       <p className="text-sm text-slate-500 dark:text-slate-400 mt-4">
         <Link href="/forgot-password" className="text-brand-600 font-bold">
-          Wachtwoord vergeten?
+          {t("auth.forgotPassword")}
         </Link>
       </p>
       <p className="text-sm text-slate-500 dark:text-slate-400 mt-2">
-        Nog geen account?{" "}
+        {t("auth.noAccount")}{" "}
         <Link href="/register" className="text-brand-600 font-bold">
-          Maak er een aan
+          {t("auth.createOne")}
         </Link>
       </p>
     </div>

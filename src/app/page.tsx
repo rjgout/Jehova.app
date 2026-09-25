@@ -5,6 +5,8 @@ import { getBranding } from "@/lib/branding";
 import { resolveAppName } from "@/lib/brand";
 import Footer from "@/components/Footer";
 import HomeIntroSections from "@/components/HomeIntroSections";
+import { getT } from "@/lib/i18n";
+import { anonymousLanguage } from "@/lib/requestLanguage";
 
 // Zolang je ingelogd bent sla je deze pagina altijd over (rechtstreeks naar
 // het dashboard) — pas na uitloggen zie je 'm weer. Installatie van de app
@@ -16,6 +18,7 @@ export default async function HomePage() {
   const [user, { appName, heroLogoDataUrl }] = await Promise.all([getCurrentUser(), getBranding()]);
   if (user) redirect("/dashboard");
   const displayName = resolveAppName(appName);
+  const t = getT(await anonymousLanguage());
 
   return (
     <>
@@ -31,21 +34,21 @@ export default async function HomePage() {
 
       <div className="flex flex-col items-center gap-3">
         <h1 className="text-4xl sm:text-5xl font-extrabold text-brand-800 dark:text-brand-300 leading-tight">
-          Bestudeer het Boek van Mormon,
+          {t("home.heroLine1")}
           <br />
-          op een speelse manier.
+          {t("home.heroLine2")}
         </h1>
         <p className="max-w-xl text-slate-500 dark:text-slate-400 text-lg">
-          Korte lessen, invuloefeningen en dag-streaks — samen met vrienden, in divisies, of live tegen elkaar.
+          {t("home.heroText")}
         </p>
       </div>
 
       <div className="flex gap-3 w-full max-w-sm sm:w-auto">
         <Link href="/register" className="btn-primary flex-1 sm:flex-none sm:!px-8">
-          Aanmelden
+          {t("home.signUp")}
         </Link>
         <Link href="/login" className="btn-secondary flex-1 sm:flex-none sm:!px-8">
-          Inloggen
+          {t("auth.login")}
         </Link>
       </div>
 

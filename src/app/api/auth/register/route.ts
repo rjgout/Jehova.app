@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { Prisma } from "@prisma/client";
+import { anonymousLanguage } from "@/lib/requestLanguage";
 import { prisma } from "@/lib/db";
 import { createSessionToken, hashPassword, SESSION_COOKIE, sessionCookieOptions } from "@/lib/auth";
 import { generateDiscriminator, formatTag, HANDLE_REGEX, HANDLE_MIN_LENGTH, HANDLE_MAX_LENGTH, containsForbiddenEmoji } from "@/lib/handle";
@@ -66,6 +67,8 @@ export async function POST(req: NextRequest) {
           passwordHash,
           isAdmin: isFirstUser,
           activeCourseId: defaultCourse?.id,
+          // De taal waarin de bezoeker de app tot nu toe zag (zie requestLanguage).
+          uiLanguage: await anonymousLanguage(),
         },
       });
 

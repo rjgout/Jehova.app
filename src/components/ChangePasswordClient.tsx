@@ -1,10 +1,12 @@
 "use client";
 
 import { useState, FormEvent } from "react";
+import { useT } from "@/components/I18nProvider";
 import { useRouter } from "next/navigation";
 
 export default function ChangePasswordClient({ forced }: { forced: boolean }) {
   const router = useRouter();
+  const t = useT();
   const [form, setForm] = useState({ currentPassword: "", newPassword: "", confirmPassword: "" });
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -13,7 +15,7 @@ export default function ChangePasswordClient({ forced }: { forced: boolean }) {
     e.preventDefault();
     setError(null);
     if (form.newPassword !== form.confirmPassword) {
-      setError("De twee nieuwe wachtwoorden komen niet overeen.");
+      setError(t("password.newMismatch"));
       return;
     }
     setLoading(true);
@@ -25,7 +27,7 @@ export default function ChangePasswordClient({ forced }: { forced: boolean }) {
     setLoading(false);
     if (!res.ok) {
       const data = await res.json().catch(() => ({}));
-      setError(data.error ?? "Er ging iets mis.");
+      setError(data.error ?? t("wordOfTheDay.somethingWrong"));
       return;
     }
     router.push("/dashboard");
@@ -34,16 +36,16 @@ export default function ChangePasswordClient({ forced }: { forced: boolean }) {
 
   return (
     <div className="max-w-md mx-auto card">
-      <h1 className="text-2xl font-extrabold mb-2 text-brand-800 dark:text-brand-300">Wachtwoord wijzigen</h1>
+      <h1 className="text-2xl font-extrabold mb-2 text-brand-800 dark:text-brand-300">{t("profile.changePassword")}</h1>
       {forced && (
         <p className="text-sm bg-gold-50 dark:bg-slate-700 text-gold-700 dark:text-gold-400 rounded-xl px-3 py-2 mb-4">
-          Een admin heeft je wachtwoord gereset. Kies hieronder eerst een eigen, nieuw wachtwoord voordat je verder kan.
+          {t("password.forcedReset")}
         </p>
       )}
       <form onSubmit={onSubmit} className="flex flex-col gap-4">
         <input
           className="input"
-          placeholder={forced ? "Tijdelijk wachtwoord" : "Huidig wachtwoord"}
+          placeholder={forced ? t("password.temporary") : t("password.current")}
           type="password"
           required
           value={form.currentPassword}
@@ -51,7 +53,7 @@ export default function ChangePasswordClient({ forced }: { forced: boolean }) {
         />
         <input
           className="input"
-          placeholder="Nieuw wachtwoord"
+          placeholder={t("password.new")}
           type="password"
           required
           minLength={8}
@@ -60,7 +62,7 @@ export default function ChangePasswordClient({ forced }: { forced: boolean }) {
         />
         <input
           className="input"
-          placeholder="Bevestig nieuw wachtwoord"
+          placeholder={t("password.confirmNew")}
           type="password"
           required
           minLength={8}
@@ -69,7 +71,7 @@ export default function ChangePasswordClient({ forced }: { forced: boolean }) {
         />
         {error && <p className="text-red-600 dark:text-red-400 text-sm font-semibold">{error}</p>}
         <button type="submit" disabled={loading} className="btn-primary mt-2">
-          {loading ? "Bezig..." : "Wachtwoord opslaan"}
+          {loading ? t("courses.busy") : t("password.save")}
         </button>
       </form>
     </div>

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { getSocket } from "@/lib/socketClient";
+import { useT } from "@/components/I18nProvider";
 
 export default function InviteAcceptButton({
   code,
@@ -14,6 +15,7 @@ export default function InviteAcceptButton({
   inviterName: string;
 }) {
   const router = useRouter();
+  const t = useT();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -24,7 +26,7 @@ export default function InviteAcceptButton({
     const body = await res.json().catch(() => ({}));
     if (!res.ok) {
       setBusy(false);
-      setError(body.error ?? "Er ging iets mis.");
+      setError(body.error ?? t("wordOfTheDay.somethingWrong"));
       return;
     }
     // De route kan de socketserver niet bereiken: zelf seinen, zodat een
@@ -36,7 +38,7 @@ export default function InviteAcceptButton({
   return (
     <div className="flex flex-col items-center gap-2 w-full">
       <button className="btn-primary" disabled={busy} onClick={accept}>
-        {busy ? "Bezig..." : `Word vrienden met ${inviterName}`}
+        {busy ? t("courses.busy") : t("invitePage.becomeFriends", { name: inviterName })}
       </button>
       {error && <p className="text-sm font-semibold text-red-600 dark:text-red-400">{error}</p>}
     </div>

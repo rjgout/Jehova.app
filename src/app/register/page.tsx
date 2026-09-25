@@ -4,6 +4,7 @@ import { useEffect, useState, FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { getSocket } from "@/lib/socketClient";
+import { useT } from "@/components/I18nProvider";
 
 interface Inviter {
   id: string;
@@ -13,6 +14,7 @@ interface Inviter {
 
 export default function RegisterPage() {
   const router = useRouter();
+  const t = useT();
   const [form, setForm] = useState({ email: "", handle: "", password: "" });
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -48,7 +50,7 @@ export default function RegisterPage() {
     const data = await res.json().catch(() => ({}));
     setLoading(false);
     if (!res.ok) {
-      setError(data.error ?? "Er ging iets mis.");
+      setError(data.error ?? t("wordOfTheDay.somethingWrong"));
       return;
     }
     if (data.inviterId) {
@@ -64,21 +66,21 @@ export default function RegisterPage() {
     return (
       <div className="max-w-md mx-auto card text-center flex flex-col items-center gap-4">
         <div className="text-4xl">🎉</div>
-        <h1 className="text-xl font-extrabold text-brand-800 dark:text-brand-300">Account aangemaakt!</h1>
-        <p className="text-slate-600 dark:text-slate-300">Jouw unieke gebruikersnaam is:</p>
+        <h1 className="text-xl font-extrabold text-brand-800 dark:text-brand-300">{t("auth.accountCreated")}</h1>
+        <p className="text-slate-600 dark:text-slate-300">{t("auth.yourUsername")}</p>
         <p className="text-2xl font-extrabold tracking-wide bg-brand-50 dark:bg-slate-700 text-brand-700 dark:text-brand-300 rounded-2xl px-4 py-2">
           {createdTag}
         </p>
         {befriended && inviter && (
           <p className="text-sm font-semibold bg-brand-50 dark:bg-slate-700 text-brand-700 dark:text-brand-300 rounded-xl px-3 py-2">
-            Je bent nu vrienden met {inviter.tag}. 🎉
+            {t("auth.nowFriends", { tag: inviter.tag })}
           </p>
         )}
         <p className="text-sm text-slate-500 dark:text-slate-400">
-          Bevestig eerst je e-mailadres. Daarna helpen we je stap voor stap op weg.
+          {t("auth.confirmEmailFirst")}
         </p>
         <button className="btn-primary" onClick={() => { router.push("/verify-email"); router.refresh(); }}>
-          E-mailadres bevestigen →
+          {t("auth.confirmEmail")}
         </button>
       </div>
     );
@@ -86,31 +88,31 @@ export default function RegisterPage() {
 
   return (
     <div className="max-w-md mx-auto card">
-      <h1 className="text-2xl font-extrabold mb-6 text-brand-800 dark:text-brand-300">Account maken</h1>
+      <h1 className="text-2xl font-extrabold mb-6 text-brand-800 dark:text-brand-300">{t("auth.createAccount")}</h1>
       {inviter && (
         <p className="text-sm font-semibold bg-brand-50 dark:bg-slate-700 text-brand-700 dark:text-brand-300 rounded-xl px-3 py-2 mb-4">
-          💌 Uitgenodigd door {inviter.tag}. Na het aanmaken zijn jullie meteen vrienden.
+          {t("auth.invitedBy", { tag: inviter.tag })}
         </p>
       )}
       <form onSubmit={onSubmit} className="flex flex-col gap-4">
         <div>
-          <input className="input" placeholder="Gebruikersnaam" required value={form.handle} onChange={(e) => setForm({ ...form, handle: e.target.value })} />
+          <input className="input" placeholder={t("auth.username")} required value={form.handle} onChange={(e) => setForm({ ...form, handle: e.target.value })} />
           <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
-            Je krijgt er automatisch een uniek nummer achter, bv. "{form.handle || "Voorbeeld"}#42" — zo kan iedereen dezelfde gebruikersnaam kiezen en hoef je nooit je e-mailadres te delen om gevonden te worden.
+            {t("auth.usernameHint", { example: `${form.handle || t("auth.exampleName")}#42` })}
           </p>
         </div>
-        <input className="input" placeholder="E-mailadres" type="email" required value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
-        <input className="input" placeholder="Wachtwoord (min. 8 tekens)" type="password" required value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} />
+        <input className="input" placeholder={t("auth.email")} type="email" required value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
+        <input className="input" placeholder={t("auth.passwordMin")} type="password" required value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} />
         {error && <p className="text-red-600 dark:text-red-400 text-sm font-semibold">{error}</p>}
-        <button type="submit" disabled={loading} className="btn-primary mt-2">{loading ? "Bezig..." : "Account maken"}</button>
+        <button type="submit" disabled={loading} className="btn-primary mt-2">{loading ? t("courses.busy") : t("auth.createAccount")}</button>
       </form>
       <p className="text-sm text-slate-500 dark:text-slate-400 mt-4">
-        Heb je al een account?{" "}
+        {t("auth.haveAccount")}{" "}
         <Link
           href={inviteCode ? `/login?next=${encodeURIComponent(`/uitnodiging/${inviteCode}`)}` : "/login"}
           className="text-brand-600 font-bold"
         >
-          Log in
+          {t("auth.logIn")}
         </Link>
       </p>
     </div>

@@ -3,9 +3,11 @@
 import { useState, FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { useT } from "@/components/I18nProvider";
 
 export default function ResetPasswordClient({ token }: { token: string | null }) {
   const router = useRouter();
+  const t = useT();
   const [form, setForm] = useState({ newPassword: "", confirmPassword: "" });
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -15,9 +17,9 @@ export default function ResetPasswordClient({ token }: { token: string | null })
   if (!token) {
     return (
       <div className="max-w-md mx-auto card text-center flex flex-col gap-4">
-        <h1 className="text-xl font-extrabold text-red-600 dark:text-red-400">Geen resetlink gevonden</h1>
+        <h1 className="text-xl font-extrabold text-red-600 dark:text-red-400">{t("password.noLink")}</h1>
         <Link href="/forgot-password" className="btn-secondary self-center">
-          Nieuwe resetlink aanvragen
+          {t("password.requestNew")}
         </Link>
       </div>
     );
@@ -27,7 +29,7 @@ export default function ResetPasswordClient({ token }: { token: string | null })
     e.preventDefault();
     setError(null);
     if (form.newPassword !== form.confirmPassword) {
-      setError("De twee wachtwoorden komen niet overeen.");
+      setError(t("password.mismatch"));
       return;
     }
     setLoading(true);
@@ -45,7 +47,7 @@ export default function ResetPasswordClient({ token }: { token: string | null })
     const data = await res.json().catch(() => ({}));
     setLoading(false);
     if (!res.ok) {
-      setError(data.error ?? "Er ging iets mis.");
+      setError(data.error ?? t("wordOfTheDay.somethingWrong"));
       return;
     }
     if (data.requiresTwoFactor) {
@@ -59,12 +61,12 @@ export default function ResetPasswordClient({ token }: { token: string | null })
 
   return (
     <div className="max-w-md mx-auto card">
-      <h1 className="text-2xl font-extrabold mb-4 text-brand-800 dark:text-brand-300">Nieuw wachtwoord instellen</h1>
+      <h1 className="text-2xl font-extrabold mb-4 text-brand-800 dark:text-brand-300">{t("password.setNewTitle")}</h1>
       <form onSubmit={onSubmit} className="flex flex-col gap-4">
         {twoFactorChallenge ? (
           <>
             <p className="text-sm text-slate-600 dark:text-slate-300">
-              Je wachtwoord is gewijzigd. Bevestig nu je identiteit met je authenticator-app of een herstelcode.
+              {t("password.changedConfirm2fa")}
             </p>
             <input
               className="input"
@@ -74,7 +76,7 @@ export default function ResetPasswordClient({ token }: { token: string | null })
               autoCorrect="off"
               spellCheck={false}
               autoComplete="one-time-code"
-              placeholder="2FA-code of herstelcode"
+              placeholder={t("auth.twoFactorPlaceholder")}
               required
               value={twoFactorCode}
               onChange={(e) => setTwoFactorCode(e.target.value.slice(0, 16))}
@@ -85,7 +87,7 @@ export default function ResetPasswordClient({ token }: { token: string | null })
           <>
         <input
           className="input"
-          placeholder="Nieuw wachtwoord"
+          placeholder={t("password.new")}
           type="password"
           required
           minLength={8}
@@ -94,7 +96,7 @@ export default function ResetPasswordClient({ token }: { token: string | null })
         />
         <input
           className="input"
-          placeholder="Bevestig nieuw wachtwoord"
+          placeholder={t("password.confirmNew")}
           type="password"
           required
           minLength={8}
@@ -105,7 +107,7 @@ export default function ResetPasswordClient({ token }: { token: string | null })
         )}
         {error && <p className="text-red-600 dark:text-red-400 text-sm font-semibold">{error}</p>}
         <button type="submit" disabled={loading} className="btn-primary mt-2">
-          {loading ? "Bezig..." : "Wachtwoord instellen"}
+          {loading ? t("courses.busy") : t("password.set")}
         </button>
       </form>
     </div>

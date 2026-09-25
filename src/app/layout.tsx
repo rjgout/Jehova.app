@@ -26,7 +26,7 @@ import ReadAloudMiniPlayer from "@/components/ReadAloudMiniPlayer";
 import ActivityTracker from "@/components/ActivityTracker";
 import { I18nProvider } from "@/components/I18nProvider";
 import { messagesFor } from "@/lib/i18n";
-import { toLanguageCode } from "@/lib/languages";
+import { requestLanguage } from "@/lib/requestLanguage";
 import { APP_TAGLINE, resolveAppName } from "@/lib/brand";
 
 // PWA: manifest + icons zijn wat een browser nodig heeft om "toevoegen aan
@@ -132,8 +132,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const [user, { logoDataUrl, appName }] = await Promise.all([getCurrentUser(), getBranding()]);
   const contentContext = user ? await getContentContext(user.id) : null;
   const displayName = resolveAppName(appName);
-  // Uitgelogd: Nederlands, zoals voorheen.
-  const uiLanguage = toLanguageCode(user?.uiLanguage);
+  const uiLanguage = await requestLanguage(user);
 
   return (
     <html lang={uiLanguage} suppressHydrationWarning>

@@ -2,9 +2,11 @@ import Link from "next/link";
 import { getCurrentUser } from "@/lib/session";
 import { prisma } from "@/lib/db";
 import { getBranding } from "@/lib/branding";
-import { APP_TAGLINE, resolveAppName } from "@/lib/brand";
+import { resolveAppName } from "@/lib/brand";
 import { formatTag } from "@/lib/handle";
-import { findInviter, INVALID_INVITE_ERROR } from "@/lib/friendInvite";
+import { findInviter } from "@/lib/friendInvite";
+import { getT } from "@/lib/i18n";
+import { requestLanguage } from "@/lib/requestLanguage";
 import UserAvatar from "@/components/UserAvatar";
 import InviteAcceptButton from "@/components/InviteAcceptButton";
 import HomeIntroSections from "@/components/HomeIntroSections";
@@ -16,6 +18,7 @@ export default async function InvitePage({ params }: { params: Promise<{ code: s
   const { code } = await params;
   const [user, inviter, branding] = await Promise.all([getCurrentUser(), findInviter(code), getBranding()]);
   const appName = resolveAppName(branding.appName);
+  const t = getT(await requestLanguage(user));
 
   if (!inviter) {
     return (
@@ -23,17 +26,17 @@ export default async function InvitePage({ params }: { params: Promise<{ code: s
         <div className="text-5xl" aria-hidden>
           🔗
         </div>
-        <h1 className="text-xl font-extrabold text-brand-800 dark:text-brand-300">{INVALID_INVITE_ERROR}</h1>
+        <h1 className="text-xl font-extrabold text-brand-800 dark:text-brand-300">{t("invitePage.invalid")}</h1>
         <p className="text-sm text-slate-500 dark:text-slate-400">
-          Vraag degene die je uitnodigde om een nieuwe link.
+          {t("invitePage.askNewLink")}
         </p>
         {user ? (
           <Link href="/friends" className="btn-primary">
-            Naar je vrienden
+            {t("invitePage.toFriends")}
           </Link>
         ) : (
           <Link href="/register" className="btn-primary">
-            Toch een account maken
+            {t("invitePage.createAnyway")}
           </Link>
         )}
       </div>
@@ -47,14 +50,14 @@ export default async function InvitePage({ params }: { params: Promise<{ code: s
     action = (
       <>
         <p className="text-sm text-slate-600 dark:text-slate-300">
-          Maak een account, dan zijn jullie meteen vrienden.
+          {t("invitePage.createToBefriend")}
         </p>
         <div className="flex flex-col gap-2 w-full">
           <Link href={`/register?invite=${encodeURIComponent(code)}`} className="btn-primary">
-            Account maken
+            {t("auth.createAccount")}
           </Link>
           <Link href={`/login?next=${encodeURIComponent(`/uitnodiging/${code}`)}`} className="btn-secondary">
-            Ik heb al een account
+            {t("invitePage.haveAccount")}
           </Link>
         </div>
       </>
@@ -63,10 +66,10 @@ export default async function InvitePage({ params }: { params: Promise<{ code: s
     action = (
       <>
         <p className="text-sm text-slate-600 dark:text-slate-300">
-          Dit is je eigen uitnodigingslink. Stuur hem naar iemand die je wilt uitnodigen.
+          {t("invitePage.ownLink")}
         </p>
         <Link href="/friends" className="btn-primary">
-          Naar je vrienden
+          {t("invitePage.toFriends")}
         </Link>
       </>
     );
@@ -83,9 +86,9 @@ export default async function InvitePage({ params }: { params: Promise<{ code: s
     });
     action = friendship ? (
       <>
-        <p className="text-sm text-slate-600 dark:text-slate-300">Jullie zijn al vrienden.</p>
+        <p className="text-sm text-slate-600 dark:text-slate-300">{t("invitePage.alreadyFriends")}</p>
         <Link href="/friends" className="btn-primary">
-          Naar je vrienden
+          {t("invitePage.toFriends")}
         </Link>
       </>
     ) : (
@@ -97,9 +100,9 @@ export default async function InvitePage({ params }: { params: Promise<{ code: s
     <div className="w-full max-w-md card flex flex-col items-center gap-4 text-center">
       <UserAvatar id={inviter.id} handle={inviter.handle} avatarEmoji={inviter.avatarEmoji} size="md" />
       <h1 className="text-xl font-extrabold text-brand-800 dark:text-brand-300">
-        {inviterTag} nodigt je uit voor {appName}
+        {t("invitePage.invitesYou", { tag: inviterTag, app: appName })}
       </h1>
-      <p className="text-sm text-slate-500 dark:text-slate-400">{APP_TAGLINE}</p>
+      <p className="text-sm text-slate-500 dark:text-slate-400">{t("home.tagline")}</p>
       {action}
     </div>
   );
