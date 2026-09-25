@@ -8,6 +8,7 @@ import ChapterPopup from "@/components/ChapterPopup";
 import { ACHIEVEMENT_DISPLAY } from "@/lib/achievementDisplay";
 import { announceXpChanged } from "@/lib/xpBroadcast";
 import { useT } from "@/components/I18nProvider";
+import { translateOr } from "@/lib/i18n/core";
 
 // Server-opgeloste content-blokken (zie /intro/[lessonId]/page.tsx) — de
 // ruwe vorm staat in prisma/introContent.ts (IntroBlock); personen/boeken
@@ -206,7 +207,7 @@ export default function IntroLessonFlow({
                 return (
                   <div key={slug} className="flex flex-col items-center gap-1">
                     <span className="text-3xl">{display.icon}</span>
-                    <span className="text-xs font-bold dark:text-slate-200">{display.name}</span>
+                    <span className="text-xs font-bold dark:text-slate-200">{translateOr(t, `achievements.${slug}.name`, display.name)}</span>
                   </div>
                 );
               })}

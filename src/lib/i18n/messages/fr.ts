@@ -1181,4 +1181,133 @@ export const fr: PartialMessages = {
     freezesUsedMany: "🧊 {n} gels utilisés",
     weekdays: "Lu,Ma,Me,Je,Ve,Sa,Di",
   },
+  achievements: {
+    "streak-3": {
+      name: "Trois jours tenus",
+      description: "A maintenu une série 3 jours d’affilée.",
+    },
+    "streak-7": {
+      name: "Première semaine",
+      description: "A maintenu une série 7 jours d’affilée.",
+    },
+    "streak-30": {
+      name: "Persévérant",
+      description: "A maintenu une série 30 jours d’affilée.",
+    },
+    "streak-100": {
+      name: "Cent jours",
+      description: "A maintenu une série 100 jours d’affilée.",
+    },
+    "first-chapter": {
+      name: "Premier chapitre",
+      description: "A terminé son premier chapitre.",
+    },
+    "chapters-5": {
+      name: "Sur la lancée",
+      description: "A terminé 5 chapitres.",
+    },
+    "chapters-10": {
+      name: "Dix chapitres",
+      description: "A terminé 10 chapitres.",
+    },
+    "chapters-25": {
+      name: "Vingt-cinq chapitres",
+      description: "A terminé 25 chapitres.",
+    },
+    "chapters-50": {
+      name: "Un demi-cent",
+      description: "A terminé 50 chapitres.",
+    },
+    "perfect-chapter": {
+      name: "Parfait",
+      description: "A terminé un chapitre à 100 %.",
+    },
+    "perfect-10": {
+      name: "Dix fois dans le mille",
+      description: "A terminé 10 chapitres à 100 %.",
+    },
+    "xp-1000": {
+      name: "1000 XP",
+      description: "A gagné 1000 XP au total.",
+    },
+    "xp-5000": {
+      name: "5000 XP",
+      description: "A gagné 5000 XP au total.",
+    },
+    "xp-10000": {
+      name: "10 000 XP",
+      description: "A gagné 10 000 XP au total.",
+    },
+    "first-freeze-earned": {
+      name: "Premier gel",
+      description: "A gagné son premier gel de série.",
+    },
+    "first-freeze-gifted": {
+      name: "Généreux",
+      description: "A offert son premier gel de série à un ami.",
+    },
+    "first-friend": {
+      name: "Pas seul",
+      description: "A ajouté son premier ami.",
+    },
+    "friends-5": {
+      name: "Cercle d’amis",
+      description: "A 5 amis.",
+    },
+    "first-duel-won": {
+      name: "Première victoire",
+      description: "A gagné son premier duel d’Écritures en direct.",
+    },
+    "duels-10-won": {
+      name: "Maître du duel",
+      description: "A gagné 10 duels d’Écritures en direct.",
+    },
+    "family-game-first-play": {
+      name: "Soirée familiale",
+      description: "A terminé le jeu de la soirée familiale pour la première fois.",
+    },
+    "word-game-first-win": {
+      name: "Artiste des mots",
+      description: "A trouvé le mot du jour pour la première fois.",
+    },
+    "word-game-7-wins": {
+      name: "Maître des mots",
+      description: "A trouvé le mot du jour 7 fois.",
+    },
+    "podcast-first-lesson": {
+      name: "Première leçon de podcast",
+      description: "A terminé sa première leçon de podcast.",
+    },
+    "podcast-10-lessons": {
+      name: "Auditeur de podcast",
+      description: "A terminé 10 leçons de podcast.",
+    },
+    "kids-first-story": {
+      name: "Première leçon enfant",
+      description: "A terminé sa première histoire du cours pour enfants.",
+    },
+    "kids-10-stories": {
+      name: "Conteur",
+      description: "A terminé 10 histoires du cours pour enfants.",
+    },
+    "intro-first-lesson": {
+      name: "À la découverte",
+      description: "A terminé sa première leçon d’introduction.",
+    },
+    "intro-all-lessons": {
+      name: "Bien parti",
+      description: "A terminé toutes les leçons d’introduction.",
+    },
+  },
+  footer: {
+    disclaimer: "Ce site est une initiative indépendante et n’est ni parrainé, ni soutenu, ni approuvé, ni géré par L’Église de Jésus-Christ des Saints des Derniers Jours.",
+    privacy: "Politique de confidentialité",
+    cookies: "Politique relative aux cookies",
+  },
+  theme: {
+    lightOn: "Activer le mode clair",
+    darkOn: "Activer le mode sombre",
+    light: "Mode clair",
+    dark: "Mode sombre",
+  },
 };

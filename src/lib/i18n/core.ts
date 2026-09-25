@@ -39,3 +39,13 @@ export function translateWith(messages: PartialMessages | undefined, key: Messag
   const text = lookup(messages, key) ?? lookup(nl, key) ?? key;
   return interpolate(text, vars);
 }
+
+/**
+ * Voor teksten waarvan de sleutel uit data komt (bv. een achievement-slug uit
+ * de database): ontbreekt de vertaling helemaal, dan de meegegeven tekst in
+ * plaats van de kale sleutel.
+ */
+export function translateOr(t: TFunction, key: string, fallback: string, vars?: Vars): string {
+  const text = t(key as MessageKey, vars);
+  return text === key ? fallback : text;
+}

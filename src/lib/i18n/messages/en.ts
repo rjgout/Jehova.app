@@ -1181,4 +1181,133 @@ export const en: PartialMessages = {
     freezesUsedMany: "🧊 {n} freezes used",
     weekdays: "Mo,Tu,We,Th,Fr,Sa,Su",
   },
+  achievements: {
+    "streak-3": {
+      name: "Three days strong",
+      description: "Kept a streak going for 3 days in a row.",
+    },
+    "streak-7": {
+      name: "First week",
+      description: "Kept a streak going for 7 days in a row.",
+    },
+    "streak-30": {
+      name: "Kept it up",
+      description: "Kept a streak going for 30 days in a row.",
+    },
+    "streak-100": {
+      name: "A hundred days strong",
+      description: "Kept a streak going for 100 days in a row.",
+    },
+    "first-chapter": {
+      name: "First chapter",
+      description: "Completed your first chapter.",
+    },
+    "chapters-5": {
+      name: "On a roll",
+      description: "Completed 5 chapters.",
+    },
+    "chapters-10": {
+      name: "Ten chapters",
+      description: "Completed 10 chapters.",
+    },
+    "chapters-25": {
+      name: "Twenty-five chapters",
+      description: "Completed 25 chapters.",
+    },
+    "chapters-50": {
+      name: "Half a hundred",
+      description: "Completed 50 chapters.",
+    },
+    "perfect-chapter": {
+      name: "Perfect",
+      description: "Completed a chapter with 100%.",
+    },
+    "perfect-10": {
+      name: "Ten bull's-eyes",
+      description: "Completed 10 chapters with 100%.",
+    },
+    "xp-1000": {
+      name: "1000 XP",
+      description: "Earned 1000 XP in total.",
+    },
+    "xp-5000": {
+      name: "5000 XP",
+      description: "Earned 5000 XP in total.",
+    },
+    "xp-10000": {
+      name: "10,000 XP",
+      description: "Earned 10,000 XP in total.",
+    },
+    "first-freeze-earned": {
+      name: "First freeze",
+      description: "Earned your first streak freeze.",
+    },
+    "first-freeze-gifted": {
+      name: "Generous",
+      description: "Gave your first streak freeze to a friend.",
+    },
+    "first-friend": {
+      name: "Not alone",
+      description: "Added your first friend.",
+    },
+    "friends-5": {
+      name: "Circle of friends",
+      description: "Has 5 friends.",
+    },
+    "first-duel-won": {
+      name: "First victory",
+      description: "Won your first live scripture duel.",
+    },
+    "duels-10-won": {
+      name: "Duel master",
+      description: "Won 10 live scripture duels.",
+    },
+    "family-game-first-play": {
+      name: "Family Home Evening",
+      description: "Finished the Family Home Evening game for the first time.",
+    },
+    "word-game-first-win": {
+      name: "Word artist",
+      description: "Guessed the word of the day for the first time.",
+    },
+    "word-game-7-wins": {
+      name: "Word master",
+      description: "Guessed the word of the day 7 times.",
+    },
+    "podcast-first-lesson": {
+      name: "First podcast lesson",
+      description: "Completed your first podcast lesson.",
+    },
+    "podcast-10-lessons": {
+      name: "Podcast listener",
+      description: "Completed 10 podcast lessons.",
+    },
+    "kids-first-story": {
+      name: "First kids' lesson",
+      description: "Completed your first story from the kids' course.",
+    },
+    "kids-10-stories": {
+      name: "Storyteller",
+      description: "Completed 10 stories from the kids' course.",
+    },
+    "intro-first-lesson": {
+      name: "Exploring",
+      description: "Completed your first intro lesson.",
+    },
+    "intro-all-lessons": {
+      name: "Well on your way",
+      description: "Completed all intro lessons.",
+    },
+  },
+  footer: {
+    disclaimer: "This website is an independent initiative and is not sponsored, supported, approved or maintained by The Church of Jesus Christ of Latter-day Saints.",
+    privacy: "Privacy policy",
+    cookies: "Cookie policy",
+  },
+  theme: {
+    lightOn: "Turn on light mode",
+    darkOn: "Turn on dark mode",
+    light: "Light mode",
+    dark: "Dark mode",
+  },
 };

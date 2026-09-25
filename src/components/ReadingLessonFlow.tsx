@@ -7,6 +7,7 @@ import { announceXpChanged } from "@/lib/xpBroadcast";
 import { ExerciseCard, ReaderView, type ChapterAudio, type Exercise } from "@/components/LessonFlow";
 import type { ChapterTerm } from "@/lib/chapterTerm";
 import { useT } from "@/components/I18nProvider";
+import { translateOr } from "@/lib/i18n/core";
 
 interface VerseView {
   id: string;
@@ -218,7 +219,7 @@ export default function ReadingLessonFlow({
                 return display ? (
                   <div key={slug} className="flex flex-col items-center gap-1">
                     <span className="text-3xl">{display.icon}</span>
-                    <span className="text-xs font-bold dark:text-slate-200">{display.name}</span>
+                    <span className="text-xs font-bold dark:text-slate-200">{translateOr(t, `achievements.${slug}.name`, display.name)}</span>
                   </div>
                 ) : null;
               })}

@@ -1181,4 +1181,133 @@ export const de: PartialMessages = {
     freezesUsedMany: "🧊 {n} Freezes verwendet",
     weekdays: "Mo,Di,Mi,Do,Fr,Sa,So",
   },
+  achievements: {
+    "streak-3": {
+      name: "Drei Tage durchgehalten",
+      description: "Hat 3 Tage in Folge eine Serie gehalten.",
+    },
+    "streak-7": {
+      name: "Erste Woche",
+      description: "Hat 7 Tage in Folge eine Serie gehalten.",
+    },
+    "streak-30": {
+      name: "Drangeblieben",
+      description: "Hat 30 Tage in Folge eine Serie gehalten.",
+    },
+    "streak-100": {
+      name: "Hundert Tage stark",
+      description: "Hat 100 Tage in Folge eine Serie gehalten.",
+    },
+    "first-chapter": {
+      name: "Erstes Kapitel",
+      description: "Hat das erste Kapitel abgeschlossen.",
+    },
+    "chapters-5": {
+      name: "In Schwung",
+      description: "Hat 5 Kapitel abgeschlossen.",
+    },
+    "chapters-10": {
+      name: "Zehn Kapitel",
+      description: "Hat 10 Kapitel abgeschlossen.",
+    },
+    "chapters-25": {
+      name: "Fünfundzwanzig Kapitel",
+      description: "Hat 25 Kapitel abgeschlossen.",
+    },
+    "chapters-50": {
+      name: "Ein halbes Hundert",
+      description: "Hat 50 Kapitel abgeschlossen.",
+    },
+    "perfect-chapter": {
+      name: "Vollkommen",
+      description: "Hat ein Kapitel mit 100 % abgeschlossen.",
+    },
+    "perfect-10": {
+      name: "Zehnmal ins Schwarze",
+      description: "Hat 10 Kapitel mit 100 % abgeschlossen.",
+    },
+    "xp-1000": {
+      name: "1000 XP",
+      description: "Hat insgesamt 1000 XP verdient.",
+    },
+    "xp-5000": {
+      name: "5000 XP",
+      description: "Hat insgesamt 5000 XP verdient.",
+    },
+    "xp-10000": {
+      name: "10.000 XP",
+      description: "Hat insgesamt 10.000 XP verdient.",
+    },
+    "first-freeze-earned": {
+      name: "Erster Freeze",
+      description: "Hat den ersten Streak-Freeze verdient.",
+    },
+    "first-freeze-gifted": {
+      name: "Großzügig",
+      description: "Hat einem Freund den ersten Streak-Freeze geschenkt.",
+    },
+    "first-friend": {
+      name: "Nicht allein",
+      description: "Hat den ersten Freund hinzugefügt.",
+    },
+    "friends-5": {
+      name: "Freundeskreis",
+      description: "Hat 5 Freunde.",
+    },
+    "first-duel-won": {
+      name: "Erster Sieg",
+      description: "Hat das erste Live-Schriftenduell gewonnen.",
+    },
+    "duels-10-won": {
+      name: "Duellmeister",
+      description: "Hat 10 Live-Schriftenduelle gewonnen.",
+    },
+    "family-game-first-play": {
+      name: "Familienabend",
+      description: "Hat das Familienabendspiel zum ersten Mal zu Ende gespielt.",
+    },
+    "word-game-first-win": {
+      name: "Wortkünstler",
+      description: "Hat das Wort des Tages zum ersten Mal erraten.",
+    },
+    "word-game-7-wins": {
+      name: "Wortmeister",
+      description: "Hat das Wort des Tages 7-mal erraten.",
+    },
+    "podcast-first-lesson": {
+      name: "Erste Podcast-Lektion",
+      description: "Hat die erste Podcast-Lektion abgeschlossen.",
+    },
+    "podcast-10-lessons": {
+      name: "Podcast-Hörer",
+      description: "Hat 10 Podcast-Lektionen abgeschlossen.",
+    },
+    "kids-first-story": {
+      name: "Erste Kinderlektion",
+      description: "Hat die erste Geschichte aus dem Kinderkurs abgeschlossen.",
+    },
+    "kids-10-stories": {
+      name: "Geschichtenerzähler",
+      description: "Hat 10 Geschichten aus dem Kinderkurs abgeschlossen.",
+    },
+    "intro-first-lesson": {
+      name: "Auf Entdeckung",
+      description: "Hat die erste Einführungslektion abgeschlossen.",
+    },
+    "intro-all-lessons": {
+      name: "Gut unterwegs",
+      description: "Hat alle Einführungslektionen abgeschlossen.",
+    },
+  },
+  footer: {
+    disclaimer: "Diese Website ist eine unabhängige Initiative und wird nicht von der Kirche Jesu Christi der Heiligen der Letzten Tage gesponsert, unterstützt, genehmigt oder betrieben.",
+    privacy: "Datenschutzerklärung",
+    cookies: "Cookie-Richtlinie",
+  },
+  theme: {
+    lightOn: "Hellen Modus einschalten",
+    darkOn: "Dunklen Modus einschalten",
+    light: "Heller Modus",
+    dark: "Dunkler Modus",
+  },
 };

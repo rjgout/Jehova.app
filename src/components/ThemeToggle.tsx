@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useT } from "@/components/I18nProvider";
 
 export default function ThemeToggle() {
+  const t = useT();
   const [isDark, setIsDark] = useState(false);
 
   useEffect(() => {
@@ -23,8 +25,8 @@ export default function ThemeToggle() {
   return (
     <button
       onClick={toggle}
-      aria-label={isDark ? "Zet lichte modus aan" : "Zet donkere modus aan"}
-      title={isDark ? "Lichte modus" : "Donkere modus"}
+      aria-label={isDark ? t("theme.lightOn") : t("theme.darkOn")}
+      title={isDark ? t("theme.light") : t("theme.dark")}
       className="h-12 w-12 text-4xl leading-none hover:scale-110 transition flex items-center justify-center"
     >
       {isDark ? "☀️" : "🌙"}

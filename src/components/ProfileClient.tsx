@@ -15,6 +15,7 @@ import TwoFactorSettings from "@/components/TwoFactorSettings";
 import { getDutchVoices, saveSelectedDutchVoice } from "@/lib/readAloud";
 import { useT, useUiLanguage } from "@/components/I18nProvider";
 import { getLanguage } from "@/lib/languages";
+import { translateOr } from "@/lib/i18n/core";
 
 interface AchievementView {
   slug: string;
@@ -608,7 +609,7 @@ export default function ProfileClient() {
           {data.achievements.map((a) => (
             <div
               key={a.slug}
-              title={a.description}
+              title={translateOr(t, `achievements.${a.slug}.description`, a.description)}
               className={`rounded-2xl border p-4 flex flex-col items-center text-center gap-1 ${
                 a.earnedAt
                   ? "bg-gold-50 dark:bg-slate-700 border-gold-400/30 dark:border-slate-600"
@@ -616,7 +617,7 @@ export default function ProfileClient() {
               }`}
             >
               <span className="text-3xl">{a.icon}</span>
-              <span className="text-xs font-bold dark:text-slate-200">{a.name}</span>
+              <span className="text-xs font-bold dark:text-slate-200">{translateOr(t, `achievements.${a.slug}.name`, a.name)}</span>
             </div>
           ))}
         </div>

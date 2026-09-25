@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { ACHIEVEMENT_DISPLAY } from "@/lib/achievementDisplay";
 import { useT } from "@/components/I18nProvider";
+import { translateOr } from "@/lib/i18n/core";
 import type { TFunction } from "@/lib/i18n/core";
 import { normalizeAnswer } from "@/lib/exerciseGen";
 import { useActivityStatus } from "@/lib/useActivity";
@@ -959,7 +960,7 @@ function SummaryScreen({
               return (
                 <div key={slug} className="flex flex-col items-center gap-1">
                   <span className="text-3xl">{display.icon}</span>
-                  <span className="text-xs font-bold dark:text-slate-200">{display.name}</span>
+                  <span className="text-xs font-bold dark:text-slate-200">{translateOr(t, `achievements.${slug}.name`, display.name)}</span>
                 </div>
               );
             })}

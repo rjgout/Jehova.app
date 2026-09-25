@@ -1185,4 +1185,133 @@ export const nl = {
     freezesUsedMany: "🧊 {n} bevriezingen gebruikt",
     weekdays: "Ma,Di,Wo,Do,Vr,Za,Zo",
   },
+  achievements: {
+    "streak-3": {
+      name: "Drie dagen volgehouden",
+      description: "Hield 3 dagen op rij een streak vol.",
+    },
+    "streak-7": {
+      name: "Eerste week",
+      description: "Hield 7 dagen op rij een streak vol.",
+    },
+    "streak-30": {
+      name: "Vol doorgezet",
+      description: "Hield 30 dagen op rij een streak vol.",
+    },
+    "streak-100": {
+      name: "Honderd dagen sterk",
+      description: "Hield 100 dagen op rij een streak vol.",
+    },
+    "first-chapter": {
+      name: "Eerste hoofdstuk",
+      description: "Rondde je eerste hoofdstuk af.",
+    },
+    "chapters-5": {
+      name: "Op dreef",
+      description: "Rondde 5 hoofdstukken af.",
+    },
+    "chapters-10": {
+      name: "Tien hoofdstukken",
+      description: "Rondde 10 hoofdstukken af.",
+    },
+    "chapters-25": {
+      name: "Vijfentwintig hoofdstukken",
+      description: "Rondde 25 hoofdstukken af.",
+    },
+    "chapters-50": {
+      name: "Halve honderd",
+      description: "Rondde 50 hoofdstukken af.",
+    },
+    "perfect-chapter": {
+      name: "Volmaakt",
+      description: "Rondde een hoofdstuk af met 100%.",
+    },
+    "perfect-10": {
+      name: "Tien keer raak",
+      description: "Rondde 10 hoofdstukken af met 100%.",
+    },
+    "xp-1000": {
+      name: "1000 XP",
+      description: "Verdiende in totaal 1000 XP.",
+    },
+    "xp-5000": {
+      name: "5000 XP",
+      description: "Verdiende in totaal 5000 XP.",
+    },
+    "xp-10000": {
+      name: "10.000 XP",
+      description: "Verdiende in totaal 10.000 XP.",
+    },
+    "first-freeze-earned": {
+      name: "Eerste freeze",
+      description: "Verdiende je eerste streak freeze.",
+    },
+    "first-freeze-gifted": {
+      name: "Vrijgevig",
+      description: "Gaf je eerste streak freeze cadeau aan een vriend.",
+    },
+    "first-friend": {
+      name: "Niet alleen",
+      description: "Voegde je eerste vriend toe.",
+    },
+    "friends-5": {
+      name: "Vriendenkring",
+      description: "Heeft 5 vrienden.",
+    },
+    "first-duel-won": {
+      name: "Eerste overwinning",
+      description: "Won je eerste live Schriftduel.",
+    },
+    "duels-10-won": {
+      name: "Duelmeester",
+      description: "Won 10 live Schriftduels.",
+    },
+    "family-game-first-play": {
+      name: "Gezinsavond",
+      description: "Speelde het Gezinsavondspel voor het eerst uit.",
+    },
+    "word-game-first-win": {
+      name: "Woordkunstenaar",
+      description: "Raadde het woord van de dag voor het eerst goed.",
+    },
+    "word-game-7-wins": {
+      name: "Woordmeester",
+      description: "Raadde 7 keer het woord van de dag goed.",
+    },
+    "podcast-first-lesson": {
+      name: "Eerste podcastles",
+      description: "Rondde je eerste podcastles af.",
+    },
+    "podcast-10-lessons": {
+      name: "Podcastluisteraar",
+      description: "Rondde 10 podcastlessen af.",
+    },
+    "kids-first-story": {
+      name: "Eerste kinderles",
+      description: "Rondde je eerste verhaal uit de kindercursus af.",
+    },
+    "kids-10-stories": {
+      name: "Verhalenverteller",
+      description: "Rondde 10 verhalen uit de kindercursus af.",
+    },
+    "intro-first-lesson": {
+      name: "Op ontdekking",
+      description: "Rondde je eerste introductieles af.",
+    },
+    "intro-all-lessons": {
+      name: "Helemaal op weg",
+      description: "Rondde alle introductielessen af.",
+    },
+  },
+  footer: {
+    disclaimer: "Deze website is een onafhankelijk initiatief en wordt niet gesponsord, ondersteund, goedgekeurd of onderhouden door De Kerk van Jezus Christus van de Heiligen der Laatste Dagen.",
+    privacy: "Privacybeleid",
+    cookies: "Cookiebeleid",
+  },
+  theme: {
+    lightOn: "Zet lichte modus aan",
+    darkOn: "Zet donkere modus aan",
+    light: "Lichte modus",
+    dark: "Donkere modus",
+  },
 };

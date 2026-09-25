@@ -6,6 +6,7 @@ import { ExerciseCard, type Exercise } from "@/components/LessonFlow";
 import { ACHIEVEMENT_DISPLAY } from "@/lib/achievementDisplay";
 import { announceXpChanged } from "@/lib/xpBroadcast";
 import { useT } from "@/components/I18nProvider";
+import { translateOr } from "@/lib/i18n/core";
 
 interface Answer {
   exerciseId: string;
@@ -107,7 +108,7 @@ export default function PodcastLessonFlow({
                 return (
                   <div key={slug} className="flex flex-col items-center gap-1">
                     <span className="text-3xl">{display.icon}</span>
-                    <span className="text-xs font-bold dark:text-slate-200">{display.name}</span>
+                    <span className="text-xs font-bold dark:text-slate-200">{translateOr(t, `achievements.${slug}.name`, display.name)}</span>
                   </div>
                 );
               })}
