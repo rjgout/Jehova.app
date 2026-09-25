@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useT } from "@/components/I18nProvider";
 
 interface IntroAudio {
   url: string;
@@ -14,6 +15,7 @@ interface IntroAudio {
  * Stopt vanzelf aan het eind van de kop, en bij een volgende vraag.
  */
 export default function IntroAudioButton({ audio }: { audio: IntroAudio | null | undefined }) {
+  const t = useT();
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [playing, setPlaying] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -83,7 +85,7 @@ export default function IntroAudioButton({ audio }: { audio: IntroAudio | null |
       className="btn-secondary !px-4 !py-2 self-start inline-flex items-center gap-2"
     >
       <span aria-hidden>{playing ? "⏸" : loading ? "⏳" : "🔊"}</span>
-      {playing ? "Stop" : loading ? "Laden..." : "Luister naar het intro"}
+      {playing ? t("chapterGuess.stopAudio") : loading ? t("common.loading") : t("chapterGuess.listenIntro")}
     </button>
   );
 }

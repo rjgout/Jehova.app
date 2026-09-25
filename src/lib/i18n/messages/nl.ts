@@ -472,6 +472,8 @@ export const nl = {
     confirmForfeit: "Weet je zeker dat je wil opgeven? Je tegenstander wint dan automatisch.",
   },
   chapterGuess: {
+    stopAudio: "Stop",
+    listenIntro: "Luister naar het intro",
     intro: "Je krijgt het eerste vers van een hoofdstuk te lezen — raad daarna welk hoofdstuk het is.",
     level: "Niveau",
     questionCount: "Aantal vragen",

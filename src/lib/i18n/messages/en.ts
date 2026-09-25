@@ -319,9 +319,9 @@ export const en: PartialMessages = {
     noGames: "{name} has no games (yet).",
     switchContent: "Switch to other content at the top to play.",
     disabledForUsers: "Disabled for users",
-    rules: "How to play",
-    rulesFor: "How to play {title}",
-    rulesClose: "Close how to play",
+    rules: "Game rules",
+    rulesFor: "Game rules for {title}",
+    rulesClose: "Close game rules",
     howToPlay: "How to play",
     wordGame: {
       description: "Guess the 5-letter word from the Book of Mormon — a new word every day at 6:00 p.m., one try per day, and it counts toward your streak.",
@@ -468,6 +468,8 @@ export const en: PartialMessages = {
     confirmForfeit: "Are you sure you want to give up? Your opponent will automatically win.",
   },
   chapterGuess: {
+    stopAudio: "Stop",
+    listenIntro: "Listen to the heading",
     intro: "You read the first verse of a chapter — then guess which chapter it is.",
     level: "Level",
     questionCount: "Number of questions",

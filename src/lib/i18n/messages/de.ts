@@ -468,6 +468,8 @@ export const de: PartialMessages = {
     confirmForfeit: "Willst du wirklich aufgeben? Dein Gegner gewinnt dann automatisch.",
   },
   chapterGuess: {
+    stopAudio: "Stopp",
+    listenIntro: "Einleitung anhören",
     intro: "Du liest den ersten Vers eines Kapitels — errate dann, welches Kapitel es ist.",
     level: "Niveau",
     questionCount: "Anzahl der Fragen",
