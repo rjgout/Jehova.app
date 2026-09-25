@@ -10,32 +10,34 @@ import {
   twoFactorFailureKey,
   verifyTotpCode,
 } from "@/lib/totp";
-import { failureLockSeconds, registerFailure, tooManyAttemptsMessage } from "@/lib/rateLimit";
+import { failureLockSeconds, registerFailure, tooManyAttempts } from "@/lib/rateLimit";
+import { apiError } from "@/lib/apiError";
 
 const schema = z.object({ code: z.string().min(1) });
 
 export async function POST(req: NextRequest) {
   const user = await getCurrentUser();
-  if (!user) return NextResponse.json({ error: "Niet ingelogd" }, { status: 401 });
+  if (!user) return await apiError("apiErrors.notLoggedIn", 401);
   if (user.isAdmin) {
-    return NextResponse.json({ error: "2FA kan voor beheerders niet worden uitgeschakeld." }, { status: 403 });
+    return await apiError("apiErrors.twoFactorAdminRequired", 403);
   }
 
   const failureKey = twoFactorFailureKey(user.id);
   const lockSeconds = failureLockSeconds(failureKey, TWO_FACTOR_MAX_FAILURES);
   if (lockSeconds > 0) {
-    return NextResponse.json({ error: tooManyAttemptsMessage(lockSeconds) }, { status: 429 });
+    const [key, vars] = tooManyAttempts(lockSeconds);
+    return await apiError(key, 429, vars);
   }
 
   const parsed = schema.safeParse(await req.json().catch(() => null));
-  if (!parsed.success) return NextResponse.json({ error: "Vul je verificatiecode of herstelcode in." }, { status: 400 });
+  if (!parsed.success) return await apiError("apiErrors.enterVerificationOrRecovery", 400);
 
   const current = await prisma.user.findUnique({
     where: { id: user.id },
     select: { totpSecretEncrypted: true, totpRecoveryCodes: true, totpEnabled: true },
   });
   if (!current?.totpEnabled || !current.totpSecretEncrypted) {
-    return NextResponse.json({ error: "2FA staat niet aan." }, { status: 400 });
+    return await apiError("apiErrors.twoFactorNotOn", 400);
   }
 
   const validTotp = verifyTotpCode(decryptTotpSecret(current.totpSecretEncrypted), parsed.data.code);
@@ -47,7 +49,7 @@ export async function POST(req: NextRequest) {
   const remaining = await consumeRecoveryCode(current.totpRecoveryCodes, parsed.data.code);
   if (!remaining) {
     registerFailure(failureKey, TWO_FACTOR_WINDOW_MS);
-    return NextResponse.json({ error: "Code klopt niet." }, { status: 400 });
+    return await apiError("apiErrors.codeWrong", 400);
   }
 
   await prisma.user.update({

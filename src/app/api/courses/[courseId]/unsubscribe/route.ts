@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getCurrentUser } from "@/lib/session";
+import { apiError } from "@/lib/apiError";
 
 // Verwijdert een cursus uit de persoonlijke cursussenlijst — de
 // UserCourseProgress-rij (dus de voortgang) blijft gewoon bestaan, alleen
@@ -8,7 +9,7 @@ import { getCurrentUser } from "@/lib/session";
 // 'm terug aan en je staat weer precies waar je was.
 export async function POST(req: NextRequest, { params }: { params: Promise<{ courseId: string }> }) {
   const user = await getCurrentUser();
-  if (!user) return NextResponse.json({ error: "Niet ingelogd" }, { status: 401 });
+  if (!user) return await apiError("apiErrors.notLoggedIn", 401);
 
   const { courseId } = await params;
   const result = await prisma.userCourseProgress.updateMany({
@@ -16,7 +17,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ cou
     data: { subscribed: false },
   });
   if (result.count === 0) {
-    return NextResponse.json({ error: "Deze cursus stond niet in je lijst." }, { status: 404 });
+    return await apiError("apiErrors.courseNotInList", 404);
   }
 
   if (user.activeCourseId === courseId) {

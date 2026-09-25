@@ -8,6 +8,7 @@ import { isEmailConfigured, sendMail } from "@/lib/email";
 import { adminPasswordResetTemplate } from "@/lib/emailTemplates";
 import { getT } from "@/lib/i18n";
 import { getBaseUrl } from "@/lib/baseUrl";
+import { apiError } from "@/lib/apiError";
 
 // Leesbaar tijdelijk wachtwoord — alleen nog als noodgreep wanneer er geen
 // e-mail geconfigureerd staat (zie hieronder). Met werkende e-mail (het
@@ -30,12 +31,12 @@ function generateTempPassword(length = 12): string {
 // zelf moet doorgeven.
 export async function POST(req: NextRequest, { params }: { params: Promise<{ userId: string }> }) {
   const admin = await getCurrentUser();
-  if (!admin) return NextResponse.json({ error: "Niet ingelogd" }, { status: 401 });
-  if (!admin.isAdmin) return NextResponse.json({ error: "Geen toegang" }, { status: 403 });
+  if (!admin) return await apiError("apiErrors.notLoggedIn", 401);
+  if (!admin.isAdmin) return await apiError("apiErrors.forbidden", 403);
 
   const { userId } = await params;
   const target = await prisma.user.findUnique({ where: { id: userId } });
-  if (!target) return NextResponse.json({ error: "Gebruiker niet gevonden" }, { status: 404 });
+  if (!target) return await apiError("apiErrors.userNotFound", 404);
 
   if (await isEmailConfigured()) {
     const rawToken = await createAuthToken(userId, "PASSWORD_RESET");

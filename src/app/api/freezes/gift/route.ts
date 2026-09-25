@@ -3,16 +3,17 @@ import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { getCurrentUser } from "@/lib/session";
 import { giftFreeze } from "@/lib/streak";
+import { apiError, apiErrorText } from "@/lib/apiError";
 
 const schema = z.object({ toUserId: z.string().min(1) });
 
 export async function POST(req: NextRequest) {
   const user = await getCurrentUser();
-  if (!user) return NextResponse.json({ error: "Niet ingelogd" }, { status: 401 });
+  if (!user) return await apiError("apiErrors.notLoggedIn", 401);
 
   const body = await req.json().catch(() => null);
   const parsed = schema.safeParse(body);
-  if (!parsed.success) return NextResponse.json({ error: "Ongeldige invoer" }, { status: 400 });
+  if (!parsed.success) return await apiError("apiErrors.invalidInput", 400);
 
   const areFriends = await prisma.friendship.findFirst({
     where: {
@@ -24,13 +25,13 @@ export async function POST(req: NextRequest) {
     },
   });
   if (!areFriends) {
-    return NextResponse.json({ error: "Je kan alleen freezes geven aan vrienden." }, { status: 403 });
+    return await apiError("apiErrors.freezeFriendsOnly", 403);
   }
 
   try {
     await giftFreeze(user.id, parsed.data.toUserId);
   } catch (e) {
-    return NextResponse.json({ error: e instanceof Error ? e.message : "Mislukt" }, { status: 400 });
+    return await apiErrorText(e instanceof Error ? e.message : "Mislukt", 400);
   }
 
   return NextResponse.json({ ok: true });

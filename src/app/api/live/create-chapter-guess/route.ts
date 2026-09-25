@@ -4,6 +4,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { getCurrentUser } from "@/lib/session";
 import { QUESTION_COUNT_OPTIONS } from "@/lib/chapterGuess";
+import { apiError } from "@/lib/apiError";
 
 const generateCode = customAlphabet("ABCDEFGHJKLMNPQRSTUVWXYZ23456789", 5);
 const schema = z.object({
@@ -17,11 +18,11 @@ const schema = z.object({
 // niveau+aantal vragen (zie LiveGame.mode CHAPTER_GUESS).
 export async function POST(req: NextRequest) {
   const user = await getCurrentUser();
-  if (!user) return NextResponse.json({ error: "Niet ingelogd" }, { status: 401 });
+  if (!user) return await apiError("apiErrors.notLoggedIn", 401);
 
   const body = await req.json().catch(() => null);
   const parsed = schema.safeParse(body);
-  if (!parsed.success) return NextResponse.json({ error: "Kies een niveau en aantal vragen." }, { status: 400 });
+  if (!parsed.success) return await apiError("apiErrors.chooseLevelAndCount", 400);
 
   let code = generateCode();
   for (let attempts = 0; attempts < 5; attempts++) {

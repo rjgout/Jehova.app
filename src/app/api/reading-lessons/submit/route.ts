@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db";
 import { getCurrentUser } from "@/lib/session";
 import { isExerciseCorrect } from "@/lib/exerciseGen";
 import { completeReadingLesson } from "@/lib/readingLessons";
+import { apiError, apiErrorText } from "@/lib/apiError";
 
 const schema = z.object({
   lessonId: z.string(),
@@ -17,11 +18,11 @@ const schema = z.object({
 
 export async function POST(req: NextRequest) {
   const user = await getCurrentUser();
-  if (!user) return NextResponse.json({ error: "Niet ingelogd" }, { status: 401 });
+  if (!user) return await apiError("apiErrors.notLoggedIn", 401);
 
   const parsed = schema.safeParse(await req.json().catch(() => null));
   if (!parsed.success) {
-    return NextResponse.json({ error: "Ongeldige invoer" }, { status: 400 });
+    return await apiError("apiErrors.invalidInput", 400);
   }
 
   const lesson = await prisma.courseLesson.findUnique({
@@ -32,7 +33,7 @@ export async function POST(req: NextRequest) {
     },
   });
   if (!lesson || lesson.course.type !== "READING_LESSONS") {
-    return NextResponse.json({ error: "Stap niet gevonden" }, { status: 404 });
+    return await apiError("apiErrors.stepNotFound", 404);
   }
 
   // De score telt altijd over ALLE vragen van deze les: niet-ingestuurde
@@ -78,7 +79,7 @@ export async function POST(req: NextRequest) {
     result = await completeReadingLesson(user.id, lesson.id, scorePercent, correctCount);
   } catch (e) {
     const message = e instanceof Error ? e.message : "Kon de stap niet afronden.";
-    return NextResponse.json({ error: message }, { status: 409 });
+    return await apiErrorText(message, 409);
   }
 
   return NextResponse.json({

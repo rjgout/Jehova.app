@@ -3,21 +3,22 @@ import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { getCurrentUser } from "@/lib/session";
 import { notifyFriendRequest } from "@/lib/notify";
+import { apiError } from "@/lib/apiError";
 
 const schema = z.object({ targetUserId: z.string().trim().min(1) });
 
 export async function POST(req: NextRequest) {
   const user = await getCurrentUser();
-  if (!user) return NextResponse.json({ error: "Niet ingelogd" }, { status: 401 });
+  if (!user) return await apiError("apiErrors.notLoggedIn", 401);
 
   const body = await req.json().catch(() => null);
   const parsed = schema.safeParse(body);
-  if (!parsed.success) return NextResponse.json({ error: "Ongeldige invoer" }, { status: 400 });
+  if (!parsed.success) return await apiError("apiErrors.invalidInput", 400);
 
   const target = await prisma.user.findUnique({ where: { id: parsed.data.targetUserId } });
-  if (!target) return NextResponse.json({ error: "Gebruiker niet gevonden." }, { status: 404 });
+  if (!target) return await apiError("apiErrors.userNotFoundDot", 404);
   if (target.id === user.id) {
-    return NextResponse.json({ error: "Je kan jezelf niet toevoegen." }, { status: 400 });
+    return await apiError("apiErrors.cantAddSelf", 400);
   }
 
   const existing = await prisma.friendship.findFirst({
@@ -29,7 +30,7 @@ export async function POST(req: NextRequest) {
     },
   });
   if (existing) {
-    return NextResponse.json({ error: "Er bestaat al een vriendschap of verzoek." }, { status: 409 });
+    return await apiError("apiErrors.friendshipExists", 409);
   }
 
   const friendship = await prisma.friendship.create({

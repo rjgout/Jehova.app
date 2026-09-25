@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { getCurrentUser } from "@/lib/session";
 import { getEmailSettingsView, saveEmailSettings } from "@/lib/email";
+import { apiError } from "@/lib/apiError";
 
 const schema = z.object({
   enabled: z.boolean(),
@@ -16,16 +17,16 @@ const schema = z.object({
 
 export async function GET() {
   const user = await getCurrentUser();
-  if (!user) return NextResponse.json({ error: "Niet ingelogd" }, { status: 401 });
-  if (!user.isAdmin) return NextResponse.json({ error: "Geen toegang" }, { status: 403 });
+  if (!user) return await apiError("apiErrors.notLoggedIn", 401);
+  if (!user.isAdmin) return await apiError("apiErrors.forbidden", 403);
 
   return NextResponse.json(await getEmailSettingsView());
 }
 
 export async function PUT(req: NextRequest) {
   const user = await getCurrentUser();
-  if (!user) return NextResponse.json({ error: "Niet ingelogd" }, { status: 401 });
-  if (!user.isAdmin) return NextResponse.json({ error: "Geen toegang" }, { status: 403 });
+  if (!user) return await apiError("apiErrors.notLoggedIn", 401);
+  if (!user.isAdmin) return await apiError("apiErrors.forbidden", 403);
 
   const body = await req.json().catch(() => null);
   const parsed = schema.safeParse(body);

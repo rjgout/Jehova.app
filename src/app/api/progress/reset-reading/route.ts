@@ -1,12 +1,13 @@
 import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/session";
 import { prisma } from "@/lib/db";
+import { apiError } from "@/lib/apiError";
 
 const READING_COURSE_TYPES = ["FRONT_TO_BACK", "FREE_CHOICE", "BY_BOOK", "READING_LESSONS"] as const;
 
 export async function POST() {
   const user = await getCurrentUser();
-  if (!user) return NextResponse.json({ error: "Niet ingelogd" }, { status: 401 });
+  if (!user) return await apiError("apiErrors.notLoggedIn", 401);
 
   await prisma.$transaction(async (tx) => {
     const readingCourses = await tx.course.findMany({

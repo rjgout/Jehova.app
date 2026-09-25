@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getCurrentUser } from "@/lib/session";
+import { apiError } from "@/lib/apiError";
 
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ code: string }> }) {
   const user = await getCurrentUser();
-  if (!user) return NextResponse.json({ error: "Niet ingelogd" }, { status: 401 });
+  if (!user) return await apiError("apiErrors.notLoggedIn", 401);
 
   const { code } = await params;
   const game = await prisma.liveGame.findUnique({
@@ -15,7 +16,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ cod
       players: { include: { user: { select: { id: true, handle: true } } } },
     },
   });
-  if (!game) return NextResponse.json({ error: "Spel niet gevonden." }, { status: 404 });
+  if (!game) return await apiError("apiErrors.gameNotFound", 404);
 
   return NextResponse.json({
     code: game.code,

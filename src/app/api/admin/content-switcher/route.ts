@@ -7,6 +7,7 @@ import {
   setContentCollectionVisibility,
   updateContentSwitcherSettings,
 } from "@/lib/contentCollections";
+import { apiError } from "@/lib/apiError";
 
 const bodySchema = z.union([
   z.object({ enabled: z.boolean() }),
@@ -20,18 +21,18 @@ async function snapshot() {
 
 export async function GET() {
   const user = await getCurrentUser();
-  if (!user) return NextResponse.json({ error: "Niet ingelogd" }, { status: 401 });
-  if (!user.isAdmin) return NextResponse.json({ error: "Geen toegang" }, { status: 403 });
+  if (!user) return await apiError("apiErrors.notLoggedIn", 401);
+  if (!user.isAdmin) return await apiError("apiErrors.forbidden", 403);
   return NextResponse.json(await snapshot());
 }
 
 export async function PUT(req: NextRequest) {
   const user = await getCurrentUser();
-  if (!user) return NextResponse.json({ error: "Niet ingelogd" }, { status: 401 });
-  if (!user.isAdmin) return NextResponse.json({ error: "Geen toegang" }, { status: 403 });
+  if (!user) return await apiError("apiErrors.notLoggedIn", 401);
+  if (!user.isAdmin) return await apiError("apiErrors.forbidden", 403);
 
   const parsed = bodySchema.safeParse(await req.json().catch(() => null));
-  if (!parsed.success) return NextResponse.json({ error: "Ongeldige invoer" }, { status: 400 });
+  if (!parsed.success) return await apiError("apiErrors.invalidInput", 400);
 
   const body = parsed.data;
   if ("enabled" in body) {

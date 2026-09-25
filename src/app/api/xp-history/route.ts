@@ -2,18 +2,19 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getCurrentUser } from "@/lib/session";
 import { weekStartKey } from "@/lib/dates";
+import { apiError } from "@/lib/apiError";
 
 const PAGE_SIZE = 30;
 
 export async function GET(req: NextRequest) {
   const user = await getCurrentUser();
-  if (!user) return NextResponse.json({ error: "Niet ingelogd" }, { status: 401 });
+  if (!user) return await apiError("apiErrors.notLoggedIn", 401);
 
   const { searchParams } = new URL(req.url);
   const skipParam = searchParams.get("skip");
   const skip = skipParam !== null ? Number(skipParam) : 0;
   if (!Number.isInteger(skip) || skip < 0) {
-    return NextResponse.json({ error: "Ongeldige skip-waarde" }, { status: 400 });
+    return await apiError("apiErrors.invalidSkip", 400);
   }
 
   const transactions = await prisma.xPTransaction.findMany({

@@ -53,7 +53,8 @@ export function clientIp(req: NextRequest): string {
   );
 }
 
-export function tooManyAttemptsMessage(seconds: number): string {
+/** Vertaalsleutel en waarden voor apiError(): `apiError(...tooManyAttempts(seconds), 429)`. */
+export function tooManyAttempts(seconds: number): ["apiErrors.tooManyAttemptsOne" | "apiErrors.tooManyAttemptsMany", { n: number }] {
   const minutes = Math.max(1, Math.ceil(seconds / 60));
-  return `Te veel mislukte pogingen. Probeer het over ${minutes} ${minutes === 1 ? "minuut" : "minuten"} opnieuw.`;
+  return [minutes === 1 ? "apiErrors.tooManyAttemptsOne" : "apiErrors.tooManyAttemptsMany", { n: minutes }];
 }

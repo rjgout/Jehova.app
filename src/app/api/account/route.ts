@@ -7,6 +7,7 @@ import { SESSION_COOKIE, createSessionToken, hashPassword, sessionCookieOptions,
 import { generateDiscriminator, HANDLE_REGEX, HANDLE_MIN_LENGTH, HANDLE_MAX_LENGTH, containsForbiddenEmoji, isSingleEmoji } from "@/lib/handle";
 import { setIncognito, INCOGNITO_DURATIONS_HOURS } from "@/lib/presence";
 import { LANGUAGES, getLanguage } from "@/lib/languages";
+import { apiError, apiErrorText } from "@/lib/apiError";
 
 const patchSchema = z.object({
   handle: z
@@ -70,17 +71,17 @@ const passwordSchema = z.object({
 // admin-wachtwoordreset (zie /api/admin/users/[userId]/reset-password).
 export async function PUT(req: NextRequest) {
   const user = await getCurrentUser();
-  if (!user) return NextResponse.json({ error: "Niet ingelogd" }, { status: 401 });
+  if (!user) return await apiError("apiErrors.notLoggedIn", 401);
 
   const body = await req.json().catch(() => null);
   const parsed = passwordSchema.safeParse(body);
   if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.issues[0].message }, { status: 400 });
+    return await apiErrorText(parsed.error.issues[0].message, 400);
   }
 
   const valid = await verifyPassword(parsed.data.currentPassword, user.passwordHash);
   if (!valid) {
-    return NextResponse.json({ error: "Huidig wachtwoord klopt niet." }, { status: 401 });
+    return await apiError("apiErrors.currentPasswordWrong", 401);
   }
 
   const passwordHash = await hashPassword(parsed.data.newPassword);
@@ -101,19 +102,19 @@ export async function PUT(req: NextRequest) {
 // vinden bij het toevoegen van vrienden (zie /api/users/search).
 export async function PATCH(req: NextRequest) {
   const user = await getCurrentUser();
-  if (!user) return NextResponse.json({ error: "Niet ingelogd" }, { status: 401 });
+  if (!user) return await apiError("apiErrors.notLoggedIn", 401);
 
   const body = await req.json().catch(() => null);
   const parsed = patchSchema.safeParse(body);
-  if (!parsed.success) return NextResponse.json({ error: "Ongeldige invoer" }, { status: 400 });
+  if (!parsed.success) return await apiError("apiErrors.invalidInput", 400);
   if (Object.keys(parsed.data).length === 0) {
-    return NextResponse.json({ error: "Niets om op te slaan" }, { status: 400 });
+    return await apiError("apiErrors.nothingToSave", 400);
   }
   const { handle, incognitoHours, ...rest } = parsed.data;
   // Een taal waarvan de app-teksten nog niet af zijn, alleen voor beheerders
   // (om de vertaling te bekijken).
   if (rest.uiLanguage && !getLanguage(rest.uiLanguage).uiReady && !user.isAdmin) {
-    return NextResponse.json({ error: "Deze taal is nog niet beschikbaar." }, { status: 400 });
+    return await apiError("apiErrors.languageUnavailable", 400);
   }
 
   if (incognitoHours !== undefined) {
@@ -154,10 +155,7 @@ export async function PATCH(req: NextRequest) {
     }
   }
 
-  return NextResponse.json(
-    { error: "Kon geen unieke gebruikersnaam aanmaken, probeer een andere gebruikersnaam." },
-    { status: 409 }
-  );
+  return await apiError("apiErrors.uniqueHandleFailed", 409);
 }
 
 // AVG: een gebruiker moet zijn account (en alle bijbehorende gegevens)
@@ -166,7 +164,7 @@ export async function PATCH(req: NextRequest) {
 // voortgang, XP-historie, vriendschappen, quizresultaten en meer.
 export async function DELETE() {
   const user = await getCurrentUser();
-  if (!user) return NextResponse.json({ error: "Niet ingelogd" }, { status: 401 });
+  if (!user) return await apiError("apiErrors.notLoggedIn", 401);
 
   await prisma.user.delete({ where: { id: user.id } });
 

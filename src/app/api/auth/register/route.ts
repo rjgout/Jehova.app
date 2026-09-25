@@ -12,6 +12,7 @@ import { getT } from "@/lib/i18n";
 import { getBaseUrl } from "@/lib/baseUrl";
 import { FRONT_TO_BACK_SLUG, subscribeUserToCourse } from "@/lib/courses";
 import { becomeFriendsViaInvite } from "@/lib/friendInvite";
+import { apiError, apiErrorText } from "@/lib/apiError";
 
 const schema = z.object({
   email: z.string().trim().toLowerCase().email("Vul een geldig e-mailadres in."),
@@ -33,13 +34,13 @@ export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => null);
   const parsed = schema.safeParse(body);
   if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.issues[0].message }, { status: 400 });
+    return await apiErrorText(parsed.error.issues[0].message, 400);
   }
   const { email, handle, password, inviteCode } = parsed.data;
 
   const existingEmail = await prisma.user.findUnique({ where: { email } });
   if (existingEmail) {
-    return NextResponse.json({ error: "Dit e-mailadres is al in gebruik." }, { status: 409 });
+    return await apiError("apiErrors.emailInUse", 409);
   }
 
   const passwordHash = await hashPassword(password);
@@ -113,8 +114,5 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  return NextResponse.json(
-    { error: "Kon geen unieke gebruikersnaam aanmaken, probeer een andere gebruikersnaam." },
-    { status: 409 }
-  );
+  return await apiError("apiErrors.uniqueHandleFailed", 409);
 }

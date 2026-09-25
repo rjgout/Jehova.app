@@ -3,6 +3,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { consumeAuthToken } from "@/lib/authTokens";
 import { createSessionToken, createTwoFactorChallengeToken, hashPassword, SESSION_COOKIE, sessionCookieOptions } from "@/lib/auth";
+import { apiError, apiErrorText } from "@/lib/apiError";
 
 const schema = z.object({
   token: z.string().min(1),
@@ -13,12 +14,12 @@ export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => null);
   const parsed = schema.safeParse(body);
   if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.issues[0].message }, { status: 400 });
+    return await apiErrorText(parsed.error.issues[0].message, 400);
   }
 
   const userId = await consumeAuthToken(parsed.data.token, "PASSWORD_RESET");
   if (!userId) {
-    return NextResponse.json({ error: "Deze link is ongeldig of verlopen. Vraag een nieuwe aan." }, { status: 400 });
+    return await apiError("apiErrors.linkInvalid", 400);
   }
 
   const passwordHash = await hashPassword(parsed.data.newPassword);

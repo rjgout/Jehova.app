@@ -7,6 +7,7 @@ import { parseItem, referencedVerses, validateAlleskennerItem } from "@/lib/alle
 import { parsePassage } from "@/lib/alleskenner/content";
 import { alleskennerItems } from "../../../../../../prisma/alleskennerContent";
 import { generatedAlleskennerItems } from "../../../../../../prisma/alleskennerGenerated";
+import { apiError } from "@/lib/apiError";
 
 const schema = z.union([
   z.object({ reset: z.literal(true) }),
@@ -34,14 +35,14 @@ async function verseMap(refs: string[]): Promise<Map<string, string>> {
 // zet editedByAdmin, zodat een volgende import hem niet overschrijft.
 export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const user = await getCurrentUser();
-  if (!user) return NextResponse.json({ error: "Niet ingelogd" }, { status: 401 });
-  if (!user.isAdmin) return NextResponse.json({ error: "Geen toegang" }, { status: 403 });
+  if (!user) return await apiError("apiErrors.notLoggedIn", 401);
+  if (!user.isAdmin) return await apiError("apiErrors.forbidden", 403);
 
   const { id } = await params;
   const existing = await prisma.alleskennerItem.findUnique({ where: { id } });
-  if (!existing) return NextResponse.json({ error: "Onderdeel niet gevonden." }, { status: 404 });
+  if (!existing) return await apiError("apiErrors.partNotFound", 404);
   const parsed = schema.safeParse(await req.json().catch(() => null));
-  if (!parsed.success) return NextResponse.json({ error: "Ongeldige invoer." }, { status: 400 });
+  if (!parsed.success) return await apiError("apiErrors.invalidInputDot", 400);
   const body = parsed.data;
 
   if ("enabled" in body) {
@@ -51,7 +52,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
 
   if ("reset" in body) {
     const original = [...alleskennerItems, ...generatedAlleskennerItems()].find((i) => i.id === id);
-    if (!original) return NextResponse.json({ error: "Dit onderdeel staat niet (meer) in het inhoudsbestand." }, { status: 409 });
+    if (!original) return await apiError("apiErrors.itemNotInFile", 409);
     await prisma.alleskennerItem.update({ where: { id }, data: { data: JSON.stringify(original.data), editedByAdmin: false } });
     return NextResponse.json({ ok: true });
   }

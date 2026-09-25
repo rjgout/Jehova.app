@@ -3,7 +3,8 @@ import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { createSessionToken, createTwoFactorChallengeToken, verifyPassword, SESSION_COOKIE, sessionCookieOptions } from "@/lib/auth";
 import { parseTag } from "@/lib/handle";
-import { clearFailures, clientIp, failureLockSeconds, registerFailure, tooManyAttemptsMessage } from "@/lib/rateLimit";
+import { clearFailures, clientIp, failureLockSeconds, registerFailure, tooManyAttempts } from "@/lib/rateLimit";
+import { apiError, apiErrorText } from "@/lib/apiError";
 
 // Per IP+account een krappe grens tegen wachtwoord raden op één account,
 // per IP een ruimere tegen het afgaan van veel accounts. Bewust niet alleen
@@ -21,7 +22,7 @@ export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => null);
   const parsed = schema.safeParse(body);
   if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.issues[0].message }, { status: 400 });
+    return await apiErrorText(parsed.error.issues[0].message, 400);
   }
   const { identifier, password } = parsed.data;
 
@@ -33,12 +34,13 @@ export async function POST(req: NextRequest) {
     failureLockSeconds(ipKey, MAX_FAILURES_PER_IP)
   );
   if (lockSeconds > 0) {
-    return NextResponse.json({ error: tooManyAttemptsMessage(lockSeconds) }, { status: 429 });
+    const [key, vars] = tooManyAttempts(lockSeconds);
+    return await apiError(key, 429, vars);
   }
-  const fail = () => {
+  const fail = async () => {
     registerFailure(accountKey, LOGIN_WINDOW_MS);
     registerFailure(ipKey, LOGIN_WINDOW_MS);
-    return NextResponse.json({ error: "Onjuiste inloggegevens." }, { status: 401 });
+    return await apiError("apiErrors.wrongCredentials", 401);
   };
 
   // Inloggen kan met e-mailadres, of met de volledige unieke tag

@@ -3,6 +3,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { getCurrentUser } from "@/lib/session";
 import { subscribeUserToCourse, INTRO_SLUG } from "@/lib/courses";
+import { apiError } from "@/lib/apiError";
 
 const schema = z.object({ level: z.enum(["NEVER", "SOME", "READ_BEFORE", "UNSURE"]) });
 
@@ -10,10 +11,10 @@ const schema = z.object({ level: z.enum(["NEVER", "SOME", "READ_BEFORE", "UNSURE
 // actieve cursus. Bij meer voorkennis blijft de bestaande actieve cursus staan.
 export async function POST(req: NextRequest) {
   const user = await getCurrentUser();
-  if (!user) return NextResponse.json({ error: "Niet ingelogd" }, { status: 401 });
+  if (!user) return await apiError("apiErrors.notLoggedIn", 401);
 
   const parsed = schema.safeParse(await req.json().catch(() => null));
-  if (!parsed.success) return NextResponse.json({ error: "Ongeldige invoer" }, { status: 400 });
+  if (!parsed.success) return await apiError("apiErrors.invalidInput", 400);
 
   await prisma.user.update({ where: { id: user.id }, data: { bomKnowledgeLevel: parsed.data.level } });
 

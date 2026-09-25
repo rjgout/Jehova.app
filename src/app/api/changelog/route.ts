@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getCurrentUser } from "@/lib/session";
+import { apiError } from "@/lib/apiError";
 
 // Voor zowel de volledige lijst op het profiel als de "nieuw sinds je laatste
 // bezoek"-pop-up (ChangelogPopup.tsx): één plek die bepaalt wat "nieuw" is,
@@ -10,7 +11,7 @@ import { getCurrentUser } from "@/lib/session";
 // tussen zit.
 export async function GET() {
   const user = await getCurrentUser();
-  if (!user) return NextResponse.json({ error: "Niet ingelogd" }, { status: 401 });
+  if (!user) return await apiError("apiErrors.notLoggedIn", 401);
 
   const entries = await prisma.changelogEntry.findMany({ orderBy: { createdAt: "desc" } });
   const hasUnseen = user.changelogEnabled && entries.some((e) => e.createdAt > user.changelogSeenAt);

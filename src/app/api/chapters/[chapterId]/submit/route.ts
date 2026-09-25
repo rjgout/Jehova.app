@@ -8,6 +8,7 @@ import { advanceCourseProgress } from "@/lib/courses";
 import { notifyNewAchievements } from "@/lib/notify";
 import { recordChallengeAttempt } from "@/lib/challenges";
 import { standardContentXp } from "@/lib/xpRules";
+import { apiError } from "@/lib/apiError";
 
 const schema = z.object({
   answers: z.array(
@@ -23,18 +24,18 @@ const schema = z.object({
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ chapterId: string }> }) {
   const user = await getCurrentUser();
-  if (!user) return NextResponse.json({ error: "Niet ingelogd" }, { status: 401 });
+  if (!user) return await apiError("apiErrors.notLoggedIn", 401);
 
   const { chapterId } = await params;
   const body = await req.json().catch(() => null);
   const parsed = schema.safeParse(body);
   if (!parsed.success) {
-    return NextResponse.json({ error: "Ongeldige invoer" }, { status: 400 });
+    return await apiError("apiErrors.invalidInput", 400);
   }
 
   const exercises = await prisma.exercise.findMany({ where: { chapterId, status: "APPROVED" } });
   if (exercises.length === 0) {
-    return NextResponse.json({ error: "Hoofdstuk niet gevonden" }, { status: 404 });
+    return await apiError("apiErrors.chapterNotFound", 404);
   }
   const exerciseById = new Map(exercises.map((e) => [e.id, e]));
 

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { verifyContentApiKey } from "@/lib/contentApi";
+import { apiError } from "@/lib/apiError";
 
 /**
  * Eerste/voorbeeld-endpoint van de content-API (zie src/lib/contentApi.ts en
@@ -11,7 +12,7 @@ import { verifyContentApiKey } from "@/lib/contentApi";
  */
 export async function GET(req: NextRequest) {
   if (!verifyContentApiKey(req)) {
-    return NextResponse.json({ error: "Ongeldige of ontbrekende API-sleutel." }, { status: 401 });
+    return await apiError("apiErrors.invalidApiKey", 401);
   }
 
   const [books, chapters, verses, courses, podcastEpisodes, kidsStories, introLessons, persons] = await Promise.all([

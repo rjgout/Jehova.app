@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { getCurrentUser } from "@/lib/session";
 import { weekStartKey } from "@/lib/dates";
 import { getLeagueSettings, movementCounts, tierForWeek, TIER_ORDER } from "@/lib/leagues";
+import { apiError } from "@/lib/apiError";
 
 type Zone = "PROMOTION" | "SAFE" | "RELEGATION";
 
@@ -16,7 +17,7 @@ const NATIONAL_PAGE_SIZE = 50;
 
 export async function GET(req: NextRequest) {
   const user = await getCurrentUser();
-  if (!user) return NextResponse.json({ error: "Niet ingelogd" }, { status: 401 });
+  if (!user) return await apiError("apiErrors.notLoggedIn", 401);
 
   const scopeParam = req.nextUrl.searchParams.get("scope");
   const scope = scopeParam === "friends" ? "friends" : scopeParam === "national" ? "national" : "league";

@@ -3,12 +3,13 @@ import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { getCurrentUser } from "@/lib/session";
 import { createInvite } from "@/lib/scrabbleGame";
+import { apiError, apiErrorText } from "@/lib/apiError";
 
 const createSchema = z.object({ friendUserId: z.string().trim().min(1) });
 
 export async function GET() {
   const user = await getCurrentUser();
-  if (!user) return NextResponse.json({ error: "Niet ingelogd" }, { status: 401 });
+  if (!user) return await apiError("apiErrors.notLoggedIn", 401);
 
   const games = await prisma.scrabbleGame.findMany({
     where: { OR: [{ player1Id: user.id }, { player2Id: user.id }], status: { not: "CANCELLED" } },
@@ -41,13 +42,13 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   const user = await getCurrentUser();
-  if (!user) return NextResponse.json({ error: "Niet ingelogd" }, { status: 401 });
+  if (!user) return await apiError("apiErrors.notLoggedIn", 401);
 
   const body = await req.json().catch(() => null);
   const parsed = createSchema.safeParse(body);
-  if (!parsed.success) return NextResponse.json({ error: "Ongeldige invoer" }, { status: 400 });
+  if (!parsed.success) return await apiError("apiErrors.invalidInput", 400);
 
   const result = await createInvite(user.id, parsed.data.friendUserId);
-  if ("error" in result) return NextResponse.json({ error: result.error }, { status: 400 });
+  if ("error" in result) return await apiErrorText(result.error, 400);
   return NextResponse.json(result);
 }

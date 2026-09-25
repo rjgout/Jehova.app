@@ -7,6 +7,7 @@ import { isEmailConfigured, sendMail } from "@/lib/email";
 import { resetPasswordTemplate } from "@/lib/emailTemplates";
 import { getT } from "@/lib/i18n";
 import { getBaseUrl } from "@/lib/baseUrl";
+import { apiError, apiErrorText } from "@/lib/apiError";
 
 const schema = z.object({
   identifier: z.string().trim().min(1, "Vul je e-mailadres of gebruikersnaam in."),
@@ -24,17 +25,14 @@ export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => null);
   const parsed = schema.safeParse(body);
   if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.issues[0].message }, { status: 400 });
+    return await apiErrorText(parsed.error.issues[0].message, 400);
   }
   const { identifier } = parsed.data;
 
   if (!(await isEmailConfigured())) {
     // Geen enumeratie-risico hier: dit is een instellingsprobleem, geen
     // account-specifiek antwoord.
-    return NextResponse.json(
-      { error: "Wachtwoordreset via e-mail is niet geconfigureerd. Vraag een beheerder om je wachtwoord te resetten." },
-      { status: 503 }
-    );
+    return await apiError("apiErrors.resetNotConfigured", 503);
   }
 
   const tag = parseTag(identifier);

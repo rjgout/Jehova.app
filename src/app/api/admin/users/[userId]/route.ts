@@ -2,29 +2,30 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { getCurrentUser } from "@/lib/session";
+import { apiError } from "@/lib/apiError";
 
 const schema = z.object({ isAdmin: z.boolean() });
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ userId: string }> }) {
   const user = await getCurrentUser();
-  if (!user) return NextResponse.json({ error: "Niet ingelogd" }, { status: 401 });
-  if (!user.isAdmin) return NextResponse.json({ error: "Geen toegang" }, { status: 403 });
+  if (!user) return await apiError("apiErrors.notLoggedIn", 401);
+  if (!user.isAdmin) return await apiError("apiErrors.forbidden", 403);
 
   const { userId } = await params;
   // Voorkomt dat een admin zichzelf per ongeluk buitensluit — adminrechten
   // afpakken moet altijd door een ándere admin gebeuren.
   if (userId === user.id) {
-    return NextResponse.json({ error: "Je kan je eigen adminrechten niet aanpassen." }, { status: 400 });
+    return await apiError("apiErrors.ownAdminRights", 400);
   }
 
   const body = await req.json().catch(() => null);
   const parsed = schema.safeParse(body);
   if (!parsed.success) {
-    return NextResponse.json({ error: "Ongeldige invoer" }, { status: 400 });
+    return await apiError("apiErrors.invalidInput", 400);
   }
 
   const target = await prisma.user.findUnique({ where: { id: userId } });
-  if (!target) return NextResponse.json({ error: "Gebruiker niet gevonden" }, { status: 404 });
+  if (!target) return await apiError("apiErrors.userNotFound", 404);
 
   const updated = await prisma.user.update({
     where: { id: userId },
@@ -42,16 +43,16 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ us
 // gebruiker.
 export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ userId: string }> }) {
   const user = await getCurrentUser();
-  if (!user) return NextResponse.json({ error: "Niet ingelogd" }, { status: 401 });
-  if (!user.isAdmin) return NextResponse.json({ error: "Geen toegang" }, { status: 403 });
+  if (!user) return await apiError("apiErrors.notLoggedIn", 401);
+  if (!user.isAdmin) return await apiError("apiErrors.forbidden", 403);
 
   const { userId } = await params;
   if (userId === user.id) {
-    return NextResponse.json({ error: "Je kan jezelf niet verwijderen — vraag een andere admin." }, { status: 400 });
+    return await apiError("apiErrors.cantDeleteSelf", 400);
   }
 
   const target = await prisma.user.findUnique({ where: { id: userId } });
-  if (!target) return NextResponse.json({ error: "Gebruiker niet gevonden" }, { status: 404 });
+  if (!target) return await apiError("apiErrors.userNotFound", 404);
 
   await prisma.user.delete({ where: { id: userId } });
 

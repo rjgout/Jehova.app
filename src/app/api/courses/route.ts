@@ -5,10 +5,11 @@ import { getContentContext } from "@/lib/contentCollections";
 import { chapterTerm, localizeTerm } from "@/lib/chapterTerm";
 import { localizedCourse } from "@/lib/courseText";
 import { getT } from "@/lib/i18n";
+import { apiError } from "@/lib/apiError";
 
 export async function GET() {
   const user = await getCurrentUser();
-  if (!user) return NextResponse.json({ error: "Niet ingelogd" }, { status: 401 });
+  if (!user) return await apiError("apiErrors.notLoggedIn", 401);
 
   const contentContext = await getContentContext(user.id);
   const t = getT(user.uiLanguage);

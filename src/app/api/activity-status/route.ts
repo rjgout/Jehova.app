@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { getCurrentUser } from "@/lib/session";
 import { getContentContext } from "@/lib/contentCollections";
 import { getT } from "@/lib/i18n";
+import { apiError } from "@/lib/apiError";
 
 interface ActivityItem {
   kind: "challenge" | "scrabble" | "live" | "chapter-guess-solo";
@@ -30,7 +31,7 @@ interface ActivityItem {
 // URL zelf onthoud je anders nergens).
 export async function GET() {
   const user = await getCurrentUser();
-  if (!user) return NextResponse.json({ error: "Niet ingelogd" }, { status: 401 });
+  if (!user) return await apiError("apiErrors.notLoggedIn", 401);
   const t = getT(user.uiLanguage);
 
   const [challenges, scrabbleGames, liveGames, soloChapterGuessGames, gameScopes, contentContext, receivedLiveInvites] = await Promise.all([

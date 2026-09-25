@@ -2,11 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/session";
 import { prisma } from "@/lib/db";
 import { getFsySettings, syncFsyContent, updateFsyAutoPublish } from "@/lib/fsyContent";
+import { apiError } from "@/lib/apiError";
 
 async function requireAdmin() {
   const user = await getCurrentUser();
-  if (!user) return { response: NextResponse.json({ error: "Niet ingelogd" }, { status: 401 }) };
-  if (!user.isAdmin) return { response: NextResponse.json({ error: "Geen toegang" }, { status: 403 }) };
+  if (!user) return { response: await apiError("apiErrors.notLoggedIn", 401) };
+  if (!user.isAdmin) return { response: await apiError("apiErrors.forbidden", 403) };
   return { user };
 }
 
@@ -51,7 +52,7 @@ export async function PUT(req: NextRequest) {
 
   const body = await req.json().catch(() => null);
   if (typeof body?.autoPublish !== "boolean") {
-    return NextResponse.json({ error: "Ongeldige invoer" }, { status: 400 });
+    return await apiError("apiErrors.invalidInput", 400);
   }
 
   await updateFsyAutoPublish(prisma, body.autoPublish);

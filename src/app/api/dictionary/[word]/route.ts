@@ -2,10 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/session";
 import { findVersesContainingWord } from "@/lib/dictionary";
 import { getContentContext } from "@/lib/contentCollections";
+import { apiError } from "@/lib/apiError";
 
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ word: string }> }) {
   const user = await getCurrentUser();
-  if (!user) return NextResponse.json({ error: "Niet ingelogd" }, { status: 401 });
+  if (!user) return await apiError("apiErrors.notLoggedIn", 401);
 
   const { word } = await params;
   const { active } = await getContentContext(user.id);

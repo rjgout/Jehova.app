@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { respondToFeedback } from "@/lib/feedback";
+import { apiError, apiErrorText } from "@/lib/apiError";
 
 const schema = z.object({ status: z.enum(["IN_PROGRESS", "DONE", "WONT_DO"]) });
 
@@ -12,9 +13,9 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ tok
   const { token } = await params;
   const body = await req.json().catch(() => null);
   const parsed = schema.safeParse(body);
-  if (!parsed.success) return NextResponse.json({ error: "Ongeldige invoer" }, { status: 400 });
+  if (!parsed.success) return await apiError("apiErrors.invalidInput", 400);
 
   const result = await respondToFeedback(token, parsed.data.status);
-  if (!result.ok) return NextResponse.json({ error: result.error }, { status: 404 });
+  if (!result.ok) return await apiErrorText(result.error, 404);
   return NextResponse.json({ ok: true, status: result.feedback.status });
 }

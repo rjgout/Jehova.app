@@ -3,6 +3,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { getCurrentUser } from "@/lib/session";
 import { isExerciseCorrect } from "@/lib/exerciseGen";
+import { apiError } from "@/lib/apiError";
 
 const schema = z.object({ given: z.array(z.string()).min(1) });
 
@@ -11,18 +12,18 @@ const schema = z.object({ given: z.array(z.string()).min(1) });
 // kindercursus-oefeningtabel.
 export async function POST(req: NextRequest, { params }: { params: Promise<{ exerciseId: string }> }) {
   const user = await getCurrentUser();
-  if (!user) return NextResponse.json({ error: "Niet ingelogd" }, { status: 401 });
+  if (!user) return await apiError("apiErrors.notLoggedIn", 401);
 
   const { exerciseId } = await params;
   const body = await req.json().catch(() => null);
   const parsed = schema.safeParse(body);
   if (!parsed.success) {
-    return NextResponse.json({ error: "Ongeldige invoer" }, { status: 400 });
+    return await apiError("apiErrors.invalidInput", 400);
   }
 
   const exercise = await prisma.kidsExercise.findUnique({ where: { id: exerciseId } });
   if (!exercise) {
-    return NextResponse.json({ error: "Oefening niet gevonden" }, { status: 404 });
+    return await apiError("apiErrors.exerciseNotFound", 404);
   }
 
   const accepted = JSON.parse(exercise.answers) as string[];

@@ -3,6 +3,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { getCurrentUser } from "@/lib/session";
 import { areFriends, isSeasonManager, loadSeasonFor } from "@/lib/alleskenner/season";
+import { apiError } from "@/lib/apiError";
 
 const schema = z.object({ userId: z.string().min(1) });
 
@@ -11,17 +12,17 @@ const schema = z.object({ userId: z.string().min(1) });
 // zomaar iemand kunt toevoegen die je niet kent.
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const user = await getCurrentUser();
-  if (!user) return NextResponse.json({ error: "Niet ingelogd" }, { status: 401 });
+  if (!user) return await apiError("apiErrors.notLoggedIn", 401);
   const { id } = await params;
   const season = await loadSeasonFor(id, user.id);
-  if (!season) return NextResponse.json({ error: "Seizoen niet gevonden." }, { status: 404 });
-  if (!isSeasonManager(season, user.id)) return NextResponse.json({ error: "Alleen de host kan leden toevoegen." }, { status: 403 });
-  if (season.status !== "REGULAR") return NextResponse.json({ error: "Na de start van de seizoensfinale kunnen er geen leden meer bij." }, { status: 409 });
+  if (!season) return await apiError("apiErrors.seasonNotFound", 404);
+  if (!isSeasonManager(season, user.id)) return await apiError("apiErrors.hostOnlyAddMembers", 403);
+  if (season.status !== "REGULAR") return await apiError("apiErrors.finaleNoNewMembers", 409);
   const parsed = schema.safeParse(await req.json().catch(() => null));
-  if (!parsed.success) return NextResponse.json({ error: "Ongeldige invoer." }, { status: 400 });
+  if (!parsed.success) return await apiError("apiErrors.invalidInputDot", 400);
   const { userId } = parsed.data;
   if (userId !== user.id && !(await areFriends(user.id, userId))) {
-    return NextResponse.json({ error: "Je kunt alleen vrienden toevoegen." }, { status: 403 });
+    return await apiError("apiErrors.addFriendsOnly", 403);
   }
   if (season.members.some((m) => m.userId === userId)) return NextResponse.json({ ok: true });
 
@@ -34,24 +35,24 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 // bij de uitslagen van het seizoen.
 export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const user = await getCurrentUser();
-  if (!user) return NextResponse.json({ error: "Niet ingelogd" }, { status: 401 });
+  if (!user) return await apiError("apiErrors.notLoggedIn", 401);
   const { id } = await params;
   const season = await loadSeasonFor(id, user.id);
-  if (!season) return NextResponse.json({ error: "Seizoen niet gevonden." }, { status: 404 });
+  if (!season) return await apiError("apiErrors.seasonNotFound", 404);
   const parsed = schema.safeParse(await req.json().catch(() => null));
-  if (!parsed.success) return NextResponse.json({ error: "Ongeldige invoer." }, { status: 400 });
+  if (!parsed.success) return await apiError("apiErrors.invalidInputDot", 400);
   const { userId } = parsed.data;
   // Een lid mag zichzelf uit de wachtrij halen; de host iedereen.
   if (!isSeasonManager(season, user.id) && userId !== user.id) {
-    return NextResponse.json({ error: "Alleen de host kan leden verwijderen." }, { status: 403 });
+    return await apiError("apiErrors.hostOnlyRemoveMembers", 403);
   }
   const member = season.members.find((m) => m.userId === userId);
   if (!member) return NextResponse.json({ ok: true });
   if (member.status !== "WAITING" || member.evenings > 0) {
-    return NextResponse.json({ error: "Wie al gespeeld heeft, blijft in het seizoen." }, { status: 409 });
+    return await apiError("apiErrors.playedStaysInSeason", 409);
   }
   if (season.hostId === userId || season.deputyHostId === userId) {
-    return NextResponse.json({ error: "Draag eerst de hostrol over." }, { status: 409 });
+    return await apiError("apiErrors.transferHostFirst", 409);
   }
   await prisma.alleskennerSeasonMember.delete({ where: { id: member.id } });
   return NextResponse.json({ ok: true });

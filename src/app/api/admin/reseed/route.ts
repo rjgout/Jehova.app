@@ -2,11 +2,12 @@ import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/session";
 import { prisma } from "@/lib/db";
 import { getReseedJob, startReseedJob } from "@/lib/reseedJob";
+import { apiError } from "@/lib/apiError";
 
 async function requireAdmin() {
   const user = await getCurrentUser();
-  if (!user) return NextResponse.json({ error: "Niet ingelogd" }, { status: 401 });
-  if (!user.isAdmin) return NextResponse.json({ error: "Geen toegang" }, { status: 403 });
+  if (!user) return await apiError("apiErrors.notLoggedIn", 401);
+  if (!user.isAdmin) return await apiError("apiErrors.forbidden", 403);
   return null;
 }
 

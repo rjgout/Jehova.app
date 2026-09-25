@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/session";
 import { getChapterGuessGameView } from "@/lib/chapterGuess";
+import { apiError } from "@/lib/apiError";
 
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ gameId: string }> }) {
   const user = await getCurrentUser();
-  if (!user) return NextResponse.json({ error: "Niet ingelogd" }, { status: 401 });
+  if (!user) return await apiError("apiErrors.notLoggedIn", 401);
 
   const { gameId } = await params;
   const view = await getChapterGuessGameView(gameId, user.id);

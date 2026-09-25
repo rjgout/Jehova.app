@@ -3,16 +3,17 @@ import { z } from "zod";
 import { getCurrentUser } from "@/lib/session";
 import { submitGuess } from "@/lib/wordGame";
 import { notifyNewAchievements } from "@/lib/notify";
+import { apiError } from "@/lib/apiError";
 
 const schema = z.object({ guess: z.string().trim().min(1) });
 
 export async function POST(req: NextRequest) {
   const user = await getCurrentUser();
-  if (!user) return NextResponse.json({ error: "Niet ingelogd" }, { status: 401 });
+  if (!user) return await apiError("apiErrors.notLoggedIn", 401);
 
   const body = await req.json().catch(() => null);
   const parsed = schema.safeParse(body);
-  if (!parsed.success) return NextResponse.json({ error: "Ongeldige invoer" }, { status: 400 });
+  if (!parsed.success) return await apiError("apiErrors.invalidInput", 400);
 
   const result = await submitGuess(user.id, parsed.data.guess);
   if ("error" in result) return NextResponse.json(result, { status: 400 });

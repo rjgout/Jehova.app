@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getCurrentUser } from "@/lib/session";
+import { apiError } from "@/lib/apiError";
 
 const MAX_IDS = 100;
 
@@ -9,7 +10,7 @@ const MAX_IDS = 100;
 // klassement, spel of vriendenlijst): geen naam, geen andere gegevens.
 export async function GET(req: NextRequest) {
   const user = await getCurrentUser();
-  if (!user) return NextResponse.json({ error: "Niet ingelogd" }, { status: 401 });
+  if (!user) return await apiError("apiErrors.notLoggedIn", 401);
   const ids = [...new Set((req.nextUrl.searchParams.get("ids") ?? "").split(",").filter(Boolean))].slice(0, MAX_IDS);
   if (ids.length === 0) return NextResponse.json({ avatars: {} });
   const users = await prisma.user.findMany({ where: { id: { in: ids } }, select: { id: true, avatarEmoji: true } });

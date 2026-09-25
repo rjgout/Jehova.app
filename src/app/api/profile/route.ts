@@ -3,10 +3,11 @@ import { prisma } from "@/lib/db";
 import { getCurrentUser } from "@/lib/session";
 import { weekStartKey } from "@/lib/dates";
 import { TIER_ORDER } from "@/lib/leagues";
+import { apiError } from "@/lib/apiError";
 
 export async function GET() {
   const user = await getCurrentUser();
-  if (!user) return NextResponse.json({ error: "Niet ingelogd" }, { status: 401 });
+  if (!user) return await apiError("apiErrors.notLoggedIn", 401);
 
   const [chaptersCompleted, versesTotal, duelsWon, duelsPlayed, allAchievements, earned, weeklyScore, seasonResults, activeSeasonScore] =
     await Promise.all([

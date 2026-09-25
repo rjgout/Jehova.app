@@ -3,15 +3,18 @@ import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { getCurrentUser } from "@/lib/session";
 import { finaleReady, isSeasonManager, loadSeasonFor, openEvening, planEvening, rankMembers } from "@/lib/alleskenner/season";
+import { apiError } from "@/lib/apiError";
+import { getT } from "@/lib/i18n";
+import { translateServerText } from "@/lib/i18n/serverTexts";
 
 // ?absent=id1,id2 berekent de opstelling van de volgende avond met die afwezigen
 // (voorbeeld op de seizoenspagina, vóór de host op "Avond starten" drukt).
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const user = await getCurrentUser();
-  if (!user) return NextResponse.json({ error: "Niet ingelogd" }, { status: 401 });
+  if (!user) return await apiError("apiErrors.notLoggedIn", 401);
   const { id } = await params;
   const season = await loadSeasonFor(id, user.id);
-  if (!season) return NextResponse.json({ error: "Seizoen niet gevonden." }, { status: 404 });
+  if (!season) return await apiError("apiErrors.seasonNotFound", 404);
 
   const done = season.evenings.filter((e) => e.status === "DONE");
   const open = openEvening(season.evenings);
@@ -30,7 +33,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     isHost: season.hostId === user.id,
     finaleReady: finaleReady(season, season.members, done.length),
     openEvening: open ? { number: open.number, code: open.game!.code, isFinale: open.isFinale } : null,
-    nextEvening: { lineup: plan.lineup.map((userId) => ({ userId, name: nameOf(userId) })), error: plan.error, isFinale: plan.isFinale, isLast: plan.isLast },
+    nextEvening: { lineup: plan.lineup.map((userId) => ({ userId, name: nameOf(userId) })), error: plan.error ? translateServerText(plan.error, getT(user.uiLanguage)) : plan.error, isFinale: plan.isFinale, isLast: plan.isLast },
     members: season.members.map((m) => ({
       userId: m.userId,
       name: m.user.handle,
@@ -63,18 +66,18 @@ const rolesSchema = z.object({ hostId: z.string().optional(), deputyHostId: z.st
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const user = await getCurrentUser();
-  if (!user) return NextResponse.json({ error: "Niet ingelogd" }, { status: 401 });
+  if (!user) return await apiError("apiErrors.notLoggedIn", 401);
   const { id } = await params;
   const season = await loadSeasonFor(id, user.id);
-  if (!season) return NextResponse.json({ error: "Seizoen niet gevonden." }, { status: 404 });
-  if (season.hostId !== user.id) return NextResponse.json({ error: "Alleen de host kan dit wijzigen." }, { status: 403 });
+  if (!season) return await apiError("apiErrors.seasonNotFound", 404);
+  if (season.hostId !== user.id) return await apiError("apiErrors.hostOnlyChange", 403);
   const parsed = rolesSchema.safeParse(await req.json().catch(() => null));
-  if (!parsed.success) return NextResponse.json({ error: "Ongeldige invoer." }, { status: 400 });
+  if (!parsed.success) return await apiError("apiErrors.invalidInputDot", 400);
 
   const isMember = (userId: string) => season.members.some((m) => m.userId === userId);
   const { hostId, deputyHostId } = parsed.data;
-  if (hostId !== undefined && !isMember(hostId)) return NextResponse.json({ error: "Kies een lid van het seizoen." }, { status: 400 });
-  if (deputyHostId && !isMember(deputyHostId)) return NextResponse.json({ error: "Kies een lid van het seizoen." }, { status: 400 });
+  if (hostId !== undefined && !isMember(hostId)) return await apiError("apiErrors.chooseSeasonMember", 400);
+  if (deputyHostId && !isMember(deputyHostId)) return await apiError("apiErrors.chooseSeasonMember", 400);
 
   await prisma.alleskennerSeason.update({
     where: { id },

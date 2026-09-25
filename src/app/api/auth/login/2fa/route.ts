@@ -10,16 +10,17 @@ import {
   twoFactorFailureKey,
   verifyTotpCode,
 } from "@/lib/totp";
-import { clearFailures, failureLockSeconds, registerFailure, tooManyAttemptsMessage } from "@/lib/rateLimit";
+import { clearFailures, failureLockSeconds, registerFailure, tooManyAttempts } from "@/lib/rateLimit";
+import { apiError } from "@/lib/apiError";
 
 const schema = z.object({ challengeToken: z.string().min(1), code: z.string().min(1) });
 
 export async function POST(req: NextRequest) {
   const parsed = schema.safeParse(await req.json().catch(() => null));
-  if (!parsed.success) return NextResponse.json({ error: "Vul je verificatiecode in." }, { status: 400 });
+  if (!parsed.success) return await apiError("apiErrors.enterVerificationCode", 400);
 
   const userId = await verifyTwoFactorChallengeToken(parsed.data.challengeToken);
-  if (!userId) return NextResponse.json({ error: "Deze verificatie is verlopen. Log opnieuw in." }, { status: 401 });
+  if (!userId) return await apiError("apiErrors.verificationExpired", 401);
 
   // Zonder deze grens kon je met één geldig wachtwoord onbeperkt 6-cijferige
   // codes proberen. Per account, omdat een nieuwe challenge (opnieuw
@@ -27,7 +28,8 @@ export async function POST(req: NextRequest) {
   const failureKey = twoFactorFailureKey(userId);
   const lockSeconds = failureLockSeconds(failureKey, TWO_FACTOR_MAX_FAILURES);
   if (lockSeconds > 0) {
-    return NextResponse.json({ error: tooManyAttemptsMessage(lockSeconds) }, { status: 429 });
+    const [key, vars] = tooManyAttempts(lockSeconds);
+    return await apiError(key, 429, vars);
   }
 
   const user = await prisma.user.findUnique({
@@ -35,7 +37,7 @@ export async function POST(req: NextRequest) {
     select: { id: true, totpEnabled: true, totpSecretEncrypted: true, totpRecoveryCodes: true },
   });
   if (!user?.totpEnabled || !user.totpSecretEncrypted) {
-    return NextResponse.json({ error: "2FA is niet beschikbaar voor dit account." }, { status: 400 });
+    return await apiError("apiErrors.twoFactorUnavailable", 400);
   }
 
   const validTotp = verifyTotpCode(decryptTotpSecret(user.totpSecretEncrypted), parsed.data.code);
@@ -44,7 +46,7 @@ export async function POST(req: NextRequest) {
     recoveryCodes = await consumeRecoveryCode(user.totpRecoveryCodes, parsed.data.code);
     if (!recoveryCodes) {
       registerFailure(failureKey, TWO_FACTOR_WINDOW_MS);
-      return NextResponse.json({ error: "Code klopt niet." }, { status: 401 });
+      return await apiError("apiErrors.codeWrong", 401);
     }
     // Alleen bijwerken als de lijst sinds het lezen niet veranderd is, zodat
     // twee gelijktijdige verzoeken dezelfde herstelcode niet allebei kunnen
@@ -53,7 +55,7 @@ export async function POST(req: NextRequest) {
       where: { id: user.id, totpRecoveryCodes: user.totpRecoveryCodes },
       data: { totpRecoveryCodes: recoveryCodes },
     });
-    if (consumed.count === 0) return NextResponse.json({ error: "Code klopt niet." }, { status: 401 });
+    if (consumed.count === 0) return await apiError("apiErrors.codeWrong", 401);
   }
 
   clearFailures(failureKey);

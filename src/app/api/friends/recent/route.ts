@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getCurrentUser } from "@/lib/session";
+import { apiError } from "@/lib/apiError";
 
 // Genoeg om "onlangs samen gespeeld" te bepalen, zonder bij veel spellen de
 // hele geschiedenis door te lopen.
@@ -13,7 +14,7 @@ const LOOKBACK = 200;
  */
 export async function GET() {
   const user = await getCurrentUser();
-  if (!user) return NextResponse.json({ error: "Niet ingelogd" }, { status: 401 });
+  if (!user) return await apiError("apiErrors.notLoggedIn", 401);
 
   const friendships = await prisma.friendship.findMany({
     where: { status: "ACCEPTED", OR: [{ senderId: user.id }, { receiverId: user.id }] },

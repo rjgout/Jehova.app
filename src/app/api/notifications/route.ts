@@ -2,13 +2,14 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { getCurrentUser } from "@/lib/session";
+import { apiError } from "@/lib/apiError";
 
 const MAX_LISTED = 100;
 
 // Meldingencentrum (de bel in de header, zie NotificationCenter.tsx).
 export async function GET() {
   const user = await getCurrentUser();
-  if (!user) return NextResponse.json({ error: "Niet ingelogd" }, { status: 401 });
+  if (!user) return await apiError("apiErrors.notLoggedIn", 401);
   const [notifications, count] = await Promise.all([
     prisma.notification.findMany({
       where: { userId: user.id },
@@ -32,9 +33,9 @@ const deleteSchema = z.union([
 
 export async function DELETE(req: NextRequest) {
   const user = await getCurrentUser();
-  if (!user) return NextResponse.json({ error: "Niet ingelogd" }, { status: 401 });
+  if (!user) return await apiError("apiErrors.notLoggedIn", 401);
   const parsed = deleteSchema.safeParse(await req.json().catch(() => null));
-  if (!parsed.success) return NextResponse.json({ error: "Ongeldige invoer" }, { status: 400 });
+  if (!parsed.success) return await apiError("apiErrors.invalidInput", 400);
   const body = parsed.data;
   const where =
     "ids" in body

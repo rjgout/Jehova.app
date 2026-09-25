@@ -12,7 +12,8 @@ import {
   TWO_FACTOR_WINDOW_MS,
   twoFactorFailureKey,
 } from "@/lib/totp";
-import { clearFailures, failureLockSeconds, registerFailure, tooManyAttemptsMessage } from "@/lib/rateLimit";
+import { clearFailures, failureLockSeconds, registerFailure, tooManyAttempts } from "@/lib/rateLimit";
+import { apiError } from "@/lib/apiError";
 
 const schema = z.object({ code: z.string().min(1) });
 
@@ -24,27 +25,28 @@ const schema = z.object({ code: z.string().min(1) });
 // resterende oude herstelcodes geldig om in te loggen.
 export async function POST(req: NextRequest) {
   const user = await getCurrentUser();
-  if (!user) return NextResponse.json({ error: "Niet ingelogd" }, { status: 401 });
+  if (!user) return await apiError("apiErrors.notLoggedIn", 401);
 
   const failureKey = twoFactorFailureKey(user.id);
   const lockSeconds = failureLockSeconds(failureKey, TWO_FACTOR_MAX_FAILURES);
   if (lockSeconds > 0) {
-    return NextResponse.json({ error: tooManyAttemptsMessage(lockSeconds) }, { status: 429 });
+    const [key, vars] = tooManyAttempts(lockSeconds);
+    return await apiError(key, 429, vars);
   }
 
   const parsed = schema.safeParse(await req.json().catch(() => null));
-  if (!parsed.success) return NextResponse.json({ error: "Vul een herstelcode in." }, { status: 400 });
+  if (!parsed.success) return await apiError("apiErrors.enterRecoveryCode", 400);
 
   const current = await prisma.user.findUnique({
     where: { id: user.id },
     select: { totpEnabled: true, totpRecoveryCodes: true },
   });
-  if (!current?.totpEnabled) return NextResponse.json({ error: "2FA staat niet aan." }, { status: 400 });
+  if (!current?.totpEnabled) return await apiError("apiErrors.twoFactorNotOn", 400);
 
   const remaining = await consumeRecoveryCode(current.totpRecoveryCodes, parsed.data.code);
   if (!remaining) {
     registerFailure(failureKey, TWO_FACTOR_WINDOW_MS);
-    return NextResponse.json({ error: "Herstelcode klopt niet." }, { status: 400 });
+    return await apiError("apiErrors.recoveryCodeWrong", 400);
   }
 
   const secret = generateTotpSecret();
@@ -52,7 +54,7 @@ export async function POST(req: NextRequest) {
     where: { id: user.id, totpRecoveryCodes: current.totpRecoveryCodes },
     data: { totpSecretEncrypted: encryptTotpSecret(secret), totpRecoveryCodes: remaining },
   });
-  if (updated.count === 0) return NextResponse.json({ error: "Herstelcode klopt niet." }, { status: 400 });
+  if (updated.count === 0) return await apiError("apiErrors.recoveryCodeWrong", 400);
   clearFailures(failureKey);
 
   return NextResponse.json({

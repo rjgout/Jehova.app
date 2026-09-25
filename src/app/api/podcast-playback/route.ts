@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { getCurrentUser } from "@/lib/session";
+import { apiError } from "@/lib/apiError";
 
 const EPISODE_SELECT = { id: true, number: true, title: true, audioUrl: true } as const;
 
@@ -41,11 +42,11 @@ const putSchema = z.object({ episodeId: z.string().min(1), positionSeconds: z.nu
 // FINISHED_REMAINING_SECONDS), die roept in dat geval DELETE hieronder aan.
 export async function PUT(req: NextRequest) {
   const user = await getCurrentUser();
-  if (!user) return NextResponse.json({ error: "Niet ingelogd" }, { status: 401 });
+  if (!user) return await apiError("apiErrors.notLoggedIn", 401);
 
   const body = await req.json().catch(() => null);
   const parsed = putSchema.safeParse(body);
-  if (!parsed.success) return NextResponse.json({ error: "Ongeldige invoer" }, { status: 400 });
+  if (!parsed.success) return await apiError("apiErrors.invalidInput", 400);
 
   await prisma.podcastPlaybackProgress.upsert({
     where: { userId_episodeId: { userId: user.id, episodeId: parsed.data.episodeId } },
@@ -60,10 +61,10 @@ export async function PUT(req: NextRequest) {
 // begint i.p.v. bij de laatste paar seconden.
 export async function DELETE(req: NextRequest) {
   const user = await getCurrentUser();
-  if (!user) return NextResponse.json({ error: "Niet ingelogd" }, { status: 401 });
+  if (!user) return await apiError("apiErrors.notLoggedIn", 401);
 
   const episodeId = req.nextUrl.searchParams.get("episodeId");
-  if (!episodeId) return NextResponse.json({ error: "episodeId ontbreekt" }, { status: 400 });
+  if (!episodeId) return await apiError("apiErrors.episodeIdMissing", 400);
 
   await prisma.podcastPlaybackProgress.deleteMany({ where: { userId: user.id, episodeId } });
   return NextResponse.json({ ok: true });

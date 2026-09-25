@@ -6,6 +6,7 @@ import { isExerciseCorrect } from "@/lib/exerciseGen";
 import { completePodcastLesson } from "@/lib/streak";
 import { notifyNewAchievements } from "@/lib/notify";
 import { standardContentXp } from "@/lib/xpRules";
+import { apiError } from "@/lib/apiError";
 
 const schema = z.object({
   answers: z.array(
@@ -21,23 +22,23 @@ export async function POST(
   { params }: { params: Promise<{ episodeId: string; mode: string }> }
 ) {
   const user = await getCurrentUser();
-  if (!user) return NextResponse.json({ error: "Niet ingelogd" }, { status: 401 });
+  if (!user) return await apiError("apiErrors.notLoggedIn", 401);
 
   const { episodeId, mode: modeParam } = await params;
   if (modeParam !== "CONTENT" && modeParam !== "BOM_CONNECTION") {
-    return NextResponse.json({ error: "Ongeldige modus" }, { status: 400 });
+    return await apiError("apiErrors.invalidMode", 400);
   }
   const mode = modeParam;
 
   const body = await req.json().catch(() => null);
   const parsed = schema.safeParse(body);
   if (!parsed.success) {
-    return NextResponse.json({ error: "Ongeldige invoer" }, { status: 400 });
+    return await apiError("apiErrors.invalidInput", 400);
   }
 
   const exercises = await prisma.podcastExercise.findMany({ where: { episodeId, mode } });
   if (exercises.length === 0) {
-    return NextResponse.json({ error: "Aflevering niet gevonden" }, { status: 404 });
+    return await apiError("apiErrors.episodeNotFound", 404);
   }
   const exerciseById = new Map(exercises.map((e) => [e.id, e]));
 

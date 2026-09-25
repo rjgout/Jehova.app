@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { getCurrentUser } from "@/lib/session";
 import { sendPushToUser } from "@/lib/push";
 import { notificationCount } from "@/lib/notify";
+import { apiError } from "@/lib/apiError";
 
 // Laat iemand direct checken of pushmeldingen op dit apparaat aankomen,
 // zonder te moeten wachten op een echte gebeurtenis (vriendschapsverzoek,
@@ -10,14 +11,11 @@ import { notificationCount } from "@/lib/notify";
 // bij de e-mailinstellingen.
 export async function POST() {
   const user = await getCurrentUser();
-  if (!user) return NextResponse.json({ error: "Niet ingelogd" }, { status: 401 });
+  if (!user) return await apiError("apiErrors.notLoggedIn", 401);
 
   const count = await prisma.pushSubscription.count({ where: { userId: user.id } });
   if (count === 0) {
-    return NextResponse.json(
-      { error: "Geen actieve pushsubscriptie gevonden. Zet pushmeldingen hierboven aan." },
-      { status: 400 }
-    );
+    return await apiError("apiErrors.noPushSubscription", 400);
   }
 
   // Bewust met vertraging en vanaf de server: zo kun je de app sluiten en

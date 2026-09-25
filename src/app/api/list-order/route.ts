@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { getCurrentUser } from "@/lib/session";
+import { apiError } from "@/lib/apiError";
 
 // Persoonlijke sleep-volgorde voor de cursussenlijst (/courses) en de
 // spelletjeslijst (/live) — één generiek mechanisme voor beide (zie
@@ -14,10 +15,10 @@ const listKeySchema = z.enum(["courses", "games"]);
 
 export async function GET(req: NextRequest) {
   const user = await getCurrentUser();
-  if (!user) return NextResponse.json({ error: "Niet ingelogd" }, { status: 401 });
+  if (!user) return await apiError("apiErrors.notLoggedIn", 401);
 
   const parsed = listKeySchema.safeParse(req.nextUrl.searchParams.get("listKey"));
-  if (!parsed.success) return NextResponse.json({ error: "Ongeldige listKey" }, { status: 400 });
+  if (!parsed.success) return await apiError("apiErrors.invalidListKey", 400);
 
   const rows = await prisma.userListOrder.findMany({
     where: { userId: user.id, listKey: parsed.data },
@@ -34,10 +35,10 @@ const putSchema = z.object({
 
 export async function PUT(req: NextRequest) {
   const user = await getCurrentUser();
-  if (!user) return NextResponse.json({ error: "Niet ingelogd" }, { status: 401 });
+  if (!user) return await apiError("apiErrors.notLoggedIn", 401);
 
   const parsed = putSchema.safeParse(await req.json().catch(() => null));
-  if (!parsed.success) return NextResponse.json({ error: "Ongeldige invoer" }, { status: 400 });
+  if (!parsed.success) return await apiError("apiErrors.invalidInput", 400);
 
   const { listKey, itemKeys } = parsed.data;
   await prisma.$transaction([

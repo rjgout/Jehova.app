@@ -3,6 +3,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { getCurrentUser } from "@/lib/session";
 import { notifyChallengeReceived } from "@/lib/notify";
+import { apiError } from "@/lib/apiError";
 
 const createSchema = z.object({
   friendUserId: z.string().trim().min(1),
@@ -11,7 +12,7 @@ const createSchema = z.object({
 
 export async function GET() {
   const user = await getCurrentUser();
-  if (!user) return NextResponse.json({ error: "Niet ingelogd" }, { status: 401 });
+  if (!user) return await apiError("apiErrors.notLoggedIn", 401);
 
   const challenges = await prisma.challenge.findMany({
     where: { OR: [{ senderId: user.id }, { receiverId: user.id }] },
@@ -51,15 +52,15 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   const user = await getCurrentUser();
-  if (!user) return NextResponse.json({ error: "Niet ingelogd" }, { status: 401 });
+  if (!user) return await apiError("apiErrors.notLoggedIn", 401);
 
   const body = await req.json().catch(() => null);
   const parsed = createSchema.safeParse(body);
-  if (!parsed.success) return NextResponse.json({ error: "Ongeldige invoer" }, { status: 400 });
+  if (!parsed.success) return await apiError("apiErrors.invalidInput", 400);
   const { friendUserId, chapterId } = parsed.data;
 
   if (friendUserId === user.id) {
-    return NextResponse.json({ error: "Je kan jezelf niet uitdagen." }, { status: 400 });
+    return await apiError("apiErrors.cantChallengeSelf", 400);
   }
 
   const friendship = await prisma.friendship.findFirst({
@@ -72,11 +73,11 @@ export async function POST(req: NextRequest) {
     },
   });
   if (!friendship) {
-    return NextResponse.json({ error: "Je kan alleen vrienden uitdagen." }, { status: 400 });
+    return await apiError("apiErrors.challengeFriendsOnly", 400);
   }
 
   const chapter = await prisma.chapter.findUnique({ where: { id: chapterId }, include: { book: true } });
-  if (!chapter) return NextResponse.json({ error: "Hoofdstuk niet gevonden." }, { status: 404 });
+  if (!chapter) return await apiError("apiErrors.chapterNotFoundDot", 404);
 
   const challenge = await prisma.challenge.create({
     data: { senderId: user.id, receiverId: friendUserId, chapterId, status: "PENDING" },

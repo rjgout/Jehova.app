@@ -3,11 +3,12 @@ import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { getCurrentUser } from "@/lib/session";
 import { getGameSettings } from "@/lib/gameSettings";
+import { apiError } from "@/lib/apiError";
 
 // Seizoenen van De Alleskenner waar je host, vervangende host of lid van bent.
 export async function GET() {
   const user = await getCurrentUser();
-  if (!user) return NextResponse.json({ error: "Niet ingelogd" }, { status: 401 });
+  if (!user) return await apiError("apiErrors.notLoggedIn", 401);
 
   const seasons = await prisma.alleskennerSeason.findMany({
     where: { OR: [{ hostId: user.id }, { deputyHostId: user.id }, { members: { some: { userId: user.id } } }] },
@@ -35,13 +36,13 @@ const createSchema = z.object({ name: z.string().trim().min(1).max(60), joinAsPl
 
 export async function POST(req: NextRequest) {
   const user = await getCurrentUser();
-  if (!user) return NextResponse.json({ error: "Niet ingelogd" }, { status: 401 });
+  if (!user) return await apiError("apiErrors.notLoggedIn", 401);
   const settings = await getGameSettings();
   if (!settings.alleskennerEnabled && !user.isAdmin) {
-    return NextResponse.json({ error: "De Alleskenner staat (nog) niet aan." }, { status: 403 });
+    return await apiError("apiErrors.alleskennerOff", 403);
   }
   const parsed = createSchema.safeParse(await req.json().catch(() => null));
-  if (!parsed.success) return NextResponse.json({ error: "Geef het seizoen een naam." }, { status: 400 });
+  if (!parsed.success) return await apiError("apiErrors.seasonNameRequired", 400);
 
   const season = await prisma.alleskennerSeason.create({
     data: {

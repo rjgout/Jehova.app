@@ -3,10 +3,11 @@ import { prisma } from "@/lib/db";
 import { getCurrentUser } from "@/lib/session";
 import { generateExerciseHint } from "@/lib/exerciseHints";
 import { toLanguageCode } from "@/lib/languages";
+import { apiError } from "@/lib/apiError";
 
 export async function GET(_req: NextRequest) {
   const user = await getCurrentUser();
-  if (!user) return NextResponse.json({ error: "Niet ingelogd" }, { status: 401 });
+  if (!user) return await apiError("apiErrors.notLoggedIn", 401);
 
   const current = await prisma.user.findUnique({ where: { id: user.id }, select: { hintBalance: true } });
   return NextResponse.json({ hintBalance: current?.hintBalance ?? 0 });
@@ -14,7 +15,7 @@ export async function GET(_req: NextRequest) {
 
 export async function POST(_req: NextRequest, { params }: { params: Promise<{ exerciseId: string }> }) {
   const user = await getCurrentUser();
-  if (!user) return NextResponse.json({ error: "Niet ingelogd" }, { status: 401 });
+  if (!user) return await apiError("apiErrors.notLoggedIn", 401);
 
   const { exerciseId } = await params;
   const exercise = await prisma.exercise.findUnique({
@@ -24,7 +25,7 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ ex
       chapter: { select: { book: { select: { contentCollection: { select: { language: true } } } } } },
     },
   });
-  if (!exercise) return NextResponse.json({ error: "Oefening niet gevonden" }, { status: 404 });
+  if (!exercise) return await apiError("apiErrors.exerciseNotFound", 404);
 
   let hint = exercise.hint;
   if (!hint) {
@@ -40,10 +41,7 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ ex
     data: { hintBalance: { decrement: 1 } },
   });
   if (result.count === 0) {
-    return NextResponse.json(
-      { error: "Je hebt geen denkhint beschikbaar — geef eerst een goed antwoord, of koop er een in de winkel." },
-      { status: 400 }
-    );
+    return await apiError("apiErrors.noHintCredit", 400);
   }
 
   const current = await prisma.user.findUnique({ where: { id: user.id }, select: { hintBalance: true } });

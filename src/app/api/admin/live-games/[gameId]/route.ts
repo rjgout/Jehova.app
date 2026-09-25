@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getCurrentUser } from "@/lib/session";
+import { apiError } from "@/lib/apiError";
 
 // Beëindigt een live spel definitief vanuit /adminbackend — bedoeld voor
 // spellen die vastzitten (zie GET hierboven) en dus geen bruikbare uitslag
@@ -16,8 +17,8 @@ import { getCurrentUser } from "@/lib/session";
 // herstart van de container).
 export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ gameId: string }> }) {
   const user = await getCurrentUser();
-  if (!user) return NextResponse.json({ error: "Niet ingelogd" }, { status: 401 });
-  if (!user.isAdmin) return NextResponse.json({ error: "Geen toegang" }, { status: 403 });
+  if (!user) return await apiError("apiErrors.notLoggedIn", 401);
+  if (!user.isAdmin) return await apiError("apiErrors.forbidden", 403);
 
   const { gameId } = await params;
   await prisma.liveGame.delete({ where: { id: gameId } }).catch(() => {});

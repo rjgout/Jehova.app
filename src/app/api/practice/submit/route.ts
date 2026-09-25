@@ -5,6 +5,7 @@ import { getCurrentUser } from "@/lib/session";
 import { isExerciseCorrect } from "@/lib/exerciseGen";
 import { completeQuickPractice } from "@/lib/streak";
 import { notifyNewAchievements } from "@/lib/notify";
+import { apiError } from "@/lib/apiError";
 
 const schema = z.object({
   answers: z.array(
@@ -22,12 +23,12 @@ const schema = z.object({
 // afgedwongen — elke APPROVED oefening mag beantwoord worden.
 export async function POST(req: NextRequest) {
   const user = await getCurrentUser();
-  if (!user) return NextResponse.json({ error: "Niet ingelogd" }, { status: 401 });
+  if (!user) return await apiError("apiErrors.notLoggedIn", 401);
 
   const body = await req.json().catch(() => null);
   const parsed = schema.safeParse(body);
   if (!parsed.success || parsed.data.answers.length === 0) {
-    return NextResponse.json({ error: "Ongeldige invoer" }, { status: 400 });
+    return await apiError("apiErrors.invalidInput", 400);
   }
 
   const exerciseIds = parsed.data.answers.map((a) => a.exerciseId);

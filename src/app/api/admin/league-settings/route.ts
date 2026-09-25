@@ -3,6 +3,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { getCurrentUser } from "@/lib/session";
 import { getLeagueSettings } from "@/lib/leagues";
+import { apiError } from "@/lib/apiError";
 
 const schema = z
   .object({
@@ -30,8 +31,8 @@ const schema = z
 
 export async function GET() {
   const user = await getCurrentUser();
-  if (!user) return NextResponse.json({ error: "Niet ingelogd" }, { status: 401 });
-  if (!user.isAdmin) return NextResponse.json({ error: "Geen toegang" }, { status: 403 });
+  if (!user) return await apiError("apiErrors.notLoggedIn", 401);
+  if (!user.isAdmin) return await apiError("apiErrors.forbidden", 403);
 
   const settings = await getLeagueSettings(prisma);
   return NextResponse.json({ ...settings, activityRules: JSON.stringify(settings.activityRules, null, 2) });
@@ -39,8 +40,8 @@ export async function GET() {
 
 export async function PUT(req: NextRequest) {
   const user = await getCurrentUser();
-  if (!user) return NextResponse.json({ error: "Niet ingelogd" }, { status: 401 });
-  if (!user.isAdmin) return NextResponse.json({ error: "Geen toegang" }, { status: 403 });
+  if (!user) return await apiError("apiErrors.notLoggedIn", 401);
+  if (!user.isAdmin) return await apiError("apiErrors.forbidden", 403);
 
   const body = await req.json().catch(() => null);
   const parsed = schema.safeParse(body);

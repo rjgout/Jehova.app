@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db";
 import { getCurrentUser } from "@/lib/session";
 import { getBaseUrl } from "@/lib/baseUrl";
 import { createFeedback } from "@/lib/feedback";
+import { apiError, apiErrorText } from "@/lib/apiError";
 
 const schema = z.object({
   message: z.string().trim().min(1, "Vul een omschrijving in.").max(4000),
@@ -18,7 +19,7 @@ const schema = z.object({
 
 export async function GET() {
   const user = await getCurrentUser();
-  if (!user) return NextResponse.json({ error: "Niet ingelogd" }, { status: 401 });
+  if (!user) return await apiError("apiErrors.notLoggedIn", 401);
 
   const reports = await prisma.feedback.findMany({
     where: { userId: user.id },
@@ -30,12 +31,12 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   const user = await getCurrentUser();
-  if (!user) return NextResponse.json({ error: "Niet ingelogd" }, { status: 401 });
+  if (!user) return await apiError("apiErrors.notLoggedIn", 401);
 
   const body = await req.json().catch(() => null);
   const parsed = schema.safeParse(body);
   if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.issues[0]?.message ?? "Ongeldige invoer" }, { status: 400 });
+    return await apiErrorText(parsed.error.issues[0]?.message ?? "Ongeldige invoer", 400);
   }
 
   const feedback = await createFeedback(user.id, parsed.data.message, parsed.data.screenshot, getBaseUrl(req));
