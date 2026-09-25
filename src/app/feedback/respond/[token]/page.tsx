@@ -1,5 +1,8 @@
 import { prisma } from "@/lib/db";
 import FeedbackRespondClient from "@/components/FeedbackRespondClient";
+import { getCurrentUser } from "@/lib/session";
+import { getT } from "@/lib/i18n";
+import { requestLanguage } from "@/lib/requestLanguage";
 
 // Bewust geen auth-check — het token in de URL (lang, willekeurig, alleen in
 // de e-mail naar de beheerder) is hier de toegangscontrole. Zie
@@ -14,7 +17,7 @@ export default async function FeedbackRespondPage({ params }: { params: Promise<
   if (!feedback) {
     return (
       <div className="max-w-md mx-auto card text-center">
-        <p className="font-bold dark:text-slate-100">Melding niet gevonden.</p>
+        <p className="font-bold dark:text-slate-100">{getT(await requestLanguage(await getCurrentUser()))("apiErrors.notificationNotFound")}</p>
       </div>
     );
   }

@@ -20,11 +20,14 @@ import AdminFsyClient from "@/components/AdminFsyClient";
 import AdminAlleskennerClient from "@/components/AdminAlleskennerClient";
 import { isDeployAgentConfigured } from "@/lib/deployAgent";
 import packageJson from "../../../package.json";
+import { getT } from "@/lib/i18n";
+import { translateServerText } from "@/lib/i18n/serverTexts";
 
 export default async function AdminBackendPage() {
   const user = await getCurrentUser();
   if (!user) redirect("/login");
   if (!user.isAdmin) redirect("/dashboard");
+  const t = getT(user.uiLanguage);
 
   const [users, userCount, bookCount, chapterCount, exerciseCount, emailSettings, leagueSettings, onlineUserCount, invitedUserCount] = await Promise.all([
     prisma.user.findMany({
@@ -63,22 +66,22 @@ export default async function AdminBackendPage() {
       <div>
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-extrabold text-brand-800 dark:text-brand-300">Adminbeheer</h1>
-            <p className="text-slate-500 dark:text-slate-400 text-sm">Alleen zichtbaar voor accounts met adminrechten.</p>
+            <h1 className="text-2xl font-extrabold text-brand-800 dark:text-brand-300">{t("adminPage.title")}</h1>
+            <p className="text-slate-500 dark:text-slate-400 text-sm">{t("adminPage.subtitle")}</p>
           </div>
           <div className="text-right text-xs text-slate-400 dark:text-slate-500 shrink-0">
             <div>v{packageJson.version} · beta</div>
-            <div>build {process.env.NEXT_PUBLIC_BUILD_SHA?.slice(0, 7) ?? "onbekend"}</div>
+            <div>build {process.env.NEXT_PUBLIC_BUILD_SHA?.slice(0, 7) ?? t("adminPage.unknown")}</div>
           </div>
         </div>
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-        <StatCard label="Gebruikers" value={userCount} />
-        <StatCard label="Via uitnodigingslink" value={invitedUserCount} />
-        <StatCard label="Boeken" value={bookCount} />
-        <StatCard label="Hoofdstukken" value={chapterCount} />
-        <StatCard label="Oefeningen" value={exerciseCount} className="col-span-2 sm:col-span-1" />
+        <StatCard label={t("adminPage.users")} value={userCount} />
+        <StatCard label={t("adminPage.viaInvite")} value={invitedUserCount} />
+        <StatCard label={t("adminPage.books")} value={bookCount} />
+        <StatCard label={t("adminPage.chapters")} value={chapterCount} />
+        <StatCard label={t("adminPage.exercises")} value={exerciseCount} className="col-span-2 sm:col-span-1" />
       </div>
 
       <AdminDeployClient configured={isDeployAgentConfigured()} onlineUserCount={onlineUserCount} />
@@ -90,7 +93,7 @@ export default async function AdminBackendPage() {
           ...u,
           createdAt: u.createdAt.toISOString(),
           online: onlineSocketCount > 0,
-          lastSeenLabel: onlineSocketCount > 0 ? null : lastSeenAt ? formatElapsedDutch(lastSeenAt) : "Nog nooit",
+          lastSeenLabel: onlineSocketCount > 0 ? null : lastSeenAt ? translateServerText(formatElapsedDutch(lastSeenAt), t) : t("adminPage.never"),
         }))}
         currentUserId={user.id}
       />

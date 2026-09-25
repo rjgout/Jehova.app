@@ -1,6 +1,10 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useT } from "@/components/I18nProvider";
+import { useUiLanguage } from "@/components/I18nProvider";
+import { getLanguage } from "@/lib/languages";
+import { rich } from "@/lib/i18n/rich";
 
 interface DeployStatus {
   phase: "idle" | "pulling" | "stopping" | "starting" | "healthchecking" | "success" | "failed_rolled_back" | "failed_critical";
@@ -14,18 +18,9 @@ interface DeployStatus {
 
 const BUSY_PHASES = ["pulling", "stopping", "starting", "healthchecking"];
 
-const PHASE_LABELS: Record<DeployStatus["phase"], string> = {
-  idle: "Niets aan de hand",
-  pulling: "Nieuwe versie ophalen...",
-  stopping: "Bezig met wisselen...",
-  starting: "Nieuwe versie starten...",
-  healthchecking: "Wachten op gezondheidscontrole...",
-  success: "Gelukt",
-  failed_rolled_back: "Mislukt — teruggezet naar vorige versie",
-  failed_critical: "Mislukt — ingrijpen nodig",
-};
-
 export default function AdminDeployClient({ configured, onlineUserCount }: { configured: boolean; onlineUserCount: number }) {
+  const t = useT();
+  const intlLocale = getLanguage(useUiLanguage()).intlLocale;
   const [status, setStatus] = useState<DeployStatus | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [actionBusy, setActionBusy] = useState(false);
@@ -48,7 +43,7 @@ export default function AdminDeployClient({ configured, onlineUserCount }: { con
       window.location.reload();
       return;
     }
-    setError("Kon de deploy-agent niet bereiken.");
+    setError(t("adminDeploy.unreachable"));
   }
 
   async function refresh() {
@@ -64,7 +59,7 @@ export default function AdminDeployClient({ configured, onlineUserCount }: { con
           transientStatusErrorsRef.current += 1;
           if (transientStatusErrorsRef.current <= 3) return;
         }
-        setError((await res.json().catch(() => null))?.error ?? "Kon status niet ophalen.");
+        setError((await res.json().catch(() => null))?.error ?? t("adminCommon.statusFailed"));
         return;
       }
       const data: DeployStatus = await res.json();
@@ -102,7 +97,7 @@ export default function AdminDeployClient({ configured, onlineUserCount }: { con
       });
       if (!res.ok) {
         if (startsOutage) deployInFlightRef.current = false;
-        setError((await res.json().catch(() => null))?.error ?? "Actie mislukt.");
+        setError((await res.json().catch(() => null))?.error ?? t("adminDeploy.actionFailed"));
       }
       await refresh();
     } catch {
@@ -116,15 +111,20 @@ export default function AdminDeployClient({ configured, onlineUserCount }: { con
       // Bovenste kaart van /adminbackend: standaard open, net als de variant hieronder.
       <details className="group card flex flex-col gap-3" open>
         <summary className="font-extrabold cursor-pointer select-none list-none [&::-webkit-details-marker]:hidden flex items-center justify-between">
-          Deployen &amp; onderhoudsmodus
+          {t("adminDeploy.title")}
           <span className="text-slate-400 transition-transform group-open:rotate-180" aria-hidden>
             ▾
           </span>
         </summary>
         <p className="text-sm text-slate-500 dark:text-slate-400">
-          Niet geconfigureerd op deze installatie (geen <code>DEPLOY_AGENT_URL</code>/<code>DEPLOY_AGENT_TOKEN</code>)
-          — dit paneel hoort bij de Synology/Portainer-deployopzet, zie{" "}
-          <code>docs/DEPLOY-SYNOLOGY.md</code>.
+          {rich(t("adminDeploy.notConfigured"), {
+            vars: (
+              <>
+                <code>DEPLOY_AGENT_URL</code>/<code>DEPLOY_AGENT_TOKEN</code>
+              </>
+            ),
+            doc: <code>docs/DEPLOY-SYNOLOGY.md</code>,
+          })}
         </p>
       </details>
     );
@@ -135,7 +135,7 @@ export default function AdminDeployClient({ configured, onlineUserCount }: { con
   return (
     <details className="group card flex flex-col gap-4" open>
       <summary className="font-extrabold cursor-pointer select-none list-none [&::-webkit-details-marker]:hidden flex items-center justify-between">
-        Deployen &amp; onderhoudsmodus
+        {t("adminDeploy.title")}
         <span className="text-slate-400 transition-transform group-open:rotate-180" aria-hidden>
           ▾
         </span>
@@ -150,7 +150,7 @@ export default function AdminDeployClient({ configured, onlineUserCount }: { con
               }`}
               aria-hidden
             />
-            <span className="font-bold text-sm dark:text-slate-100">{PHASE_LABELS[status.phase]}</span>
+            <span className="font-bold text-sm dark:text-slate-100">{t(`adminDeploy.phases.${status.phase}`)}</span>
           </div>
           <p className="text-sm text-slate-500 dark:text-slate-400">{status.message}</p>
         </div>
@@ -164,14 +164,14 @@ export default function AdminDeployClient({ configured, onlineUserCount }: { con
           />
           <span className="font-bold text-sm dark:text-slate-100">
             {onlineUserCount === 0
-              ? "Niemand online"
+              ? t("adminDeploy.nobodyOnline")
               : onlineUserCount === 1
-                ? "1 gebruiker online"
-                : onlineUserCount + " gebruikers online"}
+                ? t("adminDeploy.oneOnline")
+                : t("adminDeploy.manyOnline", { n: onlineUserCount })}
           </span>
         </div>
         <button className="btn-secondary !px-3 !py-1.5 !text-sm" disabled={isBusy} onClick={() => callAction("/api/admin/deploy/start")}>
-          🚀 Nu deployen
+          {t("adminDeploy.deployNow")}
         </button>
       </div>
       {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
@@ -183,7 +183,7 @@ export default function AdminDeployClient({ configured, onlineUserCount }: { con
             .reverse()
             .map((l, i) => (
               <div key={i}>
-                <span className="text-slate-400 dark:text-slate-500">{new Date(l.ts).toLocaleTimeString("nl-NL")}</span> {l.message}
+                <span className="text-slate-400 dark:text-slate-500">{new Date(l.ts).toLocaleTimeString(intlLocale)}</span> {l.message}
               </div>
             ))}
         </div>

@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useT } from "@/components/I18nProvider";
+import type { TFunction } from "@/lib/i18n/core";
 
 interface BrandingView {
   logoDataUrl: string | null;
@@ -10,13 +12,13 @@ interface BrandingView {
 }
 
 // PNG (niet JPEG) om transparantie in een logo/favicon te behouden.
-function resizeToDataUrl(file: File, maxDimension: number, minDimension?: number): Promise<string> {
+function resizeToDataUrl(t: TFunction, file: File, maxDimension: number, minDimension?: number): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
-    reader.onerror = () => reject(new Error("Kon het bestand niet lezen."));
+    reader.onerror = () => reject(new Error(t("adminBranding.readFailed")));
     reader.onload = () => {
       const img = new window.Image();
-      img.onerror = () => reject(new Error("Ongeldige afbeelding."));
+      img.onerror = () => reject(new Error(t("adminBranding.invalidImage")));
       img.onload = () => {
         let { width, height } = img;
         // Kleiner dan het minimum weigeren i.p.v. uitrekken: een favicon
@@ -25,7 +27,7 @@ function resizeToDataUrl(file: File, maxDimension: number, minDimension?: number
         // uitkomen — beter vooraf een duidelijke melding dan achteraf een
         // matige preview in WhatsApp e.d.
         if (minDimension && (width < minDimension || height < minDimension)) {
-          reject(new Error(`Deze afbeelding is te klein (${width}×${height}px). Minimaal ${minDimension}×${minDimension}px nodig.`));
+          reject(new Error(t("adminBranding.tooSmall", { w: width, h: height, min: minDimension })));
           return;
         }
         if (width > maxDimension || height > maxDimension) {
@@ -63,6 +65,7 @@ function ImageSlot({
   previewClassName: string;
   onChange: (dataUrl: string | null) => Promise<void>;
 }) {
+  const t = useT();
   const inputRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -76,16 +79,16 @@ function ImageSlot({
     // bestandsextensie in plaats van de upload stilzwijgend te negeren.
     const looksLikeImage = file.type.startsWith("image/") || /\.(png|jpe?g|webp|svg|ico)$/i.test(file.name);
     if (!looksLikeImage) {
-      setError("Kies een afbeeldingsbestand (PNG, JPEG, WebP, SVG of ICO).");
+      setError(t("adminBranding.chooseImage"));
       return;
     }
     setBusy(true);
     setError(null);
     try {
-      const dataUrl = await resizeToDataUrl(file, maxDimension, minDimension);
+      const dataUrl = await resizeToDataUrl(t, file, maxDimension, minDimension);
       await onChange(dataUrl);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Kon de afbeelding niet verwerken.");
+      setError(err instanceof Error ? err.message : t("adminBranding.processFailed"));
     }
     setBusy(false);
   }
@@ -107,17 +110,17 @@ function ImageSlot({
             // eslint-disable-next-line @next/next/no-img-element
             <img src={value} alt={label} className="max-h-full max-w-full object-contain" />
           ) : (
-            <span className="text-xs text-slate-400 dark:text-slate-500">geen</span>
+            <span className="text-xs text-slate-400 dark:text-slate-500">{t("adminBranding.none")}</span>
           )}
         </div>
         <div className="flex flex-col gap-2">
           <input ref={inputRef} type="file" accept="image/*" className="hidden" onChange={onFileChange} />
           <button className="btn-secondary !px-3 !py-1.5 !text-xs self-start" disabled={busy} onClick={() => inputRef.current?.click()}>
-            {busy ? "Bezig..." : value ? "Vervangen" : "Uploaden"}
+            {busy ? t("adminCommon.busy") : value ? t("adminBranding.replace") : t("adminBranding.upload")}
           </button>
           {value && (
             <button className="text-xs text-red-500 hover:underline self-start" disabled={busy} onClick={remove}>
-              Verwijderen
+              {t("adminCommon.delete")}
             </button>
           )}
         </div>
@@ -128,6 +131,7 @@ function ImageSlot({
 }
 
 export default function AdminBrandingClient() {
+  const t = useT();
   const [branding, setBranding] = useState<BrandingView | null>(null);
   const [savedMessage, setSavedMessage] = useState<string | null>(null);
   const [appNameInput, setAppNameInput] = useState("");
@@ -150,32 +154,29 @@ export default function AdminBrandingClient() {
     });
     if (res.ok) {
       setBranding(await res.json());
-      setSavedMessage("Opgeslagen — ververs de pagina om het overal te zien.");
+      setSavedMessage(t("adminBranding.savedRefresh"));
     }
   }
 
-  if (!branding) return <p className="text-slate-400 dark:text-slate-500">Laden...</p>;
+  if (!branding) return <p className="text-slate-400 dark:text-slate-500">{t("common.loading")}</p>;
 
   return (
     <details className="group card flex flex-col gap-4">
       <summary className="font-extrabold cursor-pointer select-none list-none [&::-webkit-details-marker]:hidden flex items-center justify-between">
-        Huisstijl
+        {t("adminBranding.title")}
         <span className="text-slate-400 transition-transform group-open:rotate-180" aria-hidden>
           ▾
         </span>
       </summary>
 
       <p className="text-sm text-slate-500 dark:text-slate-400">
-        Header-logo en welkomscherm-logo zijn los van elkaar in te stellen — vaak is de header-versie
-        klein en naast tekst, terwijl een welkomscherm-logo groot en alleenstaand staat.
+        {t("adminBranding.intro")}
       </p>
 
       <div className="flex flex-col gap-2">
-        <p className="font-bold text-sm dark:text-slate-100">App-naam</p>
+        <p className="font-bold text-sm dark:text-slate-100">{t("adminBranding.appName")}</p>
         <p className="text-xs text-slate-500 dark:text-slate-400">
-          Tekst die getoond wordt zolang er geen logo is ingesteld op de bijbehorende plek (header,
-          welkomscherm), en altijd voor de browsertab/paginatitel (kan geen afbeelding zijn). Leeg
-          laten = standaardnaam &ldquo;Jehova&rdquo;.
+          {t("adminBranding.appNameText")}
         </p>
         <form
           className="flex items-center gap-2"
@@ -193,14 +194,14 @@ export default function AdminBrandingClient() {
             onChange={(e) => setAppNameInput(e.target.value)}
           />
           <button type="submit" className="btn-secondary !px-3 !py-1.5 !text-xs">
-            Opslaan
+            {t("adminCommon.save")}
           </button>
         </form>
       </div>
 
       <ImageSlot
-        label="Logo (header)"
-        description="Vervangt 📖 + de app-naam in de header. Werkt het best met een transparante achtergrond."
+        label={t("adminBranding.logoHeader")}
+        description={t("adminBranding.logoHeaderText")}
         value={branding.logoDataUrl}
         maxDimension={512}
         previewClassName="h-12 w-32 px-2"
@@ -208,8 +209,8 @@ export default function AdminBrandingClient() {
       />
 
       <ImageSlot
-        label="Logo (welkomscherm)"
-        description="Los van het header-logo hierboven — vervangt de app-naam boven de titel op het welkomscherm. Optioneel: laat leeg om daar de tekstnaam te tonen."
+        label={t("adminBranding.logoHero")}
+        description={t("adminBranding.logoHeroText")}
         value={branding.heroLogoDataUrl}
         maxDimension={800}
         previewClassName="h-16 w-48 px-2"
@@ -217,8 +218,8 @@ export default function AdminBrandingClient() {
       />
 
       <ImageSlot
-        label="Favicon"
-        description="Het icoontje in het browsertabblad — verschijnt ook als voorvertoning bij het delen van een link (WhatsApp, Telegram e.d.). Minimaal 200×200px."
+        label={t("adminBranding.favicon")}
+        description={t("adminBranding.faviconText")}
         value={branding.faviconDataUrl}
         maxDimension={256}
         minDimension={200}

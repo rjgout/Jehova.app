@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, FormEvent } from "react";
+import { useT } from "@/components/I18nProvider";
 
 interface EmailSettingsView {
   enabled: boolean;
@@ -14,6 +15,7 @@ interface EmailSettingsView {
 }
 
 export default function EmailSettingsClient({ initial }: { initial: EmailSettingsView }) {
+  const t = useT();
   const [form, setForm] = useState({ ...initial, smtpPassword: "" });
   const [saving, setSaving] = useState(false);
   const [testing, setTesting] = useState(false);
@@ -40,11 +42,11 @@ export default function EmailSettingsClient({ initial }: { initial: EmailSetting
     setSaving(false);
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
-      setMessage({ type: "error", text: data.error ?? "Er ging iets mis." });
+      setMessage({ type: "error", text: data.error ?? t("adminCommon.error") });
       return;
     }
     setForm((f) => ({ ...f, smtpPassword: "", hasPassword: form.smtpPassword ? true : f.hasPassword }));
-    setMessage({ type: "ok", text: "Opgeslagen." });
+    setMessage({ type: "ok", text: t("adminCommon.saved") });
   }
 
   async function sendTest() {
@@ -54,24 +56,23 @@ export default function EmailSettingsClient({ initial }: { initial: EmailSetting
     setTesting(false);
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
-      setMessage({ type: "error", text: data.error ?? "Versturen mislukt." });
+      setMessage({ type: "error", text: data.error ?? t("adminEmail.sendFailed") });
       return;
     }
-    setMessage({ type: "ok", text: "Testmail verstuurd — check je inbox." });
+    setMessage({ type: "ok", text: t("adminEmail.testSent") });
   }
 
   return (
     <details className="group card flex flex-col gap-4">
       <summary className="font-extrabold cursor-pointer select-none list-none [&::-webkit-details-marker]:hidden flex items-center justify-between">
-        E-mailinstellingen
+        {t("adminEmail.title")}
         <span className="text-slate-400 transition-transform group-open:rotate-180" aria-hidden>
           ▾
         </span>
       </summary>
 
       <p className="text-sm text-slate-500 dark:text-slate-400">
-        Voor accountbevestiging en "wachtwoord vergeten"-links. Elke SMTP-dienst werkt — bv. een Microsoft 365-mailbox
-        (smtp.office365.com, poort 587), Gmail met een app-wachtwoord, of je eigen mailserver.
+        {t("adminEmail.intro")}
       </p>
 
       <form onSubmit={onSubmit} className="flex flex-col gap-3">
@@ -82,45 +83,45 @@ export default function EmailSettingsClient({ initial }: { initial: EmailSetting
             checked={form.enabled}
             onChange={(e) => setForm({ ...form, enabled: e.target.checked })}
           />
-          E-mail versturen inschakelen
+          {t("adminEmail.enable")}
         </label>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <input
             className="input"
-            placeholder="SMTP-host (bv. smtp.office365.com)"
+            placeholder={t("adminEmail.host")}
             value={form.smtpHost}
             onChange={(e) => setForm({ ...form, smtpHost: e.target.value })}
           />
           <input
             className="input"
             type="number"
-            placeholder="Poort (587 = STARTTLS, 465 = TLS)"
+            placeholder={t("adminEmail.port")}
             value={form.smtpPort}
             onChange={(e) => setForm({ ...form, smtpPort: Number(e.target.value) })}
           />
           <input
             className="input"
-            placeholder="Gebruikersnaam / mailbox-adres"
+            placeholder={t("adminEmail.username")}
             value={form.smtpUsername}
             onChange={(e) => setForm({ ...form, smtpUsername: e.target.value })}
           />
           <input
             className="input"
             type="password"
-            placeholder={form.hasPassword ? "Wachtwoord (laat leeg om te behouden)" : "Wachtwoord"}
+            placeholder={form.hasPassword ? t("adminEmail.passwordKeep") : t("adminEmail.password")}
             value={form.smtpPassword}
             onChange={(e) => setForm({ ...form, smtpPassword: e.target.value })}
           />
           <input
             className="input"
-            placeholder="Afzender-e-mailadres"
+            placeholder={t("adminEmail.fromEmail")}
             value={form.fromEmail}
             onChange={(e) => setForm({ ...form, fromEmail: e.target.value })}
           />
           <input
             className="input"
-            placeholder="Afzendernaam"
+            placeholder={t("adminEmail.fromName")}
             value={form.fromName}
             onChange={(e) => setForm({ ...form, fromName: e.target.value })}
           />
@@ -133,7 +134,7 @@ export default function EmailSettingsClient({ initial }: { initial: EmailSetting
             checked={form.smtpSecure}
             onChange={(e) => setForm({ ...form, smtpSecure: e.target.checked })}
           />
-          Impliciete TLS (aanzetten bij poort 465, uit laten bij 587/STARTTLS)
+          {t("adminEmail.implicitTls")}
         </label>
 
         {message && (
@@ -144,10 +145,10 @@ export default function EmailSettingsClient({ initial }: { initial: EmailSetting
 
         <div className="flex gap-3">
           <button type="submit" className="btn-primary" disabled={saving}>
-            {saving ? "Bezig..." : "Opslaan"}
+            {saving ? t("adminCommon.busy") : t("adminCommon.save")}
           </button>
           <button type="button" className="btn-secondary" onClick={sendTest} disabled={testing || !form.enabled}>
-            {testing ? "Bezig..." : "Testmail versturen"}
+            {testing ? t("adminCommon.busy") : t("adminEmail.sendTest")}
           </button>
         </div>
       </form>

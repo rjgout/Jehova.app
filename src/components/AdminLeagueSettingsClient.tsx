@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, FormEvent } from "react";
+import { useT } from "@/components/I18nProvider";
 
 interface LeagueSettingsView {
   groupSize: number;
@@ -13,6 +14,7 @@ interface LeagueSettingsView {
 }
 
 export default function AdminLeagueSettingsClient({ initial }: { initial: LeagueSettingsView }) {
+  const t = useT();
   const [form, setForm] = useState(initial);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{ type: "ok" | "error"; text: string } | null>(null);
@@ -35,34 +37,32 @@ export default function AdminLeagueSettingsClient({ initial }: { initial: League
     setSaving(false);
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
-      setMessage({ type: "error", text: data.error ?? "Er ging iets mis." });
+      setMessage({ type: "error", text: data.error ?? t("adminCommon.error") });
       return;
     }
-    setMessage({ type: "ok", text: "Opgeslagen." });
+    setMessage({ type: "ok", text: t("adminCommon.saved") });
   }
 
   return (
     <details className="group card flex flex-col gap-4">
       <summary className="font-extrabold cursor-pointer select-none list-none [&::-webkit-details-marker]:hidden flex items-center justify-between">
-        Competitie-instellingen
+        {t("adminLeague.title")}
         <span className="text-slate-400 transition-transform group-open:rotate-180" aria-hidden>
           ▾
         </span>
       </summary>
 
       <p className="text-sm text-slate-500 dark:text-slate-400">
-        Alles hier geldt vanaf de eerstvolgende keer dat het uitgerekend wordt (nieuwe week/seizoen) — een lopende
-        week of seizoen wordt niet met terugwerkende kracht aangepast.
+        {t("adminLeague.intro1")}
       </p>
       <p className="text-sm text-slate-500 dark:text-slate-400">
-        Promotie- en degradatieplaatsen gelden voor een volle groep. Een kleinere groep volgt dezelfde verhouding,
-        afgerond, met altijd minstens één promotie.
+        {t("adminLeague.intro2")}
       </p>
 
       <form onSubmit={onSubmit} className="flex flex-col gap-3">
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
           <label className="flex flex-col gap-1 text-sm font-bold dark:text-slate-200">
-            Spelers per groep
+            {t("adminLeague.groupSize")}
             <input
               type="number"
               className="input"
@@ -72,7 +72,7 @@ export default function AdminLeagueSettingsClient({ initial }: { initial: League
             />
           </label>
           <label className="flex flex-col gap-1 text-sm font-bold dark:text-slate-200">
-            Promotieplaatsen
+            {t("adminLeague.promote")}
             <input
               type="number"
               className="input"
@@ -82,7 +82,7 @@ export default function AdminLeagueSettingsClient({ initial }: { initial: League
             />
           </label>
           <label className="flex flex-col gap-1 text-sm font-bold dark:text-slate-200">
-            Degradatieplaatsen
+            {t("adminLeague.demote")}
             <input
               type="number"
               className="input"
@@ -92,7 +92,7 @@ export default function AdminLeagueSettingsClient({ initial }: { initial: League
             />
           </label>
           <label className="flex flex-col gap-1 text-sm font-bold dark:text-slate-200">
-            Seizoensduur (weken)
+            {t("adminLeague.seasonWeeks")}
             <input
               type="number"
               className="input"
@@ -102,7 +102,7 @@ export default function AdminLeagueSettingsClient({ initial }: { initial: League
             />
           </label>
           <label className="flex flex-col gap-1 text-sm font-bold dark:text-slate-200">
-            Taal-/competitiecode
+            {t("adminLeague.localeCode")}
             <input
               type="text"
               className="input"
@@ -113,7 +113,7 @@ export default function AdminLeagueSettingsClient({ initial }: { initial: League
         </div>
 
         <label className="flex flex-col gap-1 text-sm font-bold dark:text-slate-200">
-          Per-activiteit XP-regels (JSON: dailyCap, decayFactor, optioneel winBonus/levelMultiplier)
+          {t("adminLeague.rules")}
           <textarea
             className="input font-mono text-xs !h-48"
             value={form.activityRules}
@@ -122,7 +122,7 @@ export default function AdminLeagueSettingsClient({ initial }: { initial: League
         </label>
 
         <button className="btn-primary self-start" disabled={saving} type="submit">
-          {saving ? "Bezig..." : "Opslaan"}
+          {saving ? t("adminCommon.busy") : t("adminCommon.save")}
         </button>
         {message && (
           <p className={`text-sm font-semibold ${message.type === "ok" ? "text-brand-600 dark:text-brand-300" : "text-red-600 dark:text-red-400"}`}>

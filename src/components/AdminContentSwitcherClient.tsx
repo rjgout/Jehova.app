@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useT } from "@/components/I18nProvider";
 
 interface Collection {
   id: string;
@@ -16,6 +17,7 @@ interface Snapshot {
 }
 
 export default function AdminContentSwitcherClient() {
+  const t = useT();
   const [data, setData] = useState<Snapshot | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -37,12 +39,12 @@ export default function AdminContentSwitcherClient() {
       });
       const result = await response.json().catch(() => ({}));
       if (!response.ok) {
-        setError(result.error ?? "Opslaan mislukt.");
+        setError(result.error ?? t("adminContent.saveFailed"));
         return;
       }
       setData({ enabled: result.enabled === true, collections: result.collections ?? [] });
     } catch {
-      setError("Opslaan mislukt.");
+      setError(t("adminContent.saveFailed"));
     } finally {
       setSaving(false);
     }
@@ -56,17 +58,16 @@ export default function AdminContentSwitcherClient() {
   return (
     <details className="group card flex flex-col gap-4">
       <summary className="font-extrabold text-lg dark:text-slate-100 cursor-pointer select-none list-none [&::-webkit-details-marker]:hidden flex items-center justify-between">
-        Content
+        {t("adminContent.title")}
         <span className="text-slate-400 transition-transform group-open:rotate-180" aria-hidden>▾</span>
       </summary>
 
       <p className="text-sm text-slate-500 dark:text-slate-400">
-        Zet de contentswitcher voor gebruikers aan of uit, en kies welke content gebruikers daarin
-        te zien krijgen.
+        {t("adminContent.intro")}
       </p>
 
       {!data ? (
-        <p className="text-slate-400 dark:text-slate-500">Laden...</p>
+        <p className="text-slate-400 dark:text-slate-500">{t("common.loading")}</p>
       ) : (
         <>
           <label className="flex items-center gap-3 cursor-pointer">
@@ -77,16 +78,16 @@ export default function AdminContentSwitcherClient() {
               onChange={() => save({ enabled: !data.enabled })}
               disabled={saving}
             />
-            <span className="text-sm dark:text-slate-200">Contentswitcher beschikbaar voor gebruikers</span>
+            <span className="text-sm dark:text-slate-200">{t("adminContent.available")}</span>
             {!data.enabled && (
               <span className="text-xs font-bold uppercase text-slate-500 bg-slate-100 dark:bg-slate-700 dark:text-slate-300 rounded-full px-2 py-0.5">
-                Uitgeschakeld
+                {t("adminContent.disabled")}
               </span>
             )}
           </label>
 
           <div className="mt-2 flex flex-col gap-2">
-            <h3 className="text-sm font-bold text-slate-700 dark:text-slate-200">Zichtbaar voor gebruikers</h3>
+            <h3 className="text-sm font-bold text-slate-700 dark:text-slate-200">{t("adminContent.visible")}</h3>
             <div className="flex flex-col divide-y divide-slate-100 dark:divide-slate-700 rounded-xl border border-slate-100 dark:border-slate-700">
               {collections.map((collection) => {
                 const lastVisible = collection.visibleToUsers && visibleCount === 1;
@@ -108,7 +109,7 @@ export default function AdminContentSwitcherClient() {
                     <span className="min-w-0 flex-1 text-sm font-semibold dark:text-slate-200">{collection.name}</span>
                     {!collection.visibleToUsers && (
                       <span className="shrink-0 text-xs font-bold uppercase text-slate-500 bg-slate-100 dark:bg-slate-700 dark:text-slate-300 rounded-full px-2 py-0.5">
-                        Verborgen
+                        {t("adminContent.hidden")}
                       </span>
                     )}
                   </label>
@@ -116,10 +117,7 @@ export default function AdminContentSwitcherClient() {
               })}
             </div>
             <p className="text-xs text-slate-500 dark:text-slate-400">
-              Beheerders zien altijd alle content, ook verborgen content, zodat je die eerst kunt
-              bekijken. Minstens één content blijft zichtbaar. Wie verborgen content open had, gaat
-              terug naar de eerste zichtbare. Met één zichtbare content toont de switcher zich niet
-              voor gebruikers.
+              {t("adminContent.note")}
             </p>
           </div>
 

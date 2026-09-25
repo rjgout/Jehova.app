@@ -2,14 +2,10 @@
 
 import { useEffect, useState } from "react";
 import UserTag from "@/components/UserTag";
+import { useT, useUiLanguage } from "@/components/I18nProvider";
+import { getLanguage } from "@/lib/languages";
 
 const STATUS_OPTIONS = ["NEW", "IN_PROGRESS", "DONE", "WONT_DO"] as const;
-const STATUS_LABELS: Record<string, string> = {
-  NEW: "Nieuw",
-  IN_PROGRESS: "Bezig",
-  DONE: "Klaar",
-  WONT_DO: "Wordt niet uitgevoerd",
-};
 const STATUS_CLASSES: Record<string, string> = {
   NEW: "bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300",
   IN_PROGRESS: "bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-200",
@@ -27,6 +23,8 @@ interface ReportView {
 }
 
 export default function FeedbackAdminClient() {
+  const t = useT();
+  const intlLocale = getLanguage(useUiLanguage()).intlLocale;
   const [reports, setReports] = useState<ReportView[] | null>(null);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
 
@@ -53,16 +51,16 @@ export default function FeedbackAdminClient() {
   return (
     <details className="group card flex flex-col gap-4">
       <summary className="font-extrabold text-lg dark:text-slate-100 cursor-pointer select-none list-none [&::-webkit-details-marker]:hidden flex items-center justify-between">
-        Feedback
+        {t("pages.feedback")}
         <span className="text-slate-400 transition-transform group-open:rotate-180" aria-hidden>
           ▾
         </span>
       </summary>
 
       {!reports ? (
-        <p className="text-slate-400 dark:text-slate-500">Laden...</p>
+        <p className="text-slate-400 dark:text-slate-500">{t("common.loading")}</p>
       ) : reports.length === 0 ? (
-        <p className="text-slate-400 dark:text-slate-500">Nog geen meldingen.</p>
+        <p className="text-slate-400 dark:text-slate-500">{t("adminFeedback.none")}</p>
       ) : (
         <div className="flex flex-col gap-3">
           {reports.map((r) => (
@@ -74,7 +72,7 @@ export default function FeedbackAdminClient() {
                     <span className="font-normal text-slate-400 dark:text-slate-500">({r.user.email})</span>
                   </p>
                   <p className="text-xs text-slate-400 dark:text-slate-500">
-                    {new Date(r.createdAt).toLocaleString("nl-NL")}
+                    {new Date(r.createdAt).toLocaleString(intlLocale)}
                   </p>
                 </div>
                 <select
@@ -85,7 +83,7 @@ export default function FeedbackAdminClient() {
                 >
                   {STATUS_OPTIONS.map((s) => (
                     <option key={s} value={s}>
-                      {STATUS_LABELS[s]}
+                      {t(`feedback.status.${s}`)}
                     </option>
                   ))}
                 </select>
@@ -95,7 +93,7 @@ export default function FeedbackAdminClient() {
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
                   src={r.screenshot}
-                  alt="Screenshot"
+                  alt={t("feedback.screenshot")}
                   className="max-h-40 rounded-lg border border-slate-200 dark:border-slate-700 self-start"
                 />
               )}

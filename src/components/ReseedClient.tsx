@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useT } from "@/components/I18nProvider";
+import { rich } from "@/lib/i18n/rich";
 
 type ReseedJobStatus = "idle" | "running" | "done" | "error";
 
@@ -15,6 +17,7 @@ interface ReseedJobState {
 const POLL_MS = 1500;
 
 export default function ReseedClient() {
+  const t = useT();
   const [job, setJob] = useState<ReseedJobState | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -31,13 +34,13 @@ export default function ReseedClient() {
     try {
       const res = await fetch("/api/admin/reseed");
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? "Kon status niet ophalen.");
+      if (!res.ok) throw new Error(data.error ?? t("adminCommon.statusFailed"));
       setJob(data.job as ReseedJobState);
       setLoadError(null);
       if (data.job.status !== "running") stopPolling();
       return data.job as ReseedJobState;
     } catch (e) {
-      setLoadError(e instanceof Error ? e.message : "Kon status niet ophalen.");
+      setLoadError(e instanceof Error ? e.message : t("adminCommon.statusFailed"));
       return null;
     }
   }
@@ -63,7 +66,7 @@ export default function ReseedClient() {
     const res = await fetch("/api/admin/reseed", { method: "POST" });
     const data = await res.json().catch(() => null);
     if (!res.ok || !data) {
-      setLoadError(data?.error ?? "Er ging iets mis.");
+      setLoadError(data?.error ?? t("adminCommon.error"));
       return;
     }
     setJob(data.job as ReseedJobState);
@@ -84,23 +87,18 @@ export default function ReseedClient() {
   return (
     <details className="group card flex flex-col gap-4">
       <summary className="font-extrabold cursor-pointer select-none list-none [&::-webkit-details-marker]:hidden flex items-center justify-between">
-        Content opnieuw laden
+        {t("adminReseed.title")}
         <span className="text-slate-400 transition-transform group-open:rotate-180" aria-hidden>
           ▾
         </span>
       </summary>
 
       <p className="text-sm text-slate-500 dark:text-slate-400">
-        Zet de nieuwste content (boeken/hoofdstukken/oefeningen, podcastafleveringen, FSY-lessen, achievements) in de database —
-        hetzelfde als <code>npm run db:seed</code>, maar dan zonder terminal. Bestaande gebruikers, voortgang,
-        streaks en scores blijven ongemoeid; er wordt alleen content toegevoegd of bijgewerkt. Doe dit na elke
-        update die nieuwe content toevoegt (bv. een nieuwe podcastaflevering). Dit kan een tijdje duren — de balk
-        hieronder blijft staan totdat het écht klaar is, ook als je ondertussen naar een andere pagina gaat en
-        terugkomt.
+        {rich(t("adminReseed.text"), { cmd: <code>npm run db:seed</code> })}
       </p>
 
       <button className="btn-primary self-start" disabled={running} onClick={run}>
-        {running ? "Bezig..." : "Content opnieuw laden"}
+        {running ? t("adminCommon.busy") : t("adminReseed.title")}
       </button>
 
       {running && (
@@ -112,11 +110,11 @@ export default function ReseedClient() {
       {loadError && <p className="text-sm font-semibold text-red-600 dark:text-red-400">{loadError}</p>}
       {job?.status === "error" && (
         <p className="text-sm font-semibold text-red-600 dark:text-red-400">
-          {job.error ?? "Content laden is mislukt."}
+          {job.error ?? t("adminReseed.failed")}
         </p>
       )}
       {job?.status === "done" && (
-        <p className="text-sm font-semibold text-brand-700 dark:text-brand-400">Klaar — content is bijgewerkt.</p>
+        <p className="text-sm font-semibold text-brand-700 dark:text-brand-400">{t("adminReseed.done")}</p>
       )}
 
       {job && job.logs.length > 0 && (

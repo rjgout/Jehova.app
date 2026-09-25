@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useT } from "@/components/I18nProvider";
+import type { MessageKey } from "@/lib/i18n/core";
 
 interface SettingsView {
   wordGameEnabled: boolean;
@@ -12,17 +14,19 @@ interface SettingsView {
   alleskennerEnabled: boolean;
 }
 
-const GAMES: { key: keyof SettingsView; label: string }[] = [
-  { key: "wordGameEnabled", label: "🟩 Woord van de dag" },
-  { key: "scrabbleEnabled", label: "🔤 Woordspel" },
-  { key: "gezinsavondEnabled", label: "🎉 Gezinsavond" },
-  { key: "chapterGuessEnabled", label: "🔎 Raad het hoofdstuk" },
-  { key: "challengesEnabled", label: "⚔️ Uitdagingen" },
-  { key: "liveExercisesEnabled", label: "🏁 Nieuw live spel starten (oefeningen-race)" },
-  { key: "alleskennerEnabled", label: "🧠 De Alleskenner" },
+// Icoon los van de naam: de naam is dezelfde vertaling als elders in de app.
+const GAMES: { key: keyof SettingsView; icon: string; labelKey: MessageKey }[] = [
+  { key: "wordGameEnabled", icon: "🟩", labelKey: "pages.wordOfTheDay" },
+  { key: "scrabbleEnabled", icon: "🔤", labelKey: "pages.wordGame" },
+  { key: "gezinsavondEnabled", icon: "🎉", labelKey: "pages.familyNight" },
+  { key: "chapterGuessEnabled", icon: "🔎", labelKey: "pages.chapterGuess" },
+  { key: "challengesEnabled", icon: "⚔️", labelKey: "pages.challenges" },
+  { key: "liveExercisesEnabled", icon: "", labelKey: "adminGames.liveExercises" },
+  { key: "alleskennerEnabled", icon: "🧠", labelKey: "pages.alleskenner" },
 ];
 
 export default function AdminGameSettingsClient() {
+  const t = useT();
   const [settings, setSettings] = useState<SettingsView | null>(null);
   const [saving, setSaving] = useState(false);
 
@@ -48,19 +52,18 @@ export default function AdminGameSettingsClient() {
   return (
     <details className="group card flex flex-col gap-4">
       <summary className="font-extrabold text-lg dark:text-slate-100 cursor-pointer select-none list-none [&::-webkit-details-marker]:hidden flex items-center justify-between">
-        Spelletjes
+        {t("adminGames.title")}
         <span className="text-slate-400 transition-transform group-open:rotate-180" aria-hidden>
           ▾
         </span>
       </summary>
 
       <p className="text-sm text-slate-500 dark:text-slate-400">
-        Uitgezet spelletjes verdwijnen uit het overzicht (/live) van gewone gebruikers — een rechtstreekse link blijft
-        wel werken. Jijzelf blijft, als admin, alles zien.
+        {t("adminGames.intro")}
       </p>
 
       {!settings ? (
-        <p className="text-slate-400 dark:text-slate-500">Laden...</p>
+        <p className="text-slate-400 dark:text-slate-500">{t("common.loading")}</p>
       ) : (
         <div className="flex flex-col gap-2">
           {GAMES.map((g) => (
@@ -72,10 +75,10 @@ export default function AdminGameSettingsClient() {
                 onChange={() => toggle(g.key)}
                 disabled={saving}
               />
-              <span className="text-sm dark:text-slate-200">{g.label}</span>
+              <span className="text-sm dark:text-slate-200">{g.icon ? `${g.icon} ${t(g.labelKey)}` : t(g.labelKey)}</span>
               {!settings[g.key] && (
                 <span className="text-xs font-bold uppercase text-red-500 dark:text-red-400 bg-red-50 dark:bg-red-950 rounded-full px-2 py-0.5">
-                  Uitgeschakeld
+                  {t("adminContent.disabled")}
                 </span>
               )}
             </label>

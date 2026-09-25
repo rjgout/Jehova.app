@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState, type FormEvent } from "react";
+import { useT, useUiLanguage } from "@/components/I18nProvider";
+import { getLanguage } from "@/lib/languages";
 
 interface EntryView {
   id: string;
@@ -10,6 +12,8 @@ interface EntryView {
 }
 
 export default function AdminChangelogClient() {
+  const t = useT();
+  const intlLocale = getLanguage(useUiLanguage()).intlLocale;
   const [entries, setEntries] = useState<EntryView[] | null>(null);
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
@@ -45,7 +49,7 @@ export default function AdminChangelogClient() {
       setBody("");
       await load();
     } else {
-      setCreateError(data.error ?? "Kon het item niet toevoegen.");
+      setCreateError(data.error ?? t("adminChangelog.addFailed"));
     }
     setCreating(false);
   }
@@ -70,7 +74,7 @@ export default function AdminChangelogClient() {
   }
 
   async function remove(id: string) {
-    if (!window.confirm("Dit changelog-item verwijderen? Dit kan niet ongedaan worden gemaakt.")) return;
+    if (!window.confirm(t("adminChangelog.confirmDelete"))) return;
     setSavingId(id);
     await fetch(`/api/admin/changelog/${id}`, { method: "DELETE" }).catch(() => {});
     await load();
@@ -80,7 +84,7 @@ export default function AdminChangelogClient() {
   return (
     <details className="group card flex flex-col gap-4">
       <summary className="font-extrabold text-lg dark:text-slate-100 cursor-pointer select-none list-none [&::-webkit-details-marker]:hidden flex items-center justify-between">
-        Changelog
+        {t("adminChangelog.title")}
         <span className="text-slate-400 transition-transform group-open:rotate-180" aria-hidden>
           ▾
         </span>
@@ -89,28 +93,28 @@ export default function AdminChangelogClient() {
       <form onSubmit={create} className="flex flex-col gap-2 border-b border-slate-100 dark:border-slate-700 pb-4">
         <input
           className="input"
-          placeholder="Titel"
+          placeholder={t("adminChangelog.titlePlaceholder")}
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           maxLength={120}
         />
         <textarea
           className="input min-h-[6rem]"
-          placeholder="Tekst — regeleinden worden overgenomen, geen opmaak nodig"
+          placeholder={t("adminChangelog.bodyPlaceholder")}
           value={body}
           onChange={(e) => setBody(e.target.value)}
           maxLength={4000}
         />
         <button className="btn-primary self-start" disabled={creating || !title.trim() || !body.trim()} type="submit">
-          {creating ? "Bezig..." : "Toevoegen"}
+          {creating ? t("adminCommon.busy") : t("adminChangelog.add")}
         </button>
         {createError && <p className="text-sm text-red-600 dark:text-red-400">{createError}</p>}
       </form>
 
       {!entries ? (
-        <p className="text-slate-400 dark:text-slate-500">Laden...</p>
+        <p className="text-slate-400 dark:text-slate-500">{t("common.loading")}</p>
       ) : entries.length === 0 ? (
-        <p className="text-slate-400 dark:text-slate-500">Nog geen changelog-items.</p>
+        <p className="text-slate-400 dark:text-slate-500">{t("adminChangelog.none")}</p>
       ) : (
         <div className="flex flex-col gap-3">
           {entries.map((entry) => (
@@ -135,10 +139,10 @@ export default function AdminChangelogClient() {
                       disabled={savingId === entry.id || !editTitle.trim() || !editBody.trim()}
                       onClick={() => saveEdit(entry.id)}
                     >
-                      Opslaan
+                      {t("adminCommon.save")}
                     </button>
                     <button className="btn-secondary !px-3 !py-1.5" onClick={() => setEditingId(null)}>
-                      Annuleren
+                      {t("adminCommon.cancel")}
                     </button>
                   </div>
                 </>
@@ -148,7 +152,7 @@ export default function AdminChangelogClient() {
                     <div>
                       <p className="font-bold dark:text-slate-100">{entry.title}</p>
                       <p className="text-xs text-slate-400 dark:text-slate-500">
-                        {new Date(entry.createdAt).toLocaleString("nl-NL")}
+                        {new Date(entry.createdAt).toLocaleString(intlLocale)}
                       </p>
                     </div>
                     <div className="flex gap-3 shrink-0">
@@ -156,14 +160,14 @@ export default function AdminChangelogClient() {
                         className="text-xs font-semibold text-brand-600 dark:text-brand-300 hover:underline"
                         onClick={() => startEdit(entry)}
                       >
-                        Bewerken
+                        {t("adminCommon.edit")}
                       </button>
                       <button
                         className="text-xs font-semibold text-red-500 dark:text-red-400 hover:underline"
                         disabled={savingId === entry.id}
                         onClick={() => remove(entry.id)}
                       >
-                        Verwijderen
+                        {t("adminCommon.delete")}
                       </button>
                     </div>
                   </div>

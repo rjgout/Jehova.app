@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useT } from "@/components/I18nProvider";
 
 interface CourseView {
   id: string;
@@ -11,17 +12,10 @@ interface CourseView {
   collectionName: string;
 }
 
-const TYPE_LABELS: Record<string, string> = {
-  FRONT_TO_BACK: "Hoofdstuk voor hoofdstuk",
-  FREE_CHOICE: "Vrije keuze",
-  READING_LESSONS: "Stap voor stap",
-  PODCAST: "Podcast",
-  KIDS: "Voor kinderen",
-  INTRO: "Introductie",
-  FSY: "Leerplan",
-};
+const COURSE_TYPES = ["FRONT_TO_BACK", "FREE_CHOICE", "READING_LESSONS", "PODCAST", "KIDS", "INTRO", "FSY"] as const;
 
 function CourseRow({ course, onToggle, saving }: { course: CourseView; onToggle: () => void; saving: boolean }) {
+  const t = useT();
   return (
     <label
       className={`flex items-center gap-3 rounded-xl p-3 border cursor-pointer ${
@@ -32,17 +26,18 @@ function CourseRow({ course, onToggle, saving }: { course: CourseView; onToggle:
     >
       <input type="checkbox" className="h-5 w-5 accent-brand-500" checked={course.enabled} onChange={onToggle} disabled={saving} />
       <div className="flex-1">
-        <p className="text-xs font-bold uppercase text-slate-400 dark:text-slate-500">{TYPE_LABELS[course.type] ?? course.type}</p>
+        <p className="text-xs font-bold uppercase text-slate-400 dark:text-slate-500">{(COURSE_TYPES as readonly string[]).includes(course.type) ? t(`adminCourses.types.${course.type as (typeof COURSE_TYPES)[number]}`) : course.type}</p>
         <p className="font-bold dark:text-slate-100">{course.name}</p>
       </div>
       {!course.enabled && (
-        <span className="text-xs font-bold uppercase text-red-500 dark:text-red-400 shrink-0">Uitgeschakeld</span>
+        <span className="text-xs font-bold uppercase text-red-500 dark:text-red-400 shrink-0">{t("adminContent.disabled")}</span>
       )}
     </label>
   );
 }
 
 export default function AdminCoursesClient() {
+  const t = useT();
   const [courses, setCourses] = useState<CourseView[] | null>(null);
   const [savingId, setSavingId] = useState<string | null>(null);
 
@@ -67,19 +62,18 @@ export default function AdminCoursesClient() {
   return (
     <details className="group card flex flex-col gap-4">
       <summary className="font-extrabold text-lg dark:text-slate-100 cursor-pointer select-none list-none [&::-webkit-details-marker]:hidden flex items-center justify-between">
-        Cursussen
+        {t("adminCourses.title")}
         <span className="text-slate-400 transition-transform group-open:rotate-180" aria-hidden>
           ▾
         </span>
       </summary>
 
       <p className="text-sm text-slate-500 dark:text-slate-400">
-        Uitgezette cursussen verdwijnen uit ieders cursussenoverzicht en toevoeg-catalogus — bestaande voortgang
-        blijft bewaard en een rechtstreekse link blijft werken.
+        {t("adminCourses.intro")}
       </p>
 
       {!courses ? (
-        <p className="text-slate-400 dark:text-slate-500">Laden...</p>
+        <p className="text-slate-400 dark:text-slate-500">{t("common.loading")}</p>
       ) : (
         <div className="flex flex-col gap-4">
           {/* Per collectie: elke schriftcollectie heeft cursussen met dezelfde naam. */}
