@@ -64,7 +64,7 @@ export default function ReadingCourseView({ courseId, courseName, today, chapter
               📖 {today.bookName} {today.chapterNumber}
             </h2>
             <p className="text-brand-100">
-              Les {today.lessonNumber} · verzen {today.startVerse}–{today.endVerse} · ongeveer 5 minuten
+              Stap {today.lessonNumber} · verzen {today.startVerse}–{today.endVerse} · ongeveer 5 minuten
             </p>
             <Link
               href={`/reading-lesson/${today.id}`}
@@ -117,7 +117,7 @@ export default function ReadingCourseView({ courseId, courseName, today, chapter
                     <div>
                       <div className="font-extrabold dark:text-slate-100">{chapter.bookName} {chapter.number}</div>
                       <div className="text-xs text-slate-400 dark:text-slate-500">
-                        {chapter.completedLessons}/{chapter.lessonCount} lessen voltooid
+                        {chapter.completedLessons}/{chapter.lessonCount} stappen voltooid
                       </div>
                     </div>
                   </Link>

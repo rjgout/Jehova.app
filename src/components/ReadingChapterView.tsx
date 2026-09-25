@@ -27,7 +27,7 @@ export default function ReadingChapterView({ courseId, bookName, chapterNumber, 
     <div className="max-w-2xl mx-auto flex flex-col gap-6">
       <div>
         <p className="text-xs font-bold uppercase tracking-wide text-slate-400 dark:text-slate-500">
-          {completedCount}/{lessons.length} lessen voltooid
+          {completedCount}/{lessons.length} stappen voltooid
         </p>
         <h1 className="text-2xl font-extrabold text-brand-800 dark:text-brand-300 mt-1">
           {bookName} {chapterNumber}
@@ -57,7 +57,7 @@ export default function ReadingChapterView({ courseId, bookName, chapterNumber, 
               {lesson.completed ? "✓" : lesson.locked ? "🔒" : lesson.number}
             </div>
             <div className="min-w-0 flex-1">
-              <div className="font-extrabold dark:text-slate-100">Les {lesson.number}</div>
+              <div className="font-extrabold dark:text-slate-100">Stap {lesson.number}</div>
               <div className="text-xs text-slate-400 dark:text-slate-500">
                 Verzen {lesson.startVerse}–{lesson.endVerse} · {lesson.verseCount} verzen
                 {lesson.bestScore !== null ? ` · beste score ${lesson.bestScore}%` : ""}

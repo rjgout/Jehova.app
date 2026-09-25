@@ -112,7 +112,7 @@ export default function ReadingLessonFlow({
       <div className="max-w-2xl mx-auto flex flex-col gap-4">
         <div className="flex items-center justify-between gap-3">
           <p className="text-xs font-bold uppercase tracking-wide text-slate-400 dark:text-slate-500">
-            Les {lessonNumber} van {totalLessons}
+            Stap {lessonNumber} van {totalLessons}
           </p>
           <p className="text-xs font-bold text-slate-400 dark:text-slate-500">
             {startVerse}–{endVerse}
@@ -133,7 +133,7 @@ export default function ReadingLessonFlow({
             else setPhase("exercises");
           }}
         >
-          {exercises.length === 0 ? "Les afronden →" : "Naar de vragen →"}
+          {exercises.length === 0 ? "Stap afronden →" : "Naar de vragen →"}
         </button>
       </div>
     );
@@ -144,7 +144,7 @@ export default function ReadingLessonFlow({
       <div className="max-w-2xl mx-auto flex flex-col gap-6">
         <div>
           <p className="text-xs font-bold uppercase tracking-wide text-slate-400 dark:text-slate-500 mb-2">
-            Les {lessonNumber} · {startVerse}–{endVerse}
+            Stap {lessonNumber} · {startVerse}–{endVerse}
           </p>
           <div className="h-3 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
             <div className="h-full bg-brand-500 transition-all duration-300" style={{ width: `${Math.round((index / exercises.length) * 100)}%` }} />
@@ -166,7 +166,7 @@ export default function ReadingLessonFlow({
       <div className="max-w-md mx-auto card flex flex-col items-center gap-4 text-center animate-pop">
         <div className="text-5xl">{result.scorePercent >= 80 ? "🎉" : result.scorePercent >= 60 ? "👍" : "💪"}</div>
         <p className="text-xs font-bold uppercase tracking-wide text-slate-400 dark:text-slate-500">
-          Les {lessonNumber} voltooid
+          Stap {lessonNumber} voltooid
         </p>
         <h2 className="text-2xl font-extrabold text-brand-800 dark:text-brand-300">
           {result.correctCount} / {result.total} goed
@@ -178,7 +178,7 @@ export default function ReadingLessonFlow({
           </p>
           {result.scorePercent < 60 && (
             <p className="text-sm text-slate-500 dark:text-slate-400">
-              Je score wordt bewaard, maar je kunt gewoon doorgaan naar de volgende les.
+              Je score wordt bewaard, maar je kunt gewoon doorgaan naar de volgende stap.
             </p>
           )}
           {effectiveNextLessonId && (
@@ -187,7 +187,7 @@ export default function ReadingLessonFlow({
                 🔥 Ga je door?
               </p>
               <p className="text-sm text-gold-600 dark:text-gold-400">
-                De volgende les levert tot <strong>+{result.nextXpEarned} XP</strong> op (×{result.nextComboMultiplier}).
+                De volgende stap levert tot <strong>+{result.nextXpEarned} XP</strong> op (×{result.nextComboMultiplier}).
               </p>
             </div>
           )}
@@ -223,7 +223,7 @@ export default function ReadingLessonFlow({
           </Link>
           {effectiveNextLessonId && (
             <Link href={`/reading-lesson/${effectiveNextLessonId}`} className="btn-primary">
-              Volgende les → 🔥
+              Volgende stap → 🔥
             </Link>
           )}
         </div>

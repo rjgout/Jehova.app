@@ -30,8 +30,8 @@ interface CatalogCourseView {
 
 const TYPE_LABELS: Record<CourseView["type"], string> = {
   INTRO: "Introductie",
-  READING_LESSONS: "Kleine leeslessen",
-  FRONT_TO_BACK: "Van voor naar achter",
+  READING_LESSONS: "Korte stappen",
+  FRONT_TO_BACK: "Leesroute",
   FREE_CHOICE: "Vrije keuze",
   BY_BOOK: "Per boek",
   PODCAST: "Podcast",

@@ -12,9 +12,9 @@ interface CourseView {
 }
 
 const TYPE_LABELS: Record<string, string> = {
-  FRONT_TO_BACK: "Van voor naar achter",
+  FRONT_TO_BACK: "Hoofdstuk voor hoofdstuk",
   FREE_CHOICE: "Vrije keuze",
-  READING_LESSONS: "Leeslessen",
+  READING_LESSONS: "Stap voor stap",
   PODCAST: "Podcast",
   KIDS: "Voor kinderen",
   INTRO: "Introductie",

@@ -53,7 +53,7 @@ export async function completeReadingLesson(
       include: { course: true },
     });
     if (!lesson || lesson.course.type !== "READING_LESSONS") {
-      throw new Error("Leesles niet gevonden");
+      throw new Error("Stap niet gevonden");
     }
 
     const progress = await tx.userCourseProgress.findUnique({
@@ -108,7 +108,7 @@ export async function completeReadingLesson(
     // Alleen de actuele les mag worden afgerond. De eerste les is toegestaan
     // wanneer de cursus nog geen cursor heeft.
     if (progress.currentLessonId !== lessonId) {
-      throw new Error("Deze les is nog vergrendeld");
+      throw new Error("Deze stap is nog vergrendeld");
     }
 
     const chapterLessons = await tx.courseLesson.findMany({

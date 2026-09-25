@@ -1,5 +1,5 @@
 import type { PrismaClient } from "@prisma/client";
-import { chapterTerm } from "./chapterTerm";
+import { capitalize, chapterTerm } from "./chapterTerm";
 import { ensurePodcasts, PODCASTS, PODCASTS_COLLECTION_ID } from "./podcasts";
 
 export const FRONT_TO_BACK_SLUG = "voor-naar-achter";
@@ -120,7 +120,7 @@ async function syncScriptureCourses(
   collection: ScriptureCollection,
   books: SyncBook[],
   isDefault: boolean,
-  texts: { freeChoice: string; frontToBack: string; readingLessons: string }
+  texts: { freeChoice: string; frontToBack: string; frontToBackName: string; readingLessons: string }
 ): Promise<void> {
   const slugFor = (base: string) => (isDefault ? base : `${base}-${collection.slug}`);
   const chapters = books.flatMap((book) => book.chapters);
@@ -148,10 +148,10 @@ async function syncScriptureCourses(
   const freeChoice = await upsertCourse(FREE_CHOICE_SLUG, "FREE_CHOICE", "Vrije keuze", texts.freeChoice, 0);
   await setChapters(freeChoice.id);
 
-  const frontToBack = await upsertCourse(FRONT_TO_BACK_SLUG, "FRONT_TO_BACK", "Van voor naar achter", texts.frontToBack, 1);
+  const frontToBack = await upsertCourse(FRONT_TO_BACK_SLUG, "FRONT_TO_BACK", texts.frontToBackName, texts.frontToBack, 1);
   await setChapters(frontToBack.id);
 
-  const readingLessons = await upsertCourse(READING_LESSONS_SLUG, "READING_LESSONS", "Lezen van voor naar achter", texts.readingLessons, 2);
+  const readingLessons = await upsertCourse(READING_LESSONS_SLUG, "READING_LESSONS", "Stap voor stap", texts.readingLessons, 2);
   await syncReadingLessons(db, readingLessons.id, books);
 }
 
@@ -201,7 +201,8 @@ export async function syncCourses(db: PrismaClient): Promise<void> {
   await syncScriptureCourses(db, defaultCollection, books, true, {
     freeChoice: "Kies zelf welk hoofdstuk je wil doen, in elke volgorde.",
     frontToBack: "Eén vaste volgorde door alle boeken heen, hoofdstuk na hoofdstuk.",
-    readingLessons: "Lees het hele Boek van Mormon in kleine, behapbare lessen van ongeveer 5 tot 10 verzen.",
+    frontToBackName: "Hoofdstuk voor hoofdstuk",
+    readingLessons: "Lees het hele Boek van Mormon in korte stappen van ongeveer 5 tot 10 verzen.",
   });
 
   // De andere schriftcollecties (Leer en Verbonden, Parel van Grote Waarde):
@@ -223,7 +224,9 @@ export async function syncCourses(db: PrismaClient): Promise<void> {
     await syncScriptureCourses(db, collection, collectionBooks, false, {
       freeChoice: `Kies zelf welk${term.singular === "afdeling" ? "e" : ""} ${term.singular} je wil doen, in elke volgorde.`,
       frontToBack: `Eén vaste volgorde${across} ${term.singular} na ${term.singular}.`,
-      readingLessons: `Lees ${collection.name} helemaal door, in kleine, behapbare lessen van ongeveer 5 tot 10 verzen.`,
+      // "Afdeling voor afdeling" bij de Leer en Verbonden.
+      frontToBackName: `${capitalize(term.singular)} voor ${term.singular}`,
+      readingLessons: `Lees ${collection.name} helemaal door, in korte stappen van ongeveer 5 tot 10 verzen.`,
     });
   }
 

@@ -618,7 +618,7 @@ export default function ProfileClient() {
 
       <CollapsibleCard title="Leesvoortgang">
         <p className="text-sm text-slate-500 dark:text-slate-400">
-          Opnieuw beginnen met het lezen van het Boek van Mormon? Hiermee wis je je voortgang van de leesroutes en de kleine leeslessen.
+          Opnieuw beginnen met het lezen van het Boek van Mormon? Hiermee wis je je voortgang van de leesroutes en de korte stappen.
           Je XP, achievements en andere statistieken blijven behouden.
         </p>
         {!resetReadingMessage ? (

@@ -32,7 +32,7 @@ export async function POST(req: NextRequest) {
     },
   });
   if (!lesson || lesson.course.type !== "READING_LESSONS") {
-    return NextResponse.json({ error: "Leesles niet gevonden" }, { status: 404 });
+    return NextResponse.json({ error: "Stap niet gevonden" }, { status: 404 });
   }
 
   // De score telt altijd over ALLE vragen van deze les: niet-ingestuurde
@@ -77,7 +77,7 @@ export async function POST(req: NextRequest) {
   try {
     result = await completeReadingLesson(user.id, lesson.id, scorePercent, correctCount);
   } catch (e) {
-    const message = e instanceof Error ? e.message : "Kon de les niet afronden.";
+    const message = e instanceof Error ? e.message : "Kon de stap niet afronden.";
     return NextResponse.json({ error: message }, { status: 409 });
   }
 

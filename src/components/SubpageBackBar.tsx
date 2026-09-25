@@ -34,7 +34,7 @@ const GAME_PAGES: Record<string, { title: string; icon: string }> = {
 
 const LESSON_PAGES: [RegExp, string, string][] = [
   [/^\/lesson\/[^/]+$/, "Les", "📖"],
-  [/^\/reading-lesson\/[^/]+$/, "Leesles", "📖"],
+  [/^\/reading-lesson\/[^/]+$/, "Stap", "📖"],
   [/^\/podcast\/[^/]+\/[^/]+$/, "Podcastles", "🎙️"],
   [/^\/kids\/[^/]+$/, "Kinderverhaal", "🧒"],
   [/^\/intro\/[^/]+$/, "Introductieles", "✨"],

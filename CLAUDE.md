@@ -306,8 +306,10 @@ verwerken". Fundamenteel anders dan de rest van de API:
   (`scripts/church-text/fetch_dc_pgp.py`, schrijft ook de woordenlijsten voor
   het woordenboek). Elk een eigen contentcollectie (`content_dc`,
   `content_pgp`, standaard verborgen voor gebruikers) met dezelfde cursussen
-  als het Boek van Mormon: vrije keuze, van voor naar achter en leeslessen
-  (`syncCourses`); cursussen per boek bestaan niet meer. Leer en Verbonden
+  als het Boek van Mormon: Vrije keuze, Hoofdstuk voor hoofdstuk (bij de
+  Leer en Verbonden "Afdeling voor afdeling") en Stap voor stap, met korte
+  lessen die in de app "stap" heten (`syncCourses`; intern heten ze nog
+  FRONT_TO_BACK en READING_LESSONS); cursussen per boek bestaan niet meer. Leer en Verbonden
   heeft afdelingen i.p.v. hoofdstukken (`src/lib/chapterTerm.ts`).
   Nederlandse audio is daar (nog) niet voor. Functies die bij het Boek
   van Mormon horen (spellen, tekst van de dag) filteren expliciet
