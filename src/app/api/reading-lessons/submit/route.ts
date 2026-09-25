@@ -36,9 +36,9 @@ export async function POST(req: NextRequest) {
     return await apiError("apiErrors.stepNotFound", 404);
   }
 
-  // De score telt altijd over ALLE vragen van deze les: niet-ingestuurde
-  // vragen tellen als fout en een dubbel ingestuurde vraag telt maar één
-  // keer. Anders levert een lege of gedeeltelijke inzending 100% op.
+  // De les toont bewust een willekeurige subset van de vragen. Alleen de
+  // daadwerkelijk beantwoorde vragen tellen daarom mee voor deze ronde.
+  // Een dubbel ingestuurde vraag telt maar één keer.
   const submittedById = new Map<string, string[]>();
   for (const submitted of parsed.data.answers) {
     if (!submittedById.has(submitted.exerciseId)) submittedById.set(submitted.exerciseId, submitted.given);
@@ -71,8 +71,8 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  const total = lesson.exercises.length;
-  const scorePercent = total === 0 ? 100 : Math.round((correctCount / total) * 100);
+  const total = results.length;
+  const scorePercent = total === 0 ? 0 : Math.round((correctCount / total) * 100);
 
   let result;
   try {
