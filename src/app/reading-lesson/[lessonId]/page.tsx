@@ -78,6 +78,10 @@ export default async function ReadingLessonPage({
     prisma.courseLesson.count({ where: { courseId: lesson.courseId, chapterId: lesson.chapterId } }),
   ]);
 
+  const bookmarkedVerseIds = new Set(bookmarks.map((bookmark) => bookmark.verseId));
+  const highlightedVerseIds = new Set(highlights.map((highlight) => highlight.verseId));
+  const notesByVerseId = Object.fromEntries(notes.map((note) => [note.verseId, note.text]));
+
   // Voorlezen stopt aan het eind van deze les: bij het begin van het vers
   // ná de laatste, of pas aan het eind van het bestand als dat er niet is.
   const verseAfter = lesson.chapter.audioUrl
