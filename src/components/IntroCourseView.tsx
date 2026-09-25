@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { useT } from "@/components/I18nProvider";
 
 interface LessonView {
   id: string;
@@ -18,6 +21,7 @@ interface Props {
 // ChapterListCourseView) — de lessen bouwen bewust op elkaar voort, dus een
 // les is pas te openen als de vorige is afgerond.
 export default function IntroCourseView({ courseName, lessons }: Props) {
+  const t = useT();
   let previousCompleted = true;
 
   return (
@@ -25,12 +29,8 @@ export default function IntroCourseView({ courseName, lessons }: Props) {
       <div className="flex flex-col gap-4">
         <h1 className="text-2xl font-extrabold text-brand-800 dark:text-brand-300">{courseName}</h1>
         <div className="card bg-gradient-to-br from-brand-500 to-brand-600 text-white flex flex-col gap-2">
-          <p className="text-brand-100 font-bold uppercase text-xs tracking-wide">Over deze cursus</p>
-          <p>
-            Een korte introductie voor wie nog nooit het Boek van Mormon heeft gelezen — in ongeveer 12 lessen van
-            &ldquo;ik weet eigenlijk niets&rdquo; naar &ldquo;ik snap de basis en kan zelf beginnen met lezen&rdquo;.
-            Al bekend met het Boek van Mormon? Dan kan je deze cursus gewoon overslaan.
-          </p>
+          <p className="text-brand-100 font-bold uppercase text-xs tracking-wide">{t("courseViews.about")}</p>
+          <p>{t("courseViews.introAbout")}</p>
         </div>
       </div>
 
@@ -61,11 +61,11 @@ export default function IntroCourseView({ courseName, lessons }: Props) {
               </div>
               <div className="min-w-0">
                 <div className="font-extrabold dark:text-slate-100">
-                  Les {lesson.number} — {lesson.title}
+                  {t("lessonFlows.lessonNumber", { n: lesson.number })} — {lesson.title}
                 </div>
                 {lesson.summary && <p className="text-xs text-slate-400 dark:text-slate-500">{lesson.summary}</p>}
                 {lesson.bestScore !== null && (
-                  <p className="text-xs text-slate-400 dark:text-slate-500">Beste score: {lesson.bestScore}%</p>
+                  <p className="text-xs text-slate-400 dark:text-slate-500">{t("courseViews.bestScore", { score: lesson.bestScore })}</p>
                 )}
               </div>
             </Link>

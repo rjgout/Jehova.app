@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ExerciseCard, type Exercise } from "@/components/LessonFlow";
 import { ACHIEVEMENT_DISPLAY } from "@/lib/achievementDisplay";
 import { announceXpChanged } from "@/lib/xpBroadcast";
+import { useT } from "@/components/I18nProvider";
 
 interface Answer {
   exerciseId: string;
@@ -43,6 +44,7 @@ export default function KidsLessonFlow({
   courseHref: string;
   nextStoryHref: string | null;
 }) {
+  const t = useT();
   const [phase, setPhase] = useState<Phase>("read");
   const [index, setIndex] = useState(0);
   const [answers, setAnswers] = useState<Answer[]>([]);
@@ -90,7 +92,7 @@ export default function KidsLessonFlow({
         <p className="text-lg leading-relaxed dark:text-slate-100 whitespace-pre-line">{text}</p>
         {exercises.length > 0 && (
           <button className="btn-primary self-start" onClick={() => setPhase("exercises")}>
-            Begin met de vragen →
+            {t("lessonFlows.startQuestions")}
           </button>
         )}
       </div>
@@ -102,7 +104,7 @@ export default function KidsLessonFlow({
       <div className="max-w-md mx-auto card flex flex-col items-center gap-4 text-center animate-pop">
         <div className="text-5xl">🧒</div>
         <h2 className="text-2xl font-extrabold text-brand-800 dark:text-brand-300">
-          {summary.correctCount} / {summary.total} goed
+          {t("readingLesson.score", { correct: summary.correctCount, total: summary.total })}
         </h2>
         <p className="text-gold-600 dark:text-gold-400 font-extrabold text-lg">+{summary.xpEarned} XP</p>
         {!summary.alreadyStudiedToday && (
@@ -111,19 +113,21 @@ export default function KidsLessonFlow({
 
         {summary.freezeUsed && (
           <p className="text-sm bg-ice-50 dark:bg-slate-700 text-ice-600 dark:text-ice-400 rounded-xl px-3 py-2">
-            Je hebt een dag gemist, maar een streak freeze heeft je streak gered! 🧊
+            {t("lesson.freezeUsed")}
           </p>
         )}
         {summary.freezesEarned > 0 && (
           <p className="text-sm bg-gold-50 dark:bg-slate-700 text-gold-600 dark:text-gold-400 rounded-xl px-3 py-2">
-            Mijlpaal gehaald! Je hebt {summary.freezesEarned} streak freeze{summary.freezesEarned > 1 ? "s" : ""} verdiend. 🧊
+            {summary.freezesEarned > 1
+              ? t("lesson.freezesEarnedMany", { n: summary.freezesEarned })
+              : t("lesson.freezesEarnedOne", { n: summary.freezesEarned })}
           </p>
         )}
 
         {summary.newAchievements.length > 0 && (
           <div className="flex flex-col gap-2 w-full">
             <p className="text-sm font-bold text-brand-700 dark:text-brand-300">
-              Nieuwe achievement{summary.newAchievements.length > 1 ? "s" : ""}! 🎊
+              {summary.newAchievements.length > 1 ? t("lesson.newAchievementsMany") : t("lesson.newAchievementsOne")}
             </p>
             <div className="flex justify-center gap-3 flex-wrap">
               {summary.newAchievements.map((slug) => {
@@ -142,11 +146,11 @@ export default function KidsLessonFlow({
 
         <div className="flex gap-3 flex-wrap justify-center">
           <Link href={courseHref} className={nextStoryHref ? "btn-secondary" : "btn-primary"}>
-            Naar de verhalen
+            {t("lessonFlows.toStories")}
           </Link>
           {nextStoryHref && (
             <Link href={nextStoryHref} className="btn-primary">
-              Volgend verhaal →
+              {t("lessonFlows.nextStory")}
             </Link>
           )}
         </div>

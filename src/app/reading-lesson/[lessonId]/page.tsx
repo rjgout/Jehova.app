@@ -3,7 +3,8 @@ import { getCurrentUser } from "@/lib/session";
 import { prisma } from "@/lib/db";
 import { advanceCourseProgress } from "@/lib/courses";
 import ReadingLessonFlow from "@/components/ReadingLessonFlow";
-import { chapterTerm } from "@/lib/chapterTerm";
+import { chapterTerm, localizeTerm } from "@/lib/chapterTerm";
+import { getT } from "@/lib/i18n";
 import CourseBackTarget from "@/components/CourseBackTarget";
 
 export default async function ReadingLessonPage({
@@ -127,7 +128,7 @@ export default async function ReadingLessonPage({
         audioStart: verse.audioStart,
       }))}
       audio={audio}
-      term={chapterTerm(lesson.chapter.book.slug)}
+      term={localizeTerm(chapterTerm(lesson.chapter.book.slug), getT(user.uiLanguage))}
       exercises={exercises}
       language={lesson.chapter.book.contentCollection.language}
     />

@@ -7,6 +7,7 @@ import PersonCard from "@/components/PersonCard";
 import ChapterPopup from "@/components/ChapterPopup";
 import { ACHIEVEMENT_DISPLAY } from "@/lib/achievementDisplay";
 import { announceXpChanged } from "@/lib/xpBroadcast";
+import { useT } from "@/components/I18nProvider";
 
 // Server-opgeloste content-blokken (zie /intro/[lessonId]/page.tsx) — de
 // ruwe vorm staat in prisma/introContent.ts (IntroBlock); personen/boeken
@@ -76,6 +77,7 @@ export default function IntroLessonFlow({
   /** Terug naar dé introductiecursus zelf, nooit de generieke /courses-lijst van alle cursustypes. */
   courseHref: string;
 }) {
+  const t = useT();
   // Een finalChoices-blok (alleen in de laatste les) hoort ná de eindtoets
   // te verschijnen, niet als content-blok ertussenin — het heeft zelf geen
   // "Verder"-knop, dus als het als gewoon content-blok in `blocks` zou staan
@@ -172,7 +174,7 @@ export default function IntroLessonFlow({
       <div className="max-w-md mx-auto card flex flex-col items-center gap-4 text-center animate-pop">
         <div className="text-5xl">📖</div>
         <h2 className="text-2xl font-extrabold text-brand-800 dark:text-brand-300">
-          {summary.correctCount} / {summary.total} goed
+          {t("readingLesson.score", { correct: summary.correctCount, total: summary.total })}
         </h2>
         <p className="text-gold-600 dark:text-gold-400 font-extrabold text-lg">+{summary.xpEarned} XP</p>
         {!summary.alreadyStudiedToday && (
@@ -181,19 +183,21 @@ export default function IntroLessonFlow({
 
         {summary.freezeUsed && (
           <p className="text-sm bg-ice-50 dark:bg-slate-700 text-ice-600 dark:text-ice-400 rounded-xl px-3 py-2">
-            Je hebt een dag gemist, maar een streak freeze heeft je streak gered! 🧊
+            {t("lesson.freezeUsed")}
           </p>
         )}
         {summary.freezesEarned > 0 && (
           <p className="text-sm bg-gold-50 dark:bg-slate-700 text-gold-600 dark:text-gold-400 rounded-xl px-3 py-2">
-            Mijlpaal gehaald! Je hebt {summary.freezesEarned} streak freeze{summary.freezesEarned > 1 ? "s" : ""} verdiend. 🧊
+            {summary.freezesEarned > 1
+              ? t("lesson.freezesEarnedMany", { n: summary.freezesEarned })
+              : t("lesson.freezesEarnedOne", { n: summary.freezesEarned })}
           </p>
         )}
 
         {summary.newAchievements.length > 0 && (
           <div className="flex flex-col gap-2 w-full">
             <p className="text-sm font-bold text-brand-700 dark:text-brand-300">
-              Nieuwe achievement{summary.newAchievements.length > 1 ? "s" : ""}! 🎊
+              {summary.newAchievements.length > 1 ? t("lesson.newAchievementsMany") : t("lesson.newAchievementsOne")}
             </p>
             <div className="flex justify-center gap-3 flex-wrap">
               {summary.newAchievements.map((slug) => {
@@ -215,33 +219,33 @@ export default function IntroLessonFlow({
             <Link href="/lesson" className="card flex items-center gap-4 hover:shadow-md hover:-translate-y-0.5 transition">
               <span className="text-3xl">📖</span>
               <div className="text-left">
-                <p className="font-extrabold dark:text-slate-100">Begin met lezen</p>
-                <p className="text-sm text-slate-500 dark:text-slate-400">1 Nephi 1</p>
+                <p className="font-extrabold dark:text-slate-100">{t("lessonFlows.startReading")}</p>
+                <p className="text-sm text-slate-500 dark:text-slate-400">{t("lessonFlows.firstChapter")}</p>
               </div>
             </Link>
             <Link href="/practice" className="card flex items-center gap-4 hover:shadow-md hover:-translate-y-0.5 transition">
               <span className="text-3xl">🎮</span>
               <div className="text-left">
-                <p className="font-extrabold dark:text-slate-100">Oefen wat je hebt geleerd</p>
-                <p className="text-sm text-slate-500 dark:text-slate-400">Snelle ronde</p>
+                <p className="font-extrabold dark:text-slate-100">{t("lessonFlows.practiceLearned")}</p>
+                <p className="text-sm text-slate-500 dark:text-slate-400">{t("lessonFlows.quickRound")}</p>
               </div>
             </Link>
             <Link href="/courses" className="card flex items-center gap-4 hover:shadow-md hover:-translate-y-0.5 transition">
               <span className="text-3xl">🗺️</span>
               <div className="text-left">
-                <p className="font-extrabold dark:text-slate-100">Ontdek het verhaal</p>
-                <p className="text-sm text-slate-500 dark:text-slate-400">Cursussen</p>
+                <p className="font-extrabold dark:text-slate-100">{t("lessonFlows.discoverStory")}</p>
+                <p className="text-sm text-slate-500 dark:text-slate-400">{t("lessonFlows.courses")}</p>
               </div>
             </Link>
           </div>
         ) : (
           <div className="flex gap-3 mt-1">
             <Link href={courseHref} className="btn-secondary">
-              Terug naar cursussen
+              {t("lessonFlows.backToCourses")}
             </Link>
             {nextLessonId && (
               <Link href={`/intro/${nextLessonId}`} className="btn-primary">
-                Volgende les →
+                {t("lessonFlows.nextLesson")}
               </Link>
             )}
           </div>
@@ -254,23 +258,26 @@ export default function IntroLessonFlow({
 }
 
 function Header({ number, title }: { number: number; title: string }) {
+  const t = useT();
   return (
     <div>
-      <p className="text-xs font-bold uppercase text-brand-500 tracking-wide">Les {number}</p>
+      <p className="text-xs font-bold uppercase text-brand-500 tracking-wide">{t("lessonFlows.lessonNumber", { n: number })}</p>
       <h1 className="text-2xl font-extrabold text-brand-800 dark:text-brand-300">{title}</h1>
     </div>
   );
 }
 
-function NextButton({ onNext, label = "Verder →" }: { onNext: () => void; label?: string }) {
+function NextButton({ onNext, label }: { onNext: () => void; label?: string }) {
+  const t = useT();
   return (
     <button className="btn-primary self-start" onClick={onNext}>
-      {label}
+      {label ?? t("lessonFlows.next")}
     </button>
   );
 }
 
 function BlockView({ block, onNext }: { block: ResolvedIntroBlock; onNext: () => void }) {
+  const t = useT();
   const [pollChoice, setPollChoice] = useState<string | null>(null);
   const [reflected, setReflected] = useState(false);
 
@@ -311,11 +318,11 @@ function BlockView({ block, onNext }: { block: ResolvedIntroBlock; onNext: () =>
         <div className="card flex flex-col gap-3 animate-pop">
           <p className="font-extrabold dark:text-slate-100">🤔 {block.question}</p>
           <p className="text-sm text-slate-500 dark:text-slate-400">
-            Er is geen goed of fout antwoord — denk er gewoon even over na.
+            {t("lessonFlows.noRightAnswer")}
           </p>
           {!reflected ? (
             <button className="btn-secondary self-start" onClick={() => setReflected(true)}>
-              Ik heb erover nagedacht
+              {t("lessonFlows.reflected")}
             </button>
           ) : (
             <NextButton onNext={onNext} />
@@ -408,6 +415,7 @@ function ReadMoreBlock({
   block: Extract<ResolvedIntroBlock, { type: "readMore" }>;
   onNext: () => void;
 }) {
+  const t = useT();
   const [open, setOpen] = useState(false);
   const close = useCallback(() => setOpen(false), []);
   const chapter = block.chapter;
@@ -423,7 +431,7 @@ function ReadMoreBlock({
           {block.label}
         </Link>
       )}
-      <NextButton onNext={onNext} label="Verder in de les →" />
+      <NextButton onNext={onNext} label={t("lessonFlows.continueLesson")} />
       {chapter && open && (
         <ChapterPopup
           chapterId={chapter.id}

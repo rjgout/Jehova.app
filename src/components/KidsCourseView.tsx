@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { useT } from "@/components/I18nProvider";
 
 interface StoryView {
   id: string;
@@ -15,16 +18,14 @@ interface Props {
 }
 
 export default function KidsCourseView({ courseName, stories }: Props) {
+  const t = useT();
   return (
     <div className="flex flex-col gap-10">
       <div className="flex flex-col gap-4">
         <h1 className="text-2xl font-extrabold text-brand-800 dark:text-brand-300">{courseName}</h1>
         <div className="card bg-gradient-to-br from-brand-500 to-brand-600 text-white flex flex-col gap-2">
-          <p className="text-brand-100 font-bold uppercase text-xs tracking-wide">Over deze cursus</p>
-          <p>
-            Korte, geïllustreerde verhalen uit het Boek van Mormon — met een plaatjesspel en simpele vraagjes.
-            Kies gewoon een verhaal dat je leuk lijkt, in elke volgorde.
-          </p>
+          <p className="text-brand-100 font-bold uppercase text-xs tracking-wide">{t("courseViews.about")}</p>
+          <p>{t("courseViews.kidsAbout")}</p>
         </div>
       </div>
 
@@ -46,7 +47,7 @@ export default function KidsCourseView({ courseName, stories }: Props) {
               {story.completed && <span className="text-brand-500 text-lg shrink-0">✓</span>}
             </div>
             {story.bestScore !== null && (
-              <p className="text-xs text-slate-400 dark:text-slate-500">Beste score: {story.bestScore}%</p>
+              <p className="text-xs text-slate-400 dark:text-slate-500">{t("courseViews.bestScore", { score: story.bestScore })}</p>
             )}
           </Link>
         ))}

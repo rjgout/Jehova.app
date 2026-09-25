@@ -6,6 +6,7 @@ import { ACHIEVEMENT_DISPLAY } from "@/lib/achievementDisplay";
 import { announceXpChanged } from "@/lib/xpBroadcast";
 import { ExerciseCard, ReaderView, type ChapterAudio, type Exercise } from "@/components/LessonFlow";
 import type { ChapterTerm } from "@/lib/chapterTerm";
+import { useT } from "@/components/I18nProvider";
 
 interface VerseView {
   id: string;
@@ -73,6 +74,7 @@ export default function ReadingLessonFlow({
   exercises,
   language,
 }: Props) {
+  const t = useT();
   const [phase, setPhase] = useState<Phase>("read");
   const [index, setIndex] = useState(0);
   const [answers, setAnswers] = useState<{ exerciseId: string; given: string[]; correct: boolean }[]>([]);
@@ -115,7 +117,7 @@ export default function ReadingLessonFlow({
       <div className="max-w-2xl mx-auto flex flex-col gap-4">
         <div className="flex items-center justify-between gap-3">
           <p className="text-xs font-bold uppercase tracking-wide text-slate-400 dark:text-slate-500">
-            Stap {lessonNumber} van {totalLessons}
+            {t("readingLesson.stepOf", { n: lessonNumber, total: totalLessons })}
           </p>
           <p className="text-xs font-bold text-slate-400 dark:text-slate-500">
             {startVerse}–{endVerse}
@@ -137,7 +139,7 @@ export default function ReadingLessonFlow({
             else setPhase("exercises");
           }}
         >
-          {exercises.length === 0 ? "Stap afronden →" : "Naar de vragen →"}
+          {exercises.length === 0 ? t("readingLesson.finishStep") : t("readingLesson.toQuestions")}
         </button>
       </div>
     );
@@ -148,7 +150,7 @@ export default function ReadingLessonFlow({
       <div className="max-w-2xl mx-auto flex flex-col gap-6">
         <div>
           <p className="text-xs font-bold uppercase tracking-wide text-slate-400 dark:text-slate-500 mb-2">
-            Stap {lessonNumber} · {startVerse}–{endVerse}
+            {t("readingLesson.stepVerses", { n: lessonNumber, start: startVerse, end: endVerse })}
           </p>
           <div className="h-3 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
             <div className="h-full bg-brand-500 transition-all duration-300" style={{ width: `${Math.round((index / exercises.length) * 100)}%` }} />
@@ -170,10 +172,10 @@ export default function ReadingLessonFlow({
       <div className="max-w-md mx-auto card flex flex-col items-center gap-4 text-center animate-pop">
         <div className="text-5xl">{result.scorePercent >= 80 ? "🎉" : result.scorePercent >= 60 ? "👍" : "💪"}</div>
         <p className="text-xs font-bold uppercase tracking-wide text-slate-400 dark:text-slate-500">
-          Stap {lessonNumber} voltooid
+          {t("readingLesson.stepDone", { n: lessonNumber })}
         </p>
         <h2 className="text-2xl font-extrabold text-brand-800 dark:text-brand-300">
-          {result.correctCount} / {result.total} goed
+          {t("readingLesson.score", { correct: result.correctCount, total: result.total })}
         </h2>
 
         <>
@@ -182,16 +184,17 @@ export default function ReadingLessonFlow({
           </p>
           {result.scorePercent < 60 && (
             <p className="text-sm text-slate-500 dark:text-slate-400">
-              Je score wordt bewaard, maar je kunt gewoon doorgaan naar de volgende stap.
+              {t("readingLesson.lowScore")}
             </p>
           )}
           {effectiveNextLessonId && (
             <div className="rounded-2xl bg-gold-50 dark:bg-slate-700 px-4 py-3 w-full">
               <p className="font-extrabold text-gold-700 dark:text-gold-300">
-                🔥 Ga je door?
+                {t("readingLesson.keepGoing")}
               </p>
               <p className="text-sm text-gold-600 dark:text-gold-400">
-                De volgende stap levert tot <strong>+{result.nextXpEarned} XP</strong> op (×{result.nextComboMultiplier}).
+                {t("readingLesson.nextXpBefore")}<strong>+{result.nextXpEarned} XP</strong>
+                {t("readingLesson.nextXpAfter", { multiplier: result.nextComboMultiplier })}
               </p>
             </div>
           )}
@@ -200,13 +203,15 @@ export default function ReadingLessonFlow({
         {!result.alreadyStudiedToday && (
           <div className="mt-2">
             <div className="text-xl font-extrabold text-orange-500">🔥 {result.currentStreak}</div>
-            <div className="text-xs text-slate-400 dark:text-slate-500 font-bold uppercase">Streak</div>
+            <div className="text-xs text-slate-400 dark:text-slate-500 font-bold uppercase">{t("lesson.streak")}</div>
           </div>
         )}
 
         {result.newAchievements.length > 0 && (
           <div className="flex flex-col gap-2 w-full">
-            <p className="text-sm font-bold text-brand-700 dark:text-brand-300">Nieuwe achievement{result.newAchievements.length > 1 ? "s" : ""}! 🎊</p>
+            <p className="text-sm font-bold text-brand-700 dark:text-brand-300">
+              {result.newAchievements.length > 1 ? t("lesson.newAchievementsMany") : t("lesson.newAchievementsOne")}
+            </p>
             <div className="flex justify-center gap-3 flex-wrap">
               {result.newAchievements.map((slug) => {
                 const display = ACHIEVEMENT_DISPLAY[slug];
@@ -223,11 +228,11 @@ export default function ReadingLessonFlow({
 
         <div className="flex flex-wrap justify-center gap-3 mt-4">
           <Link href="/courses" className="btn-secondary">
-            Stoppen
+            {t("readingLesson.stop")}
           </Link>
           {effectiveNextLessonId && (
             <Link href={`/reading-lesson/${effectiveNextLessonId}`} className="btn-primary">
-              Volgende stap → 🔥
+              {t("readingLesson.nextStep")}
             </Link>
           )}
         </div>

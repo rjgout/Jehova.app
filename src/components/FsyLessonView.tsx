@@ -1,3 +1,6 @@
+"use client";
+
+import { useT } from "@/components/I18nProvider";
 import FsyContentBlocks from "@/components/FsyContentBlocks";
 import type { FsyContentBlock } from "@/lib/fsyContent";
 
@@ -10,23 +13,25 @@ interface Props {
   sourceUrl: string;
 }
 
-const CATEGORY_LABELS: Record<string, string> = {
-  INTRO: "Maandintroductie",
-  FAST_SUNDAY: "Vastenzondag",
-  SECOND_SUNDAY: "Tweede zondag",
-  THIRD_SUNDAY: "Derde zondag",
-  LAST_SUNDAY_YOUNG_WOMEN: "Laatste zondag · Jongevrouwen",
-  LAST_SUNDAY_AARONIC_PRIESTHOOD: "Laatste zondag · Aäronische priesterschapsquorums",
-  ACTIVITY: "Jongerenactiviteit",
-  OTHER: "Aanvullend",
-};
+const CATEGORY_KEYS = {
+  INTRO: "courseViews.fsy.intro",
+  FAST_SUNDAY: "courseViews.fsy.fastSunday",
+  SECOND_SUNDAY: "courseViews.fsy.secondSunday",
+  THIRD_SUNDAY: "courseViews.fsy.thirdSunday",
+  LAST_SUNDAY_YOUNG_WOMEN: "courseViews.fsy.lastSundayYoungWomen",
+  LAST_SUNDAY_AARONIC_PRIESTHOOD: "courseViews.fsy.lastSundayAaronic",
+  ACTIVITY: "courseViews.fsy.activity",
+  OTHER: "courseViews.fsy.other",
+} as const;
 
 export default function FsyLessonView({ title, month, year, category, blocks, sourceUrl }: Props) {
+  const t = useT();
+  const categoryKey = CATEGORY_KEYS[category as keyof typeof CATEGORY_KEYS];
   return (
     <div className="max-w-3xl mx-auto flex flex-col gap-6">
       <div>
         <p className="text-xs font-extrabold uppercase tracking-wide text-slate-400 dark:text-slate-500">
-          {CATEGORY_LABELS[category] ?? "Les"} · {month}/{year}
+          {categoryKey ? t(categoryKey) : t("courseViews.fsy.lesson")} · {month}/{year}
         </p>
         <h1 className="text-2xl sm:text-3xl font-extrabold text-brand-800 dark:text-brand-300 mt-1">{title}</h1>
       </div>
@@ -36,9 +41,9 @@ export default function FsyLessonView({ title, month, year, category, blocks, so
       </article>
 
       <p className="text-xs text-slate-400 dark:text-slate-500">
-        Bron:{" "}
+        {t("courseViews.fsy.source")}{" "}
         <a href={sourceUrl} target="_blank" rel="noreferrer" className="underline">
-          officiële website
+          {t("courseViews.fsy.officialSite")}
         </a>
       </p>
     </div>

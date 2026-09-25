@@ -2,7 +2,8 @@ import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/session";
 import { prisma } from "@/lib/db";
 import LessonFlow from "@/components/LessonFlow";
-import { chapterTerm } from "@/lib/chapterTerm";
+import { chapterTerm, localizeTerm } from "@/lib/chapterTerm";
+import { getT } from "@/lib/i18n";
 import CourseBackTarget from "@/components/CourseBackTarget";
 
 // Een hoofdstuk kan (met de automatisch gegenereerde invuloefeningen erbij)
@@ -99,7 +100,7 @@ export default async function LessonPage({
         audioStart: v.audioStart,
       }))}
       audio={chapter.audioUrl ? { url: chapter.audioUrl, end: null } : null}
-      term={chapterTerm(chapter.book.slug)}
+      term={localizeTerm(chapterTerm(chapter.book.slug), getT(user.uiLanguage))}
       exercises={exercises}
       challengeId={challengeId}
       courseId={course?.id}

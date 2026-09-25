@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { usePodcastPlayer } from "@/lib/podcastPlayerContext";
+import { useT } from "@/components/I18nProvider";
 
 interface EpisodeView {
   id: string;
@@ -28,12 +29,12 @@ interface Props {
 
 type StatusFilter = "ALL" | "DONE" | "PARTIAL" | "TODO";
 
-const FILTERS: { value: StatusFilter; label: string }[] = [
-  { value: "ALL", label: "Alle" },
-  { value: "DONE", label: "100% klaar" },
-  { value: "PARTIAL", label: "Deels gedaan" },
-  { value: "TODO", label: "Nog te doen" },
-];
+const FILTERS = [
+  { value: "ALL", label: "courseViews.podcast.filterAll" },
+  { value: "DONE", label: "courseViews.podcast.filterDone" },
+  { value: "PARTIAL", label: "courseViews.podcast.filterPartial" },
+  { value: "TODO", label: "courseViews.podcast.filterTodo" },
+] as const satisfies readonly { value: StatusFilter; label: string }[];
 
 const PAGE_SIZE = 10;
 
@@ -47,6 +48,7 @@ function episodeStatus(episode: EpisodeView): StatusFilter {
 }
 
 export default function PodcastCourseView({ courseName, podcastName, episodes }: Props) {
+  const t = useT();
   const [filter, setFilter] = useState<StatusFilter>("ALL");
   const [page, setPage] = useState(1);
 
@@ -69,11 +71,11 @@ export default function PodcastCourseView({ courseName, podcastName, episodes }:
       <div className="flex flex-col gap-4">
         <h1 className="text-2xl font-extrabold text-brand-800 dark:text-brand-300">{courseName}</h1>
         <div className="card bg-gradient-to-br from-brand-500 to-brand-600 text-white flex flex-col gap-2">
-          <p className="text-brand-100 font-bold uppercase text-xs tracking-wide">Over deze cursus</p>
+          <p className="text-brand-100 font-bold uppercase text-xs tracking-wide">{t("courseViews.about")}</p>
           <p>
-            Bij elke aflevering van <span className="font-extrabold">{podcastName}</span> horen twee korte
-            oefenrondes: één
-            over de inhoud van de aflevering, en één die de brug slaat naar het Boek van Mormon.
+            {t("courseViews.podcast.aboutBefore")}
+            <span className="font-extrabold">{podcastName}</span>
+            {t("courseViews.podcast.aboutAfter")}
           </p>
         </div>
       </div>
@@ -91,22 +93,24 @@ export default function PodcastCourseView({ courseName, podcastName, episodes }:
                     : "bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-600 hover:border-brand-300"
                 }`}
               >
-                {f.label}
+                {t(f.label)}
               </button>
             ))}
           </div>
           <p className="text-xs text-slate-400 dark:text-slate-500">
-            {filtered.length} aflevering{filtered.length === 1 ? "" : "en"}
+            {filtered.length === 1
+              ? t("courseViews.podcast.countOne", { n: filtered.length })
+              : t("courseViews.podcast.countMany", { n: filtered.length })}
           </p>
         </div>
 
         <PageControls currentPage={currentPage} totalPages={totalPages} onChange={setPage} />
 
         {episodes.length === 0 && (
-          <p className="text-slate-400 dark:text-slate-500">Er zijn nog geen afleveringen beschikbaar.</p>
+          <p className="text-slate-400 dark:text-slate-500">{t("courseViews.podcast.none")}</p>
         )}
         {episodes.length > 0 && filtered.length === 0 && (
-          <p className="text-slate-400 dark:text-slate-500">Geen afleveringen in dit filter.</p>
+          <p className="text-slate-400 dark:text-slate-500">{t("courseViews.podcast.noneInFilter")}</p>
         )}
 
         <div className="contents">
@@ -114,7 +118,7 @@ export default function PodcastCourseView({ courseName, podcastName, episodes }:
           <div key={episode.id} className="card flex flex-col gap-3 max-w-xl">
             <div className="flex items-center justify-between gap-3 flex-wrap">
               <h2 className="font-extrabold text-lg dark:text-slate-100">
-                🎙️ Aflevering {episode.number} — {episode.title}
+                🎙️ {t("courseViews.podcast.episode", { n: episode.number })} — {episode.title}
               </h2>
               {episode.listenUrl && (
                 <a
@@ -123,7 +127,7 @@ export default function PodcastCourseView({ courseName, podcastName, episodes }:
                   rel="noreferrer"
                   className="text-xs font-bold text-brand-600 dark:text-brand-300 underline underline-offset-2"
                 >
-                  Bekijk op de website ↗
+                  {t("courseViews.podcast.viewOnSite")}
                 </a>
               )}
             </div>
@@ -132,14 +136,14 @@ export default function PodcastCourseView({ courseName, podcastName, episodes }:
             <div className="flex gap-3 flex-wrap">
               <ModeButton
                 href={`/podcast/${episode.id}/CONTENT`}
-                label="Inhoud van de aflevering"
+                label={t("lessonFlows.roundContent")}
                 available={episode.hasContentExercises}
                 completed={episode.contentCompleted}
                 bestScore={episode.contentBestScore}
               />
               <ModeButton
                 href={`/podcast/${episode.id}/BOM_CONNECTION`}
-                label="Verband met het Boek van Mormon"
+                label={t("lessonFlows.roundBom")}
                 available={episode.hasBomExercises}
                 completed={episode.bomCompleted}
                 bestScore={episode.bomBestScore}
@@ -164,15 +168,16 @@ function PageControls({
   totalPages: number;
   onChange: (page: number) => void;
 }) {
+  const t = useT();
   if (totalPages <= 1) return null;
 
   return (
     <div className="flex items-center justify-center gap-3 flex-wrap">
       <button className="btn-secondary !px-3 !py-1.5" disabled={currentPage <= 1} onClick={() => onChange(currentPage - 1)}>
-        ← Vorige
+        {t("courseViews.podcast.previous")}
       </button>
       <label className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
-        Pagina
+        {t("courseViews.podcast.page")}
         <select
           className="input !w-auto !py-1.5 text-center"
           value={currentPage}
@@ -184,10 +189,10 @@ function PageControls({
             </option>
           ))}
         </select>
-        van {totalPages}
+        {t("courseViews.podcast.pageOf", { total: totalPages })}
       </label>
       <button className="btn-secondary !px-3 !py-1.5" disabled={currentPage >= totalPages} onClick={() => onChange(currentPage + 1)}>
-        Volgende →
+        {t("courseViews.podcast.next")}
       </button>
     </div>
   );
@@ -195,6 +200,7 @@ function PageControls({
 
 function EpisodePlayButton({ episode, podcastName }: { episode: EpisodeView; podcastName: string }) {
   const player = usePodcastPlayer();
+  const t = useT();
   if (!episode.audioUrl) return null;
 
   const isThisEpisode = player.episode?.id === episode.id;
@@ -222,7 +228,7 @@ function EpisodePlayButton({ episode, podcastName }: { episode: EpisodeView; pod
   return (
     <button onClick={handleClick} className="btn-secondary !px-4 !py-2 self-start flex items-center gap-2">
       <span aria-hidden>{isPlaying ? "⏸" : "▶"}</span>
-      {isPlaying ? "Pauzeren" : hasResumePoint ? "Hervatten" : "Afspelen"}
+      {isPlaying ? t("courseViews.podcast.pause") : hasResumePoint ? t("courseViews.podcast.resume") : t("courseViews.podcast.play")}
     </button>
   );
 }
@@ -231,6 +237,7 @@ const SUMMARY_TRUNCATE_LENGTH = 220;
 
 function EpisodeSummary({ text }: { text: string }) {
   const [expanded, setExpanded] = useState(false);
+  const t = useT();
 
   if (text.length <= SUMMARY_TRUNCATE_LENGTH) {
     return <p className="text-sm text-slate-500 dark:text-slate-400">{text}</p>;
@@ -246,7 +253,7 @@ function EpisodeSummary({ text }: { text: string }) {
         onClick={() => setExpanded(!expanded)}
         className="text-brand-600 dark:text-brand-300 font-bold hover:underline"
       >
-        {expanded ? "Lees minder" : "Lees meer"}
+        {expanded ? t("courseViews.podcast.readLess") : t("courseViews.podcast.readMore")}
       </button>
     </p>
   );
@@ -265,10 +272,11 @@ function ModeButton({
   completed: boolean;
   bestScore: number | null;
 }) {
+  const t = useT();
   if (!available) {
     return (
       <span className="btn flex-1 min-w-[220px] border-2 border-dashed border-slate-200 dark:border-slate-700 text-slate-400 dark:text-slate-500 cursor-default">
-        {label} — oefeningen volgen nog
+        {t("courseViews.podcast.comingSoon", { label })}
       </span>
     );
   }

@@ -3,6 +3,8 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { ACHIEVEMENT_DISPLAY } from "@/lib/achievementDisplay";
+import { useT } from "@/components/I18nProvider";
+import type { TFunction } from "@/lib/i18n/core";
 import { normalizeAnswer } from "@/lib/exerciseGen";
 import { useActivityStatus } from "@/lib/useActivity";
 import { announceXpChanged } from "@/lib/xpBroadcast";
@@ -89,6 +91,7 @@ const MIN_SCALE = 0.85;
 const MAX_SCALE = 1.5;
 
 export default function LessonFlow({ chapterId, bookName, chapterNumber, nextChapterId, verses, audio, term = chapterTerm(null), exercises, challengeId, courseId, focusVerse, language }: Props) {
+  const t = useT();
   const [phase, setPhase] = useState<Phase>("read");
   const [index, setIndex] = useState(0);
   const [answers, setAnswers] = useState<SubmittedAnswer[]>([]);
@@ -173,7 +176,7 @@ export default function LessonFlow({ chapterId, bookName, chapterNumber, nextCha
       <div className="max-w-2xl mx-auto flex flex-col gap-4">
         <ReaderView chapterId={chapterId} bookName={bookName} chapterNumber={chapterNumber} verses={verses} audio={audio} term={term} focusVerse={focusVerse} language={language} />
         <button className="btn-primary self-start" onClick={() => setPhase("exercises")}>
-          Begin oefeningen →
+          {t("lesson.startExercises")}
         </button>
       </div>
     );
@@ -198,18 +201,18 @@ export default function LessonFlow({ chapterId, bookName, chapterNumber, nextCha
       <div className="max-w-2xl mx-auto flex flex-col gap-6">
         <div className="flex items-center justify-between gap-3">
           <h2 className="text-xl font-extrabold text-brand-800 dark:text-brand-300">
-            Leermomenten ({reviewPos + 1}/{reviewQueue.length})
+            {t("lesson.reviewTitle", { pos: reviewPos + 1, total: reviewQueue.length })}
           </h2>
           <button
             className="text-sm font-bold text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300"
             onClick={skipAllReview}
             disabled={submitting}
           >
-            Alles overslaan →
+            {t("lesson.skipAll")}
           </button>
         </div>
         <p className="text-slate-500 dark:text-slate-400 text-sm -mt-2">
-          Deze had je niet goed. Wil je het nog een keer proberen?
+          {t("lesson.reviewHint")}
         </p>
         <ExerciseCard
           key={reviewExercise.id}
@@ -248,6 +251,7 @@ export function ReaderView({
   focusVerse?: number;
   language?: string;
 }) {
+  const t = useT();
   const [scale, setScale] = useState(1);
   const [verseState, setVerseState] = useState(verses);
   const [openNoteFor, setOpenNoteFor] = useState<string | null>(null);
@@ -310,14 +314,14 @@ export function ReaderView({
         </h1>
         <div className="flex items-center gap-1 text-sm">
           <button
-            aria-label="Kleinere tekst"
+            aria-label={t("lesson.smallerText")}
             className="w-8 h-8 rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-bold"
             onClick={() => changeScale(-0.1)}
           >
             A-
           </button>
           <button
-            aria-label="Grotere tekst"
+            aria-label={t("lesson.largerText")}
             className="w-8 h-8 rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-bold"
             onClick={() => changeScale(0.1)}
           >
@@ -331,7 +335,7 @@ export function ReaderView({
         title={`${bookName} ${chapterNumber}`}
         verses={verseState.map((v) => ({ number: v.number, text: v.text, audioStart: v.audioStart }))}
         audio={audio}
-        subtitle={`Luister naar ${term.thisOne}`}
+        subtitle={t("lesson.listenTo", { thisOne: term.thisOne })}
         language={language}
       />
 
@@ -356,21 +360,21 @@ export function ReaderView({
             </p>
             <div className="flex items-center gap-3 text-sm">
               <button
-                aria-label={v.bookmarked ? "Bladwijzer verwijderen" : "Bladwijzer toevoegen"}
+                aria-label={v.bookmarked ? t("lesson.bookmarkRemove") : t("lesson.bookmarkAdd")}
                 onClick={() => toggleBookmark(v.id)}
                 className={v.bookmarked ? "opacity-100" : "opacity-40 hover:opacity-100"}
               >
                 🔖
               </button>
               <button
-                aria-label={v.highlighted ? "Highlight verwijderen" : "Vers highlighten"}
+                aria-label={v.highlighted ? t("lesson.highlightRemove") : t("lesson.highlightAdd")}
                 onClick={() => toggleHighlight(v.id)}
                 className={v.highlighted ? "opacity-100" : "opacity-40 hover:opacity-100"}
               >
                 🖍️
               </button>
               <button
-                aria-label="Notitie"
+                aria-label={t("lesson.note")}
                 onClick={() => setOpenNoteFor(openNoteFor === v.id ? null : v.id)}
                 className={v.note ? "opacity-100" : "opacity-40 hover:opacity-100"}
               >
@@ -388,6 +392,7 @@ export function ReaderView({
 }
 
 function NoteEditor({ initialText, onSave }: { initialText: string; onSave: (text: string) => void }) {
+  const t = useT();
   const [text, setText] = useState(initialText);
   const [saved, setSaved] = useState(true);
 
@@ -395,7 +400,7 @@ function NoteEditor({ initialText, onSave }: { initialText: string; onSave: (tex
     <div className="flex flex-col gap-2">
       <textarea
         className="input !text-sm !py-2 min-h-[4rem]"
-        placeholder="Jouw notitie bij dit vers..."
+        placeholder={t("lesson.notePlaceholder")}
         value={text}
         onChange={(e) => {
           setText(e.target.value);
@@ -409,7 +414,7 @@ function NoteEditor({ initialText, onSave }: { initialText: string; onSave: (tex
           setSaved(true);
         }}
       >
-        {saved ? "Opgeslagen" : "Notitie opslaan"}
+        {saved ? t("lesson.noteSaved") : t("lesson.noteSave")}
       </button>
     </div>
   );
@@ -424,12 +429,13 @@ function ProgressBar({ current, total }: { current: number; total: number }) {
   );
 }
 
-function formatCorrectAnswer(type: Exercise["type"], correctAnswer: string[]): string {
-  if (type === "TRUE_FALSE") return correctAnswer[0] === "true" ? "Waar" : "Niet waar";
+function formatCorrectAnswer(type: Exercise["type"], correctAnswer: string[], t: TFunction): string {
+  if (type === "TRUE_FALSE") return correctAnswer[0] === "true" ? t("lesson.true") : t("lesson.false");
   return correctAnswer.join(" ");
 }
 
 function HintControl({ exercise, checked }: { exercise: Exercise; checked: boolean }) {
+  const t = useT();
   const [hint, setHint] = useState<string | null>(null);
   const [hintCredits, setHintCredits] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
@@ -452,13 +458,13 @@ function HintControl({ exercise, checked }: { exercise: Exercise; checked: boole
       const res = await fetch(`/api/exercises/${exercise.id}/hint`, { method: "POST" });
       const data = await res.json();
       if (!res.ok) {
-        setError(typeof data.error === "string" ? data.error : "De denkhint kon niet worden opgehaald.");
+        setError(typeof data.error === "string" ? data.error : t("lesson.hintFailed"));
         return;
       }
       setHint(typeof data.hint === "string" ? data.hint : null);
       setHintCredits(typeof data.hintBalance === "number" ? data.hintBalance : hintCredits);
     } catch {
-      setError("De denkhint kon niet worden opgehaald.");
+      setError(t("lesson.hintFailed"));
     } finally {
       setLoading(false);
     }
@@ -467,10 +473,12 @@ function HintControl({ exercise, checked }: { exercise: Exercise; checked: boole
   if (hint) {
     return (
       <div className="rounded-2xl bg-gold-50 dark:bg-slate-700 px-4 py-3">
-        <p className="font-extrabold text-gold-700 dark:text-gold-300">💡 Denkhint</p>
+        <p className="font-extrabold text-gold-700 dark:text-gold-300">💡 {t("lesson.hint")}</p>
         <p className="text-sm text-gold-700/90 dark:text-gold-200 mt-1">{hint}</p>
         {hintCredits !== null && (
-          <p className="text-xs text-gold-600 dark:text-gold-300 mt-2 font-bold">{hintCredits} denkhint{hintCredits === 1 ? "" : "s"} over</p>
+          <p className="text-xs text-gold-600 dark:text-gold-300 mt-2 font-bold">
+            {hintCredits === 1 ? t("lesson.hintsLeftOne", { n: hintCredits }) : t("lesson.hintsLeftMany", { n: hintCredits })}
+          </p>
         )}
       </div>
     );
@@ -484,7 +492,7 @@ function HintControl({ exercise, checked }: { exercise: Exercise; checked: boole
         disabled={loading || checked || hintCredits === 0}
         onClick={showHint}
       >
-        {loading ? "Denkhint ophalen…" : `💡 Denkhint${hintCredits === null ? "" : ` · ${hintCredits}`}`}
+        {loading ? t("lesson.hintLoading") : `💡 ${t("lesson.hint")}${hintCredits === null ? "" : ` · ${hintCredits}`}`}
       </button>
       {error && <p className="text-sm text-red-500 dark:text-red-400">{error}</p>}
     </div>
@@ -506,6 +514,7 @@ export function ExerciseCard({
   /** Standaard /api/exercises/{id}/check — voor bv. podcastoefeningen kan een ander endpoint meegegeven worden. */
   checkEndpoint?: string;
 }) {
+  const t = useT();
   const [checked, setChecked] = useState(false);
   const [checking, setChecking] = useState(false);
   const [wasCorrect, setWasCorrect] = useState(false);
@@ -572,10 +581,10 @@ export function ExerciseCard({
       }`}
     >
       {wasCorrect
-        ? "Goed gedaan! ✅"
+        ? t("lesson.correct")
         : exercise.type === "IMAGE_CHOICE"
-          ? "Niet helemaal — de juiste afbeelding staat hierboven omlijnd."
-          : `Niet helemaal — het juiste antwoord was: ${formatCorrectAnswer(exercise.type, correctAnswer ?? [])}`}
+          ? t("lesson.wrongImage")
+          : t("lesson.wrongAnswer", { answer: formatCorrectAnswer(exercise.type, correctAnswer ?? [], t) })}
     </p>
   );
 
@@ -604,7 +613,7 @@ export function ExerciseCard({
                         : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-600"
                 }`}
               >
-                {value === "true" ? "✅ Waar" : "❌ Niet waar"}
+                {value === "true" ? `✅ ${t("lesson.true")}` : `❌ ${t("lesson.false")}`}
               </button>
             );
           })}
@@ -633,7 +642,7 @@ export function ExerciseCard({
         <div className="card flex flex-col gap-5">
           <p className="text-xs font-bold uppercase text-slate-400 dark:text-slate-500">{exercise.verseRef}</p>
           <p className="text-sm text-slate-500 dark:text-slate-400">
-            Deze oefening kan nog niet getoond worden (verouderde content — herlaad de content via db:seed).
+            {t("lesson.outdated")}
           </p>
           <button className="btn-primary self-end" disabled={disabled} onClick={() => onDone([""], false)}>
             Doorgaan →
@@ -799,8 +808,8 @@ export function ExerciseCard({
         {placed.length === 0 && (
           <span className="text-slate-400 dark:text-slate-500 text-sm">
             {exercise.type === "SEQUENCE"
-              ? "Tik de gebeurtenissen hieronder in de juiste volgorde"
-              : "Tik de woorden hieronder in de juiste volgorde"}
+              ? t("lesson.tapEvents")
+              : t("lesson.tapWords")}
           </span>
         )}
         {placed.map((p, i) => (
@@ -859,6 +868,7 @@ function FooterControls({
   onNext: () => void;
   onSkip?: () => void;
 }) {
+  const t = useT();
   if (!checked) {
     return (
       <div className="flex items-center justify-between gap-3">
@@ -868,20 +878,20 @@ function FooterControls({
             disabled={disabled}
             onClick={onSkip}
           >
-            Sla over
+            {t("lesson.skip")}
           </button>
         ) : (
           <span />
         )}
         <button className="btn-primary" disabled={!canCheck || disabled || checking} onClick={onCheck}>
-          {checking ? "Controleren..." : "Controleer"}
+          {checking ? t("lesson.checking") : t("lesson.check")}
         </button>
       </div>
     );
   }
   return (
     <button className="btn-primary self-end animate-pop" disabled={disabled} onClick={onNext}>
-      {disabled ? "Bezig..." : "Doorgaan →"}
+      {disabled ? t("courses.busy") : t("lesson.continue")}
     </button>
   );
 }
@@ -897,11 +907,12 @@ function SummaryScreen({
   term: ChapterTerm;
   courseId?: string;
 }) {
+  const t = useT();
   return (
     <div className="max-w-md mx-auto card flex flex-col items-center gap-4 text-center animate-pop">
       <div className="text-5xl">{summary.scorePercent >= 80 ? "🎉" : summary.scorePercent >= 50 ? "👍" : "💪"}</div>
       <h2 className="text-2xl font-extrabold text-brand-800 dark:text-brand-300">
-        {summary.correctCount} / {summary.total} goed ({summary.scorePercent}%)
+        {t("lesson.score", { correct: summary.correctCount, total: summary.total, pct: summary.scorePercent })}
       </h2>
       <p className="text-gold-600 dark:text-gold-400 font-extrabold text-lg">+{summary.xpEarned} XP</p>
 
@@ -909,34 +920,38 @@ function SummaryScreen({
         {!summary.alreadyStudiedToday && (
           <div>
             <div className="text-xl font-extrabold text-orange-500">🔥 {summary.currentStreak}</div>
-            <div className="text-xs text-slate-400 dark:text-slate-500 font-bold uppercase">Streak</div>
+            <div className="text-xs text-slate-400 dark:text-slate-500 font-bold uppercase">{t("lesson.streak")}</div>
           </div>
         )}
         <div>
           <div className="text-xl font-extrabold text-ice-600">🧊 {summary.freezeCount}</div>
-          <div className="text-xs text-slate-400 dark:text-slate-500 font-bold uppercase">Freezes</div>
+          <div className="text-xs text-slate-400 dark:text-slate-500 font-bold uppercase">{t("lesson.freezes")}</div>
         </div>
       </div>
 
       {summary.freezeUsed && (
         <p className="text-sm bg-ice-50 dark:bg-slate-700 text-ice-600 dark:text-ice-400 rounded-xl px-3 py-2">
-          Je hebt een dag gemist, maar een streak freeze heeft je streak gered! 🧊
+          {t("lesson.freezeUsed")}
         </p>
       )}
       {summary.streakBroken && !summary.freezeUsed && (
         <p className="text-sm bg-red-50 dark:bg-slate-700 text-red-500 dark:text-red-400 rounded-xl px-3 py-2">
-          Je streak is helaas verbroken — morgen weer opbouwen!
+          {t("lesson.streakBroken")}
         </p>
       )}
       {summary.freezesEarned > 0 && (
         <p className="text-sm bg-gold-50 dark:bg-slate-700 text-gold-600 dark:text-gold-400 rounded-xl px-3 py-2">
-          Mijlpaal gehaald! Je hebt {summary.freezesEarned} streak freeze{summary.freezesEarned > 1 ? "s" : ""} verdiend. 🧊
+          {summary.freezesEarned > 1
+            ? t("lesson.freezesEarnedMany", { n: summary.freezesEarned })
+            : t("lesson.freezesEarnedOne", { n: summary.freezesEarned })}
         </p>
       )}
 
       {summary.newAchievements.length > 0 && (
         <div className="flex flex-col gap-2 w-full">
-          <p className="text-sm font-bold text-brand-700 dark:text-brand-300">Nieuwe achievement{summary.newAchievements.length > 1 ? "s" : ""}! 🎊</p>
+          <p className="text-sm font-bold text-brand-700 dark:text-brand-300">
+            {summary.newAchievements.length > 1 ? t("lesson.newAchievementsMany") : t("lesson.newAchievementsOne")}
+          </p>
           <div className="flex justify-center gap-3 flex-wrap">
             {summary.newAchievements.map((slug) => {
               const display = ACHIEVEMENT_DISPLAY[slug];
@@ -954,11 +969,11 @@ function SummaryScreen({
 
       <div className="flex gap-3 mt-4">
         <Link href="/dashboard" className="btn-secondary">
-          Terug naar lessen
+          {t("lesson.backToLessons")}
         </Link>
         {nextChapterId && (
           <Link href={`/lesson/${nextChapterId}${courseId ? `?cursus=${courseId}` : ""}`} className="btn-primary">
-            Volgend{term.singular === "afdeling" ? "e" : ""} {term.singular} →
+            {t(`terms.${term.kind}.next`)}
           </Link>
         )}
       </div>

@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/session";
+import { getT } from "@/lib/i18n";
 import { prisma } from "@/lib/db";
 import { isEmailConfigured } from "@/lib/email";
 import PodcastLessonFlow from "@/components/PodcastLessonFlow";
@@ -58,11 +59,12 @@ export default async function PodcastLessonPage({
     }),
   ]);
   const courseHref = course ? `/courses/${course.id}` : "/courses";
+  const t = getT(user.uiLanguage);
   const nextRound =
     otherExerciseCount > 0 && !otherProgress?.completed
       ? {
           href: `/podcast/${episode.id}/${otherMode}`,
-          label: otherMode === "CONTENT" ? "Inhoud van de aflevering" : "Verband met het Boek van Mormon",
+          label: otherMode === "CONTENT" ? t("lessonFlows.roundContent") : t("lessonFlows.roundBom"),
         }
       : null;
 

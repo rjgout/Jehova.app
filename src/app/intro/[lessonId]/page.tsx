@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/session";
+import { getT } from "@/lib/i18n";
 import { prisma } from "@/lib/db";
 import { isEmailConfigured } from "@/lib/email";
 import IntroLessonFlow, { type ResolvedIntroBlock } from "@/components/IntroLessonFlow";
@@ -113,7 +114,7 @@ export default async function IntroLessonPage({ params }: { params: Promise<{ le
   const exercises: Exercise[] = lesson.exercises.map((e) => ({
     id: e.id,
     type: e.type as Exercise["type"],
-    verseRef: `Les ${lesson.number}`,
+    verseRef: getT(user.uiLanguage)("lessonFlows.lessonNumber", { n: lesson.number }),
     prompt: e.prompt,
     blanks: (JSON.parse(e.answers) as string[]).length,
     wordBank: e.wordBank ? shuffleForDisplay(JSON.parse(e.wordBank) as string[]) : undefined,
