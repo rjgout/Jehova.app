@@ -88,7 +88,7 @@ export default function ContentSwitcher({
   const badge = getLanguage(active.language).badge;
 
   return (
-    <div ref={ref} className="absolute left-0 md:left-1/2 top-0 h-full -translate-x-0 md:-translate-x-1/2">
+    <div ref={ref} className="relative md:absolute md:left-1/2 md:top-0 md:h-full md:-translate-x-1/2">
       <button
         type="button"
         onClick={() => setOpen((value) => !value)}
@@ -108,7 +108,7 @@ export default function ContentSwitcher({
       </button>
 
       {open && (
-        <div className="absolute top-full left-0 md:left-1/2 -translate-x-0 md:-translate-x-1/2 w-screen max-w-5xl overflow-hidden rounded-b-2xl border border-slate-200 bg-white shadow-xl dark:border-slate-700 dark:bg-slate-900 z-50">
+        <div className="absolute top-full left-0 w-screen max-w-5xl overflow-hidden rounded-b-2xl border border-slate-200 bg-white shadow-xl dark:border-slate-700 dark:bg-slate-900 z-50 md:left-1/2 md:-translate-x-1/2">
           <div className="mx-auto max-w-2xl px-4 py-2" role="listbox" aria-label={t("contentSwitcher.available")}>
             {ordered.map(({ work, edition: collection }, index) => {
               const selected = work === activeWork;
