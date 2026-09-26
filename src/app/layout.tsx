@@ -150,7 +150,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <StickyHeader>
         <header className="bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800">
           <div className="mx-auto max-w-5xl px-4 py-3 flex items-center gap-4 relative">
-            <Link href={user ? "/dashboard" : "/"} className="flex invisible md:visible w-28 md:w-auto items-center gap-2 font-extrabold text-brand-700 dark:text-brand-300 text-lg shrink-0 cursor-pointer">
+            {/* Kleiner dan een tablet: geen logo (ingelogd); het contentmenu neemt
+                zijn plek links in. Zonder account is het logo het enige links. */}
+            <Link href={user ? "/dashboard" : "/"} className={`${user ? "hidden md:flex" : "flex"} items-center gap-2 font-extrabold text-brand-700 dark:text-brand-300 text-lg shrink-0 cursor-pointer`}>
               {logoDataUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={logoDataUrl} alt={displayName} className="h-8 w-auto" />
