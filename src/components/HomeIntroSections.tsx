@@ -1,6 +1,7 @@
 "use client";
 
 import { useT } from "@/components/I18nProvider";
+import { APP_NAME } from "@/lib/brand";
 
 // Het kennismakingsdeel van de homepage, onder de aanmeldknoppen. Ook
 // gebruikt op de uitnodigingspagina (/uitnodiging/<code>), zodat wie via een
@@ -24,7 +25,8 @@ export default function HomeIntroSections({ displayName }: { displayName: string
   const t = useT();
   return (
     <>
-      {displayName === "Jehova" && (
+      {/* Uitleg van de standaardnaam; niet bij een eigen naam uit Huisstijl. */}
+      {displayName === APP_NAME && (
         <div className="card !bg-gold-50 dark:!bg-slate-800 !border-gold-400/30 dark:!border-slate-700 max-w-xl text-left flex flex-col gap-2">
           <h2 className="font-extrabold text-lg text-brand-800 dark:text-brand-300">{t("home.whyTitle")}</h2>
           <p className="text-sm text-slate-600 dark:text-slate-300">

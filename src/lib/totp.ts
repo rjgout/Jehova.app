@@ -109,7 +109,7 @@ export function decryptTotpSecret(value: string): string {
 }
 
 export function createOtpauthUri(secret: string, accountName: string): string {
-  const issuer = "Jehova.app";
+  const issuer = "Versado.app";
   return `otpauth://totp/${encodeURIComponent(issuer)}:${encodeURIComponent(accountName)}?secret=${secret}&issuer=${encodeURIComponent(issuer)}&algorithm=SHA1&digits=6&period=30`;
 }
 

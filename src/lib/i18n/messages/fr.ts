@@ -1386,10 +1386,10 @@ export const fr: PartialMessages = {
     heroLine2: "de façon ludique.",
     heroText: "Des leçons courtes, des textes à trous et des séries quotidiennes — avec des amis, en divisions ou en direct les uns contre les autres.",
     signUp: "S’inscrire",
-    whyTitle: "Pourquoi le nom Jehova ?",
-    why1: "Jéhovah est un nom de Jésus-Christ avant sa naissance. Ce nom figure aussi dans le Livre de Mormon.",
-    why2: "Le Livre de Mormon est « un autre témoignage de Jésus-Christ ». Il a pour but de témoigner que Jésus est le Christ.",
-    why3: "C’est pourquoi son nom est au cœur de Jehova.app.",
+    whyTitle: "Pourquoi le nom Versado ?",
+    why1: "Versado signifie en espagnol et en portugais « versé dans » : quelqu’un qui connaît vraiment son sujet.",
+    why2: "Et on y entend « vers ». Ici, tout tourne autour des versets des Écritures, petit à petit.",
+    why3: "Ainsi, en apprenant et en jouant, tu deviens versé dans les Écritures.",
     features: {
       lessons: {
         title: "Leçons courtes",
@@ -2084,7 +2084,7 @@ export const fr: PartialMessages = {
     title: "Identité visuelle",
     intro: "Le logo d’en-tête et celui de l’écran d’accueil se règlent séparément — la version d’en-tête est souvent petite et à côté du texte, alors que le logo d’accueil est grand et isolé.",
     appName: "Nom de l’appli",
-    appNameText: "Texte affiché tant qu’aucun logo n’est défini à cet endroit (en-tête, écran d’accueil), et toujours pour l’onglet/le titre de page (ne peut pas être une image). Laisser vide = nom par défaut « Jehova ».",
+    appNameText: "Texte affiché tant qu’aucun logo n’est défini à cet endroit (en-tête, écran d’accueil), et toujours pour l’onglet/le titre de page (ne peut pas être une image). Laisser vide = nom par défaut « Versado ».",
     logoHeader: "Logo (en-tête)",
     logoHeaderText: "Remplace 📖 + le nom de l’appli dans l’en-tête. Fonctionne mieux avec un fond transparent.",
     logoHero: "Logo (écran d’accueil)",

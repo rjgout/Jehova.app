@@ -1386,10 +1386,10 @@ export const de: PartialMessages = {
     heroLine2: "auf spielerische Weise.",
     heroText: "Kurze Lektionen, Lückentexte und Tagesserien — mit Freunden, in Ligen oder live gegeneinander.",
     signUp: "Registrieren",
-    whyTitle: "Warum heißt das Jehova?",
-    why1: "Jehova ist ein Name für Jesus Christus vor seiner Geburt. Dieser Name kommt auch im Buch Mormon vor.",
-    why2: "Das Buch Mormon ist „ein weiterer Zeuge für Jesus Christus“. Es soll bezeugen, dass Jesus der Christus ist.",
-    why3: "Deshalb steht sein Name im Mittelpunkt von Jehova.app.",
+    whyTitle: "Warum heißt das Versado?",
+    why1: "Versado ist Spanisch und Portugiesisch für „bewandert“: jemand, der sich wirklich auskennt.",
+    why2: "Und darin steckt „Vers“. Darum geht es hier: um die Verse der heiligen Schriften, Stück für Stück.",
+    why3: "So wirst du lernend und spielend in den Schriften bewandert.",
     features: {
       lessons: {
         title: "Kurze Lektionen",
@@ -2084,7 +2084,7 @@ export const de: PartialMessages = {
     title: "Erscheinungsbild",
     intro: "Header-Logo und Willkommensbildschirm-Logo lassen sich getrennt einstellen — die Header-Version ist oft klein und neben Text, das Willkommenslogo groß und allein.",
     appName: "App-Name",
-    appNameText: "Text, der angezeigt wird, solange an der Stelle (Header, Willkommensbildschirm) kein Logo eingestellt ist, und immer für Browsertab/Seitentitel (kann kein Bild sein). Leer lassen = Standardname „Jehova“.",
+    appNameText: "Text, der angezeigt wird, solange an der Stelle (Header, Willkommensbildschirm) kein Logo eingestellt ist, und immer für Browsertab/Seitentitel (kann kein Bild sein). Leer lassen = Standardname „Versado“.",
     logoHeader: "Logo (Header)",
     logoHeaderText: "Ersetzt 📖 + den App-Namen im Header. Funktioniert am besten mit transparentem Hintergrund.",
     logoHero: "Logo (Willkommensbildschirm)",

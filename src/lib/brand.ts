@@ -5,7 +5,7 @@
 // src/lib/courses.ts), niet de identiteit van het hele product. "Geloof je
 // dat ook?" is op dezelfde manier een aparte contentbron (de podcastcursus,
 // zie prisma/podcastContent.ts) en dus ook geen productnaam.
-export const APP_NAME = "Jehova";
+export const APP_NAME = "Versado";
 export const APP_TAGLINE = "Schriftstudie op een speelse, motiverende manier.";
 
 /**

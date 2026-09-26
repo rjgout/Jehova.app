@@ -1390,10 +1390,10 @@ export const nl = {
     heroLine2: "op een speelse manier.",
     heroText: "Korte lessen, invuloefeningen en dag-streaks — samen met vrienden, in divisies, of live tegen elkaar.",
     signUp: "Aanmelden",
-    whyTitle: "Waarom heet dit Jehova?",
-    why1: "Jehova is een naam voor Jezus Christus vóór Zijn geboorte. Die naam komt ook voor in het Boek van Mormon.",
-    why2: "Het Boek van Mormon is “een testament van Jezus Christus”. Het is bedoeld om te getuigen dat Jezus de Christus is.",
-    why3: "Daarom staat Zijn naam centraal in Jehova.app.",
+    whyTitle: "Waarom heet dit Versado?",
+    why1: "Versado is Spaans en Portugees voor “goed thuis in iets”: iemand die de stof echt kent.",
+    why2: "En je hoort er “vers” in. Daar draait het hier om: de verzen van de Schriften, stukje voor stukje.",
+    why3: "Zo raak je, al lerend en spelend, thuis in de Schriften.",
     features: {
       lessons: {
         title: "Korte lessen",
@@ -2088,7 +2088,7 @@ export const nl = {
     title: "Huisstijl",
     intro: "Header-logo en welkomscherm-logo zijn los van elkaar in te stellen — vaak is de header-versie klein en naast tekst, terwijl een welkomscherm-logo groot en alleenstaand staat.",
     appName: "App-naam",
-    appNameText: "Tekst die getoond wordt zolang er geen logo is ingesteld op de bijbehorende plek (header, welkomscherm), en altijd voor de browsertab/paginatitel (kan geen afbeelding zijn). Leeg laten = standaardnaam “Jehova”.",
+    appNameText: "Tekst die getoond wordt zolang er geen logo is ingesteld op de bijbehorende plek (header, welkomscherm), en altijd voor de browsertab/paginatitel (kan geen afbeelding zijn). Leeg laten = standaardnaam “Versado”.",
     logoHeader: "Logo (header)",
     logoHeaderText: "Vervangt 📖 + de app-naam in de header. Werkt het best met een transparante achtergrond.",
     logoHero: "Logo (welkomscherm)",

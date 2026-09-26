@@ -189,7 +189,7 @@ export default function AdminBrandingClient() {
             type="text"
             className="input !py-2 max-w-xs"
             maxLength={40}
-            placeholder="Jehova"
+            placeholder="Versado"
             value={appNameInput}
             onChange={(e) => setAppNameInput(e.target.value)}
           />
