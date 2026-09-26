@@ -88,7 +88,7 @@ export default function ContentSwitcher({
   const badge = getLanguage(active.language).badge;
 
   return (
-    <div ref={ref} className="absolute left-1/2 top-0 h-full -translate-x-1/2">
+    <div ref={ref} className="absolute left-0 md:left-1/2 top-0 h-full -translate-x-0 md:-translate-x-1/2">
       <button
         type="button"
         onClick={() => setOpen((value) => !value)}
