@@ -325,7 +325,13 @@ async function runStreakRolloverTick(): Promise<void> {
         });
         await tx.user.update({
           where: { id: user.id },
-          data: { freezeCount: { decrement: missedDays } },
+          data: {
+            freezeCount: { decrement: missedDays },
+            // Laat de meest recente beschermde dag gelden als ankerpunt.
+            // Daardoor kan een studieactiviteit vandaag morgen de reeks
+            // normaal met één verhogen, zonder de freeze opnieuw te tellen.
+            lastStudyDate: addDays(today, -1),
+          },
         });
       } else {
         await tx.user.update({
