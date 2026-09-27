@@ -126,9 +126,6 @@ export default function LeaderboardClient() {
           </>
         ) : (
           <>
-            <span className="text-5xl" aria-hidden>
-              {t("leaderboard.nationalIcon")}
-            </span>
             <h1 className="text-2xl font-extrabold">{t("leaderboard.national")}</h1>
             <p className="text-brand-100 text-sm text-center px-6">{t("leaderboard.nationalSub")}</p>
           </>
