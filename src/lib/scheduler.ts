@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/db";
-import { addDays, dayKey, weekStartKey, amsterdamNow, type AmsterdamTime } from "@/lib/dates";
+import { addDays, dayKey, daysBetween, weekStartKey, amsterdamNow, type AmsterdamTime } from "@/lib/dates";
 import { tierForWeek, getLeagueSettings, TIER_ORDER } from "@/lib/leagues";
 import { notifyDailyReminder, notifyDailyText, notifyWeeklyResult, notifySeasonResult, notifyWordGame } from "@/lib/notify";
 import { getTextOfTheDay } from "@/lib/dailyText";
@@ -278,6 +278,65 @@ async function runWordGameNotificationTick(): Promise<void> {
  * Query is goedkoop (meestal 0 rijen), dus geen aparte self-gating nodig
  * zoals bij de dag-/weekgebonden ticks hierboven.
  */
+
+/**
+ * Verwerkt afgesloten streak-dagen zonder dat de gebruiker online hoeft te zijn.
+ * Na middernacht is de vorige kalenderdag definitief gemist. Een beschikbare
+ * freeze wordt dan direct ingezet; zonder voldoende freezes wordt de reeks
+ * meteen op nul gezet.
+ */
+async function runStreakRolloverTick(): Promise<void> {
+  const today = dayKey();
+  const candidates = await prisma.user.findMany({
+    where: {
+      currentStreak: { gt: 0 },
+      lastStudyDate: { not: null, lt: today },
+    },
+    select: { id: true },
+  });
+
+  for (const user of candidates) {
+    await prisma.$transaction(async (tx) => {
+      const fresh = await tx.user.findUnique({
+        where: { id: user.id },
+        select: { currentStreak: true, lastStudyDate: true, freezeCount: true },
+      });
+      if (!fresh?.lastStudyDate || fresh.currentStreak <= 0 || fresh.lastStudyDate >= today) return;
+
+      const missedDays = daysBetween(fresh.lastStudyDate, today) - 1;
+      if (missedDays <= 0) return;
+
+      if (fresh.freezeCount >= missedDays) {
+        for (let i = 1; i <= missedDays; i++) {
+          const frozenDayKey = addDays(fresh.lastStudyDate, i);
+          await tx.streakDay.upsert({
+            where: { userId_dayKey: { userId: user.id, dayKey: frozenDayKey } },
+            create: { userId: user.id, dayKey: frozenDayKey, status: "FROZEN" },
+            update: { status: "FROZEN" },
+          });
+        }
+        await tx.freezeTransaction.create({
+          data: {
+            userId: user.id,
+            type: "AUTO_SPENT",
+            amount: -missedDays,
+            reason: `Streak beschermd op ${today} (${missedDays} dag${missedDays > 1 ? "en" : ""} gemist)`,
+          },
+        });
+        await tx.user.update({
+          where: { id: user.id },
+          data: { freezeCount: { decrement: missedDays } },
+        });
+      } else {
+        await tx.user.update({
+          where: { id: user.id },
+          data: { currentStreak: 0 },
+        });
+      }
+    }).catch((e) => console.error(`Streak rollover mislukt voor ${user.id}:`, e));
+  }
+}
+
 async function runIncognitoExpiryTick(): Promise<void> {
   const expired = await prisma.user.findMany({
     where: { invisibleUntil: { lte: new Date() } },
@@ -304,6 +363,7 @@ export function startNotificationSchedulers(): void {
     runWeeklyResultTick().catch((e) => console.error("Wekelijkse uitslag mislukt:", e));
     runSeasonRolloverTick().catch((e) => console.error("Seizoensafsluiting mislukt:", e));
     runWordGameNotificationTick().catch((e) => console.error("Woord-van-de-dag-melding mislukt:", e));
+    runStreakRolloverTick().catch((e) => console.error("Streak rollover mislukt:", e));
     runIncognitoExpiryTick().catch((e) => console.error("Incognito-vervaltijd mislukt:", e));
     runFsyWeeklyCheckIfDue(prisma).catch((e) => console.error("FSY-weekcontrole mislukt:", e));
   }, TICK_MS);
