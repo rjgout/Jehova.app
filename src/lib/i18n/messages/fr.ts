@@ -1105,7 +1105,6 @@ export const fr: PartialMessages = {
     movement: "{up}, {down}.",
     divisionLower: "division",
     friendsSub: "Toi et tes amis, cette semaine",
-    nationalIcon: "🌍",
     national: "Classement général",
     nationalSub: "Ton XP actuel : tout ce que tu as gagné, moins tes achats dans la boutique",
     division: "Division",
