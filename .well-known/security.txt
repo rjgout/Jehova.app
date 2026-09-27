@@ -1,4 +1,0 @@
-Contact: https://github.com/rjgout/Jehova.app/security/advisories/new
-Expires: 2027-09-27T00:00:00.000Z
-Preferred-Languages: nl, en
-Canonical: https://versado.app/.well-known/security.txt
