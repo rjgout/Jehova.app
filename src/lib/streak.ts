@@ -11,6 +11,31 @@ const PASS_THRESHOLD = 60; // percentage nodig om een hoofdstuk als voltooid te 
 const STREAK_MILESTONE_FOR_FREEZE = 7; // elke 7-daagse streak levert een freeze op
 const LESSONS_MILESTONE_FOR_FREEZE = 10; // elke 10 voltooide hoofdstukken levert een freeze op
 
+/**
+ * Corrigeert de gecachte reeks zodra een gebruiker terugkomt na een onderbreking.
+ * Een beschikbare freeze houdt de reeks nog in stand; pas als er meer gemiste
+ * dagen zijn dan beschikbare freezes, is de reeks daadwerkelijk gebroken.
+ */
+export async function refreshCurrentStreak(userId: string): Promise<number> {
+  const user = await prisma.user.findUniqueOrThrow({
+    where: { id: userId },
+    select: { currentStreak: true, lastStudyDate: true, freezeCount: true },
+  });
+
+  if (!user.lastStudyDate || user.currentStreak === 0) return user.currentStreak;
+
+  const gap = daysBetween(user.lastStudyDate, dayKey());
+  const missedDays = gap - 1;
+  if (missedDays <= 0 || user.freezeCount >= missedDays) return user.currentStreak;
+
+  await prisma.user.update({
+    where: { id: userId },
+    data: { currentStreak: 0 },
+  });
+
+  return 0;
+}
+
 export interface StudyResult {
   xpEarned: number;
   chapterCompleted: boolean;
