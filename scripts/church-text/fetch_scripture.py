@@ -30,7 +30,7 @@ import unicodedata
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # Taalcode van de app -> taalcode van de kerkwebsite (zie src/lib/languages.ts).
-CHURCH_CODES = {"en": "eng", "de": "deu", "fr": "fra"}
+CHURCH_CODES = {"en": "eng", "de": "deu", "fr": "fra", "es": "spa"}
 
 # (werkprefix voor de bestandsnaam, Nederlands bronbestand, boeksleutels in volgorde)
 WORKS = [

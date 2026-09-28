@@ -90,6 +90,17 @@ const TEMPLATES: Record<LanguageCode, Record<string, string>> = {
     image: "Repense à {ref} et cherche l’indice principal de la question.",
     other: "Relis {ref} et cherche le passage qui répond directement à cette question.",
   },
+  es: {
+    fillContext: "Lee de nuevo {ref}. La palabra que falta aparece literalmente en este versículo. Fíjate especialmente en esta parte: « {context} ».",
+    fill: "Lee de nuevo {ref} con calma. La palabra que falta aparece literalmente en el versículo y encaja con las palabras que la rodean.",
+    bankContext: "Mira otra vez {ref}. Las palabras que faltan forman un fragmento continuo del texto. Puedes reconocerlo por: « {context} ».",
+    bank: "Lee de nuevo {ref}. Las palabras que buscas aparecen juntas como un fragmento continuo del texto.",
+    trueFalse: "Comprueba la afirmación con {ref}. Presta especial atención al detalle concreto que se menciona en la frase.",
+    choice: "Busca la respuesta en {ref}. Fíjate especialmente en lo que dice el texto sobre {keywords}.",
+    choiceDetail: "el detalle concreto del que trata la pregunta",
+    image: "Recuerda {ref} y busca la pista principal de la pregunta.",
+    other: "Lee de nuevo {ref} y busca el fragmento que responde directamente a esta pregunta.",
+  },
 };
 
 function fill(template: string, vars: Record<string, string>): string {
