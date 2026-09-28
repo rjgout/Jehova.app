@@ -1,4 +1,4 @@
-import { headers } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { DEFAULT_LANGUAGE, LANGUAGES, getLanguage, toLanguageCode, type LanguageCode } from "@/lib/languages";
 
 // Gebruikt next/headers: alleen importeren vanuit page/layout/route-bestanden,
@@ -16,6 +16,9 @@ const FOREIGN_FALLBACK: LanguageCode = "en";
  * taalvoorkeur (bv. een zoekmachine) blijft het Nederlands.
  */
 export async function anonymousLanguage(): Promise<LanguageCode> {
+  const preferred = (await cookies()).get("versado_language")?.value;
+  if (preferred === "nl" || preferred === "en") return preferred;
+
   const accept = (await headers()).get("accept-language") ?? "";
   let anyLanguage = false;
   for (const part of accept.split(",")) {
