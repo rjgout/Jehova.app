@@ -311,9 +311,11 @@ verwerken". Fundamenteel anders dan de rest van de API:
   lessen die in de app "stap" heten (`syncCourses`; intern heten ze nog
   FRONT_TO_BACK en READING_LESSONS); cursussen per boek bestaan niet meer. Leer en Verbonden
   heeft afdelingen i.p.v. hoofdstukken (`src/lib/chapterTerm.ts`).
-  Nederlandse audio is daar (nog) niet voor. Functies die bij het Boek
-  van Mormon horen (spellen, tekst van de dag) filteren expliciet
-  op `BOM_COLLECTION_ID`: Book/Chapter/Verse bevatten nu meer dan één schrift.
+  Nederlandse audio is daar (nog) niet voor. Functies die alleen voor de
+  Nederlandse Boek van Mormon-uitgave bestaan filteren expliciet op
+  `BOM_COLLECTION_ID`; taalbewuste functies zoals Woord van de dag kiezen de
+  collectie van de gespeelde taal. Book/Chapter/Verse bevatten immers meer
+  dan één schrift en meerdere taaluitgaven.
   Personages hebben een eigen `Person.contentCollectionId`; die van de Leer en
   Verbonden staan in `prisma/dcPersons.ts` (slugs met `lv-`), gecontroleerd
   tegen de verzen en opschriften in `prisma/dcContent.json`.

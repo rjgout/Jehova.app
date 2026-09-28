@@ -7,6 +7,6 @@ export async function GET() {
   const user = await getCurrentUser();
   if (!user) return await apiError("apiErrors.notLoggedIn", 401);
 
-  const view = await getOrCreateTodayGame(user.id);
+  const view = await getOrCreateTodayGame(user.id, user.contentLanguage);
   return NextResponse.json(view);
 }

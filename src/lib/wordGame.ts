@@ -1,19 +1,38 @@
 import bomWords from "../../prisma/bomWords.json";
+import bomWordCountsEn from "../../prisma/bomWordCounts.en.json";
 import { amsterdamNow } from "@/lib/dates";
 import { prisma } from "@/lib/db";
 import { completeWordGame } from "@/lib/streak";
 import { findVersesContainingWord, type VerseMatch } from "@/lib/dictionary";
+import { BOM_COLLECTION_ID, BOM_EN_COLLECTION_ID } from "@/lib/contentCollections";
+import type { TFunction } from "@/lib/i18n";
 
 export const WORD_LENGTH = 5;
 export const MAX_GUESSES = 6;
 
-// Alleen woorden uit het Boek van Mormon (zelfde bron als het Woordspel,
-// zie src/lib/scrabble/dictionary.ts) van precies 5 letters — zowel de
-// antwoorden als de toegestane gok-woorden komen uit deze lijst.
-const WORDS: readonly string[] = (bomWords as string[]).filter((w) => w.length === WORD_LENGTH);
+type WordGameLanguage = "nl" | "en";
 
-export function isValidGuess(word: string): boolean {
-  return WORDS.includes(word.toLowerCase());
+// Per uitgave alleen woorden van precies vijf letters. De Engelse lijst is
+// als [woord, aantal]-paren opgeslagen omdat objectkeys met gereserveerde
+// woorden de eager tsx-importketen kunnen laten crashen (zie AGENTS.md).
+const WORDS: Record<WordGameLanguage, readonly string[]> = {
+  nl: (bomWords as string[]).filter((word) => word.length === WORD_LENGTH),
+  en: (bomWordCountsEn as [string, number][])
+    .map(([word]) => word)
+    .filter((word) => word.length === WORD_LENGTH),
+};
+
+const WORD_SETS: Record<WordGameLanguage, ReadonlySet<string>> = {
+  nl: new Set(WORDS.nl),
+  en: new Set(WORDS.en),
+};
+
+function wordGameLanguage(contentLanguage: string | null | undefined): WordGameLanguage {
+  return contentLanguage === "en" ? "en" : "nl";
+}
+
+export function isValidGuess(word: string, language: WordGameLanguage = "nl"): boolean {
+  return WORD_SETS[language].has(word.toLowerCase());
 }
 
 // Het woord wisselt om 18:00 Nederlandse tijd, niet om middernacht UTC —
@@ -58,16 +77,17 @@ function seededShuffle<T>(arr: readonly T[], seed: number): T[] {
   return a;
 }
 
-// Doorloopt alle woorden in een (per cyclus opnieuw geschudde) willekeurige
-// volgorde vóór er ooit een woord herhaald wordt — puur een functie van de
-// datum, dus geen aparte databasetabel met "het woord van vandaag" nodig
-// (en dus ook geen achtergrondtaak die dat elke dag zou moeten bijwerken).
-export function getWordForDay(gameDayKey: string): string {
-  const n = WORDS.length;
+// Doorloopt per taal alle woorden in een (per cyclus opnieuw geschudde)
+// willekeurige volgorde vóór er ooit een woord herhaald wordt. DailyWord legt
+// de uitkomst daarna vast, zodat een wijziging aan een woordenlijst het reeds
+// uitgegeven woord niet meer kan veranderen.
+export function getWordForDay(gameDayKey: string, language: WordGameLanguage = "nl"): string {
+  const words = WORDS[language];
+  const n = words.length;
   const index = daysSinceEpoch(gameDayKey);
   const cycle = Math.floor(index / n);
   const position = ((index % n) + n) % n;
-  const order = seededShuffle(WORDS, cycle);
+  const order = seededShuffle(words, cycle);
   return order[position];
 }
 
@@ -130,11 +150,14 @@ export interface WordGameLeaderboardEntry {
 
 export interface WordGameView {
   dayKey: string;
+  language: WordGameLanguage;
   wordLength: number;
   maxGuesses: number;
   guesses: { word: string; result: LetterState[] }[];
   status: "IN_PROGRESS" | "WON" | "LOST";
   xpEarned: number;
+  leaderboardRank: number | null;
+  leaderboardXpBonus: number;
   // Alleen gezet zodra het potje van vandaag is afgerond — geheim tot dan.
   word: string | null;
   // Idem: pas gevuld na afloop (winst of verlies maakt niet uit), zodat je
@@ -143,10 +166,11 @@ export interface WordGameView {
   leaderboard: WordGameLeaderboardEntry[];
 }
 
-async function getTodayLeaderboard(dayKey: string): Promise<WordGameLeaderboardEntry[]> {
+async function getTodayLeaderboard(dayKey: string, language: WordGameLanguage): Promise<WordGameLeaderboardEntry[]> {
   const games = await prisma.wordGame.findMany({
     where: {
       dayKey,
+      language,
       status: "WON",
       finishedAt: { not: null },
     },
@@ -175,6 +199,7 @@ async function getTodayLeaderboard(dayKey: string): Promise<WordGameLeaderboardE
 
 async function buildView(game: {
   dayKey: string;
+  language: string;
   word: string;
   guesses: string;
   status: string;
@@ -182,70 +207,79 @@ async function buildView(game: {
   leaderboardRank: number | null;
   leaderboardXpBonus: number;
 }): Promise<WordGameView> {
+  const language = wordGameLanguage(game.language);
   const guesses = (JSON.parse(game.guesses) as string[]).map((word) => ({
     word,
     result: evaluateGuess(word, game.word),
   }));
   const finished = game.status !== "IN_PROGRESS";
-  const leaderboard = await getTodayLeaderboard(game.dayKey);
+  const leaderboard = await getTodayLeaderboard(game.dayKey, language);
   return {
     dayKey: game.dayKey,
+    language,
     wordLength: WORD_LENGTH,
     maxGuesses: MAX_GUESSES,
     guesses,
     status: game.status as WordGameView["status"],
     xpEarned: game.xpEarned,
+    leaderboardRank: game.leaderboardRank,
+    leaderboardXpBonus: game.leaderboardXpBonus,
     word: finished ? game.word : null,
-    verses: finished ? await findVersesContainingWord(game.word) : [],
+    verses: finished
+      ? await findVersesContainingWord(game.word, language === "en" ? BOM_EN_COLLECTION_ID : BOM_COLLECTION_ID)
+      : [],
     leaderboard,
   };
 }
 
 /**
- * Legt het woord voor een dayKey definitief vast — atomisch, dus de eerste
- * speler van die dag "wint" en iedereen daarna (ongeacht eventuele
+ * Legt het woord voor een dayKey en taal definitief vast — atomisch, dus de
+ * eerste speler in die taal "wint" en iedereen daarna (ongeacht eventuele
  * codewijzigingen tussendoor) krijgt exact datzelfde woord terug. Zie de
  * toelichting bij het DailyWord-model in schema.prisma.
  */
-async function getOrLockWordForDay(dayKey: string): Promise<string> {
+async function getOrLockWordForDay(dayKey: string, language: WordGameLanguage): Promise<string> {
   const daily = await prisma.dailyWord.upsert({
-    where: { dayKey },
+    where: { dayKey_language: { dayKey, language } },
     update: {},
-    create: { dayKey, word: getWordForDay(dayKey) },
+    create: { dayKey, language, word: getWordForDay(dayKey, language) },
   });
   return daily.word;
 }
 
 /** Haalt het potje van vandaag op, en maakt het aan als het nog niet bestaat — dit dwingt meteen "één keer per dag" af via @@unique([userId, dayKey]). */
-export async function getOrCreateTodayGame(userId: string): Promise<WordGameView> {
+export async function getOrCreateTodayGame(userId: string, contentLanguage: string): Promise<WordGameView> {
   const dayKey = wordGameDayKey();
   const existing = await prisma.wordGame.findUnique({ where: { userId_dayKey: { userId, dayKey } } });
   if (existing) return await buildView(existing);
 
-  const word = await getOrLockWordForDay(dayKey);
+  const language = wordGameLanguage(contentLanguage);
+  const word = await getOrLockWordForDay(dayKey, language);
   const created = await prisma.wordGame.upsert({
     where: { userId_dayKey: { userId, dayKey } },
     update: {},
-    create: { userId, dayKey, word },
+    create: { userId, dayKey, language, word },
   });
   return await buildView(created);
 }
 
 export async function submitGuess(
   userId: string,
-  rawGuess: string
+  rawGuess: string,
+  t: TFunction
 ): Promise<(WordGameView & { newAchievements: string[] }) | { error: string }> {
   const guess = rawGuess.trim().toLowerCase();
-  if (guess.length !== WORD_LENGTH) return { error: `Het woord moet ${WORD_LENGTH} letters hebben.` };
-  if (!isValidGuess(guess)) return { error: "Dat woord ken ik niet uit het Boek van Mormon." };
+  if (guess.length !== WORD_LENGTH) return { error: t("wordOfTheDay.wrongLength", { n: WORD_LENGTH }) };
 
   const dayKey = wordGameDayKey();
   const game = await prisma.wordGame.findUnique({ where: { userId_dayKey: { userId, dayKey } } });
-  if (!game) return { error: "Er is nog geen potje voor vandaag — begin eerst een nieuw spel." };
-  if (game.status !== "IN_PROGRESS") return { error: "Je hebt het woord van vandaag al gespeeld." };
+  if (!game) return { error: t("wordOfTheDay.noGame") };
+  const language = wordGameLanguage(game.language);
+  if (!isValidGuess(guess, language)) return { error: t("wordOfTheDay.unknownWord") };
+  if (game.status !== "IN_PROGRESS") return { error: t("wordOfTheDay.alreadyPlayed") };
 
   const priorGuesses = JSON.parse(game.guesses) as string[];
-  if (priorGuesses.length >= MAX_GUESSES) return { error: "Je hebt geen pogingen meer over." };
+  if (priorGuesses.length >= MAX_GUESSES) return { error: t("wordOfTheDay.noGuesses") };
 
   const guesses = [...priorGuesses, guess];
   const won = guess === game.word;
@@ -262,6 +296,7 @@ export async function submitGuess(
     const fasterWinners = await prisma.wordGame.count({
       where: {
         dayKey,
+        language,
         status: "WON",
         finishedAt: { not: null, lt: finishedAt },
       },
@@ -284,7 +319,7 @@ export async function submitGuess(
       finishedAt,
     },
   });
-  if (saved.count === 0) return { error: "Je gok is al verwerkt. Ververs de pagina." };
+  if (saved.count === 0) return { error: t("wordOfTheDay.alreadyProcessed") };
   const updated = await prisma.wordGame.findUniqueOrThrow({ where: { id: game.id } });
 
   const newAchievements = finished ? (await completeWordGame(userId, totalXpEarned)).newAchievements : [];

@@ -1601,16 +1601,18 @@ model ChapterGuessQuestion {
 
 // --- Dagelijks woordspel (woord raden) --------------------------------
 //
-// Eén woord van de dag voor iedereen, gekozen uit de 5-letterwoorden van het
-// Boek van Mormon (zie src/lib/wordGame.ts). De dag wisselt om 18:00
-// Nederlandse tijd, niet om middernacht UTC — vandaar een eigen
-// dayKey-functie i.p.v. dayKey() uit src/lib/dates.ts.
-// @@unique([userId, dayKey]) is wat "één keer per dag" afdwingt.
+// Per taal één woord van de dag voor iedereen, gekozen uit de 5-letterwoorden
+// van de betreffende uitgave van het Boek van Mormon (zie src/lib/wordGame.ts).
+// De dag wisselt om 18:00 Nederlandse tijd, niet om middernacht UTC — vandaar
+// een eigen dayKey-functie i.p.v. dayKey() uit src/lib/dates.ts.
+// @@unique([userId, dayKey]) dwingt één spel per gebruiker per dag af, ook als
+// die gebruiker tussendoor van contenttaal wisselt.
 model WordGame {
   id         String         @id @default(cuid())
   userId     String
   user       User           @relation(fields: [userId], references: [id], onDelete: Cascade)
   dayKey     String
+  language   String         @default("nl")
   word       String // het doelwoord van die dag, hier bewaard voor eenvoudige/consistente lookup
   guesses    String         @default("[]") // JSON: array van geraden woorden, in volgorde
   status     WordGameStatus @default(IN_PROGRESS)
@@ -1621,7 +1623,7 @@ model WordGame {
   finishedAt DateTime?
 
   @@unique([userId, dayKey])
-  @@index([dayKey, status, finishedAt])
+  @@index([dayKey, language, status, finishedAt])
 }
 
 // Het woord zelf komt uit een deterministische functie van de dayKey (zie
@@ -1631,14 +1633,17 @@ model WordGame {
 // vermoedelijk omdat er tussen hun beurten een nieuwe versie van de app
 // live ging (elke wijziging die de woordenlijst of de volgorde ervan
 // raakt, verandert de uitkomst van diezelfde functie). Deze tabel legt het
-// woord voor een dayKey vast zodra de allereerste speler van die dag 'm
-// opvraagt (atomische upsert, zie getOrCreateTodayGame) — elke speler
-// daarna krijgt gegarandeerd exact datzelfde, opgeslagen woord terug, ook
-// als de code/woordenlijst ondertussen verandert.
+// woord voor een dayKey en taal vast zodra de allereerste speler van die dag
+// het opvraagt (atomische upsert, zie getOrCreateTodayGame) — elke speler in
+// die taal krijgt daarna gegarandeerd exact datzelfde, opgeslagen woord terug,
+// ook als de code/woordenlijst ondertussen verandert.
 model DailyWord {
-  dayKey    String   @id
+  dayKey    String
+  language  String   @default("nl")
   word      String
   createdAt DateTime @default(now())
+
+  @@id([dayKey, language])
 }
 
 enum WordGameStatus {
