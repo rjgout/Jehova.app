@@ -17,6 +17,7 @@ import EdgeSwipeGuard from "@/components/EdgeSwipeGuard";
 import SubpageBackBar from "@/components/SubpageBackBar";
 import PodcastMiniPlayer from "@/components/PodcastMiniPlayer";
 import HeaderInstallHint from "@/components/HeaderInstallHint";
+import PublicLanguageSwitcher from "@/components/PublicLanguageSwitcher";
 import ContentSwitcher from "@/components/ContentSwitcher";
 import { getContentContext } from "@/lib/contentCollections";
 import StickyHeader from "@/components/StickyHeader";
@@ -173,6 +174,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                 showLanguage={contentContext.contentLanguages.length > 1}
               />
             )}
+
+            {!user && <div className="ml-auto"><PublicLanguageSwitcher language={uiLanguage} /></div>}
 
             {user ? (
               <nav className="ml-auto flex items-center gap-4">
