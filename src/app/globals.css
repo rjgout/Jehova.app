@@ -5,6 +5,10 @@
 html,
 body {
   height: 100%;
+  /* Alle browser-scrolling (ankers, scrollIntoView en navigatie naar een
+     vers) houdt rekening met de dynamische vaste bovenbalk. Die bevat naast
+     de header ook eventuele minispelers en de terugbalk. */
+  scroll-padding-top: calc(var(--header-height, 4.5rem) + 1rem);
   /* Voorkomt dat een horizontale swipe (iOS Safari/PWA: edge-swipe terug/
      verder, Chrome/Android: overscroll-navigatie) als browsernavigatie wordt
      opgevat — "pan-y pinch-zoom" i.p.v. kaal "pan-y" houdt zowel verticaal
