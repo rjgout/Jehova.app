@@ -12,6 +12,7 @@ const schema = z.object({
   challengesEnabled: z.boolean().optional(),
   liveExercisesEnabled: z.boolean().optional(),
   alleskennerEnabled: z.boolean().optional(),
+  jigsawEnabled: z.boolean().optional(),
 });
 
 export async function GET() {

@@ -66,6 +66,16 @@ van een specifieke cloud-hostingprovider.
   vrienden uit (real-time pop-up als ze de site open hebben, of deel de
   code), en speel gelijktijdig dezelfde invuloefeningen met een live
   scorebord (via Socket.io, met Redis als adapter).
+- **Legpuzzel** (`/jigsaw`, onder Spelen): hergebruikt de 216 illustraties uit
+  de kinderverhalen van het Boek van Mormon, met 6, 12, 24 of 48 stukjes.
+  Gericht op touch: slepen of een stukje en zijn plek aantikken, met grote
+  bladerknoppen voor de losse stukjes, een voorbeeld en een hulpafbeelding.
+  Beschikbaar bij alle bestaande taaluitgaven van het Boek van Mormon;
+  de bediening is vertaald in Nederlands, Engels, Duits en Frans.
+  Na de migratie zet een beheerder **Legpuzzel** aan bij de spelinstellingen
+  in `/adminbackend`. De koppelingen per content-uitgave staan daar ook.
+  Geen XP of tijdslimiet; de server controleert plaatsingen. Voortgang geldt
+  alleen zolang de puzzel open blijft (maximaal 24 uur).
 - **Privacy**: alleen functioneel noodzakelijke cookies (geen tracking, dus
   geen cookiebanner nodig), een privacy- en cookiebeleid, en zelf je account
   + alle gegevens kunnen verwijderen.

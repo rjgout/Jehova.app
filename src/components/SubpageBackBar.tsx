@@ -26,6 +26,7 @@ const TOOL_SUBPAGES: Record<string, { title: MessageKey; icon: string }> = {
 // een spel gaat terug naar Spelen. Een lopend spel (/live/<code>) bewust niet:
 // daar leidt een terugbalk alleen af.
 const GAME_PAGES: Record<string, { title: MessageKey; icon: string }> = {
+  "/jigsaw": { title: "jigsaw.title", icon: "🧩" },
   "/word-game": { title: "pages.wordOfTheDay", icon: "🟩" },
   "/scrabble": { title: "pages.wordGame", icon: "🔤" },
   "/alleskenner": { title: "pages.alleskenner", icon: "🧠" },

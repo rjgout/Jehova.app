@@ -23,6 +23,7 @@ interface GameSettings {
   challengesEnabled: boolean;
   liveExercisesEnabled: boolean;
   alleskennerEnabled: boolean;
+  jigsawEnabled: boolean;
 }
 
 interface Props {
@@ -33,7 +34,7 @@ interface Props {
   contentName: string;
 }
 
-type GameTextKey = "wordGame" | "scrabble" | "alleskenner" | "gezinsavond" | "chapterGuess" | "challenges";
+type GameTextKey = "wordGame" | "scrabble" | "alleskenner" | "gezinsavond" | "chapterGuess" | "challenges" | "jigsaw";
 
 interface GameEntry {
   id: string; // stabiele sleutel voor de sleepvolgorde (UserListOrder.itemKey)
@@ -48,6 +49,7 @@ interface GameEntry {
 // Vaste catalogus — nu data-driven (i.p.v. losse hardcoded kaarten) zodat
 // hij herordend kan worden (zie SortableList/listOrder.ts, listKey="games").
 const GAMES: GameEntry[] = [
+  { id: "jigsaw", enabledKey: "jigsawEnabled", icon: "🧩", textKey: "jigsaw", titleKey: "jigsaw.title", href: "/jigsaw" },
   { id: "word-game", enabledKey: "wordGameEnabled", icon: "🟩", textKey: "wordGame", titleKey: "pages.wordOfTheDay", href: "/word-game" },
   { id: "scrabble", enabledKey: "scrabbleEnabled", icon: "🔤", textKey: "scrabble", titleKey: "pages.wordGame", href: "/scrabble" },
   { id: "alleskenner", enabledKey: "alleskennerEnabled", icon: "🧠", textKey: "alleskenner", titleKey: "pages.alleskenner", href: "/alleskenner" },
@@ -106,7 +108,7 @@ export default function LiveLobbyForm({ settings, isAdmin, allowedGameKeys, cont
   }
 
   return (
-    <div className="max-w-2xl mx-auto flex flex-col gap-8">
+    <div className="max-w-5xl mx-auto flex flex-col gap-8">
       <ActiveGamesBanner />
 
       <div>
