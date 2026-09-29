@@ -228,14 +228,14 @@ export default function FriendsClient({ appName }: { appName: string }) {
             {results.map((r) => (
               <div
                 key={r.id}
-                className="flex items-center justify-between gap-3 rounded-xl px-2 !py-2 hover:bg-brand-50 dark:hover:bg-slate-700"
+                className="flex min-w-0 items-center justify-between gap-3 rounded-xl px-2 !py-2 hover:bg-brand-50 dark:hover:bg-slate-700"
               >
-                <span className="flex items-center gap-2 dark:text-slate-100">
+                <span className="flex min-w-0 flex-1 items-center gap-2 dark:text-slate-100">
                   <UserAvatar id={r.id} handle={r.handle} size="sm" />
-                  <UserTag handle={r.handle} discriminator={r.discriminator} />
+                  <UserTag handle={r.handle} discriminator={r.discriminator} className="block min-w-0 truncate" />
                 </span>
                 <button
-                  className="btn-secondary !px-3 !py-1.5"
+                  className="btn-secondary shrink-0 !px-3 !py-1.5"
                   disabled={sentTo.has(r.id) || r.friendshipStatus === "PENDING" || r.friendshipStatus === "ACCEPTED"}
                   onClick={() => sendRequest(r)}
                   aria-label={
