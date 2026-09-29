@@ -16,6 +16,7 @@ scripts/church-text/fetch_dc_pgp.py; die raakt dit script niet aan.
 Werkmap voor de opgehaalde pagina's: $CHURCH_TEXT_WORK, standaard
 .bom-audio-work/church-<taal> (in .gitignore). Draaien vanuit de repo-root:
     python3 scripts/church-text/fetch_scripture.py en
+    python3 scripts/church-text/fetch_scripture.py es bom
 """
 import collections
 import html
@@ -30,7 +31,7 @@ import unicodedata
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # Taalcode van de app -> taalcode van de kerkwebsite (zie src/lib/languages.ts).
-CHURCH_CODES = {"en": "eng", "de": "deu", "fr": "fra"}
+CHURCH_CODES = {"en": "eng", "de": "deu", "fr": "fra", "es": "spa"}
 
 # (werkprefix voor de bestandsnaam, Nederlands bronbestand, boeksleutels in volgorde)
 WORKS = [
@@ -80,14 +81,18 @@ def word_counts(books):
 
 
 def main():
-    if len(sys.argv) != 2 or sys.argv[1] not in CHURCH_CODES:
-        raise SystemExit("Gebruik: fetch_scripture.py " + "|".join(CHURCH_CODES))
+    if len(sys.argv) not in (2, 3) or sys.argv[1] not in CHURCH_CODES:
+        raise SystemExit("Gebruik: fetch_scripture.py " + "|".join(CHURCH_CODES) + " [bom|dc|pgp]")
     code = sys.argv[1]
     church = CHURCH_CODES[code]
+    requested_work = sys.argv[2] if len(sys.argv) == 3 else None
+    works = [work for work in WORKS if requested_work is None or work[0] == requested_work]
+    if not works:
+        raise SystemExit("Onbekend werk: " + str(requested_work))
     work_dir = os.environ.get("CHURCH_TEXT_WORK", os.path.join(ROOT, ".bom-audio-work", f"church-{code}"))
     os.makedirs(work_dir, exist_ok=True)
 
-    for prefix, dutch_file, keys in WORKS:
+    for prefix, dutch_file, keys in works:
         dutch = json.load(open(os.path.join(ROOT, "prisma", dutch_file)))
         assert len(dutch) == len(keys), (prefix, len(dutch), len(keys))
         books = []

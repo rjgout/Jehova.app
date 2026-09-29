@@ -349,13 +349,14 @@ het hoofdstuk). Het fundament ligt er; zichtbaar is alles nog Nederlands.
   elke uitgave hetzelfde. Helpers in `src/lib/scriptureRefs.ts`. Een spel
   tussen talen kiest één verwijzing en laat die elke speler in de eigen
   contenttaal zien; scores tellen op de vraag, niet op de tekst.
-- **Uitgaven in andere talen**: `scripts/church-text/fetch_scripture.py <en|de|fr>`
+- **Uitgaven in andere talen**: `scripts/church-text/fetch_scripture.py <en|de|fr|es>`
   haalt Boek van Mormon, Leer en Verbonden en Parel van Grote Waarde op
   (verzen + opschriften, met `key` per boek; stopt als het aantal verzen
   afwijkt van het Nederlands) en schrijft `prisma/<werk>Content.<taal>.json`
   en `<werk>WordCounts.<taal>.json`. Collecties komen via een migratie
-  (Engels: `content_bom_en`, `content_dc_en`, `content_pgp_en`, verborgen),
-  de seed importeert ze. Oefeningen en hints worden gemaakt in de taal van de
+  (Engels: `content_bom_en`, `content_dc_en`, `content_pgp_en`; Spaanse uitgave
+  van het Boek van Mormon: `content_bom_es`), de seed importeert ze. Oefeningen
+  en hints worden gemaakt in de taal van de
   collectie (woordenlijsten per taal in `src/lib/exerciseGen.ts`, hints in
   `src/lib/exerciseHints.ts`); de Nederlandse uitvoer mag daarbij nooit
   veranderen. **Let op:** JSON die `tsx` laadt (alles in de keten van
