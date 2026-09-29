@@ -268,6 +268,14 @@ export function ReaderView({
     return () => window.clearTimeout(timer);
   }, [focusVerse]);
 
+  useEffect(() => {
+    if (!readingVerse) return;
+    document.getElementById(`vers-${readingVerse}`)?.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
+  }, [readingVerse]);
+
 
   useEffect(() => {
     try {
@@ -345,7 +353,7 @@ export function ReaderView({
           <div
             key={v.id}
             id={`vers-${v.number}`}
-            className={`reader-text flex flex-col gap-2 rounded-xl -mx-2 px-2 py-1 transition-colors duration-700 ${
+            className={`reader-text scroll-mt-24 flex flex-col gap-2 rounded-xl -mx-2 px-2 py-1 transition-colors duration-700 ${
               flashVerse === v.number
                 ? "bg-brand-100/70 dark:bg-brand-900/30 ring-2 ring-brand-400 dark:ring-brand-500"
                 : v.highlighted
