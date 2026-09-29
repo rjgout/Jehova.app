@@ -507,13 +507,19 @@ function buildView(room: Room, viewerId: string): AkStateView {
     const gridItem = gridRound ? currentGridItem(gridRound.round) : null;
     const g = room.phase === "GALLERY" && room.gallery ? room.gallery : null;
     const galleryEntry = g && g.index >= 0 && g.index < g.items.length ? g.items[g.index].entries[g.turnEntries[g.turnPos]] : null;
-    // De quizmaster beoordeelt in de eigen taal: antwoord en andere geldige formuleringen daarin.
-    const acceptFor = (answer: string, accept: string[]) => dictionary?.accept.get(answer)?.slice(1) ?? accept;
+    // De quizmaster moet het antwoord kunnen voorlezen/beoordelen in de taal
+    // waarin de actieve speler speelt. Bij teams is dat de taal van de
+    // teamleider, omdat die het antwoord hardop geeft; buiten een beurt valt
+    // de weergave terug op de taal van de quizmaster.
+    const activeLanguageUserId = leaderOfActive(room) ?? viewerId;
+    const answerDictionary = dictionaryFor(room, activeLanguageUserId) ?? dictionary;
+    const answerL = (text: string) => localizeText(answerDictionary, text);
+    const acceptFor = (answer: string, accept: string[]) => answerDictionary?.accept.get(answer)?.slice(1) ?? accept;
     quizmaster = {
-      answer369: q ? L(q.data.answer) : null,
+      answer369: q ? answerL(q.data.answer) : null,
       puzzleGroups: p
         ? p.data.groups.map((group, i) => ({
-            answer: L(group.answer),
+            answer: answerL(group.answer),
             accept: acceptFor(group.answer, group.accept),
             clues: group.clues.map(L),
             found: room.puzzle!.found[i],
@@ -523,9 +529,9 @@ function buildView(room: Room, viewerId: string): AkStateView {
         gridRound && gridItem
           ? gridItem.answers
               .slice(0, gridRound.count)
-              .map((a, i) => ({ text: L(a.text), accept: acceptFor(a.text, a.accept), found: gridRound.round.found[i] }))
+              .map((a, i) => ({ text: answerL(a.text), accept: acceptFor(a.text, a.accept), found: gridRound.round.found[i] }))
           : null,
-      galleryAnswer: galleryEntry ? L(galleryEntry.answer) : null,
+      galleryAnswer: galleryEntry ? answerL(galleryEntry.answer) : null,
     };
   }
 
