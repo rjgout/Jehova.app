@@ -321,9 +321,9 @@ verwerken". Fundamenteel anders dan de rest van de API:
   worden met toestemming gebruikt — deel dit dus niet als losstaand
   bestand/export met een instantie die die toestemming niet apart heeft.
 
-## Talen (Nederlands, Engels, Duits, Frans)
+## Talen (Nederlands, Engels, Duits, Frans, Spaans)
 
-Doel: één app in vier talen, met één gezamenlijke competitie en spellen die
+Doel: één app in vijf talen, met één gezamenlijke competitie en spellen die
 spelers in verschillende talen samen kunnen spelen (bv. De Alleskenner, Raad
 het hoofdstuk). Het fundament ligt er; zichtbaar is alles nog Nederlands.
 
@@ -363,14 +363,22 @@ het hoofdstuk). Het fundament ligt er; zichtbaar is alles nog Nederlands.
   bevatten: `tsx` maakt van elke sleutel een variabele, en woorden als
   `yield` of `let` laten de app dan bij het opstarten crashen. Woordenlijsten
   in andere talen staan daarom als `[woord, aantal]`-paren.
-- **App-teksten**: `src/lib/i18n/messages/nl.ts` is de bron; `en/de/fr.ts`
-  volgen die structuur; een ontbrekende tekst valt terug langs
-  `fallbackChain` (Duits/Frans → Engels → Nederlands). Sleutels zijn getypt. Server (ook de eager-keten van
+- **App-teksten**: `src/lib/i18n/messages/nl.ts` is de bron; de taalbestanden
+  (`en.ts`, `de.ts`, `fr.ts`, `es.ts`) volgen die structuur;
+  een ontbrekende tekst valt terug langs
+  `fallbackChain` (Duits/Frans/Spaans → Engels → Nederlands). Sleutels zijn getypt. Server (ook de eager-keten van
   `server.ts`): `getT(user.uiLanguage)`; client: `useT()` uit
   `src/components/I18nProvider.tsx`. Voortgang: `npx tsx scripts/i18n/check.ts`.
   Zet teksten per onderdeel om (niet alles tegelijk) en groepeer sleutels per
   onderdeel van de app. Codecommentaar en commitmessages blijven Nederlands.
-
+- **Vertalingen bij iedere wijziging**: elke nieuwe of gewijzigde zichtbare
+  tekst moet via het i18n-systeem lopen en worden meegenomen in alle talen die
+  als `uiReady` beschikbaar zijn. Dit geldt ook voor foutmeldingen, API-responsen
+  die aan gebruikers worden getoond, e-mails, pushmeldingen, bevestigingsdialogen,
+  laad-/lege-/successtatussen en teksten in nieuwe functionaliteit. Voeg eerst
+  de sleutel toe aan `nl.ts`, werk de andere taalbestanden bij en voer daarna
+  `npx tsx scripts/i18n/check.ts` uit; een ontbrekende vertaling mag niet stil
+  blijven staan als Nederlands of Engels in een beschikbare taal.
 ## Podcastafleveringen verwerken (`prisma/podcastContent.ts`)
 
 De app kent meerdere podcasts (vaste lijst in `src/lib/podcasts.ts`, elk met
