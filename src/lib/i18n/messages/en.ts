@@ -1962,6 +1962,9 @@ export const en: PartialMessages = {
     notFound: "Not found.",
   },
   player: {
+    audioLanguage: "Audio language",
+    audioLanguageHint: "Read and listen in different languages. Your choice is saved on this device. Without a recording, a computer voice is used.",
+    retryLanguages: "Could not load audio languages. Try again",
     pause: "Pause",
     play: "Play",
     episode: "🎙️ Episode {n} — {title}",

@@ -1966,6 +1966,9 @@ export const nl = {
     notFound: "Niet gevonden.",
   },
   player: {
+    audioLanguage: "Audiotaal",
+    audioLanguageHint: "Lees en luister in verschillende talen. Je keuze wordt op dit apparaat bewaard. Zonder opname wordt de computerstem gebruikt.",
+    retryLanguages: "Audiotalen laden mislukt. Opnieuw proberen",
     pause: "Pauzeren",
     play: "Afspelen",
     episode: "🎙️ Aflevering {n} — {title}",
