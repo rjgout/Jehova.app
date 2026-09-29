@@ -1244,6 +1244,7 @@ export const nl = {
       WORD_GAME_WON: "Woordspel gewonnen",
       INTRO_LESSON_COMPLETED: "Introductieles afgerond",
       ALLESKENNER_SOLO: "De Alleskenner alleen",
+      WORD_SEARCH_COMPLETED: "Woordzoeker afgerond",
     },
   },
   streakPage: {

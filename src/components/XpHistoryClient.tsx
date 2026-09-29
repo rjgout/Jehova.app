@@ -19,7 +19,8 @@ type XPReason =
   | "CHAPTER_GUESS_COMPLETED"
   | "WORD_GAME_WON"
   | "INTRO_LESSON_COMPLETED"
-  | "ALLESKENNER_SOLO";
+  | "ALLESKENNER_SOLO"
+  | "WORD_SEARCH_COMPLETED";
 
 interface XpTransaction {
   id: string;
@@ -43,6 +44,7 @@ const REASON_ICONS: Record<XPReason, string> = {
   WORD_GAME_WON: "🔤",
   INTRO_LESSON_COMPLETED: "🧭",
   ALLESKENNER_SOLO: "🧠",
+  WORD_SEARCH_COMPLETED: "🔎",
 };
 
 function startOfDay(d: Date): number {

@@ -1240,6 +1240,7 @@ export const en: PartialMessages = {
       WORD_GAME_WON: "Word game won",
       INTRO_LESSON_COMPLETED: "Intro lesson completed",
       ALLESKENNER_SOLO: "The Know-It-All alone",
+      WORD_SEARCH_COMPLETED: "Word search completed",
     },
   },
   streakPage: {

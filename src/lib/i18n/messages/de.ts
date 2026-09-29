@@ -1240,6 +1240,7 @@ export const de: PartialMessages = {
       WORD_GAME_WON: "Wortspiel gewonnen",
       INTRO_LESSON_COMPLETED: "Einführungslektion abgeschlossen",
       ALLESKENNER_SOLO: "Der Alleswisser allein",
+      WORD_SEARCH_COMPLETED: "Wortsuche abgeschlossen",
     },
   },
   streakPage: {
