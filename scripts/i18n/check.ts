@@ -7,6 +7,7 @@ import { nl } from "../../src/lib/i18n/messages/nl";
 import { en } from "../../src/lib/i18n/messages/en";
 import { de } from "../../src/lib/i18n/messages/de";
 import { fr } from "../../src/lib/i18n/messages/fr";
+import { es } from "../../src/lib/i18n/messages/es";
 import { readdirSync, readFileSync, statSync } from "fs";
 import { join } from "path";
 
@@ -18,7 +19,7 @@ function keys(node: unknown, prefix = ""): string[] {
 
 const source = new Set(keys(nl));
 const only = process.argv[2];
-for (const [code, messages] of Object.entries({ en, de, fr })) {
+for (const [code, messages] of Object.entries({ en, de, fr, es })) {
   const present = new Set(keys(messages));
   const missing = [...source].filter((key) => !present.has(key));
   const unknown = [...present].filter((key) => !source.has(key));

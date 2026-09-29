@@ -7,10 +7,11 @@ import { nl } from "./messages/nl";
 import { en } from "./messages/en";
 import { de } from "./messages/de";
 import { fr } from "./messages/fr";
+import { es } from "./messages/es";
 
 export type { MessageKey, TFunction, Vars } from "./core";
 
-const MESSAGES: Record<LanguageCode, PartialMessages> = { nl, en, de, fr };
+const MESSAGES: Record<LanguageCode, PartialMessages> = { nl, en, de, fr, es };
 
 function merge(base: unknown, over: unknown): unknown {
   if (!over || typeof over !== "object") return over ?? base;

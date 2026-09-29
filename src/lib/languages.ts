@@ -6,7 +6,7 @@
 // - taal van de app: menu's, knoppen, meldingen en e-mails;
 // - taal van de content: welke uitgave van een werk je leest en speelt.
 
-export type LanguageCode = "nl" | "en" | "de" | "fr";
+export type LanguageCode = "nl" | "en" | "de" | "fr" | "es";
 
 export interface Language {
   code: LanguageCode;
@@ -30,6 +30,7 @@ export const LANGUAGES: Language[] = [
   { code: "en", nativeName: "English", badge: "EN", churchCode: "eng", intlLocale: "en-US", uiReady: true },
   { code: "de", nativeName: "Deutsch", badge: "DE", churchCode: "deu", intlLocale: "de-DE", uiReady: false },
   { code: "fr", nativeName: "Français", badge: "FR", churchCode: "fra", intlLocale: "fr-FR", uiReady: false },
+  { code: "es", nativeName: "Español", badge: "ES", churchCode: "spa", intlLocale: "es-ES", uiReady: true },
 ];
 
 export const DEFAULT_LANGUAGE: LanguageCode = "nl";

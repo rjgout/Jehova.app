@@ -93,6 +93,20 @@ const WORD_LISTS: Record<LanguageCode, WordLists> = {
     ]),
     names: [...SHARED_NAMES, "Jérusalem", "Noé", "Aaron", "Jacob"],
   },
+  es: {
+    distractors: [
+      "profeta", "pacto", "fe", "desierto", "rey", "sacerdote",
+      "rectitud", "obediente", "oración", "visión", "espada", "templo",
+      "mandamiento", "testimonio", "arrepentimiento", "revelación",
+    ],
+    stopwords: new Set([
+      "el", "la", "los", "las", "un", "una", "unos", "unas", "de", "del", "y", "que", "en",
+      "por", "para", "con", "sin", "sobre", "como", "no", "se", "su", "sus", "lo", "le", "les",
+      "ellos", "ellas", "nosotros", "vosotros", "este", "esta", "estos", "estas", "eso", "esa",
+      "pero", "cuando", "también", "más", "muy", "fue", "era", "son", "ser", "ha", "han",
+    ]),
+    names: [...SHARED_NAMES, "Jerusalén", "Noé", "Aarón", "Jacob"],
+  },
 };
 
 function wordLists(language: LanguageCode = "nl"): WordLists {
