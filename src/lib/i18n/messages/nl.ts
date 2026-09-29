@@ -15,6 +15,8 @@ export const nl = {
   common: {
     loading: "Laden...",
     close: "Sluiten",
+    confirm: "Bevestigen",
+    cancel: "Annuleren",
   },
   // Namen van pagina's en spellen; dezelfde naam op elke plek één vertaling.
   pages: {

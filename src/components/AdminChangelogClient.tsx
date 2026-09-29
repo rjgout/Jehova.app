@@ -2,6 +2,7 @@
 
 import { useEffect, useState, type FormEvent } from "react";
 import { useT, useUiLanguage } from "@/components/I18nProvider";
+import { useConfirm } from "@/components/ConfirmProvider";
 import { getLanguage } from "@/lib/languages";
 
 interface EntryView {
@@ -13,6 +14,7 @@ interface EntryView {
 
 export default function AdminChangelogClient() {
   const t = useT();
+  const confirm = useConfirm();
   const intlLocale = getLanguage(useUiLanguage()).intlLocale;
   const [entries, setEntries] = useState<EntryView[] | null>(null);
   const [title, setTitle] = useState("");
@@ -74,7 +76,7 @@ export default function AdminChangelogClient() {
   }
 
   async function remove(id: string) {
-    if (!window.confirm(t("adminChangelog.confirmDelete"))) return;
+    if (!(await confirm(t("adminChangelog.confirmDelete")))) return;
     setSavingId(id);
     await fetch(`/api/admin/changelog/${id}`, { method: "DELETE" }).catch(() => {});
     await load();

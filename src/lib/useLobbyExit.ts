@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getSocket } from "@/lib/socketClient";
+import { useConfirm } from "@/components/ConfirmProvider";
 
 // Lang genoeg om de melding te lezen, kort genoeg om niet te blijven hangen.
 const REDIRECT_AFTER_MS = 2500;
@@ -15,6 +16,7 @@ const REDIRECT_AFTER_MS = 2500;
  */
 export function useLobbyExit(code: string, options: { isHost: boolean; alleskenner?: boolean }) {
   const router = useRouter();
+  const confirm = useConfirm();
   const [closedByHost, setClosedByHost] = useState(false);
   const { isHost, alleskenner = false } = options;
 
@@ -44,12 +46,12 @@ export function useLobbyExit(code: string, options: { isHost: boolean; alleskenn
     };
   }, [code, isHost, router]);
 
-  const leave = useCallback(() => {
-    if (!window.confirm("Deze lobby verlaten?")) return;
+  const leave = useCallback(async () => {
+    if (!(await confirm("Deze lobby verlaten?"))) return;
     const socket = getSocket();
     if (alleskenner) socket.emit("ak:leave");
     else socket.emit("leave_game", { code });
-  }, [code, alleskenner]);
+  }, [code, alleskenner, confirm]);
 
   return { closedByHost, leave };
 }

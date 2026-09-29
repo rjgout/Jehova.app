@@ -9,6 +9,7 @@ import { announceXpChanged } from "@/lib/xpBroadcast";
 import UserAvatar from "@/components/UserAvatar";
 import LobbyInviteCard from "@/components/LobbyInviteCard";
 import { useT } from "@/components/I18nProvider";
+import { useConfirm } from "@/components/ConfirmProvider";
 import { translateServerText } from "@/lib/i18n/serverTexts";
 import IntroAudioButton from "@/components/IntroAudioButton";
 
@@ -57,6 +58,7 @@ const LEVEL_KEYS = { BEGINNER: "beginner", ADVANCED: "advanced", EXPERT: "expert
 
 export default function ChapterGuessGameRoom({ code, myUserId }: { code: string; myUserId: string }) {
   const t = useT();
+  const confirm = useConfirm();
   const [phase, setPhase] = useState<Phase>("connecting");
   const [hostId, setHostId] = useState<string | null>(null);
   const [level, setLevel] = useState<Level | null>(null);
@@ -176,8 +178,8 @@ export default function ChapterGuessGameRoom({ code, myUserId }: { code: string;
     setInvited((prev) => new Set(prev).add(friendId));
   }
 
-  function cancelGame() {
-    if (!window.confirm(t("activeGames.confirmEnd"))) return;
+  async function cancelGame() {
+    if (!(await confirm(t("activeGames.confirmEnd")))) return;
     socket.emit("cancel_game", { code });
   }
 
@@ -200,8 +202,8 @@ export default function ChapterGuessGameRoom({ code, myUserId }: { code: string;
     socket.emit("use_hint");
   }
 
-  function forfeit() {
-    if (!window.confirm(t("lobby.confirmForfeit"))) return;
+  async function forfeit() {
+    if (!(await confirm(t("lobby.confirmForfeit")))) return;
     socket.emit("forfeit");
   }
 

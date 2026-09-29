@@ -4,6 +4,7 @@ import { Fragment, useState } from "react";
 import { formatTag } from "@/lib/handle";
 import UserTag from "@/components/UserTag";
 import { useT } from "@/components/I18nProvider";
+import { useConfirm } from "@/components/ConfirmProvider";
 import { rich } from "@/lib/i18n/rich";
 
 interface AdminUser {
@@ -29,6 +30,7 @@ export default function AdminUsersClient({
   currentUserId: string;
 }) {
   const t = useT();
+  const confirm = useConfirm();
   const [users, setUsers] = useState(initialUsers);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -53,7 +55,7 @@ export default function AdminUsersClient({
   }
 
   async function resetPassword(userId: string) {
-    if (!confirm(t("adminUsers.confirmReset"))) return;
+    if (!(await confirm(t("adminUsers.confirmReset")))) return;
     setError(null);
     setBusyId(userId);
     const res = await fetch(`/api/admin/users/${userId}/reset-password`, { method: "POST" });
@@ -73,9 +75,9 @@ export default function AdminUsersClient({
 
   async function deleteUser(u: AdminUser) {
     if (
-      !confirm(
+      !(await confirm(
         t("adminUsers.confirmDelete", { name: formatTag(u.handle, u.discriminator) })
-      )
+      ))
     ) {
       return;
     }

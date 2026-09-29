@@ -5,6 +5,7 @@ import Link from "next/link";
 import { getSocket } from "@/lib/socketClient";
 import UserAvatar from "@/components/UserAvatar";
 import { useT } from "@/components/I18nProvider";
+import { useConfirm } from "@/components/ConfirmProvider";
 
 interface ActivityItem {
   kind: "challenge" | "scrabble" | "live" | "chapter-guess-solo";
@@ -41,6 +42,7 @@ const KIND_ICON: Record<ActivityItem["kind"], string> = {
 // de geïnstalleerde webapp) niet van elkaar te onderscheiden waren.
 export default function ActiveGamesBanner() {
   const t = useT();
+  const confirm = useConfirm();
   const [status, setStatus] = useState<ActivityStatus | null>(null);
   const [error, setError] = useState<string | null>(null);
   // Voorkomt dubbel annuleren terwijl het verzoek nog loopt.
@@ -106,13 +108,13 @@ export default function ActiveGamesBanner() {
 
   async function cancelInvite(item: ActivityItem) {
     if (item.kind === "live") {
-      if (!window.confirm(t("activeGames.confirmEnd"))) return;
+      if (!(await confirm(t("activeGames.confirmEnd")))) return;
       // De banner ververst zichzelf pas via het "game_cancelled"-event
       // hierboven, zodra de server het spel écht heeft verwijderd.
       getSocket().emit("cancel_game", { code: item.code });
       return;
     }
-    if (!window.confirm(t("activeGames.confirmCancel", { name: item.opponentName ?? "" }))) return;
+    if (!(await confirm(t("activeGames.confirmCancel", { name: item.opponentName ?? "" })))) return;
     setCancelling(item.id);
     const url = item.kind === "scrabble" ? `/api/scrabble/${item.id}/cancel` : `/api/challenges/${item.id}/cancel`;
     const response = await fetch(url, { method: "POST" }).catch(() => null);

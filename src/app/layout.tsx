@@ -1,4 +1,5 @@
 import FreezeGiftPopup from "@/components/FreezeGiftPopup";
+import { ConfirmProvider } from "@/components/ConfirmProvider";
 import type { Metadata, Viewport } from "next";
 import Link from "next/link";
 import { headers } from "next/headers";
@@ -142,6 +143,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       </head>
       <body>
         <I18nProvider language={uiLanguage} messages={messagesFor(uiLanguage)}>
+        <ConfirmProvider>
         <PodcastPlayerProvider>
         <ReadAloudPlayerProvider>
         {/* Header + mini-player samen in één vaste wrapper (i.p.v. sticky —
@@ -202,6 +204,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <EdgeSwipeGuard />
         </ReadAloudPlayerProvider>
         </PodcastPlayerProvider>
+        </ConfirmProvider>
         </I18nProvider>
       </body>
     </html>

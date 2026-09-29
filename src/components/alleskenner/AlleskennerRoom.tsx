@@ -12,6 +12,7 @@ import AlleskennerGame, { TEAM_DOTS } from "@/components/alleskenner/Alleskenner
 import UserAvatar from "@/components/UserAvatar";
 import LobbyInviteCard from "@/components/LobbyInviteCard";
 import { useT } from "@/components/I18nProvider";
+import { useConfirm } from "@/components/ConfirmProvider";
 import { rich } from "@/lib/i18n/rich";
 import { translateServerText } from "@/lib/i18n/serverTexts";
 import type { TFunction } from "@/lib/i18n/core";
@@ -46,6 +47,7 @@ interface Friend {
  */
 export default function AlleskennerRoom({ code, soloRunId }: { code: string; soloRunId?: string }) {
   const t = useT();
+  const confirm = useConfirm();
   const [rawState, setState] = useState<AkStateView | null>(null);
   const state = useMemo(() => rawState && localizeState(rawState, t), [rawState, t]);
   const [receivedAt, setReceivedAt] = useState(0);
@@ -135,8 +137,8 @@ function Lobby({ state, onLeave }: { state: AkStateView; onLeave: () => void }) 
     setInvited((prev) => new Set(prev).add(friendId));
   }
 
-  function cancel() {
-    if (!window.confirm(t("activeGames.confirmEnd"))) return;
+  async function cancel() {
+    if (!(await confirm(t("activeGames.confirmEnd")))) return;
     socket.emit("cancel_game", { code: state.code });
   }
 

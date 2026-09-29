@@ -7,6 +7,7 @@ import { getLanguage } from "@/lib/languages";
 import { beginSpeechPlayback, endSpeechPlayback } from "@/lib/speechAudioSession";
 import type { AkGridCell, AkPhase, AkStateView } from "@/lib/alleskenner/types";
 import { useT } from "@/components/I18nProvider";
+import { useConfirm } from "@/components/ConfirmProvider";
 import type { MessageKey } from "@/lib/i18n/core";
 import { rich } from "@/lib/i18n/rich";
 
@@ -105,6 +106,7 @@ function abilities(state: AkStateView): Abilities {
 export default function AlleskennerGame({ state, receivedAt }: { state: AkStateView; receivedAt: number }) {
   const socket = getSocket();
   const t = useT();
+  const confirm = useConfirm();
   const ticking = state.clockRunning || state.turnDeadline !== null;
   const now = useNow(ticking);
   const elapsed = ticking ? Math.max(0, (now - receivedAt) / 1000) : 0;
@@ -211,14 +213,14 @@ export default function AlleskennerGame({ state, receivedAt }: { state: AkStateV
       {state.me.isHost && (
         <button
           className="text-xs text-slate-400 hover:text-red-500 hover:underline self-center"
-          onClick={() =>
-            window.confirm(
+          onClick={async () =>
+            (await confirm(
               state.solo?.mode === "DAILY"
                 ? t("akGame.confirmStopDaily")
                 : state.solo
                   ? t("akGame.confirmStopPractice")
                   : t("akGame.confirmStop")
-            ) && socket.emit("ak:stop")
+            )) && socket.emit("ak:stop")
           }
         >
           {t("akGame.stop")}

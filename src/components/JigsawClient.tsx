@@ -2,6 +2,7 @@
 
 import { useEffect, useId, useRef, useState, type PointerEvent } from "react";
 import { useT } from "@/components/I18nProvider";
+import { useConfirm } from "@/components/ConfirmProvider";
 import { JIGSAW_LEVELS, jigsawGrid, jigsawPiecePath, type JigsawLevel, type JigsawState } from "@/lib/jigsaw";
 
 async function requestGame(body: object, fallback: string): Promise<JigsawState & { accepted?: boolean }> {
@@ -15,6 +16,7 @@ async function requestGame(body: object, fallback: string): Promise<JigsawState 
 
 export default function JigsawClient({ images }: { images: string[] }) {
   const t = useT();
+  const confirm = useConfirm();
   const [imageIndex, setImageIndex] = useState(0);
   const [pieces, setPieces] = useState<JigsawLevel>(12);
   const [page, setPage] = useState(0);
@@ -207,8 +209,8 @@ function Puzzle({ initial, image, onExit }: { initial: JigsawState; image: strin
     void place(current.piece, (x - rect.left) / rect.width, (y - rect.top) / rect.height);
   }
 
-  function exit() {
-    if (!game.complete && game.placed.length > 0 && !window.confirm(t("jigsaw.leaveConfirm"))) return;
+  async function exit() {
+    if (!game.complete && game.placed.length > 0 && !(await confirm(t("jigsaw.leaveConfirm")))) return;
     onExit();
   }
 

@@ -14,6 +14,7 @@ import ThemeToggle from "@/components/ThemeToggle";
 import TwoFactorSettings from "@/components/TwoFactorSettings";
 import { getDutchVoices, saveSelectedDutchVoice } from "@/lib/readAloud";
 import { useT, useUiLanguage } from "@/components/I18nProvider";
+import { useConfirm } from "@/components/ConfirmProvider";
 import { getLanguage } from "@/lib/languages";
 import { translateOr } from "@/lib/i18n/core";
 
@@ -79,6 +80,7 @@ const AVATAR_EMOJI_OPTIONS = [
 
 export default function ProfileClient() {
   const t = useT();
+  const confirm = useConfirm();
   const tier = (value: LeagueTier) => t(`tiers.${value}`);
   const [data, setData] = useState<ProfileData | null>(null);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
@@ -633,9 +635,9 @@ export default function ProfileClient() {
             disabled={resettingReadingProgress}
             onClick={async () => {
               if (
-                !window.confirm(
+                !(await confirm(
                   t("profile.readingResetConfirm")
-                )
+                ))
               ) {
                 return;
               }

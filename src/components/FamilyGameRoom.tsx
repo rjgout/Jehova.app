@@ -9,6 +9,7 @@ import UserAvatar from "@/components/UserAvatar";
 import LobbyInviteCard from "@/components/LobbyInviteCard";
 import IntroAudioButton from "@/components/IntroAudioButton";
 import { useT } from "@/components/I18nProvider";
+import { useConfirm } from "@/components/ConfirmProvider";
 import { translateServerText } from "@/lib/i18n/serverTexts";
 
 type Phase = "connecting" | "lobby" | "playing" | "finished" | "error";
@@ -86,6 +87,7 @@ function tileY(index: number): number {
 
 export default function FamilyGameRoom({ code, myUserId }: { code: string; myUserId: string }) {
   const t = useT();
+  const confirm = useConfirm();
   const [phase, setPhase] = useState<Phase>("connecting");
   const [hostId, setHostId] = useState<string | null>(null);
   const [players, setPlayers] = useState<FamilyPlayerView[]>([]);
@@ -337,13 +339,13 @@ export default function FamilyGameRoom({ code, myUserId }: { code: string; myUse
     socket.emit("start_game");
   }
 
-  function cancelGame() {
-    if (!window.confirm(t("activeGames.confirmEnd"))) return;
+  async function cancelGame() {
+    if (!(await confirm(t("activeGames.confirmEnd")))) return;
     socket.emit("cancel_game", { code });
   }
 
-  function abortInProgress() {
-    if (!window.confirm(t("familyGame.confirmAbort"))) return;
+  async function abortInProgress() {
+    if (!(await confirm(t("familyGame.confirmAbort")))) return;
     socket.emit("forfeit");
   }
 

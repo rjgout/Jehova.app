@@ -6,6 +6,7 @@ import { useT } from "@/components/I18nProvider";
 import type { MessageKey } from "@/lib/i18n/core";
 import { SortableList, DragHandle } from "@/components/SortableList";
 import { applyPersonalOrder, fetchListOrder, saveListOrder } from "@/lib/listOrder";
+import { useConfirm } from "@/components/ConfirmProvider";
 
 interface CourseView {
   id: string;
@@ -43,6 +44,7 @@ const TYPE_LABELS: Record<CourseView["type"], MessageKey> = {
 
 export default function CoursesClient() {
   const t = useT();
+  const confirm = useConfirm();
   const [courses, setCourses] = useState<CourseView[] | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [activatingId, setActivatingId] = useState<string | null>(null);
@@ -99,9 +101,9 @@ export default function CoursesClient() {
 
   async function remove(courseId: string) {
     if (
-      !window.confirm(
+      !(await confirm(
         t("courses.removeConfirm")
-      )
+      ))
     ) {
       return;
     }

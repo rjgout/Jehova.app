@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useT } from "@/components/I18nProvider";
+import { useConfirm } from "@/components/ConfirmProvider";
 
 /**
  * Persoonlijke uitnodigingslink op de Vrienden-pagina (zie
@@ -10,6 +11,7 @@ import { useT } from "@/components/I18nProvider";
  */
 export default function FriendInviteCard({ appName }: { appName: string }) {
   const t = useT();
+  const confirm = useConfirm();
   const [code, setCode] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -50,11 +52,7 @@ export default function FriendInviteCard({ appName }: { appName: string }) {
   }
 
   async function regenerate() {
-    if (
-      !window.confirm(
-        t("friendInvite.confirmRegenerate")
-      )
-    ) {
+    if (!(await confirm(t("friendInvite.confirmRegenerate")))) {
       return;
     }
     setBusy(true);

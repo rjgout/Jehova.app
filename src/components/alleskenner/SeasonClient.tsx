@@ -7,6 +7,7 @@ import { SEASON_STATUS_KEY } from "@/components/alleskenner/SeasonListClient";
 import UserAvatar from "@/components/UserAvatar";
 import FriendPicker from "@/components/FriendPicker";
 import { useT } from "@/components/I18nProvider";
+import { useConfirm } from "@/components/ConfirmProvider";
 import type { TFunction } from "@/lib/i18n/core";
 
 type MemberStatus = "WAITING" | "ACTIVE" | "ELIMINATED" | "RETIRED";
@@ -73,6 +74,7 @@ function statusLabel(m: Member, season: Season, t: TFunction): { text: string; s
 
 export default function SeasonClient({ id }: { id: string }) {
   const t = useT();
+  const confirm = useConfirm();
   const router = useRouter();
   const [season, setSeason] = useState<Season | null>(null);
   const [notFound, setNotFound] = useState(false);
@@ -117,7 +119,7 @@ export default function SeasonClient({ id }: { id: string }) {
   }
 
   async function startFinale() {
-    if (!window.confirm(t("season.confirmFinale"))) return;
+    if (!(await confirm(t("season.confirmFinale")))) return;
     if (await call(`/api/alleskenner/seasons/${id}/finale`, "POST")) load();
   }
 
@@ -130,7 +132,7 @@ export default function SeasonClient({ id }: { id: string }) {
   }
 
   async function setRoles(body: { hostId?: string; deputyHostId?: string | null }) {
-    if (body.hostId && !window.confirm(t("season.confirmTransfer"))) return;
+    if (body.hostId && !(await confirm(t("season.confirmTransfer")))) return;
     if (await call(`/api/alleskenner/seasons/${id}`, "PATCH", body)) load();
   }
 

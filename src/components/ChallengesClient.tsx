@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import UserAvatar from "@/components/UserAvatar";
 import FriendPicker, { type PickerFriend } from "@/components/FriendPicker";
 import { useT } from "@/components/I18nProvider";
+import { useConfirm } from "@/components/ConfirmProvider";
 import { rich } from "@/lib/i18n/rich";
 
 interface ChallengeView {
@@ -31,6 +32,7 @@ interface ChapterOption {
 
 export default function ChallengesClient() {
   const t = useT();
+  const confirm = useConfirm();
   const [challenges, setChallenges] = useState<ChallengeView[] | null>(null);
   const [chapters, setChapters] = useState<ChapterOption[] | null>(null);
   const [selectedChapter, setSelectedChapter] = useState("");
@@ -78,7 +80,7 @@ export default function ChallengesClient() {
   }
 
   async function forfeit(id: string) {
-    if (!window.confirm(t("challenges.confirmForfeit"))) return;
+    if (!(await confirm(t("challenges.confirmForfeit")))) return;
     await fetch(`/api/challenges/${id}/forfeit`, { method: "POST" });
     load();
   }

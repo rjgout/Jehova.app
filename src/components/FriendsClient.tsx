@@ -7,6 +7,7 @@ import UserTag from "@/components/UserTag";
 import UserAvatar from "@/components/UserAvatar";
 import FriendInviteCard from "@/components/FriendInviteCard";
 import { useT } from "@/components/I18nProvider";
+import { useConfirm } from "@/components/ConfirmProvider";
 import { translateServerText } from "@/lib/i18n/serverTexts";
 import { rich } from "@/lib/i18n/rich";
 
@@ -41,6 +42,7 @@ interface SearchResult {
 
 export default function FriendsClient({ appName }: { appName: string }) {
   const t = useT();
+  const confirm = useConfirm();
   const [data, setData] = useState<FriendsData | null>(null);
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SearchResult[] | null>(null);
@@ -149,7 +151,7 @@ export default function FriendsClient({ appName }: { appName: string }) {
   }
 
   async function removeFriendship(friendshipId: string, kind: "request" | "friendship") {
-    if (!window.confirm(t(kind === "request" ? "friends.confirmRemoveRequest" : "friends.confirmRemoveFriendship"))) return;
+    if (!(await confirm(t(kind === "request" ? "friends.confirmRemoveRequest" : "friends.confirmRemoveFriendship")))) return;
     const res = await fetch(`/api/friends/${friendshipId}`, { method: "DELETE" });
     const body = await res.json().catch(() => ({}));
     if (!res.ok) { setMessage(body.error ?? t("friends.removeFailed")); return; }

@@ -10,6 +10,7 @@ import { announceXpChanged } from "@/lib/xpBroadcast";
 import UserAvatar from "@/components/UserAvatar";
 import LobbyInviteCard from "@/components/LobbyInviteCard";
 import { useT } from "@/components/I18nProvider";
+import { useConfirm } from "@/components/ConfirmProvider";
 import { translateServerText } from "@/lib/i18n/serverTexts";
 
 interface LobbyPlayer {
@@ -40,6 +41,7 @@ type Phase = "connecting" | "lobby" | "question" | "reveal" | "finished" | "erro
 
 export default function GameRoom({ code, myUserId }: { code: string; myUserId: string }) {
   const t = useT();
+  const confirm = useConfirm();
   const [phase, setPhase] = useState<Phase>("connecting");
   const [hostId, setHostId] = useState<string | null>(null);
   const [players, setPlayers] = useState<LobbyPlayer[]>([]);
@@ -126,13 +128,13 @@ export default function GameRoom({ code, myUserId }: { code: string; myUserId: s
     setInvited((prev) => new Set(prev).add(friendId));
   }
 
-  function cancelGame() {
-    if (!window.confirm(t("activeGames.confirmEnd"))) return;
+  async function cancelGame() {
+    if (!(await confirm(t("activeGames.confirmEnd")))) return;
     socket.emit("cancel_game", { code });
   }
 
-  function forfeit() {
-    if (!window.confirm(t("lobby.confirmForfeit"))) return;
+  async function forfeit() {
+    if (!(await confirm(t("lobby.confirmForfeit")))) return;
     socket.emit("forfeit");
   }
 

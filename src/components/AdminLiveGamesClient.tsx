@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useT, useUiLanguage } from "@/components/I18nProvider";
+import { useConfirm } from "@/components/ConfirmProvider";
 import { getLanguage } from "@/lib/languages";
 
 interface GameView {
@@ -16,6 +17,7 @@ interface GameView {
 
 export default function AdminLiveGamesClient() {
   const t = useT();
+  const confirm = useConfirm();
   const intlLocale = getLanguage(useUiLanguage()).intlLocale;
   const [games, setGames] = useState<GameView[] | null>(null);
   const [endingId, setEndingId] = useState<string | null>(null);
@@ -30,7 +32,7 @@ export default function AdminLiveGamesClient() {
   }, []);
 
   async function endGame(id: string, code: string) {
-    if (!window.confirm(t("adminLive.confirmEnd", { code }))) return;
+    if (!(await confirm(t("adminLive.confirmEnd", { code })))) return;
     setEndingId(id);
     await fetch(`/api/admin/live-games/${id}`, { method: "DELETE" }).catch(() => {});
     await load();

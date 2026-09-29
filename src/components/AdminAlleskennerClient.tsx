@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useT } from "@/components/I18nProvider";
+import { useConfirm } from "@/components/ConfirmProvider";
 import type { TFunction } from "@/lib/i18n/core";
 
 type Kind = "QUESTION" | "TOPIC" | "PUZZLE" | "GALLERY" | "MEMORY";
@@ -34,6 +35,7 @@ function summary(item: Item, t: TFunction): string {
  */
 export default function AdminAlleskennerClient() {
   const t = useT();
+  const confirm = useConfirm();
   const [items, setItems] = useState<Item[] | null>(null);
   const [kind, setKind] = useState<Kind | "ALL">("ALL");
   const [query, setQuery] = useState("");
@@ -105,7 +107,7 @@ export default function AdminAlleskennerClient() {
   }
 
   async function reset(item: Item) {
-    if (!window.confirm(t("adminAk.confirmReset"))) return;
+    if (!(await confirm(t("adminAk.confirmReset")))) return;
     if (await send(item.id, { reset: true }, t("adminAk.resetDone"))) {
       const res = await fetch("/api/admin/alleskenner");
       const fresh = (await res.json()).items as Item[];

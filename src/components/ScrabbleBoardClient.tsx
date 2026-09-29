@@ -5,6 +5,7 @@ import Link from "next/link";
 import UserAvatar from "@/components/UserAvatar";
 import { getSocket } from "@/lib/socketClient";
 import { useT } from "@/components/I18nProvider";
+import { useConfirm } from "@/components/ConfirmProvider";
 import { rich } from "@/lib/i18n/rich";
 
 const BOARD_SIZE = 15;
@@ -108,6 +109,7 @@ const FLASH_DURATION_MS = 2800;
 
 export default function ScrabbleBoardClient({ gameId }: { gameId: string }) {
   const t = useT();
+  const confirm = useConfirm();
   const [game, setGame] = useState<GameState | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [pending, setPending] = useState<Pending[]>([]);
@@ -318,7 +320,7 @@ export default function ScrabbleBoardClient({ gameId }: { gameId: string }) {
   }
 
   async function submitForfeit() {
-    if (!window.confirm(t("challenges.confirmForfeit"))) return;
+    if (!(await confirm(t("challenges.confirmForfeit")))) return;
     setBusy(true);
     setMessage(null);
     const res = await fetch(`/api/scrabble/${gameId}/forfeit`, { method: "POST" });
