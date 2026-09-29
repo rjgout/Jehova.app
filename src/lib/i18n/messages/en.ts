@@ -55,6 +55,8 @@ export const en: PartialMessages = {
     incorrect: "That is not a hidden word.",
     error: "The word search could not be loaded.",
     xpEarned: "+{xp} XP earned",
+    giveUp: "Give up",
+    giveUpConfirm: "Give up this word search? Your progress will be lost.",
   },
   nav: {
     main: "Main navigation",

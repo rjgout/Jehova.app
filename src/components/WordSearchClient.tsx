@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useRef, useState } from "react";
+import { useConfirm } from "@/components/ConfirmProvider";
 import { useT } from "@/components/I18nProvider";
 import { lineCoordinates, type WordSearchDifficulty, type WordSearchPlacedWord, type WordSearchPosition } from "@/lib/wordSearch/generator";
 import type { WordSearchView } from "@/lib/wordSearch/game";
@@ -17,6 +18,7 @@ function keyOf(position: WordSearchPosition) {
 
 export default function WordSearchClient({ initialGame = null }: Props) {
   const t = useT();
+  const confirm = useConfirm();
   const router = useRouter();
   const [game, setGame] = useState<WordSearchView | null>(initialGame);
   const [difficulty, setDifficulty] = useState<WordSearchDifficulty>("EASY");
@@ -44,6 +46,18 @@ export default function WordSearchClient({ initialGame = null }: Props) {
     setGame(next);
     setStarting(false);
     router.replace(`/word-search/${next.id}`);
+  }
+
+  async function giveUp() {
+    if (!game || !(await confirm(t("wordSearch.giveUpConfirm")))) return;
+    const response = await fetch(`/api/word-search/${game.id}/give-up`, { method: "POST" }).catch(() => null);
+    if (!response?.ok) {
+      setMessage(t("wordSearch.error"));
+      return;
+    }
+    setGame(null);
+    setMessage(null);
+    router.push("/word-search");
   }
 
   function cellFromPoint(clientX: number, clientY: number): WordSearchPosition | null {
@@ -157,7 +171,10 @@ export default function WordSearchClient({ initialGame = null }: Props) {
           <h1 className="text-2xl font-black dark:text-slate-100">{t("wordSearch.title")}</h1>
           <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{t("wordSearch.selectHint")}</p>
         </div>
-        <Link href="/live" className="btn-secondary">{t("wordSearch.backToGames")}</Link>
+        <div className="flex flex-wrap gap-2">
+          {game.status === "IN_PROGRESS" && <button type="button" className="btn-secondary" onClick={() => void giveUp()}>{t("wordSearch.giveUp")}</button>}
+          <Link href="/live" className="btn-secondary">{t("wordSearch.backToGames")}</Link>
+        </div>
       </div>
 
       <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_18rem]">

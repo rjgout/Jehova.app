@@ -1,0 +1,1 @@
+ALTER TYPE "WordSearchGameStatus" ADD VALUE 'ABANDONED';

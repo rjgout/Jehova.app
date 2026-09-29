@@ -55,6 +55,8 @@ export const fr: PartialMessages = {
     incorrect: "Ce n'est pas un mot caché.",
     error: "Les mots cachés n'ont pas pu être chargés.",
     xpEarned: "+{xp} XP gagnés",
+    giveUp: "Abandonner",
+    giveUpConfirm: "Abandonner cette grille ? Votre progression sera perdue.",
   },
   nav: {
     main: "Navigation principale",

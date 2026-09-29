@@ -14,7 +14,7 @@ interface StoredGame {
   grid: string;
   words: string;
   foundWords: string;
-  status: "IN_PROGRESS" | "COMPLETED";
+  status: "IN_PROGRESS" | "COMPLETED" | "ABANDONED";
   xpEarned: number;
   finishedAt: Date | null;
 }
@@ -107,6 +107,15 @@ export async function startWordSearch(userId: string, difficulty: WordSearchDiff
 export async function getWordSearch(userId: string, gameId: string) {
   const game = await prisma.wordSearchGame.findFirst({ where: { id: gameId, userId } });
   return game ? toView(game) : null;
+}
+
+export async function abandonWordSearch(userId: string, gameId: string) {
+  const game = await prisma.wordSearchGame.findFirst({ where: { id: gameId, userId, status: "IN_PROGRESS" } });
+  if (!game) return null;
+  return prisma.wordSearchGame.update({
+    where: { id: game.id },
+    data: { status: "ABANDONED", finishedAt: new Date() },
+  });
 }
 
 export async function findWordSearchWord(userId: string, gameId: string, start: WordSearchPosition, end: WordSearchPosition) {

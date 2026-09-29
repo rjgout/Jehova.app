@@ -442,6 +442,8 @@ export const nl = {
     incorrect: "Dat is geen verborgen woord.",
     error: "De woordzoeker kon niet worden geladen.",
     xpEarned: "+{xp} XP verdiend",
+    giveUp: "Opgeven",
+    giveUpConfirm: "Deze woordzoeker opgeven? Je voortgang gaat verloren.",
   },
   chapterGuessLevels: {
     beginner: "Beginner",

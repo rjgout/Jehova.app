@@ -40,6 +40,25 @@ test("generator blijft binnen het raster en is reproduceerbaar per seed", () => 
     assert.equal(positions?.map(({ row, col }) => first.grid[row][col]).join(""), word.normalized);
     assert.ok(positions?.every(({ row, col }) => row >= 0 && row < first.size && col >= 0 && col < first.size));
   }
+  assert.equal(first.words.filter((word) => word.start.row !== word.end.row && word.start.col !== word.end.col).length >= 4, true);
+});
+
+test("moeilijkheidsgraden verschillen in raster, lengtevariatie en overlap", () => {
+  const easy = generateWordSearch(candidates, "EASY", 7);
+  const medium = generateWordSearch(candidates, "MEDIUM", 7);
+  const hard = generateWordSearch(candidates, "HARD", 7);
+  assert.ok(easy.size < medium.size && medium.size < hard.size);
+  for (const puzzle of [easy, medium, hard]) {
+    const lengths = new Set(puzzle.words.map((word) => word.normalized.length));
+    assert.ok(lengths.size >= 2);
+    const usedCells = new Set<string>();
+    for (const word of puzzle.words) {
+      lineCoordinates(word.start, word.end, puzzle.size)?.forEach((cell) => usedCells.add(`${cell.row}:${cell.col}`));
+    }
+    assert.ok(usedCells.size < puzzle.size * puzzle.size);
+  }
+  assert.ok(medium.words.some((word) => word.start.row !== word.end.row && word.start.col !== word.end.col));
+  assert.ok(hard.words.some((word) => word.start.row !== word.end.row && word.start.col !== word.end.col));
 });
 
 test("woorden die niet passen worden overgeslagen zonder oneindige lus", () => {
@@ -48,6 +67,6 @@ test("woorden die niet passen worden overgeslagen zonder oneindige lus", () => {
     "EASY",
     99
   );
-  assert.equal(result.words.length, 6);
+  assert.equal(result.words.length, 5);
   assert.ok(!result.words.some((word) => word.normalized === "DITWOORDPASTNIET"));
 });

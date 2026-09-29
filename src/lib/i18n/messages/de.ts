@@ -55,6 +55,8 @@ export const de: PartialMessages = {
     incorrect: "Das ist kein verborgenes Wort.",
     error: "Die Wortsuche konnte nicht geladen werden.",
     xpEarned: "+{xp} XP verdient",
+    giveUp: "Aufgeben",
+    giveUpConfirm: "Diese Wortsuche aufgeben? Dein Fortschritt geht verloren.",
   },
   nav: {
     main: "Hauptnavigation",
