@@ -178,6 +178,11 @@ export default function FriendsClient({ appName }: { appName: string }) {
   if (!data) return <p className="text-slate-400 dark:text-slate-500">{t("common.loading")}</p>;
 
   const onlineCount = Object.values(data.statusByUserId).filter((s) => s.online).length;
+  // Houd actieve vrienden direct zichtbaar; de volgorde binnen online en
+  // offline blijft gelijk aan de volgorde die de API aanlevert.
+  const sortedFriends = [...data.friends].sort(
+    (a, b) => Number(data.statusByUserId[b.user.id]?.online ?? false) - Number(data.statusByUserId[a.user.id]?.online ?? false)
+  );
 
   return (
     <div className="max-w-5xl mx-auto flex flex-col gap-6">
@@ -314,7 +319,7 @@ export default function FriendsClient({ appName }: { appName: string }) {
         </h2>
         {data.friends.length === 0 && <p className="text-slate-400 dark:text-slate-500">{t("friends.none")}</p>}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {data.friends.map(({ friendshipId, user: f }) => {
+          {sortedFriends.map(({ friendshipId, user: f }) => {
             const status = data.statusByUserId[f.id];
             return (
               <div key={f.id} className="card flex flex-col gap-3">
