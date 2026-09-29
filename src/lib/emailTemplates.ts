@@ -28,6 +28,15 @@ export function verifyEmailTemplate(t: TFunction, link: string) {
   };
 }
 
+export function registrationAttemptTemplate(t: TFunction) {
+  return {
+    subject: t("emails.registrationAttemptSubject", { app: APP_NAME }),
+    html: wrap(t, `<p>${t("emails.registrationAttemptIntro", { app: APP_NAME })}</p>
+       <p>${t("emails.registrationAttemptIgnore")}</p>`),
+    text: `${t("emails.registrationAttemptIntro", { app: APP_NAME })}\n\n${t("emails.registrationAttemptIgnore")}`,
+  };
+}
+
 export function resetPasswordTemplate(t: TFunction, link: string) {
   return {
     subject: t("emails.resetSubject", { app: APP_NAME }),

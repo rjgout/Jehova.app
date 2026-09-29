@@ -1,9 +1,7 @@
 "use client";
 
 import { useEffect, useState, FormEvent } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { getSocket } from "@/lib/socketClient";
 import { useT } from "@/components/I18nProvider";
 
 interface Inviter {
@@ -13,18 +11,16 @@ interface Inviter {
 }
 
 export default function RegisterPage() {
-  const router = useRouter();
   const t = useT();
   const [form, setForm] = useState({ email: "", handle: "", password: "" });
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [createdTag, setCreatedTag] = useState<string | null>(null);
+  const [submitted, setSubmitted] = useState(false);
   // Via een uitnodigingslink (/uitnodiging/<code>) binnengekomen. Uit de URL
   // gelezen na het laden in plaats van met useSearchParams, dat voor deze
   // statische pagina een Suspense-grens zou vereisen.
   const [inviteCode, setInviteCode] = useState<string | null>(null);
   const [inviter, setInviter] = useState<Inviter | null>(null);
-  const [befriended, setBefriended] = useState(false);
 
   useEffect(() => {
     const code = new URLSearchParams(window.location.search).get("invite");
@@ -53,35 +49,18 @@ export default function RegisterPage() {
       setError(data.error ?? t("wordOfTheDay.somethingWrong"));
       return;
     }
-    if (data.inviterId) {
-      setBefriended(true);
-      // De route kan de socketserver niet bereiken: zelf seinen, zodat een
-      // openstaande vriendenpagina van de uitnodiger meteen ververst.
-      getSocket().emit("friendship_changed", { otherUserId: data.inviterId });
-    }
-    setCreatedTag(data.tag);
+    setSubmitted(true);
   }
 
-  if (createdTag) {
+  if (submitted) {
     return (
       <div className="max-w-md mx-auto card text-center flex flex-col items-center gap-4">
-        <div className="text-4xl">🎉</div>
-        <h1 className="text-xl font-extrabold text-brand-800 dark:text-brand-300">{t("auth.accountCreated")}</h1>
-        <p className="text-slate-600 dark:text-slate-300">{t("auth.yourUsername")}</p>
-        <p className="text-2xl font-extrabold tracking-wide bg-brand-50 dark:bg-slate-700 text-brand-700 dark:text-brand-300 rounded-2xl px-4 py-2">
-          {createdTag}
-        </p>
-        {befriended && inviter && (
-          <p className="text-sm font-semibold bg-brand-50 dark:bg-slate-700 text-brand-700 dark:text-brand-300 rounded-xl px-3 py-2">
-            {t("auth.nowFriends", { tag: inviter.tag })}
-          </p>
-        )}
+        <div className="text-4xl">✉️</div>
+        <h1 className="text-xl font-extrabold text-brand-800 dark:text-brand-300">{t("auth.registrationSubmittedTitle")}</h1>
         <p className="text-sm text-slate-500 dark:text-slate-400">
-          {t("auth.confirmEmailFirst")}
+          {t("auth.registrationSubmitted")}
         </p>
-        <button className="btn-primary" onClick={() => { router.push("/verify-email"); router.refresh(); }}>
-          {t("auth.confirmEmail")}
-        </button>
+        <Link className="btn-primary" href="/login">{t("auth.logIn")}</Link>
       </div>
     );
   }

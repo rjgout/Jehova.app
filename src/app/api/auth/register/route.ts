@@ -1,13 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { Prisma } from "@prisma/client";
+import { createHash } from "crypto";
 import { anonymousLanguage } from "@/lib/requestLanguage";
 import { prisma } from "@/lib/db";
-import { createSessionToken, hashPassword, SESSION_COOKIE, sessionCookieOptions } from "@/lib/auth";
-import { generateDiscriminator, formatTag, HANDLE_REGEX, HANDLE_MIN_LENGTH, HANDLE_MAX_LENGTH, containsForbiddenEmoji } from "@/lib/handle";
+import { hashPassword } from "@/lib/auth";
+import { generateDiscriminator, HANDLE_REGEX, HANDLE_MIN_LENGTH, HANDLE_MAX_LENGTH, containsForbiddenEmoji } from "@/lib/handle";
 import { createAuthToken } from "@/lib/authTokens";
 import { isEmailConfigured, sendMail } from "@/lib/email";
-import { verifyEmailTemplate } from "@/lib/emailTemplates";
+import { registrationAttemptTemplate, verifyEmailTemplate } from "@/lib/emailTemplates";
 import { getT } from "@/lib/i18n";
 import { getBaseUrl } from "@/lib/baseUrl";
 import { FRONT_TO_BACK_SLUG, subscribeUserToCourse } from "@/lib/courses";
@@ -30,6 +31,33 @@ const schema = z.object({
 });
 
 const MAX_DISCRIMINATOR_ATTEMPTS = 25;
+const REGISTRATION_NOTICE_WINDOW_MS = 24 * 60 * 60 * 1000;
+const noticeSentAt = new Map<string, number>();
+
+const GENERIC_RESPONSE = {
+  ok: true,
+  message: "Als registratie mogelijk is, ontvang je een e-mail met vervolgstappen.",
+};
+
+function noticeKey(email: string): string {
+  // Het e-mailadres mag niet in de rate-limit-sleutel blijven staan als deze
+  // map tijdens de levensduur van het proces wordt geïnspecteerd.
+  return createHash("sha256").update(email).digest("hex");
+}
+
+function maySendRegistrationNotice(email: string): boolean {
+  const key = noticeKey(email);
+  const now = Date.now();
+  const lastSent = noticeSentAt.get(key);
+  if (lastSent && now - lastSent < REGISTRATION_NOTICE_WINDOW_MS) return false;
+  noticeSentAt.set(key, now);
+  if (noticeSentAt.size > 5000) {
+    for (const [storedKey, sentAt] of noticeSentAt) {
+      if (now - sentAt >= REGISTRATION_NOTICE_WINDOW_MS) noticeSentAt.delete(storedKey);
+    }
+  }
+  return true;
+}
 
 export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => null);
@@ -41,7 +69,14 @@ export async function POST(req: NextRequest) {
 
   const existingEmail = await prisma.user.findUnique({ where: { email } });
   if (existingEmail) {
-    return await apiError("apiErrors.emailInUse", 409);
+    // Geef geen account-specifieke respons en maak geen tweede account aan.
+    // De melding is bewust beperkt tot maximaal één keer per dag: anders kan
+    // dit eindpunt worden misbruikt om iemand met e-mails lastig te vallen.
+    if (await isEmailConfigured() && maySendRegistrationNotice(email)) {
+      const { subject, html, text } = registrationAttemptTemplate(getT(existingEmail.uiLanguage));
+      await sendMail({ to: existingEmail.email, subject, html, text });
+    }
+    return NextResponse.json(GENERIC_RESPONSE);
   }
 
   const passwordHash = await hashPassword(password);
@@ -92,9 +127,9 @@ export async function POST(req: NextRequest) {
         await subscribeUserToCourse(prisma, user.id, defaultCourse.id);
       }
 
-      // Best-effort: als er geen (werkende) e-mailconfiguratie is, blijft
-      // emailVerifiedAt gewoon leeg en wordt bevestiging nergens afgedwongen
-      // (zie dashboard/page.tsx) — dus geen registratie die vastloopt.
+      // Als e-mail is geconfigureerd, moet de gebruiker eerst bevestigen. De
+      // registratie krijgt daarom nog geen sessie: zo is het antwoord voor een
+      // bestaand en een nieuw e-mailadres niet uit elkaar te houden.
       if (await isEmailConfigured()) {
         const rawToken = await createAuthToken(user.id, "EMAIL_VERIFY");
         const link = `${getBaseUrl(req)}/verify-email?token=${rawToken}`;
@@ -104,19 +139,16 @@ export async function POST(req: NextRequest) {
 
       // Een ongeldige of vervangen link mag de registratie nooit laten mislukken:
       // dan wordt het gewoon een account zonder vriend.
-      let inviterId: string | null = null;
       if (inviteCode) {
         const invite = await becomeFriendsViaInvite(inviteCode, user.id, { isNewAccount: true }).catch(() => null);
         if (invite?.ok) {
-          inviterId = invite.inviterId;
           await prisma.user.update({ where: { id: user.id }, data: { registeredViaInvite: true } });
         }
       }
 
-      const token = await createSessionToken(user.id);
-      const res = NextResponse.json({ id: user.id, tag: formatTag(user.handle, user.discriminator), inviterId });
-      res.cookies.set(SESSION_COOKIE, token, sessionCookieOptions);
-      return res;
+      // Geen id, tag, uitnodiger of sessie teruggeven: ook de normale
+      // registratie mag vóór e-mailbevestiging geen accountinformatie lekken.
+      return NextResponse.json(GENERIC_RESPONSE);
     } catch (e) {
       if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
         continue; // discriminator-botsing voor deze handle, probeer opnieuw
