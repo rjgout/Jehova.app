@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import CollapsibleCard from "@/components/CollapsibleCard";
 import { LANGUAGES, getLanguage } from "@/lib/languages";
 import { useT } from "@/components/I18nProvider";
+import AppSelect from "@/components/AppSelect";
 
 // Twee losse keuzes (zie User.uiLanguage / contentLanguage): de taal van de
 // app en de taal waarin je de Schriften leest en speelt. Een taal staat
@@ -59,19 +60,14 @@ export default function LanguageSettings({ uiLanguage, isAdmin }: { uiLanguage: 
         <span className="text-sm font-semibold dark:text-slate-200">{t("languageSettings.appLanguage")}</span>
         <span className="text-xs text-slate-500 dark:text-slate-400">{t("languageSettings.appLanguageHint")}</span>
         {uiChoices.length > 1 ? (
-          <select
+          <AppSelect
             className="input"
             value={uiLanguage}
             disabled={saving}
-            onChange={(e) => save("/api/account", "PATCH", { uiLanguage: e.target.value })}
-          >
-            {uiChoices.map((language) => (
-              <option key={language.code} value={language.code}>
-                {language.nativeName}
-                {language.uiReady ? "" : ` ${t("languageSettings.inDevelopment")}`}
-              </option>
-            ))}
-          </select>
+            onChange={(value) => save("/api/account", "PATCH", { uiLanguage: value })}
+            ariaLabel={t("languageSettings.appLanguage")}
+            options={uiChoices.map((language) => ({ value: language.code, label: `${language.nativeName}${language.uiReady ? "" : ` ${t("languageSettings.inDevelopment")}`}` }))}
+          />
         ) : (
           <span className="text-sm dark:text-slate-200">
             {t("languageSettings.moreFollow", { language: getLanguage(uiLanguage).nativeName })}
@@ -83,18 +79,14 @@ export default function LanguageSettings({ uiLanguage, isAdmin }: { uiLanguage: 
         <span className="text-sm font-semibold dark:text-slate-200">{t("languageSettings.textLanguage")}</span>
         <span className="text-xs text-slate-500 dark:text-slate-400">{t("languageSettings.textLanguageHint")}</span>
         {contentLanguage && contentChoices.length > 1 ? (
-          <select
+          <AppSelect
             className="input"
             value={contentLanguage}
             disabled={saving}
-            onChange={(e) => save("/api/content-context", "PUT", { contentLanguage: e.target.value })}
-          >
-            {contentChoices.map((language) => (
-              <option key={language.code} value={language.code}>
-                {language.nativeName}
-              </option>
-            ))}
-          </select>
+            onChange={(value) => save("/api/content-context", "PUT", { contentLanguage: value })}
+            ariaLabel={t("languageSettings.textLanguage")}
+            options={contentChoices.map((language) => ({ value: language.code, label: language.nativeName }))}
+          />
         ) : (
           <span className="text-sm dark:text-slate-200">
             {t("languageSettings.moreFollow", { language: getLanguage(contentLanguage).nativeName })}

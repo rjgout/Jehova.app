@@ -12,6 +12,7 @@ import AlleskennerGame, { TEAM_DOTS } from "@/components/alleskenner/Alleskenner
 import UserAvatar from "@/components/UserAvatar";
 import LobbyInviteCard from "@/components/LobbyInviteCard";
 import { useT } from "@/components/I18nProvider";
+import AppSelect from "@/components/AppSelect";
 import { useConfirm } from "@/components/ConfirmProvider";
 import { rich } from "@/lib/i18n/rich";
 import { translateServerText } from "@/lib/i18n/serverTexts";
@@ -195,17 +196,13 @@ function Lobby({ state, onLeave }: { state: AkStateView; onLeave: () => void }) 
                 )}
                 {isHost && teams && p.teamIndex !== null && (
                   <>
-                    <select
+                    <AppSelect
                       className="input !w-auto !py-1 !text-sm"
-                      value={p.teamIndex}
-                      onChange={(e) => socket.emit("ak:set_team", { userId: p.userId, team: Number(e.target.value) })}
-                    >
-                      {teams.map((team, i) => (
-                        <option key={team.name} value={i}>
-                          {team.name}
-                        </option>
-                      ))}
-                    </select>
+                      value={String(p.teamIndex)}
+                      onChange={(value) => socket.emit("ak:set_team", { userId: p.userId, team: Number(value) })}
+                      ariaLabel={p.name}
+                      options={teams.map((team, i) => ({ value: String(i), label: team.name }))}
+                    />
                     <button
                       className={`rounded-full px-2.5 py-1 text-xs font-bold ${
                         isLeader
@@ -221,14 +218,13 @@ function Lobby({ state, onLeave }: { state: AkStateView; onLeave: () => void }) 
                   </>
                 )}
                 {isHost && p.role !== "quizmaster" && !season ? (
-                  <select
+                  <AppSelect
                     className="input !w-auto !py-1 !text-sm"
                     value={p.role}
-                    onChange={(e) => socket.emit("ak:set_role", { userId: p.userId, role: e.target.value })}
-                  >
-                    <option value="player">{t("akRoom.roles.player")}</option>
-                    <option value="spectator">{t("akRoom.roles.spectator")}</option>
-                  </select>
+                    onChange={(value) => socket.emit("ak:set_role", { userId: p.userId, role: value })}
+                    ariaLabel={p.name}
+                    options={[{ value: "player", label: t("akRoom.roles.player") }, { value: "spectator", label: t("akRoom.roles.spectator") }]}
+                  />
                 ) : (
                   <span className="text-sm text-slate-500 dark:text-slate-400">{t(`akRoom.roles.${ROLE_KEY[p.role]}`)}</span>
                 )}
@@ -268,20 +264,13 @@ function Lobby({ state, onLeave }: { state: AkStateView; onLeave: () => void }) 
       {isHost && (
         <div className="card flex flex-col gap-3">
           <h2 className="font-extrabold dark:text-slate-100">{t("akRoom.roles.quizmaster")}</h2>
-          <select
+          <AppSelect
             className="input"
             value={state.quizmasterId ?? ""}
-            onChange={(e) => socket.emit("ak:set_quizmaster", { userId: e.target.value || null })}
-          >
-            <option value="">{t("akRoom.noQuizmaster")}</option>
-            {state.participants
-              .filter((p) => !season?.lineup.some((l) => l.userId === p.userId))
-              .map((p) => (
-              <option key={p.userId} value={p.userId}>
-                {t("akRoom.isQuizmaster", { name: p.name })}
-              </option>
-              ))}
-          </select>
+            onChange={(value) => socket.emit("ak:set_quizmaster", { userId: value || null })}
+            ariaLabel={t("akRoom.roles.quizmaster")}
+            options={[{ value: "", label: t("akRoom.noQuizmaster") }, ...state.participants.filter((p) => !season?.lineup.some((l) => l.userId === p.userId)).map((p) => ({ value: p.userId, label: t("akRoom.isQuizmaster", { name: p.name }) }))]}
+          />
           <p className="text-xs text-slate-500 dark:text-slate-400">
             {t("akRoom.quizmasterHint")}
           </p>
@@ -291,18 +280,13 @@ function Lobby({ state, onLeave }: { state: AkStateView; onLeave: () => void }) 
       {isHost && !season && (playerCount >= AK_MIN_TEAM_PLAYERS || teams) && (
         <div className="card flex flex-col gap-3">
           <h2 className="font-extrabold dark:text-slate-100">{t("akRoom.teams")}</h2>
-          <select
+          <AppSelect
             className="input"
-            value={teams?.length ?? 0}
-            onChange={(e) => socket.emit("ak:set_teams", { count: Number(e.target.value) })}
-          >
-            <option value={0}>{t("akRoom.everyoneForThemselves")}</option>
-            {Array.from({ length: AK_MAX_TEAMS - 1 }, (_, i) => i + 2).map((count) => (
-              <option key={count} value={count}>
-                {t("akRoom.teamsN", { n: count })}
-              </option>
-            ))}
-          </select>
+            value={String(teams?.length ?? 0)}
+            onChange={(value) => socket.emit("ak:set_teams", { count: Number(value) })}
+            ariaLabel={t("akRoom.teams")}
+            options={[{ value: "0", label: t("akRoom.everyoneForThemselves") }, ...Array.from({ length: AK_MAX_TEAMS - 1 }, (_, i) => i + 2).map((count) => ({ value: String(count), label: t("akRoom.teamsN", { n: count }) }))]}
+          />
           <p className="text-xs text-slate-500 dark:text-slate-400">
             {t("akRoom.teamsHint")}
           </p>

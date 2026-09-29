@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useT } from "@/components/I18nProvider";
+import AppSelect from "@/components/AppSelect";
 import { useConfirm } from "@/components/ConfirmProvider";
 import type { TFunction } from "@/lib/i18n/core";
 
@@ -131,14 +132,13 @@ export default function AdminAlleskennerClient() {
       </div>
 
       <div className="flex flex-wrap gap-2">
-        <select className="input !w-auto" value={kind} onChange={(e) => setKind(e.target.value as Kind | "ALL")}>
-          <option value="ALL">{t("adminAk.allKinds", { n: items?.length ?? 0 })}</option>
-          {KINDS.map((k) => (
-            <option key={k} value={k}>
-              {t(`adminAk.kinds.${k}`)} ({items?.filter((i) => i.kind === k).length ?? 0})
-            </option>
-          ))}
-        </select>
+        <AppSelect
+          className="input !w-auto"
+          value={kind}
+          onChange={(value) => setKind(value as Kind | "ALL")}
+          ariaLabel={t("adminAk.allKinds", { n: items?.length ?? 0 })}
+          options={[{ value: "ALL", label: t("adminAk.allKinds", { n: items?.length ?? 0 }) }, ...KINDS.map((k) => ({ value: k, label: `${t(`adminAk.kinds.${k}`)} (${items?.filter((i) => i.kind === k).length ?? 0})` }))]}
+        />
         <input className="input flex-1 min-w-[10rem]" placeholder={t("adminAk.search")} value={query} onChange={(e) => setQuery(e.target.value)} />
       </div>
 

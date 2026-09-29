@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import UserAvatar from "@/components/UserAvatar";
 import FriendPicker, { type PickerFriend } from "@/components/FriendPicker";
 import { useT } from "@/components/I18nProvider";
+import AppSelect from "@/components/AppSelect";
 import { useConfirm } from "@/components/ConfirmProvider";
 import { rich } from "@/lib/i18n/rich";
 
@@ -103,14 +104,13 @@ export default function ChallengesClient() {
 
       <div className="card flex flex-col gap-3">
         <h2 className="font-extrabold dark:text-slate-100">{t("challenges.newChallenge")}</h2>
-        <select className="input" value={selectedChapter} onChange={(e) => setSelectedChapter(e.target.value)}>
-          <option value="">{t("challenges.chooseChapter")}</option>
-          {chapters.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.label}
-            </option>
-          ))}
-        </select>
+        <AppSelect
+          className="input"
+          value={selectedChapter}
+          onChange={setSelectedChapter}
+          ariaLabel={t("challenges.chooseChapter")}
+          options={[{ value: "", label: t("challenges.chooseChapter") }, ...chapters.map((c) => ({ value: c.id, label: c.label }))]}
+        />
         <button className="btn-primary self-start" disabled={!selectedChapter} onClick={() => setPickerOpen(true)}>
           {t("challenges.challengeFriend")}
         </button>

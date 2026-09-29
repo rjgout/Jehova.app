@@ -1,6 +1,7 @@
 "use client";
 
 import { useT } from "@/components/I18nProvider";
+import AppSelect from "@/components/AppSelect";
 import { useReadAloudPlayer } from "@/lib/readAloudPlayerContext";
 
 const SPEEDS = [0.75, 1, 1.25, 1.5, 2];
@@ -34,9 +35,7 @@ export default function ReadAloudMiniPlayer() {
             <div className="w-full h-1 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden" aria-hidden>
               <div className="h-full bg-brand-500 transition-all duration-300" style={{ width: progress + "%" }} />
             </div>
-            <select value={speed} onChange={(e) => setSpeed(Number(e.target.value))} className="shrink-0 bg-transparent text-xs font-bold text-slate-500 dark:text-slate-300 border-0 outline-none" aria-label={t("player.speed")}>
-              {SPEEDS.map((value) => <option key={value} value={value}>{value}×</option>)}
-            </select>
+            <AppSelect value={String(speed)} onChange={(value) => setSpeed(Number(value))} className="shrink-0 bg-transparent text-xs font-bold text-slate-500 dark:text-slate-300 border-0 outline-none" ariaLabel={t("player.speed")} options={SPEEDS.map((value) => ({ value: String(value), label: `${value}×` }))} />
           </div>
         </div>
         <button onClick={stop} className="shrink-0 w-7 h-7 rounded-full text-slate-400 dark:text-slate-500" aria-label={t("player.stopAria")} title={t("player.stop")}>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useT } from "@/components/I18nProvider";
+import AppSelect from "@/components/AppSelect";
 import { useEffect, useState } from "react";
 import { getLanguage } from "@/lib/languages";
 import { useReadAloudPlayer, type ReadAloudSource, type ReadAloudVerse } from "@/lib/readAloudPlayerContext";
@@ -79,12 +80,7 @@ export default function ReadAloudPlayer({ sourceId, title, verses, audio, startV
     <div className="space-y-2">
       <label className="flex flex-wrap items-center gap-2 text-sm font-semibold">
         {t("player.audioLanguage")}
-        <select className="input w-auto" value={selectedLanguage} onChange={(event) => changeLanguage(event.target.value)}>
-          <option value={textLanguage}>{getLanguage(textLanguage).nativeName}</option>
-          {available.filter((edition) => edition.language !== textLanguage).map((edition) => (
-            <option key={edition.language} value={edition.language}>{getLanguage(edition.language).nativeName}</option>
-          ))}
-        </select>
+        <AppSelect className="input w-auto" value={selectedLanguage} onChange={changeLanguage} ariaLabel={t("player.audioLanguage")} options={[{ value: textLanguage, label: getLanguage(textLanguage).nativeName }, ...available.filter((edition) => edition.language !== textLanguage).map((edition) => ({ value: edition.language, label: getLanguage(edition.language).nativeName }))]} />
       </label>
       <p className="text-xs text-slate-500 dark:text-slate-400">{t("player.audioLanguageHint")}</p>
       {failed && <button className="text-sm underline" onClick={() => setAttempt((value) => value + 1)}>{t("player.retryLanguages")}</button>}

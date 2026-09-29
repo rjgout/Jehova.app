@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import UserTag from "@/components/UserTag";
 import { useT, useUiLanguage } from "@/components/I18nProvider";
+import AppSelect from "@/components/AppSelect";
 import { getLanguage } from "@/lib/languages";
 
 const STATUS_OPTIONS = ["NEW", "IN_PROGRESS", "DONE", "WONT_DO"] as const;
@@ -75,18 +76,14 @@ export default function FeedbackAdminClient() {
                     {new Date(r.createdAt).toLocaleString(intlLocale)}
                   </p>
                 </div>
-                <select
+                <AppSelect
                   className={`text-xs font-bold uppercase rounded-full px-2 py-1 border-0 ${STATUS_CLASSES[r.status] ?? STATUS_CLASSES.NEW}`}
                   value={r.status}
                   disabled={updatingId === r.id}
-                  onChange={(e) => changeStatus(r.id, e.target.value)}
-                >
-                  {STATUS_OPTIONS.map((s) => (
-                    <option key={s} value={s}>
-                      {t(`feedback.status.${s}`)}
-                    </option>
-                  ))}
-                </select>
+                  onChange={(value) => changeStatus(r.id, value)}
+                  ariaLabel={t("feedback.status.NEW")}
+                  options={STATUS_OPTIONS.map((s) => ({ value: s, label: t(`feedback.status.${s}`) }))}
+                />
               </div>
               <p className="text-sm whitespace-pre-wrap dark:text-slate-200">{r.message}</p>
               {r.screenshot && (

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { announceXpChanged } from "@/lib/xpBroadcast";
 import IntroAudioButton from "@/components/IntroAudioButton";
 import { useT } from "@/components/I18nProvider";
+import AppSelect from "@/components/AppSelect";
 
 type Level = "BEGINNER" | "ADVANCED" | "EXPERT";
 
@@ -316,35 +317,25 @@ export default function ChapterGuessSoloClient({ gameId }: { gameId: string }) {
           </div>
         ) : (
           <div className="flex flex-col gap-3">
-            <select
+            <AppSelect
               className="input"
               value={pickedBookId}
               disabled={answered}
-              onChange={(e) => {
-                setPickedBookId(e.target.value);
+              onChange={(value) => {
+                setPickedBookId(value);
                 setPickedNumber("");
               }}
-            >
-              <option value="">{t("chapterGuess.chooseBook")}</option>
-              {uniqueBooks.map(([id, name]) => (
-                <option key={id} value={id}>
-                  {name}
-                </option>
-              ))}
-            </select>
-            <select
+              ariaLabel={t("chapterGuess.chooseBook")}
+              options={[{ value: "", label: t("chapterGuess.chooseBook") }, ...uniqueBooks.map(([id, name]) => ({ value: id, label: name }))]}
+            />
+            <AppSelect
               className="input"
-              value={pickedNumber}
+              value={pickedNumber === "" ? "" : String(pickedNumber)}
               disabled={answered || !pickedBookId}
-              onChange={(e) => setPickedNumber(e.target.value ? Number(e.target.value) : "")}
-            >
-              <option value="">{t("challenges.chooseChapter")}</option>
-              {chaptersForBook.map((c) => (
-                <option key={c.id} value={c.number}>
-                  {t("chapterGuess.chapterN", { n: c.number })}
-                </option>
-              ))}
-            </select>
+              onChange={(value) => setPickedNumber(value ? Number(value) : "")}
+              ariaLabel={t("challenges.chooseChapter")}
+              options={[{ value: "", label: t("challenges.chooseChapter") }, ...chaptersForBook.map((c) => ({ value: String(c.number), label: t("chapterGuess.chapterN", { n: c.number }) }))]}
+            />
             {!answered && (
               <button
                 className="btn-primary self-start"

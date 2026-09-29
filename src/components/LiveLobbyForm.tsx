@@ -7,6 +7,7 @@ import ActiveGamesBanner from "@/components/ActiveGamesBanner";
 import { SortableList, DragHandle, type DragHandleProps } from "@/components/SortableList";
 import { applyPersonalOrder, fetchListOrder, saveListOrder } from "@/lib/listOrder";
 import { useT } from "@/components/I18nProvider";
+import AppSelect from "@/components/AppSelect";
 import type { MessageKey } from "@/lib/i18n/core";
 
 interface ChapterOption {
@@ -127,17 +128,13 @@ export default function LiveLobbyForm({ settings, isAdmin, allowedGameKeys, cont
             <p className="text-brand-100 text-sm">{t("gamesHub.liveIntro")}</p>
           </div>
           <form onSubmit={createGame} className="flex flex-col gap-3">
-            <select
+            <AppSelect
               className="input !bg-white/90 dark:!bg-slate-900/60 !text-slate-800 dark:!text-slate-100 !border-0"
               value={chapterId}
-              onChange={(e) => setChapterId(e.target.value)}
-            >
-              {chapters.map((c) => (
-                <option key={c.id} value={c.id} disabled={c.exerciseCount === 0}>
-                  {t("gamesHub.chapterOption", { label: c.label, count: c.exerciseCount })}
-                </option>
-              ))}
-            </select>
+              onChange={setChapterId}
+              ariaLabel={t("gamesHub.liveTitle")}
+              options={chapters.map((c) => ({ value: c.id, disabled: c.exerciseCount === 0, label: t("gamesHub.chapterOption", { label: c.label, count: c.exerciseCount }) }))}
+            />
             <button
               className="rounded-2xl bg-gold-400 text-brand-900 font-extrabold uppercase tracking-wide text-sm py-3 shadow-[0_4px_0_0_theme(colors.gold.600)] active:shadow-none active:translate-y-1 transition disabled:opacity-50"
               disabled={creating || !chapterId}

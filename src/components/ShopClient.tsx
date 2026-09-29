@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { announceXpChanged } from "@/lib/xpBroadcast";
 import { useT } from "@/components/I18nProvider";
+import AppSelect from "@/components/AppSelect";
 
 interface ShopData {
   xpTotal: number;
@@ -125,17 +126,13 @@ export default function ShopClient() {
         <div className="flex items-center gap-2 flex-wrap">
           <label className="flex items-center gap-2 text-sm dark:text-slate-200">
             {t("shop.quantity")}
-            <select
+            <AppSelect
               className="input !w-20 text-center"
-              value={hintQuantity}
-              onChange={(e) => setHintQuantity(Number(e.target.value))}
-            >
-              {Array.from({ length: 10 }, (_, i) => i + 1).map((n) => (
-                <option key={n} value={n}>
-                  {n}
-                </option>
-              ))}
-            </select>
+              value={String(hintQuantity)}
+              options={Array.from({ length: 10 }, (_, i) => i + 1).map((n) => ({ value: String(n), label: n }))}
+              onChange={(value) => setHintQuantity(Number(value))}
+              ariaLabel={t("shop.quantity")}
+            />
           </label>
           <button className="btn-primary !px-4 !py-2" disabled={buyingHints || !canAffordHints} onClick={buyHints}>
             {buyingHints ? t("courses.busy") : t("shop.buyFor", { xp: hintCost })}
@@ -169,17 +166,13 @@ export default function ShopClient() {
         <div className="flex items-center gap-2 flex-wrap">
           <label className="flex items-center gap-2 text-sm dark:text-slate-200">
             {t("shop.quantity")}
-            <select
+            <AppSelect
               className="input !w-20 text-center"
-              value={freezeQuantity}
-              onChange={(e) => setFreezeQuantity(Number(e.target.value))}
-            >
-              {Array.from({ length: 10 }, (_, i) => i + 1).map((n) => (
-                <option key={n} value={n}>
-                  {n}
-                </option>
-              ))}
-            </select>
+              value={String(freezeQuantity)}
+              options={Array.from({ length: 10 }, (_, i) => i + 1).map((n) => ({ value: String(n), label: n }))}
+              onChange={(value) => setFreezeQuantity(Number(value))}
+              ariaLabel={t("shop.quantity")}
+            />
           </label>
           <button
             className="btn-primary !px-4 !py-2"

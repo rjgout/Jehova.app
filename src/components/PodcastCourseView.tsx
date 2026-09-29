@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { usePodcastPlayer } from "@/lib/podcastPlayerContext";
 import { useT } from "@/components/I18nProvider";
+import AppSelect from "@/components/AppSelect";
 
 interface EpisodeView {
   id: string;
@@ -178,17 +179,13 @@ function PageControls({
       </button>
       <label className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
         {t("courseViews.podcast.page")}
-        <select
+        <AppSelect
           className="input !w-auto !py-1.5 text-center"
-          value={currentPage}
-          onChange={(e) => onChange(Number(e.target.value))}
-        >
-          {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
-            <option key={p} value={p}>
-              {p}
-            </option>
-          ))}
-        </select>
+          value={String(currentPage)}
+          onChange={(value) => onChange(Number(value))}
+          ariaLabel={t("courseViews.podcast.page")}
+          options={Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => ({ value: String(p), label: p }))}
+        />
         {t("courseViews.podcast.pageOf", { total: totalPages })}
       </label>
       <button className="btn-secondary !px-3 !py-1.5" disabled={currentPage >= totalPages} onClick={() => onChange(currentPage + 1)}>

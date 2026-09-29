@@ -7,6 +7,7 @@ import { SEASON_STATUS_KEY } from "@/components/alleskenner/SeasonListClient";
 import UserAvatar from "@/components/UserAvatar";
 import FriendPicker from "@/components/FriendPicker";
 import { useT } from "@/components/I18nProvider";
+import AppSelect from "@/components/AppSelect";
 import { useConfirm } from "@/components/ConfirmProvider";
 import type { TFunction } from "@/lib/i18n/core";
 
@@ -368,39 +369,25 @@ export default function SeasonClient({ id }: { id: string }) {
               <h2 className="font-extrabold dark:text-slate-100">{t("lobby.host")}</h2>
               <label className="flex flex-col gap-1 text-sm dark:text-slate-200">
                 {t("season.deputyHost")}
-                <select
+                <AppSelect
                   className="input"
                   value={season.deputyHost?.id ?? ""}
                   disabled={busy}
-                  onChange={(e) => setRoles({ deputyHostId: e.target.value || null })}
-                >
-                  <option value="">{t("season.none_")}</option>
-                  {season.members
-                    .filter((m) => m.userId !== season.host.id)
-                    .map((m) => (
-                      <option key={m.userId} value={m.userId}>
-                        {m.name}
-                      </option>
-                    ))}
-                </select>
+                  onChange={(value) => setRoles({ deputyHostId: value || null })}
+                  ariaLabel={t("season.deputyHost")}
+                  options={[{ value: "", label: t("season.none_") }, ...season.members.filter((m) => m.userId !== season.host.id).map((m) => ({ value: m.userId, label: m.name }))]}
+                />
               </label>
               <label className="flex flex-col gap-1 text-sm dark:text-slate-200">
                 {t("season.transferTo")}
-                <select
+                <AppSelect
                   className="input"
                   value=""
                   disabled={busy}
-                  onChange={(e) => e.target.value && setRoles({ hostId: e.target.value })}
-                >
-                  <option value="">{t("season.chooseMember")}</option>
-                  {season.members
-                    .filter((m) => m.userId !== season.host.id)
-                    .map((m) => (
-                      <option key={m.userId} value={m.userId}>
-                        {m.name}
-                      </option>
-                    ))}
-                </select>
+                  onChange={(value) => value && setRoles({ hostId: value })}
+                  ariaLabel={t("season.transferTo")}
+                  options={[{ value: "", label: t("season.chooseMember") }, ...season.members.filter((m) => m.userId !== season.host.id).map((m) => ({ value: m.userId, label: m.name }))]}
+                />
               </label>
               <p className="text-xs text-slate-500 dark:text-slate-400">
                 {t("season.hostHint")}

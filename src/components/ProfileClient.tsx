@@ -17,6 +17,7 @@ import { useT, useUiLanguage } from "@/components/I18nProvider";
 import { useConfirm } from "@/components/ConfirmProvider";
 import { getLanguage } from "@/lib/languages";
 import { translateOr } from "@/lib/i18n/core";
+import AppSelect from "@/components/AppSelect";
 
 interface AchievementView {
   slug: string;
@@ -677,34 +678,25 @@ export default function ProfileClient() {
           <>
             <label className="flex flex-col gap-1.5">
               <span className="text-sm font-semibold dark:text-slate-200">{t("profile.dutchVoice")}</span>
-              <select
+              <AppSelect
                 className="input"
                 value={selectedReadAloudVoice}
-                onChange={(e) => changeReadAloudVoice(e.target.value)}
-              >
-                <option value="">{t("profile.automatic")}</option>
-                {readAloudVoices.map((voice) => (
-                  <option key={voice.voiceURI} value={voice.voiceURI}>
-                    {voice.name}
-                  </option>
-                ))}
-              </select>
+                onChange={changeReadAloudVoice}
+                ariaLabel={t("profile.dutchVoice")}
+                options={[{ value: "", label: t("profile.automatic") }, ...readAloudVoices.map((voice) => ({ value: voice.voiceURI, label: voice.name }))]}
+              />
             </label>
 
             <div className="flex flex-col gap-2">
               <label className="flex items-center gap-3">
                 <span className="text-sm font-semibold dark:text-slate-200">{t("profile.readAloudSpeed")}</span>
-                <select
+                <AppSelect
                   className="input !w-auto"
-                  value={readAloudSpeed}
-                  onChange={(e) => changeReadAloudSpeed(Number(e.target.value))}
-                >
-                  {[0.75, 1, 1.25, 1.5, 2].map((value) => (
-                    <option key={value} value={value}>
-                      {value}×
-                    </option>
-                  ))}
-                </select>
+                  value={String(readAloudSpeed)}
+                  onChange={(value) => changeReadAloudSpeed(Number(value))}
+                  ariaLabel={t("profile.readAloudSpeed")}
+                  options={[0.75, 1, 1.25, 1.5, 2].map((value) => ({ value: String(value), label: `${value}×` }))}
+                />
               </label>
               <div className="flex items-center gap-3">
               <button
