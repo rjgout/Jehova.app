@@ -13,12 +13,14 @@ interface SettingsView {
   liveExercisesEnabled: boolean;
   alleskennerEnabled: boolean;
   jigsawEnabled: boolean;
+  wordSearchEnabled: boolean;
 }
 
 // Icoon los van de naam: de naam is dezelfde vertaling als elders in de app.
 // gameKey: de sleutel in GameContentScope (bij welke content-uitgave een spel staat).
 const GAMES: { key: keyof SettingsView; gameKey: string; icon: string; labelKey: MessageKey }[] = [
   { key: "jigsawEnabled", gameKey: "jigsaw", icon: "🧩", labelKey: "jigsaw.title" },
+  { key: "wordSearchEnabled", gameKey: "word-search", icon: "🔎", labelKey: "pages.wordSearch" },
   { key: "wordGameEnabled", gameKey: "word-game", icon: "🟩", labelKey: "pages.wordOfTheDay" },
   { key: "scrabbleEnabled", gameKey: "scrabble", icon: "🔤", labelKey: "pages.wordGame" },
   { key: "gezinsavondEnabled", gameKey: "gezinsavond", icon: "🎉", labelKey: "pages.familyNight" },

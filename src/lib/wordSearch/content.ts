@@ -1,0 +1,36 @@
+import bomWords from "../../../prisma/bomWords.json";
+import bomWordCountsEn from "../../../prisma/bomWordCounts.en.json";
+import type { LanguageCode } from "@/lib/languages";
+import { stopwordsFor } from "@/lib/exerciseGen";
+import { prisma } from "@/lib/db";
+import type { WordSearchCandidate } from "./generator";
+
+type CountPair = [string, number];
+
+const DUTCH_WORDS = bomWords as string[];
+const ENGLISH_WORDS = (bomWordCountsEn as CountPair[]).map(([word]) => word);
+
+/** De woordpool komt uit de bestaande BOM-woordenlijsten plus de officiële namen uit de actieve uitgave. */
+export async function getWordSearchCandidates(
+  contentCollectionId: string,
+  language: string
+): Promise<WordSearchCandidate[]> {
+  const safeLanguage: LanguageCode = language === "en" || language === "de" || language === "fr" ? language : "nl";
+  const sourceWords = safeLanguage === "en" ? ENGLISH_WORDS : DUTCH_WORDS;
+  const stopwords = stopwordsFor(safeLanguage);
+  const [persons, places, books] = await Promise.all([
+    prisma.person.findMany({ where: { contentCollectionId }, select: { name: true } }),
+    prisma.place.findMany({ select: { name: true }, take: 500 }),
+    prisma.book.findMany({ where: { contentCollectionId }, select: { name: true } }),
+  ]);
+
+  const candidates = [...sourceWords, ...persons.map((item) => item.name), ...places.map((item) => item.name), ...books.map((item) => item.name)];
+  const seen = new Set<string>();
+  return candidates.flatMap((word) => {
+    const normalized = word.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-zA-Z]/g, "").toUpperCase();
+    const lower = normalized.toLowerCase();
+    if (normalized.length < 4 || normalized.length > 12 || stopwords.has(lower) || seen.has(normalized)) return [];
+    seen.add(normalized);
+    return [{ display: word, normalized }];
+  });
+}

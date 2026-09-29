@@ -9,6 +9,7 @@ export interface GameSettingsView {
   liveExercisesEnabled: boolean;
   alleskennerEnabled: boolean;
   jigsawEnabled: boolean;
+  wordSearchEnabled: boolean;
 }
 
 const DEFAULTS: GameSettingsView = {
@@ -20,6 +21,7 @@ const DEFAULTS: GameSettingsView = {
   liveExercisesEnabled: true,
   alleskennerEnabled: false,
   jigsawEnabled: false,
+  wordSearchEnabled: true,
 };
 
 export async function getGameSettings(): Promise<GameSettingsView> {

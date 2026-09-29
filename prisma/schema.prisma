@@ -229,6 +229,7 @@ model User {
 
   chapterGuessGames ChapterGuessGame[]
   wordGames         WordGame[]
+  wordSearchGames   WordSearchGame[]
 
   authTokens AuthToken[]
 
@@ -407,6 +408,7 @@ model ContentCollection {
   users     User[]   @relation("ActiveContentCollection")
   fsyLessons FsyLesson[]
   persons   Person[]
+  wordSearchGames WordSearchGame[]
 }
 
 // Koppelt een spel aan één of meer contentcollecties. gameKey is de stabiele
@@ -1209,6 +1211,8 @@ enum XPReason {
   // De Alleskenner alleen gespeeld (van de dag of vrij oefenen). Zie
   // completeAlleskennerSolo.
   ALLESKENNER_SOLO
+  // Een onbeperkte woordzoeker afgerond. De spelronde zelf staat los van een dag.
+  WORD_SEARCH_COMPLETED
 }
 
 model XPTransaction {
@@ -1647,6 +1651,42 @@ enum WordGameStatus {
   LOST
 }
 
+// Een woordzoeker wordt per start op de server gegenereerd. De volledige
+// raster- en plaatsingsstaat blijft bewaard, zodat vernieuwen geen nieuwe
+// puzzel oplevert en de client nooit zelf de oplossing hoeft te bepalen.
+enum WordSearchDifficulty {
+  EASY
+  MEDIUM
+  HARD
+}
+
+enum WordSearchGameStatus {
+  IN_PROGRESS
+  COMPLETED
+}
+
+model WordSearchGame {
+  id                   String                @id @default(cuid())
+  userId               String
+  user                 User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  contentCollectionId  String
+  contentCollection    ContentCollection     @relation(fields: [contentCollectionId], references: [id], onDelete: Cascade)
+  difficulty           WordSearchDifficulty
+  theme                String                @default("RANDOM")
+  size                 Int
+  seed                 Int
+  grid                 String                // JSON: letterraster als string[][]
+  words                String                // JSON: zichtbare woorden met posities
+  foundWords           String                @default("[]")
+  status               WordSearchGameStatus  @default(IN_PROGRESS)
+  xpEarned             Int                   @default(0)
+  createdAt            DateTime              @default(now())
+  finishedAt           DateTime?
+
+  @@index([userId, status])
+  @@index([contentCollectionId])
+}
+
 // --- Notificaties (e-mail + browser push) ----------------------------------
 
 // Meldingencentrum (de bel in de header, zie NotificationCenter.tsx): elke
@@ -1886,6 +1926,7 @@ model GameSettings {
   // Standaard uit: een beheerder test het eerst (beheerders zien de kaart altijd).
   alleskennerEnabled   Boolean @default(false)
   jigsawEnabled        Boolean @default(false)
+  wordSearchEnabled    Boolean @default(true)
 }
 
 // --- De Alleskenner ----------------------------------------------------------

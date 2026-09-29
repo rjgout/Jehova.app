@@ -13,6 +13,7 @@ const schema = z.object({
   liveExercisesEnabled: z.boolean().optional(),
   alleskennerEnabled: z.boolean().optional(),
   jigsawEnabled: z.boolean().optional(),
+  wordSearchEnabled: z.boolean().optional(),
 });
 
 export async function GET() {

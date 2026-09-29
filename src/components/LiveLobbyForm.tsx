@@ -24,6 +24,7 @@ interface GameSettings {
   liveExercisesEnabled: boolean;
   alleskennerEnabled: boolean;
   jigsawEnabled: boolean;
+  wordSearchEnabled: boolean;
 }
 
 interface Props {
@@ -34,7 +35,7 @@ interface Props {
   contentName: string;
 }
 
-type GameTextKey = "wordGame" | "scrabble" | "alleskenner" | "gezinsavond" | "chapterGuess" | "challenges" | "jigsaw";
+type GameTextKey = "wordGame" | "scrabble" | "alleskenner" | "gezinsavond" | "chapterGuess" | "challenges" | "jigsaw" | "wordSearch";
 
 interface GameEntry {
   id: string; // stabiele sleutel voor de sleepvolgorde (UserListOrder.itemKey)
@@ -50,6 +51,7 @@ interface GameEntry {
 // hij herordend kan worden (zie SortableList/listOrder.ts, listKey="games").
 const GAMES: GameEntry[] = [
   { id: "jigsaw", enabledKey: "jigsawEnabled", icon: "🧩", textKey: "jigsaw", titleKey: "jigsaw.title", href: "/jigsaw" },
+  { id: "word-search", enabledKey: "wordSearchEnabled", icon: "🔎", textKey: "wordSearch", titleKey: "pages.wordSearch", href: "/word-search" },
   { id: "word-game", enabledKey: "wordGameEnabled", icon: "🟩", textKey: "wordGame", titleKey: "pages.wordOfTheDay", href: "/word-game" },
   { id: "scrabble", enabledKey: "scrabbleEnabled", icon: "🔤", textKey: "scrabble", titleKey: "pages.wordGame", href: "/scrabble" },
   { id: "alleskenner", enabledKey: "alleskennerEnabled", icon: "🧠", textKey: "alleskenner", titleKey: "pages.alleskenner", href: "/alleskenner" },
