@@ -9,16 +9,18 @@ import time
 import traceback
 from multiprocessing import Pool
 
-from common import ABBR, ROOT, WORK, find_pauses, load_audio, recognize, work
+from common import ABBR, ROOT, find_pauses, language_config, load_audio, recognize, work
 
-MODEL_DIR = os.environ.get("VOSK_MODEL", os.path.join(WORK, "vosk-model-small-nl-0.22"))
+LANGUAGE = sys.argv[1] if len(sys.argv) > 1 else "nl"
+CONFIG = language_config(LANGUAGE)
+MODEL_DIR = os.environ.get("VOSK_MODEL", os.path.join(CONFIG["work"], CONFIG["model"]))
 MODEL = None
 
 
 def job(item):
     global MODEL
     key, page_file = item
-    out = work("timings", key.replace("/", "_") + ".json")
+    out = work(LANGUAGE, "timings", key.replace("/", "_") + ".json")
     if os.path.exists(out):
         return key, "al klaar"
     try:
@@ -32,7 +34,7 @@ def job(item):
         if not audio:
             return key, "geen audio"
         url = audio[0]["mediaUrl"]
-        mp3 = work("tmp", key.replace("/", "_") + ".mp3")
+        mp3 = work(LANGUAGE, "tmp", key.replace("/", "_") + ".mp3")
         for attempt in range(5):
             r = subprocess.run(["curl", "-sS", "-A", "Mozilla/5.0", "-o", mp3, url])
             if r.returncode == 0 and os.path.getsize(mp3) > 10000:
@@ -40,7 +42,7 @@ def job(item):
             time.sleep(5 * (attempt + 1))
         x, sr = load_audio(mp3)
         pauses, duration = find_pauses(x, sr)
-        words_file = work("words", key.replace("/", "_") + ".json")
+        words_file = work(LANGUAGE, "words", key.replace("/", "_") + ".json")
         if os.path.exists(words_file):
             words = [tuple(w) for w in json.load(open(words_file))]
         else:
@@ -58,9 +60,9 @@ def job(item):
 
 
 if __name__ == "__main__":
-    books = json.load(open(os.path.join(ROOT, "prisma", "bomContent.json")))
-    jobs = [(f"{b['slug']}/{c['number']}", work("church", f"{abbr}_{c['number']}.json")) for abbr, b in zip(ABBR, books) for c in b["chapters"]]
-    only = set(sys.argv[1:])
+    books = json.load(open(os.path.join(ROOT, "prisma", CONFIG["content"])))
+    jobs = [(f"{b['key'] if LANGUAGE != 'nl' else b['slug']}/{c['number']}", work(LANGUAGE, "church", f"{abbr}_{c['number']}.json")) for abbr, b in zip(ABBR, books) for c in b["chapters"]]
+    only = set(sys.argv[2:])
     if only:
         jobs = [j for j in jobs if j[0] in only]
     with Pool(int(os.environ.get("BOM_AUDIO_PROCS", "4"))) as p:

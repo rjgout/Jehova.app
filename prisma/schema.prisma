@@ -356,8 +356,8 @@ model Chapter {
   // gebruikt als introtekst bij "Raad het hoofdstuk" (zie
   // src/lib/chapterGuess.ts). Optioneel omdat niet elke seed-bron 'm heeft.
   heading              String?
-  // Voorgelezen hoofdstuk (Nederlandse audio van de kerk, per hoofdstuk één
-  // bestand; zie prisma/bomAudio.json en prisma/importAudio.ts). Null = geen
+  // Voorgelezen hoofdstuk (audio van de kerk in de taal van de uitgave, per
+  // hoofdstuk één bestand; zie prisma/bomAudio*.json en prisma/importAudio.ts). Null = geen
   // audio, dan leest de computerstem voor. audioHeadingStart/End omsluiten de
   // voorgelezen hoofdstukkop, zónder "Hoofdstuk N" ervoor (dat zou bij
   // "Raad het hoofdstuk" het antwoord verklappen).

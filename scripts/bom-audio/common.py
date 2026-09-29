@@ -12,14 +12,38 @@ import unicodedata
 import numpy as np
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-WORK = os.environ.get("BOM_AUDIO_WORK", os.path.join(ROOT, ".bom-audio-work"))
+WORK_ROOT = os.environ.get("BOM_AUDIO_WORK", os.path.join(ROOT, ".bom-audio-work"))
+
+LANGUAGES = {
+    "nl": {
+        "church": "nld",
+        "content": "bomContent.json",
+        "output": "bomAudio.json",
+        "model": "vosk-model-small-nl-0.22",
+    },
+    "en": {
+        "church": "eng",
+        "content": "bomContent.en.json",
+        "output": "bomAudio.en.json",
+        "model": "vosk-model-small-en-us-0.15",
+    },
+}
 
 # Afkortingen in de URL's van de kerkwebsite, in de volgorde van prisma/bomContent.json.
 ABBR = ["1-ne", "2-ne", "jacob", "enos", "jarom", "omni", "w-of-m", "mosiah", "alma", "hel", "3-ne", "4-ne", "morm", "ether", "moro"]
 
 
-def work(*parts):
-    path = os.path.join(WORK, *parts)
+def language_config(language):
+    if language not in LANGUAGES:
+        raise SystemExit("Gebruik taal: " + "|".join(LANGUAGES))
+    config = LANGUAGES[language]
+    # Houd de bestaande Nederlandse werkmap intact; andere talen krijgen hun
+    # eigen map, zodat pagina's, woorden en timings nooit vermengd raken.
+    return {**config, "work": WORK_ROOT if language == "nl" else os.path.join(WORK_ROOT, language)}
+
+
+def work(language, *parts):
+    path = os.path.join(language_config(language)["work"], *parts)
     os.makedirs(os.path.dirname(path), exist_ok=True)
     return path
 

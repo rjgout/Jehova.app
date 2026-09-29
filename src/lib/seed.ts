@@ -3,6 +3,7 @@ import { seedBooks } from "../../prisma/content";
 import { importBooks } from "../../prisma/importContent";
 import { importChapterAudio, type ChapterAudioSeed } from "../../prisma/importAudio";
 import bomAudio from "../../prisma/bomAudio.json";
+import bomAudioEn from "../../prisma/bomAudio.en.json";
 import dcContent from "../../prisma/dcContent.json";
 import pgpContent from "../../prisma/pgpContent.json";
 import bomContentEn from "../../prisma/bomContent.en.json";
@@ -11,6 +12,7 @@ import pgpContentEn from "../../prisma/pgpContent.en.json";
 import type { SeedBook } from "../../prisma/content";
 import {
   BOM_EN_COLLECTION_ID,
+  BOM_COLLECTION_ID,
   DC_COLLECTION_ID,
   DC_EN_COLLECTION_ID,
   PGP_COLLECTION_ID,
@@ -77,7 +79,7 @@ const achievementDefs = [
 export async function runSeed(client: PrismaClient, log: (msg: string) => void = console.log): Promise<void> {
   log("Seeding boeken, hoofdstukken, verzen en oefeningen...");
   await importBooks(client, seedBooks, log);
-  await importChapterAudio(client, bomAudio as ChapterAudioSeed[], log);
+  await importChapterAudio(client, bomAudio as ChapterAudioSeed[], BOM_COLLECTION_ID, log);
 
   // Leer en Verbonden en de Parel van Grote Waarde, en de Engelse uitgaven
   // van alle drie, elk in een eigen collectie. Alleen als die collectie
@@ -95,6 +97,9 @@ export async function runSeed(client: PrismaClient, log: (msg: string) => void =
     if (!(await client.contentCollection.findUnique({ where: { id: collectionId }, select: { id: true } }))) continue;
     log(`Seeding ${label}...`);
     await importBooks(client, books, log, collectionId);
+    if (collectionId === BOM_EN_COLLECTION_ID) {
+      await importChapterAudio(client, bomAudioEn as ChapterAudioSeed[], BOM_EN_COLLECTION_ID, log);
+    }
   }
 
   log("Seeding podcastafleveringen...");

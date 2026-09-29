@@ -1,15 +1,16 @@
 import type { PrismaClient } from "@prisma/client";
 
-// Voorgelezen hoofdstukken: per hoofdstuk het audiobestand van de kerk
-// (Nederlands, huidige uitgave, zie prisma/content.ts) met de begintijd van
-// elk vers en van de hoofdstukkop. De tijden zijn eenmalig berekend met
+// Voorgelezen hoofdstukken: per hoofdstuk het audiobestand van de kerk in de
+// taal van de uitgave, met de begintijd van elk vers en van de hoofdstukkop.
+// De tijden zijn eenmalig berekend met
 // spraakherkenning op de audio, uitgelijnd op de bekende tekst en afgerond
 // op het einde van de pauze vóór elk vers (zodat een vers nooit midden in een
 // woord begint). De bestanden zelf worden niet gehost: de app speelt ze af
 // vanaf de server van de kerk.
 
 export interface ChapterAudioSeed {
-  book: string; // Book.slug
+  /** Book.key voor taaloverschrijdende data; oude Nederlandse data gebruikt Book.slug. */
+  book: string;
   chapter: number;
   url: string;
   headingStart: number;
@@ -27,17 +28,19 @@ const CHUNK = 500;
 export async function importChapterAudio(
   prisma: PrismaClient,
   entries: ChapterAudioSeed[],
+  contentCollectionId: string,
   log: (msg: string) => void = console.log
 ) {
   const byKey = new Map(entries.map((e) => [`${e.book}:${e.chapter}`, e]));
   const chapters = await prisma.chapter.findMany({
+    where: { book: { contentCollectionId } },
     select: {
       id: true,
       number: true,
       audioUrl: true,
       audioHeadingStart: true,
       audioHeadingEnd: true,
-      book: { select: { slug: true } },
+      book: { select: { slug: true, key: true } },
       verses: { select: { id: true, number: true, audioStart: true } },
     },
   });
@@ -47,7 +50,12 @@ export async function importChapterAudio(
   let withAudio = 0;
   let skipped = 0;
   for (const chapter of chapters) {
-    const entry = byKey.get(`${chapter.book.slug}:${chapter.number}`);
+    // Nederlandse audiometadata gebruikt historisch de slug; nieuwe uitgaven
+    // gebruiken de taaloverschrijdende Book.key. Zo blijft het bestaande
+    // bestand ongewijzigd terwijl andere talen veilig gekoppeld worden.
+    const entry =
+      (chapter.book.key ? byKey.get(`${chapter.book.key}:${chapter.number}`) : undefined) ??
+      byKey.get(`${chapter.book.slug}:${chapter.number}`);
     // Een telling die niet klopt met de verzen in de database hoort bij een
     // andere tekst: dan liever geen audio dan verzen die verspringen.
     const usable = entry && entry.verseStarts.length === chapter.verses.length ? entry : null;
