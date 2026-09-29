@@ -152,10 +152,10 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             de header — zie PodcastMiniPlayer.tsx. */}
         <StickyHeader>
         <header className="bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800">
-          <div className="mx-auto max-w-5xl px-4 py-3 flex items-center gap-4 relative">
-            {/* Kleiner dan een tablet: geen logo (ingelogd); het contentmenu neemt
-                zijn plek links in. Zonder account is het logo het enige links. */}
-            <Link href={user ? "/dashboard" : "/"} className={`${user ? "hidden md:flex" : "flex"} items-center gap-2 font-extrabold text-brand-700 dark:text-brand-300 text-lg shrink-0 cursor-pointer`}>
+          <div className="mx-auto max-w-5xl px-4 py-3 flex items-center gap-4 relative min-w-0">
+            {/* Op brede schermen staat het logo los gecentreerd; het menu blijft
+                links staan en kan daardoor een lange contentnaam afkappen. */}
+            <Link href={user ? "/dashboard" : "/"} className={`${user ? "hidden lg:flex absolute left-1/2 -translate-x-1/2" : "flex"} items-center gap-2 font-extrabold text-brand-700 dark:text-brand-300 text-lg shrink-0 cursor-pointer`}>
               {logoDataUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={logoDataUrl} alt={displayName} className="h-8 w-auto" />
@@ -173,7 +173,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                 active={contentContext.active}
                 works={contentContext.works}
                 activeEditions={contentContext.activeEditions}
-                showLanguage={contentContext.contentLanguages.length > 1}
+                showLanguage
               />
             )}
 
