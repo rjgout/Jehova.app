@@ -17,7 +17,8 @@ const FOREIGN_FALLBACK: LanguageCode = "en";
  */
 export async function anonymousLanguage(): Promise<LanguageCode> {
   const preferred = (await cookies()).get("versado_language")?.value;
-  if (preferred === "nl" || preferred === "en") return preferred;
+  const preferredLanguage = LANGUAGES.find((item) => item.code === preferred);
+  if (preferredLanguage?.uiReady) return preferredLanguage.code;
 
   const accept = (await headers()).get("accept-language") ?? "";
   let anyLanguage = false;

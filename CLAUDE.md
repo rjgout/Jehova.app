@@ -355,7 +355,10 @@ het hoofdstuk). Het fundament ligt er; zichtbaar is alles nog Nederlands.
   afwijkt van het Nederlands) en schrijft `prisma/<werk>Content.<taal>.json`
   en `<werk>WordCounts.<taal>.json`. Collecties komen via een migratie
   (Engels: `content_bom_en`, `content_dc_en`, `content_pgp_en`; Spaanse uitgave
-  van het Boek van Mormon: `content_bom_es`), de seed importeert ze. Oefeningen
+  van het Boek van Mormon: `content_bom_es`; Duitse en Franse uitgaven van het
+  Boek van Mormon: `content_bom_de`, `content_bom_fr`), de seed importeert ze.
+  De woordzoeker is voor deze extra Boek-van-Mormon-uitgaven ingeschakeld;
+  andere spellen volgen pas na een afzonderlijke taalcontrole. Oefeningen
   en hints worden gemaakt in de taal van de
   collectie (woordenlijsten per taal in `src/lib/exerciseGen.ts`, hints in
   `src/lib/exerciseHints.ts`); de Nederlandse uitvoer mag daarbij nooit

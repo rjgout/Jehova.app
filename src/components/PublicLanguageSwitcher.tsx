@@ -6,6 +6,9 @@ import type { LanguageCode } from "@/lib/languages";
 const choices: { code: LanguageCode; label: string; flag: string }[] = [
   { code: "nl", label: "Nederlands", flag: "🇳🇱" },
   { code: "en", label: "English", flag: "🇬🇧" },
+  { code: "de", label: "Deutsch", flag: "🇩🇪" },
+  { code: "fr", label: "Français", flag: "🇫🇷" },
+  { code: "es", label: "Español", flag: "🇪🇸" },
 ];
 
 export default function PublicLanguageSwitcher({ language }: { language: LanguageCode }) {

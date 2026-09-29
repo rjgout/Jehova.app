@@ -3,6 +3,8 @@ import dcWordCounts from "../../prisma/dcWordCounts.json";
 import pgpWordCounts from "../../prisma/pgpWordCounts.json";
 import bomWordCountsEn from "../../prisma/bomWordCounts.en.json";
 import bomWordCountsEs from "../../prisma/bomWordCounts.es.json";
+import bomWordCountsDe from "../../prisma/bomWordCounts.de.json";
+import bomWordCountsFr from "../../prisma/bomWordCounts.fr.json";
 import dcWordCountsEn from "../../prisma/dcWordCounts.en.json";
 import pgpWordCountsEn from "../../prisma/pgpWordCounts.en.json";
 import { prisma } from "@/lib/db";
@@ -10,6 +12,8 @@ import {
   BOM_COLLECTION_ID,
   BOM_EN_COLLECTION_ID,
   BOM_ES_COLLECTION_ID,
+  BOM_DE_COLLECTION_ID,
+  BOM_FR_COLLECTION_ID,
   DC_COLLECTION_ID,
   DC_EN_COLLECTION_ID,
   PGP_COLLECTION_ID,
@@ -45,6 +49,8 @@ const ENTRIES_BY_COLLECTION: Record<string, DictionaryEntry[]> = {
   [PGP_COLLECTION_ID]: toEntries(pgpWordCounts as Record<string, number>),
   [BOM_EN_COLLECTION_ID]: toEntries(bomWordCountsEn as [string, number][]),
   [BOM_ES_COLLECTION_ID]: toEntries(bomWordCountsEs as [string, number][]),
+  [BOM_DE_COLLECTION_ID]: toEntries(bomWordCountsDe as [string, number][]),
+  [BOM_FR_COLLECTION_ID]: toEntries(bomWordCountsFr as [string, number][]),
   [DC_EN_COLLECTION_ID]: toEntries(dcWordCountsEn as [string, number][]),
   [PGP_EN_COLLECTION_ID]: toEntries(pgpWordCountsEn as [string, number][]),
 };

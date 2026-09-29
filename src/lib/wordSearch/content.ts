@@ -1,6 +1,8 @@
 import bomWords from "../../../prisma/bomWords.json";
 import bomWordCountsEn from "../../../prisma/bomWordCounts.en.json";
 import bomWordCountsEs from "../../../prisma/bomWordCounts.es.json";
+import bomWordCountsDe from "../../../prisma/bomWordCounts.de.json";
+import bomWordCountsFr from "../../../prisma/bomWordCounts.fr.json";
 import type { LanguageCode } from "@/lib/languages";
 import { stopwordsFor } from "@/lib/exerciseGen";
 import { prisma } from "@/lib/db";
@@ -11,6 +13,8 @@ type CountPair = [string, number];
 const DUTCH_WORDS = bomWords as string[];
 const ENGLISH_WORDS = (bomWordCountsEn as CountPair[]).map(([word]) => word);
 const SPANISH_WORDS = (bomWordCountsEs as CountPair[]).map(([word]) => word);
+const GERMAN_WORDS = (bomWordCountsDe as CountPair[]).map(([word]) => word);
+const FRENCH_WORDS = (bomWordCountsFr as CountPair[]).map(([word]) => word);
 
 /** De woordpool komt uit de bestaande BOM-woordenlijsten plus de officiële namen uit de actieve uitgave. */
 export async function getWordSearchCandidates(
@@ -18,7 +22,7 @@ export async function getWordSearchCandidates(
   language: string
 ): Promise<WordSearchCandidate[]> {
   const safeLanguage: LanguageCode = language === "en" || language === "de" || language === "fr" || language === "es" ? language : "nl";
-  const sourceWords = safeLanguage === "en" ? ENGLISH_WORDS : safeLanguage === "es" ? SPANISH_WORDS : DUTCH_WORDS;
+  const sourceWords = safeLanguage === "en" ? ENGLISH_WORDS : safeLanguage === "es" ? SPANISH_WORDS : safeLanguage === "de" ? GERMAN_WORDS : safeLanguage === "fr" ? FRENCH_WORDS : DUTCH_WORDS;
   const stopwords = stopwordsFor(safeLanguage);
   const [persons, places, books] = await Promise.all([
     prisma.person.findMany({ where: { contentCollectionId }, select: { name: true } }),

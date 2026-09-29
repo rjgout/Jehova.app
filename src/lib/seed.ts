@@ -8,12 +8,16 @@ import dcContent from "../../prisma/dcContent.json";
 import pgpContent from "../../prisma/pgpContent.json";
 import bomContentEn from "../../prisma/bomContent.en.json";
 import bomContentEs from "../../prisma/bomContent.es.json";
+import bomContentDe from "../../prisma/bomContent.de.json";
+import bomContentFr from "../../prisma/bomContent.fr.json";
 import dcContentEn from "../../prisma/dcContent.en.json";
 import pgpContentEn from "../../prisma/pgpContent.en.json";
 import type { SeedBook } from "../../prisma/content";
 import {
   BOM_EN_COLLECTION_ID,
   BOM_ES_COLLECTION_ID,
+  BOM_DE_COLLECTION_ID,
+  BOM_FR_COLLECTION_ID,
   BOM_COLLECTION_ID,
   DC_COLLECTION_ID,
   DC_EN_COLLECTION_ID,
@@ -94,6 +98,8 @@ export async function runSeed(client: PrismaClient, log: (msg: string) => void =
     [PGP_COLLECTION_ID, pgpContent as SeedBook[], "Parel van Grote Waarde"],
     [BOM_EN_COLLECTION_ID, bomContentEn as SeedBook[], "Book of Mormon (Engels)"],
     [BOM_ES_COLLECTION_ID, bomContentEs as SeedBook[], "Libro de Mormón (Spaans)"],
+    [BOM_DE_COLLECTION_ID, bomContentDe as SeedBook[], "Das Buch Mormon (Duits)"],
+    [BOM_FR_COLLECTION_ID, bomContentFr as SeedBook[], "Le Livre de Mormon (Frans)"],
     [DC_EN_COLLECTION_ID, dcContentEn as SeedBook[], "Doctrine and Covenants (Engels)"],
     [PGP_EN_COLLECTION_ID, pgpContentEn as SeedBook[], "Pearl of Great Price (Engels)"],
   ] as const) {

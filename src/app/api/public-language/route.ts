@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
+import { LANGUAGES } from "@/lib/languages";
 
-const schema = z.object({ language: z.enum(["nl", "en"]) });
+const schema = z.object({ language: z.enum(LANGUAGES.filter((language) => language.uiReady).map((language) => language.code) as [string, ...string[]]) });
 
 export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => null);
