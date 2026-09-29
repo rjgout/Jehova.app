@@ -49,7 +49,7 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     title: displayName,
     description: APP_TAGLINE,
-    manifest: "/manifest.webmanifest",
+    manifest: "/api/branding/manifest",
     metadataBase: new URL(appUrl),
     alternates: {
       canonical: "/",

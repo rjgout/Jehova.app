@@ -11,13 +11,18 @@ export async function GET(req: NextRequest) {
   const { faviconDataUrl } = await getBranding();
   const decoded = decodeBrandingDataUrl(faviconDataUrl);
   if (!decoded) {
-    return NextResponse.redirect(new URL("/favicon.ico", req.nextUrl.origin));
+    // Niet terugverwijzen naar /favicon.ico: de reverse proxy stuurt dat pad
+    // juist naar deze route door, waardoor zonder branding een redirectlus
+    // zou ontstaan.
+    return NextResponse.redirect(new URL("/icons/icon-192.png", req.nextUrl.origin));
   }
 
   return new NextResponse(decoded.buffer, {
     headers: {
       "Content-Type": decoded.contentType,
-      "Cache-Control": "public, max-age=300",
+      // Een beheerder moet een nieuw icoon meteen kunnen zien; browsers en de
+      // reverse proxy mogen de oude branding daarom niet opnieuw gebruiken.
+      "Cache-Control": "no-store, max-age=0, must-revalidate",
     },
   });
 }
