@@ -164,6 +164,7 @@ export default function ContentSwitcher({
                       type="button"
                       role="radio"
                       aria-checked={selected}
+                      aria-label={language.nativeName}
                       disabled={busy}
                       onClick={() => selectLanguage(edition)}
                       title={edition.visibleToUsers ? undefined : t("contentSwitcher.hiddenTitle")}
@@ -175,7 +176,9 @@ export default function ContentSwitcher({
                         edition.visibleToUsers ? "" : "border-dashed",
                       ].join(" ")}
                     >
-                      <span>{language.badge}</span>
+                      {/* Smal scherm: alleen de code; breder: alleen de naam. Allebei
+                          tegelijk zonder ruimte ertussen gaf "NLNederlands". */}
+                      <span className="sm:hidden">{language.badge}</span>
                       <span className="hidden sm:inline">{language.nativeName}</span>
                     </button>
                   );
