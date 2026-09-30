@@ -83,6 +83,7 @@ export default function SubpageBackBar() {
   const override = useBackTargetOverride(pathname);
   const base = backTargetFor(pathname);
   if (!base) return null;
+  const isCourseDetail = /^\/courses\/[^/]+$/.test(pathname);
   // Een cursusnaam (override) komt al als tekst uit de database.
   const page = {
     href: override?.href ?? base.href,
@@ -111,10 +112,12 @@ export default function SubpageBackBar() {
           </span>
         </Link>
 
-        <span className="ml-auto flex items-center gap-1.5 min-w-0 rounded-full bg-white/15 px-2.5 py-1 text-sm font-bold">
-          <span aria-hidden>{page.icon}</span>
-          <span className="truncate">{page.title}</span>
-        </span>
+        {!isCourseDetail && (
+          <span className="ml-auto flex min-w-0 items-center gap-1.5 rounded-full bg-white/15 px-2.5 py-1 text-sm font-bold">
+            <span aria-hidden>{page.icon}</span>
+            <span className="truncate">{page.title}</span>
+          </span>
+        )}
       </div>
     </div>
   );

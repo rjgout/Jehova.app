@@ -72,27 +72,31 @@ export default function ChapterListCourseView({ courseId, courseName, currentCha
   }
   function ChapterCard({ chapter }: { chapter: ChapterView }) {
     const locked = lockedById.get(chapter.id) ?? false;
-    return (
-      <Link
-        href={locked ? "#" : `/lesson/${chapter.id}?cursus=${courseId}`}
-        aria-disabled={locked}
-        className={`card flex items-center gap-4 transition max-w-sm ${
-          locked ? "opacity-50 pointer-events-none" : "hover:shadow-md hover:-translate-y-0.5"
-        }`}
-      >
+    const current = chapter.id === currentChapterId;
+    const rowClass = `flex min-h-14 items-center gap-3 rounded-xl px-3 py-2 transition motion-reduce:transition-none ${
+      locked
+        ? "opacity-60"
+        : current
+          ? "bg-brand-50 ring-1 ring-brand-200 dark:bg-slate-800 dark:ring-brand-700"
+          : "hover:bg-slate-50 dark:hover:bg-slate-800/70"
+    }`;
+    const rowContent = (
+      <>
         <div
-          className={`h-12 w-12 shrink-0 rounded-full flex items-center justify-center text-xl font-extrabold ${
+          className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-extrabold ${
             chapter.completed
               ? "bg-brand-500 text-white"
               : locked
-                ? "bg-slate-100 dark:bg-slate-700 text-slate-400"
-                : "bg-gold-400 text-white"
+                ? "bg-slate-100 text-slate-400 dark:bg-slate-700 dark:text-slate-300"
+                : current
+                  ? "bg-gold-400 text-white"
+                  : "border-2 border-gold-400 text-gold-600 dark:text-gold-300"
           }`}
         >
           {chapter.completed ? "✓" : locked ? "🔒" : chapter.number}
         </div>
-        <div>
-          <div className="font-extrabold dark:text-slate-100">
+        <div className="min-w-0">
+          <div className="truncate font-extrabold dark:text-slate-100">
             {chapter.bookName} {chapter.number}
           </div>
           <div className="text-xs text-slate-400 dark:text-slate-500">
@@ -100,20 +104,30 @@ export default function ChapterListCourseView({ courseId, courseName, currentCha
             {chapter.bestScore !== null ? t("courseView.bestScore", { n: chapter.bestScore }) : ""}
           </div>
         </div>
+      </>
+    );
+
+    return locked ? (
+      <div aria-disabled="true" className={rowClass}>
+        {rowContent}
+      </div>
+    ) : (
+      <Link href={`/lesson/${chapter.id}?cursus=${courseId}`} className={rowClass}>
+        {rowContent}
       </Link>
     );
   }
 
   return (
-    <div className="flex flex-col gap-10">
-      <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-8 sm:gap-10">
+      <div className="flex flex-col gap-3 sm:gap-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h1 className="text-2xl font-extrabold text-brand-800 dark:text-brand-300">{courseName}</h1>
           {studyAction}
         </div>
 
         {chapters.length > 0 && (
-          <div className="card flex flex-col gap-2">
+          <div className="flex flex-col gap-2 border-y border-slate-200/80 py-3 dark:border-slate-700/80">
             <div className="flex items-center justify-between text-xs font-bold text-slate-500 dark:text-slate-400">
               <span>{t("courseView.progress")}</span>
               <span>{t("courseView.progressCount", { pos: progressPosition, total: chapters.length, unit: unitPlural, pct: progressPercent })}</span>
@@ -125,7 +139,7 @@ export default function ChapterListCourseView({ courseId, courseName, currentCha
         )}
 
         {todayChapter && !allDone ? (
-          <div className="card bg-gradient-to-br from-brand-500 to-brand-600 text-white flex flex-col gap-3">
+          <div className="card bg-gradient-to-br from-brand-500 to-brand-600 text-white flex flex-col gap-2.5">
             <p className="text-brand-100 font-bold uppercase text-xs tracking-wide">{t("courseView.today")}</p>
             <h2 className="text-2xl font-extrabold">
               📖 {todayChapter.bookName} {todayChapter.number}
@@ -148,19 +162,19 @@ export default function ChapterListCourseView({ courseId, courseName, currentCha
       </div>
 
       {singleBook ? (
-        <div className="flex flex-col gap-8">
+        <div className="flex flex-col gap-1">
           {chapters.map((chapter) => (
             <ChapterCard key={chapter.id} chapter={chapter} />
           ))}
         </div>
       ) : (
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-4">
           {books.map((book) => {
             const doneCount = book.chapters.filter((c) => c.completed).length;
             const containsToday = book.chapters.some((c) => c.id === todayChapter?.id);
             return (
-              <details key={book.name} className="group card" open={containsToday}>
-                <summary className="font-extrabold text-lg dark:text-slate-100 cursor-pointer select-none list-none [&::-webkit-details-marker]:hidden flex items-center justify-between">
+              <details key={book.name} className="group border-b border-slate-200/80 pb-3 last:border-b-0 dark:border-slate-700/80" open={containsToday}>
+                <summary className="flex min-h-12 cursor-pointer select-none list-none items-center justify-between gap-3 rounded-xl px-2 py-2 font-extrabold text-lg transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 dark:text-slate-100 dark:hover:bg-slate-800/70 [&::-webkit-details-marker]:hidden">
                   <span>
                     {doneCount === book.chapters.length ? "✓ " : ""}
                     {book.name}
@@ -172,7 +186,7 @@ export default function ChapterListCourseView({ courseId, courseName, currentCha
                     </span>
                   </span>
                 </summary>
-                <div className="flex flex-col gap-4 pt-4">
+                <div className="ml-2 flex flex-col gap-1 border-l-2 border-slate-200 pl-3 pt-2 dark:border-slate-700 sm:ml-4 sm:pl-4">
                   {book.chapters.map((chapter) => (
                     <ChapterCard key={chapter.id} chapter={chapter} />
                   ))}
