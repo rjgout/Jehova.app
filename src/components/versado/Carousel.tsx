@@ -11,7 +11,7 @@ import { useT } from "@/components/I18nProvider";
 // netjes uitlijnt; het toetsenbord scrollt de rij gewoon mee.
 export default function Carousel({
   label,
-  itemClassName = "basis-[82%] sm:basis-[46%] lg:basis-[45%]",
+  itemClassName = "basis-[82%] sm:basis-[46%] md:basis-[42%] lg:basis-[45%]",
   children,
 }: {
   label: string;

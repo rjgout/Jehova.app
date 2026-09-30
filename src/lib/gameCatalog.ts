@@ -19,8 +19,10 @@ export type GameEnabledKey =
   | "jigsawEnabled"
   | "wordSearchEnabled";
 
+export type GameId = "jigsaw" | "word-search" | "word-game" | "scrabble" | "alleskenner" | "gezinsavond" | "chapter-guess" | "challenges";
+
 export interface GameCatalogEntry {
-  id: string;
+  id: GameId;
   enabledKey: GameEnabledKey;
   /** Titel, omschrijving, knop en speluitleg staan onder gamesHub.<textKey> in de vertalingen. */
   textKey: GameTextKey;

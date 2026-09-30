@@ -58,11 +58,10 @@ export interface DailyGameState {
   won?: boolean;
 }
 
-export interface OnlineFriend {
+export interface FriendSummary {
   id: string;
   handle: string;
   avatarEmoji: string | null;
-  activity: string | null;
 }
 
 export interface DiscoverItem {
@@ -86,13 +85,13 @@ export interface TodayData {
   dailyText: DailyText | null;
   wordGame: DailyGameState | null;
   dailyQuiz: DailyGameState | null;
-  social: { friendCount: number; online: OnlineFriend[]; viewerSharesOnline: boolean };
+  /** Alle vrienden (voor live bijwerken: een vriend die online komt, moet al bekend zijn) en wie nu online is, met diens gedeelde activiteit. */
+  social: { friends: FriendSummary[]; online: Record<string, string | null>; viewerSharesOnline: boolean };
   discover: DiscoverItem[];
 }
 
 const MAX_ACTIONS = 6;
 const MAX_CONTINUE = 8;
-const MAX_ONLINE = 6;
 const MAX_DISCOVER = 6;
 
 function partOfDay(): TodayData["partOfDay"] {
@@ -243,7 +242,7 @@ export async function getTodayData(user: User): Promise<TodayData> {
         context: contentContext.active.name,
         at: course.lastActivityAt!,
         // Het beeld volgt het boek waar je nu bent (bv. Alma), niet alleen de cursus.
-        artwork: courseArtworkKeys({ slug: course.slug, work: course.work, bookKey: lesson?.chapter.book.key ?? course.currentChapter?.bookKey }),
+        artwork: courseArtworkKeys({ slug: course.slug, type: course.type, work: course.work, bookKey: lesson?.chapter.book.key ?? course.currentChapter?.bookKey }),
       };
     });
   const podcastItems: ContinueItem[] = podcastPositions
@@ -268,12 +267,15 @@ export async function getTodayData(user: User): Promise<TodayData> {
   // Aanwezigheid alleen via presence.ts: dat past incognito, "online-status
   // delen" en "activiteit delen" toe, en toont niets als je je eigen status
   // niet deelt (zelfde regel als de vriendenpagina).
-  const friends = friendships.map((f) => (f.senderId === user.id ? f.receiver : f.sender));
+  // Daarna houdt de pagina dit live bij via de socketserver (SocialLive.tsx),
+  // die dezelfde regels toepast.
+  const friends: FriendSummary[] = friendships
+    .map((f) => (f.senderId === user.id ? f.receiver : f.sender))
+    .sort((a, b) => a.handle.localeCompare(b.handle));
   const statusMap = await getFriendStatusMap(friends.map((f) => f.id), user.shareOnlineStatus);
-  const online: OnlineFriend[] = friends
-    .filter((f) => statusMap[f.id]?.online)
-    .slice(0, MAX_ONLINE)
-    .map((f) => ({ id: f.id, handle: f.handle, avatarEmoji: f.avatarEmoji, activity: statusMap[f.id]?.activity?.label ?? null }));
+  const online: Record<string, string | null> = Object.fromEntries(
+    friends.filter((f) => statusMap[f.id]?.online).map((f) => [f.id, statusMap[f.id]?.activity?.label ?? null])
+  );
 
   // Voor jou: nog niet toegevoegde cursussen bij de actieve content en de
   // spellen in je eigen volgorde. De dagelijkse spellen staan al bij Vandaag.
@@ -291,7 +293,7 @@ export async function getTodayData(user: User): Promise<TodayData> {
         description: text.description,
         href: "/courses",
         meta: course._count.chapters > 0 ? `${course._count.chapters} ${unit}` : null,
-        artwork: courseArtworkKeys({ slug: course.slug, work: course.contentCollection.work }),
+        artwork: courseArtworkKeys({ slug: course.slug, type: course.type, work: course.contentCollection.work }),
       };
     });
   const gameCards: DiscoverItem[] = games.map((game) => ({
@@ -325,7 +327,7 @@ export async function getTodayData(user: User): Promise<TodayData> {
     dailyQuiz: quizEntry
       ? { href: "/alleskenner/alleen", status: !dailyQuiz ? "todo" : dailyQuiz.status === "IN_PROGRESS" ? "in-progress" : "done" }
       : null,
-    social: { friendCount: friends.length, online, viewerSharesOnline: user.shareOnlineStatus },
+    social: { friends, online, viewerSharesOnline: user.shareOnlineStatus },
     discover,
   };
 }

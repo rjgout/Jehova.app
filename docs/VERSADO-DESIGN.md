@@ -58,11 +58,14 @@ lijst hierboven nog volledig.
   algemeen). Bestanden staan in `public/images/`, zonder tekst erin;
   `versado/MediaArtwork.tsx` toont ze via `next/image` (WebP per
   schermbreedte, vaste verhouding, gemiddelde kleur tijdens laden, neutrale
-  placeholder met icoon als er geen beeld is of het niet laadt). Eerste
-  set: 1 Nephi (ook het algemene beeld voor het Boek van Mormon), Alma,
-  Het leven van Christus (voor een cursus met slug `life-of-christ`, die er
-  nog niet is), podcast (algemeen), De Slimste Heilige en de tekst van de
-  dag. `versado/MascotSlot.tsx` rendert niets tot de mascottes er zijn.
+  placeholder met icoon als er geen beeld is of het niet laadt). Beeld
+  hoort inhoudelijk bij de content: een cursus toont het boek waar je bent
+  (of het beginboek als die cursus het boek van voor naar achter volgt),
+  en anders de placeholder; er is geen algemeen beeld per werk. Eerste
+  set: 1 Nephi, Alma, Het leven van Christus (voor een cursus met slug
+  `life-of-christ`, die er nog niet is), podcast (algemeen), De Slimste
+  Heilige en de tekst van de dag. Spelcovers komen per spel-id in
+  `GAME_COVERS`. `versado/MascotSlot.tsx` rendert niets tot de mascottes er zijn.
   `versado/Carousel.tsx` is de veegrij met puntjes en pijlen.
 
 ## Wat Versado is
