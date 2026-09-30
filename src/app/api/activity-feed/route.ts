@@ -52,6 +52,7 @@ export async function GET() {
         actor: item.user,
         reactionCounts,
         myReaction,
+        canReact: item.userId !== user.id,
         text:
           item.kind === "XP"
             ? t("activityFeed.xpText", { amount: item.xpAmount, reason: reason ?? t("activityFeed.xpFallback") })

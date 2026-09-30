@@ -17,6 +17,7 @@ interface FeedItem {
   text: string;
   reactionCounts: Record<string, number>;
   myReaction: string | null;
+  canReact: boolean;
 }
 
 export default function ActivityFeedClient() {
@@ -45,6 +46,7 @@ export default function ActivityFeedClient() {
   }, []);
 
   async function react(item: FeedItem, emoji: string) {
+    if (!item.canReact) return;
     setOpenReactions(null);
     const response = await fetch(`/api/activity-feed/${encodeURIComponent(item.id)}/reaction`, {
       method: "POST",
@@ -100,41 +102,49 @@ export default function ActivityFeedClient() {
 
                 <div className="flex items-center gap-2 border-t border-slate-100 dark:border-slate-700 pt-2">
                   {reactionEntries.map(([emoji, count]) => (
-                    <button
-                      key={emoji}
-                      type="button"
-                      onClick={() => react(item, emoji)}
-                      className={"rounded-full px-2 py-1 text-sm border " + (item.myReaction === emoji ? "border-brand-400 bg-brand-50 dark:bg-slate-700" : "border-slate-200 dark:border-slate-600")}
-                      aria-label={t("activityFeed.reactWith", { emoji })}
-                    >
-                      {emoji} {count}
-                    </button>
+                    item.canReact ? (
+                      <button
+                        key={emoji}
+                        type="button"
+                        onClick={() => react(item, emoji)}
+                        className={"rounded-full px-2 py-1 text-sm border " + (item.myReaction === emoji ? "border-brand-400 bg-brand-50 dark:bg-slate-700" : "border-slate-200 dark:border-slate-600")}
+                        aria-label={t("activityFeed.reactWith", { emoji })}
+                      >
+                        {emoji} {count}
+                      </button>
+                    ) : (
+                      <span key={emoji} className="rounded-full px-2 py-1 text-sm border border-slate-200 dark:border-slate-600">
+                        {emoji} {count}
+                      </span>
+                    )
                   ))}
-                  <div className="relative ml-auto">
-                    <button
-                      type="button"
-                      className="btn-secondary !px-3 !py-1.5 text-sm"
-                      onClick={() => setOpenReactions(openReactions === item.id ? null : item.id)}
-                      aria-expanded={openReactions === item.id}
-                    >
-                      {item.myReaction ?? "🫶🏻"} {t("activityFeed.react")}
-                    </button>
-                    {openReactions === item.id && (
-                      <div className="absolute right-0 bottom-full mb-2 z-10 flex gap-1 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-2 shadow-lg">
-                        {REACTIONS.map((emoji) => (
-                          <button
-                            key={emoji}
-                            type="button"
-                            className="h-9 w-9 rounded-lg text-xl hover:bg-slate-100 dark:hover:bg-slate-700"
-                            onClick={() => react(item, emoji)}
-                            aria-label={t("activityFeed.reactWith", { emoji })}
-                          >
-                            {emoji}
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
+                  {item.canReact && (
+                    <div className="relative ml-auto">
+                      <button
+                        type="button"
+                        className="btn-secondary !px-3 !py-1.5 text-sm"
+                        onClick={() => setOpenReactions(openReactions === item.id ? null : item.id)}
+                        aria-expanded={openReactions === item.id}
+                      >
+                        {item.myReaction ?? "🫶🏻"} {t("activityFeed.react")}
+                      </button>
+                      {openReactions === item.id && (
+                        <div className="absolute right-0 bottom-full mb-2 z-10 flex gap-1 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-2 shadow-lg">
+                          {REACTIONS.map((emoji) => (
+                            <button
+                              key={emoji}
+                              type="button"
+                              className="h-9 w-9 rounded-lg text-xl hover:bg-slate-100 dark:hover:bg-slate-700"
+                              onClick={() => react(item, emoji)}
+                              aria-label={t("activityFeed.reactWith", { emoji })}
+                            >
+                              {emoji}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               </article>
             );

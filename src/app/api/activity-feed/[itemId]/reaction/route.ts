@@ -10,7 +10,7 @@ const schema = z.object({ emoji: z.enum(REACTIONS) });
 async function canSeeItem(itemId: string, userId: string): Promise<boolean> {
   const item = await prisma.activityFeedItem.findUnique({ where: { id: itemId }, select: { userId: true } });
   if (!item) return false;
-  if (item.userId === userId) return true;
+  if (item.userId === userId) return false;
   const friendship = await prisma.friendship.findFirst({
     where: {
       status: "ACCEPTED",
