@@ -524,7 +524,6 @@ export const fr: PartialMessages = {
     },
     title: "Jeux et défis",
     intro: "Joue seul, ensemble ou contre un ami. Organise les jeux comme tu le souhaites.",
-    allGames: "Tous les jeux",
     featured: "Jouer maintenant",
     liveTitle: "⚡ Lancer un quiz en direct",
     liveIntro: "Choisis un chapitre et invite des amis à un duel en direct.",

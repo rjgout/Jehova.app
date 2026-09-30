@@ -103,14 +103,14 @@ function SortableRow({ id, className, children }: { id: string; className?: stri
 }
 
 /** Het greep-icoontje zelf — spreidt de sleep-luisteraars alleen hierop uit. */
-export function DragHandle({ attributes, listeners }: DragHandleProps) {
+export function DragHandle({ attributes, listeners, className = "" }: DragHandleProps & { className?: string }) {
   const t = useT();
   return (
     <button
       type="button"
       {...attributes}
       {...listeners}
-      className="shrink-0 touch-none cursor-grab active:cursor-grabbing text-slate-300 dark:text-slate-600 hover:text-slate-400 px-1 -ml-1 select-none"
+      className={`shrink-0 touch-none cursor-grab active:cursor-grabbing text-slate-300 dark:text-slate-600 hover:text-slate-400 px-1 -ml-1 select-none ${className}`}
       aria-label={t("misc.dragToReorder")}
       onClick={(e) => e.preventDefault()}
     >

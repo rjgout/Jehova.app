@@ -534,7 +534,6 @@ export const es: PartialMessages = {
     },
     "title": "Juegos y desafíos",
     "intro": "Juega solo, en grupo o contra un amigo. Ordena los juegos como quieras.",
-    "allGames": "Todos los juegos",
     "featured": "Jugar ahora",
     "liveTitle": "⚡ Iniciar un cuestionario en vivo",
     "liveIntro": "Elige un capítulo e invita a amigos a un duelo en vivo.",

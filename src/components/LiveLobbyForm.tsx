@@ -3,6 +3,7 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { ArrowRight } from "lucide-react";
 import ActiveGamesBanner from "@/components/ActiveGamesBanner";
 import { SortableList, DragHandle, type DragHandleProps } from "@/components/SortableList";
 import { applyPersonalOrder, fetchListOrder, saveListOrder } from "@/lib/listOrder";
@@ -140,7 +141,6 @@ export default function LiveLobbyForm({ settings, isAdmin, allowedGameKeys, cont
         </div>
       )}
 
-      {games.length > 0 && <h2 className="text-lg font-extrabold text-brand-800 dark:text-brand-300">{t("gamesHub.allGames")}</h2>}
       <SortableList
         dndId="games-list"
         items={games}
@@ -169,7 +169,7 @@ function GameCardBody({ game, enabled, handle }: { game: GameEntry; enabled: boo
   const text = (part: "description" | "linkLabel" | "rule1" | "rule2" | "rule3") => t(`gamesHub.${game.textKey}.${part}`);
 
   return (
-    <div className={`card flex flex-col gap-3 !p-4 sm:!p-5 ${!enabled ? "!border-2 !border-red-300 dark:!border-red-800" : ""}`}>
+    <div className={`card flex flex-col gap-2 !p-3 sm:gap-3 sm:!p-5 ${enabled ? "dark:!border-slate-800" : "!border-2 !border-red-300 dark:!border-red-800"}`}>
       {/* Cover over de volle breedte van de kaart (tegen de padding van .card
           in). Op een telefoon lager (21:9), vanaf twee kolommen 2:1. */}
       <MediaArtwork
@@ -177,11 +177,11 @@ function GameCardBody({ game, enabled, handle }: { game: GameEntry; enabled: boo
         artworkKey={gameArtworkKeys(game.id)}
         ratio="21/9"
         sizes="(min-width: 1024px) 500px, (min-width: 640px) 50vw, 100vw"
-        className="-mx-4 -mt-4 rounded-t-[calc(1.5rem-1px)] sm:-mx-5 sm:-mt-5 sm:aspect-[2/1]"
+        className="-mx-3 -mt-3 rounded-t-[calc(1.5rem-1px)] sm:-mx-5 sm:-mt-5 sm:aspect-[2/1]"
       />
       <div className="flex items-start gap-2.5">
         <div className="pt-0.5 shrink-0">
-          <DragHandle {...handle} />
+          <DragHandle {...handle} className="!ml-[-0.5rem] !rounded-lg !px-2 !py-1 !text-slate-400 hover:!bg-slate-100 dark:!text-slate-500 dark:hover:!bg-slate-700" />
         </div>
         <div className="min-w-0 flex-1">
           {!enabled && (
@@ -189,7 +189,7 @@ function GameCardBody({ game, enabled, handle }: { game: GameEntry; enabled: boo
               {t("gamesHub.disabledForUsers")}
             </span>
           )}
-          {game.id === "word-game" && <span className="mb-1 inline-flex text-xs font-extrabold uppercase tracking-wide text-brand-600 dark:text-brand-300">{t("gamesHub.featured")}</span>}
+          {game.id === "word-game" && <span className="mb-0.5 inline-flex text-xs font-extrabold uppercase tracking-wide text-brand-600 dark:text-brand-300">{t("gamesHub.featured")}</span>}
           <div className="flex min-w-0 items-start gap-2">
             <Link href={game.href} className="min-w-0 flex-1 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500">
               <h2 className="truncate font-extrabold leading-tight dark:text-slate-100">{title}</h2>
@@ -204,12 +204,12 @@ function GameCardBody({ game, enabled, handle }: { game: GameEntry; enabled: boo
               i
             </button>
           </div>
-          <Link href={game.href} className="mt-1 block rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500">
+          <Link href={game.href} className="mt-0.5 block rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500">
             <p className="line-clamp-2 text-sm text-slate-500 dark:text-slate-400">{text("description")}</p>
           </Link>
         </div>
-        <Link href={game.href} className="mt-1 shrink-0 rounded-full p-1 text-slate-400 transition hover:bg-slate-100 hover:text-brand-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 dark:text-slate-500 dark:hover:bg-slate-700 dark:hover:text-brand-300" aria-label={text("linkLabel")}>
-          <span aria-hidden>→</span>
+        <Link href={game.href} className="mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-100/70 text-slate-500 transition hover:bg-brand-100 hover:text-brand-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 dark:bg-slate-700/70 dark:text-slate-300 dark:hover:bg-slate-600 dark:hover:text-brand-200" aria-label={text("linkLabel")}>
+          <ArrowRight className="h-4 w-4" aria-hidden />
         </Link>
       </div>
       {showRules && (

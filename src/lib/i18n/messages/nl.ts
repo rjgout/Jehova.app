@@ -472,7 +472,6 @@ export const nl = {
     },
     title: "Spelletjes en uitdagingen",
     intro: "Speel alleen, samen of tegen een vriend. Rangschik de spellen zoals jij wilt.",
-    allGames: "Alle spellen",
     featured: "Speel nu",
     liveTitle: "⚡ Live quiz starten",
     liveIntro: "Kies een hoofdstuk en nodig vrienden uit voor een live duel.",

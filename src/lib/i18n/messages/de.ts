@@ -524,7 +524,6 @@ export const de: PartialMessages = {
     },
     title: "Spiele und Herausforderungen",
     intro: "Spiele allein, gemeinsam oder gegen einen Freund. Ordne die Spiele nach deinen Wünschen.",
-    allGames: "Alle Spiele",
     featured: "Jetzt spielen",
     liveTitle: "⚡ Live-Quiz starten",
     liveIntro: "Wähle ein Kapitel und lade Freunde zu einem Live-Duell ein.",
