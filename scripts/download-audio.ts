@@ -1,10 +1,17 @@
 /**
  * Download audiobestanden voor schriftboeken van de kerkserver naar lokale opslag.
  *
- * Ondersteunde talen: Nederlands (bomAudio.json)
- * Toekomstig: Engels, Duits, Frans, L&V, PGP
+ * Herbruikbaar:
+ * - Via CLI: `npx tsx scripts/download-audio.ts`
+ * - Via admin: `/api/admin/reseed` (roept downloadAudio aan via seed.ts)
  *
- * Gebruik: npx tsx scripts/download-audio.ts
+ * Ondersteunde talen:
+ * - Nederlands (NL): bomAudio.json ✓
+ * - Engels (EN): metadata nodig (bomAudio.en.json)
+ * - Duits (DE): metadata nodig (bomAudio.de.json)
+ * - Frans (FR): metadata nodig (bomAudio.fr.json)
+ *
+ * Toekomstig: ook L&V (Leer en Verbonden) en PGP (Parel van Grote Waarde)
  */
 
 import fs from "fs";
@@ -20,9 +27,23 @@ interface AudioMetadata {
   verseStarts: number[];
 }
 
+interface AudioLanguageConfig {
+  code: string;
+  name: string;
+  metadataFile: string;
+}
+
 const AUDIO_DIR = process.env.AUDIO_STORAGE_DIR || "./public/audio";
 const MAX_RETRIES = 3;
 const RETRY_DELAY = 2000;
+
+/** Audio-metadata bestanden per taal. Voeg hier nieuwe talen toe als metadata beschikbaar wordt. */
+const AUDIO_LANGUAGES: AudioLanguageConfig[] = [
+  { code: "nl", name: "Nederlands", metadataFile: "prisma/bomAudio.json" },
+  // { code: "en", name: "English", metadataFile: "prisma/bomAudio.en.json" },
+  // { code: "de", name: "Deutsch", metadataFile: "prisma/bomAudio.de.json" },
+  // { code: "fr", name: "Français", metadataFile: "prisma/bomAudio.fr.json" },
+];
 
 /**
  * Download een bestand met retries
@@ -103,20 +124,23 @@ async function downloadFile(
  * Download alle audiobestanden voor een taal
  */
 async function downloadAudioForLanguage(
-  language: string,
-  metadataFile: string
-) {
-  console.log(`\n📥 ${language.toUpperCase()}: ${metadataFile}`);
+  config: AudioLanguageConfig
+): Promise<{ downloaded: number; failed: number; skipped: boolean }> {
+  if (!fs.existsSync(config.metadataFile)) {
+    return { downloaded: 0, failed: 0, skipped: true };
+  }
+
+  console.log(`\n📥 ${config.name} (${config.code})`);
 
   const metadata: AudioMetadata[] = JSON.parse(
-    fs.readFileSync(metadataFile, "utf-8")
+    fs.readFileSync(config.metadataFile, "utf-8")
   );
 
   let downloaded = 0;
   let failed = 0;
 
   for (const item of metadata) {
-    const filename = `${language}/${item.book}/${String(item.chapter).padStart(3, "0")}.mp3`;
+    const filename = `${config.code}/${item.book}/${String(item.chapter).padStart(3, "0")}.mp3`;
     const targetPath = path.join(AUDIO_DIR, filename);
 
     const success = await downloadFile(item.url, targetPath);
@@ -128,42 +152,52 @@ async function downloadAudioForLanguage(
   }
 
   console.log(
-    `  Klaar: ${downloaded}/${metadata.length} (${failed} mislukt)\n`
+    `  Klaar: ${downloaded}/${metadata.length} (${failed} mislukt)`
   );
-  return { downloaded, failed };
+  return { downloaded, failed, skipped: false };
 }
 
 /**
- * Main: download audio voor alle beschikbare talen
+ * Herbruikbare download-functie voor CLI en seed
  */
-async function main() {
-  console.log("🎵 Audio bestanden downloaden...");
-  console.log(`   Opslag: ${AUDIO_DIR}\n`);
-
-  const languages = [
-    { code: "nl", file: "prisma/bomAudio.json", name: "Nederlands" },
-    // Toekomstig: other languages en collections
-  ];
+export async function downloadAudio(
+  logFn: (msg: string) => void = console.log
+): Promise<{ totalDownloaded: number; totalFailed: number }> {
+  logFn("🎵 Audio bestanden downloaden...");
+  logFn(`   Opslag: ${AUDIO_DIR}`);
 
   let totalDownloaded = 0;
   let totalFailed = 0;
+  let totalSkipped = 0;
 
-  for (const lang of languages) {
-    if (fs.existsSync(lang.file)) {
-      const { downloaded, failed } = await downloadAudioForLanguage(
-        lang.code,
-        lang.file
-      );
-      totalDownloaded += downloaded;
-      totalFailed += failed;
+  for (const lang of AUDIO_LANGUAGES) {
+    const result = await downloadAudioForLanguage(lang);
+    if (result.skipped) {
+      totalSkipped++;
     } else {
-      console.log(`⊘ Geen metadata: ${lang.file}`);
+      totalDownloaded += result.downloaded;
+      totalFailed += result.failed;
     }
   }
 
-  console.log(`\n✓ Totaal: ${totalDownloaded} bestanden gedownload`);
+  if (totalSkipped > 0) {
+    logFn(`⊘ ${totalSkipped} taal(talen) overgeslagen (geen metadata)`);
+  }
+
+  logFn(`✓ Totaal: ${totalDownloaded} bestanden gedownload`);
   if (totalFailed > 0) {
-    console.log(`⚠ ${totalFailed} downloads mislukt — probeer later opnieuw.`);
+    logFn(`⚠ ${totalFailed} downloads mislukt`);
+  }
+
+  return { totalDownloaded, totalFailed };
+}
+
+/**
+ * CLI entrypoint
+ */
+async function main() {
+  const { totalFailed } = await downloadAudio();
+  if (totalFailed > 0) {
     process.exit(1);
   }
 }

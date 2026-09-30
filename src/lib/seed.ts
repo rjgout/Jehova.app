@@ -2,6 +2,7 @@ import { PrismaClient } from "@prisma/client";
 import { seedBooks } from "../../prisma/content";
 import { importBooks } from "../../prisma/importContent";
 import { importChapterAudio, type ChapterAudioSeed } from "../../prisma/importAudio";
+import { downloadAudio } from "../../scripts/download-audio";
 import bomAudio from "../../prisma/bomAudio.json";
 import dcContent from "../../prisma/dcContent.json";
 import pgpContent from "../../prisma/pgpContent.json";
@@ -77,6 +78,11 @@ const achievementDefs = [
 export async function runSeed(client: PrismaClient, log: (msg: string) => void = console.log): Promise<void> {
   log("Seeding boeken, hoofdstukken, verzen en oefeningen...");
   await importBooks(client, seedBooks, log);
+
+  // Audiobestanden downloaden van de kerkserver (eenmalig; daarna lokaal geserveerd)
+  await downloadAudio(log);
+
+  // Audio-begintijden per vers toepassen
   await importChapterAudio(client, bomAudio as ChapterAudioSeed[], log);
 
   // Leer en Verbonden en de Parel van Grote Waarde, en de Engelse uitgaven
