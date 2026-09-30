@@ -1,8 +1,8 @@
-"use client";
-
 // Kleine, gedeelde helpers voor de persoonlijke sleepvolgorde van cursussen
 // (/courses) en spelletjes (/live) — zie /api/list-order en het
-// UserListOrder-model. Client-only (fetch), dus geen server-import hier.
+// UserListOrder-model. Bewust geen "use client": applyPersonalOrder wordt ook
+// op de server gebruikt (Vandaag), en de fetch-helpers roep je alleen vanuit
+// de browser aan.
 
 export type ListKey = "courses" | "games";
 

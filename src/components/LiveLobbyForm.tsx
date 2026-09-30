@@ -8,7 +8,7 @@ import { SortableList, DragHandle, type DragHandleProps } from "@/components/Sor
 import { applyPersonalOrder, fetchListOrder, saveListOrder } from "@/lib/listOrder";
 import { useT } from "@/components/I18nProvider";
 import AppSelect from "@/components/AppSelect";
-import type { MessageKey } from "@/lib/i18n/core";
+import { GAME_CATALOG, type GameCatalogEntry } from "@/lib/gameCatalog";
 
 interface ChapterOption {
   id: string;
@@ -36,30 +36,23 @@ interface Props {
   contentName: string;
 }
 
-type GameTextKey = "wordGame" | "scrabble" | "alleskenner" | "gezinsavond" | "chapterGuess" | "challenges" | "jigsaw" | "wordSearch";
-
-interface GameEntry {
-  id: string; // stabiele sleutel voor de sleepvolgorde (UserListOrder.itemKey)
-  enabledKey: keyof GameSettings;
+interface GameEntry extends GameCatalogEntry {
   icon: string;
-  /** Titel, omschrijving, knop en speluitleg staan onder gamesHub.<textKey> in de vertalingen. */
-  textKey: GameTextKey;
-  titleKey: MessageKey;
-  href: string;
 }
 
-// Vaste catalogus — nu data-driven (i.p.v. losse hardcoded kaarten) zodat
-// hij herordend kan worden (zie SortableList/listOrder.ts, listKey="games").
-const GAMES: GameEntry[] = [
-  { id: "jigsaw", enabledKey: "jigsawEnabled", icon: "🧩", textKey: "jigsaw", titleKey: "jigsaw.title", href: "/jigsaw" },
-  { id: "word-search", enabledKey: "wordSearchEnabled", icon: "🔎", textKey: "wordSearch", titleKey: "pages.wordSearch", href: "/word-search" },
-  { id: "word-game", enabledKey: "wordGameEnabled", icon: "🟩", textKey: "wordGame", titleKey: "pages.wordOfTheDay", href: "/word-game" },
-  { id: "scrabble", enabledKey: "scrabbleEnabled", icon: "🔤", textKey: "scrabble", titleKey: "pages.wordGame", href: "/scrabble" },
-  { id: "alleskenner", enabledKey: "alleskennerEnabled", icon: "🧠", textKey: "alleskenner", titleKey: "pages.alleskenner", href: "/alleskenner" },
-  { id: "gezinsavond", enabledKey: "gezinsavondEnabled", icon: "🎉", textKey: "gezinsavond", titleKey: "pages.familyNight", href: "/gezinsavond" },
-  { id: "chapter-guess", enabledKey: "chapterGuessEnabled", icon: "🔎", textKey: "chapterGuess", titleKey: "pages.chapterGuess", href: "/chapter-guess" },
-  { id: "challenges", enabledKey: "challengesEnabled", icon: "⚔️", textKey: "challenges", titleKey: "pages.challenges", href: "/challenges" },
-];
+// De catalogus zelf staat in src/lib/gameCatalog.ts (gedeeld met Vandaag);
+// de iconen horen bij dit overzicht.
+const GAME_ICONS: Record<string, string> = {
+  jigsaw: "🧩",
+  "word-search": "🔎",
+  "word-game": "🟩",
+  scrabble: "🔤",
+  alleskenner: "🧠",
+  gezinsavond: "🎉",
+  "chapter-guess": "🔎",
+  challenges: "⚔️",
+};
+const GAMES: GameEntry[] = GAME_CATALOG.map((game) => ({ ...game, icon: GAME_ICONS[game.id] ?? "" }));
 
 export default function LiveLobbyForm({ settings, isAdmin, allowedGameKeys, contentName }: Props) {
   const t = useT();
