@@ -64,7 +64,7 @@ const GAME_COVERS: Partial<Record<GameId, ArtworkAsset>> = {
   scrabble: { src: "/images/games/woordspel.png", position: "35% 50%", tone: "#a67953" },
   "chapter-guess": { src: "/images/games/raad-het-hoofdstuk.png", tone: "#9d6e49" },
   gezinsavond: { src: "/images/games/gezinsavond.png", tone: "#a27141" },
-  // challenges (Uitdagingen): nog geen cover aangeleverd.
+  challenges: { src: "/images/games/uitdagingen.png", tone: "#996638" },
 };
 
 const PODCASTS: Record<string, ArtworkAsset> = {

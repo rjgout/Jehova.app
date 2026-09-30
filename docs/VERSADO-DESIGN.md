@@ -66,8 +66,7 @@ lijst hierboven nog volledig.
   `life-of-christ`, die er nog niet is), podcast (algemeen), De Slimste
   Heilige en de tekst van de dag. Spelcovers staan per spel-id in
   `GAME_COVERS` en worden overal gebruikt waar een spel als kaart staat
-  (Vandaag, Voor jou en de spelkaarten op Spelen in `LiveLobbyForm`);
-  Uitdagingen heeft nog geen cover. `versado/MascotSlot.tsx` rendert niets tot de mascottes er zijn.
+  (Vandaag, Voor jou en de spelkaarten op Spelen in `LiveLobbyForm`). `versado/MascotSlot.tsx` rendert niets tot de mascottes er zijn.
   `versado/Carousel.tsx` is de veegrij met puntjes en pijlen.
 
 ## Wat Versado is
