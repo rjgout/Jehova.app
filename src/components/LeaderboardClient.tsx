@@ -105,37 +105,29 @@ export default function LeaderboardClient() {
   const nationalData = data && data.scope === "national" ? (data as NationalData) : null;
 
   return (
-    <div className="max-w-2xl mx-auto flex flex-col gap-6">
-      {/* Elk tabblad een hero van dezelfde vaste hoogte: anders verspringt
-          het tabbladmenu eronder bij elke wissel. */}
-      <div className="card bg-gradient-to-br from-brand-500 to-brand-700 dark:from-brand-600 dark:to-brand-900 text-white !border-0 !px-0 !py-5 h-48 flex flex-col items-center justify-center gap-1 overflow-hidden">
-        {scope === "league" ? (
-          <>
-            <h1 className="sr-only">
-              {t("nav.competition")} — {tiers ? t(`tiers.${tiers.current}`) : t("leaderboard.divisionLower")}
-            </h1>
-            {tiers && <DivisionScroller current={tiers.current} highest={tiers.highest} />}
-          </>
-        ) : scope === "friends" ? (
-          <>
-            <span className="text-5xl" aria-hidden>
-              🤝
-            </span>
-            <h1 className="text-2xl font-extrabold">{t("nav.friends")}</h1>
-            <p className="text-brand-100 text-sm text-center px-6">{t("leaderboard.friendsSub")}</p>
-          </>
-        ) : (
-          <>
-            <h1 className="text-2xl font-extrabold">{t("leaderboard.national")}</h1>
-            <p className="text-brand-100 text-sm text-center px-6">{t("leaderboard.nationalSub")}</p>
-          </>
-        )}
-      </div>
+    <div className="max-w-2xl mx-auto flex flex-col gap-4 sm:gap-5">
+      {scope === "league" ? (
+        <div className="card bg-gradient-to-br from-brand-500 to-brand-700 dark:from-brand-600 dark:to-brand-900 text-white !border-0 !px-0 !py-3 h-32 sm:h-36 flex flex-col items-center justify-center gap-1 overflow-hidden">
+          <h1 className="sr-only">
+            {t("nav.competition")} — {tiers ? t(`tiers.${tiers.current}`) : t("leaderboard.divisionLower")}
+          </h1>
+          {tiers && <DivisionScroller current={tiers.current} highest={tiers.highest} />}
+        </div>
+      ) : (
+        <header className="flex flex-col gap-0.5 px-1">
+          <h1 className="text-xl font-extrabold text-brand-800 dark:text-brand-300">
+            {scope === "friends" ? t("nav.friends") : t("leaderboard.national")}
+          </h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400">
+            {scope === "friends" ? t("leaderboard.friendsSub") : t("leaderboard.nationalSub")}
+          </p>
+        </header>
+      )}
 
-      <div className="flex bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-1 flex-wrap justify-center">
+      <div className="flex w-full rounded-full border border-slate-200 bg-white p-1 dark:border-slate-700 dark:bg-slate-800">
         <button
           onClick={() => setScope("league")}
-          className={`px-4 py-1.5 rounded-xl text-sm font-bold ${
+          className={`min-w-0 flex-1 rounded-full px-2 py-1.5 text-xs font-bold transition sm:px-3 sm:text-sm ${
             scope === "league" ? "bg-brand-500 text-white" : "text-slate-500 dark:text-slate-300"
           }`}
         >
@@ -143,7 +135,7 @@ export default function LeaderboardClient() {
         </button>
         <button
           onClick={() => setScope("friends")}
-          className={`px-4 py-1.5 rounded-xl text-sm font-bold ${
+          className={`min-w-0 flex-1 rounded-full px-2 py-1.5 text-xs font-bold transition sm:px-3 sm:text-sm ${
             scope === "friends" ? "bg-brand-500 text-white" : "text-slate-500 dark:text-slate-300"
           }`}
         >
@@ -151,7 +143,7 @@ export default function LeaderboardClient() {
         </button>
         <button
           onClick={() => setScope("national")}
-          className={`px-4 py-1.5 rounded-xl text-sm font-bold ${
+          className={`min-w-0 flex-1 rounded-full px-2 py-1.5 text-xs font-bold transition sm:px-3 sm:text-sm ${
             scope === "national" ? "bg-brand-500 text-white" : "text-slate-500 dark:text-slate-300"
           }`}
         >
@@ -164,7 +156,7 @@ export default function LeaderboardClient() {
       )}
 
       {scope === "league" && leagueData?.xpGap && (
-        <div className="card !py-3 !bg-gold-50 dark:!bg-slate-700 !border-gold-400/30 dark:!border-slate-600 text-center">
+        <div className="card !py-2.5 !bg-gold-50 dark:!bg-slate-700 !border-gold-400/30 dark:!border-slate-600 text-center">
           <p className="font-extrabold text-gold-700 dark:text-gold-400">
             {leagueData.xpGap.toward === "SAFETY" && t("leaderboard.gapSafety", { xp: leagueData.xpGap.xp })}
             {leagueData.xpGap.toward === "PROMOTION" && t("leaderboard.gapPromotion", { xp: leagueData.xpGap.xp })}
@@ -184,7 +176,7 @@ export default function LeaderboardClient() {
           {leagueData.entries.map((e) => (
             <div
               key={e.userId}
-              className={`flex items-center gap-3 py-3 px-2 rounded-xl min-w-0 ${
+              className={`flex items-center gap-2.5 px-2 py-2.5 rounded-xl min-w-0 ${
                 e.isMe ? "bg-brand-50 dark:bg-slate-700 font-extrabold" : ""
               }`}
             >
@@ -238,7 +230,7 @@ export default function LeaderboardClient() {
 function NationalRow({ e }: { e: NationalEntry }) {
   const t = useT();
   return (
-    <div className={`flex items-center gap-3 py-3 px-2 rounded-xl min-w-0 ${
+    <div className={`flex items-center gap-2.5 px-2 py-2.5 rounded-xl min-w-0 ${
       e.isMe ? "font-extrabold" : ""
     }`}>
       <div className="flex items-center gap-2 min-w-0 flex-1">
@@ -253,7 +245,7 @@ function NationalRow({ e }: { e: NationalEntry }) {
           </span>
         )}
       </div>
-      <div className="flex shrink-0 items-center gap-2 text-sm whitespace-nowrap">
+      <div className="flex shrink-0 items-center gap-1.5 text-xs whitespace-nowrap sm:gap-2 sm:text-sm">
         <span className="text-orange-500 font-bold">🔥 {e.currentStreak}</span>
         <span className="text-gold-600 dark:text-gold-400 font-extrabold">⭐ {e.xpTotal}</span>
       </div>

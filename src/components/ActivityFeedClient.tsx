@@ -70,22 +70,22 @@ export default function ActivityFeedClient() {
 
   const locale = getLanguage(uiLanguage).intlLocale;
   return (
-    <div className="max-w-2xl mx-auto flex flex-col gap-6">
+    <div className="max-w-2xl mx-auto flex flex-col gap-4 sm:gap-5">
       <div>
         <h1 className="text-2xl font-extrabold text-brand-800 dark:text-brand-300 flex items-center gap-2">
           <span aria-hidden>✨</span> {t("pages.activity")}
         </h1>
-        <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">{t("activityFeed.intro")}</p>
+        <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">{t("activityFeed.intro")}</p>
       </div>
 
       {items.length === 0 ? (
         <div className="card text-center text-slate-500 dark:text-slate-400">{t("activityFeed.empty")}</div>
       ) : (
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-2.5">
           {items.map((item) => {
             const reactionEntries = Object.entries(item.reactionCounts).filter(([, count]) => count > 0);
             return (
-              <article key={item.id} className="card flex flex-col gap-3">
+              <article key={item.id} className="card flex flex-col gap-2 !p-3 sm:!p-4 sm:gap-2.5">
                 <div className="flex items-start gap-3">
                   <UserAvatar id={item.actor.id} handle={item.actor.handle} avatarEmoji={item.actor.avatarEmoji} size="sm" />
                   <div className="min-w-0 flex-1">
@@ -100,14 +100,14 @@ export default function ActivityFeedClient() {
                   {item.achievementIcon && <span className="text-2xl" aria-hidden>{item.achievementIcon}</span>}
                 </div>
 
-                <div className="flex items-center gap-2 border-t border-slate-100 dark:border-slate-700 pt-2">
+                <div className="flex min-h-9 flex-wrap items-center gap-1.5">
                   {reactionEntries.map(([emoji, count]) => (
                     item.canReact ? (
                       <button
                         key={emoji}
                         type="button"
                         onClick={() => react(item, emoji)}
-                        className={"rounded-full px-2 py-1 text-sm border " + (item.myReaction === emoji ? "border-brand-400 bg-brand-50 dark:bg-slate-700" : "border-slate-200 dark:border-slate-600")}
+                        className={"min-h-9 rounded-full border px-2 py-1 text-sm " + (item.myReaction === emoji ? "border-brand-400 bg-brand-50 dark:bg-slate-700" : "border-slate-200 dark:border-slate-600")}
                         aria-label={t("activityFeed.reactWith", { emoji })}
                       >
                         {emoji} {count}
@@ -122,7 +122,7 @@ export default function ActivityFeedClient() {
                     <div className="relative ml-auto">
                       <button
                         type="button"
-                        className="btn-secondary !px-3 !py-1.5 text-sm"
+                        className="btn-secondary !min-h-9 !px-3 !py-1 text-sm"
                         onClick={() => setOpenReactions(openReactions === item.id ? null : item.id)}
                         aria-expanded={openReactions === item.id}
                       >
