@@ -68,7 +68,7 @@ export default function FriendInviteCard({ appName }: { appName: string }) {
   }
 
   return (
-    <div className="card flex flex-col gap-3">
+    <div className="card flex flex-col gap-2.5 !p-4 sm:gap-3 sm:!p-5">
       <p className="font-bold text-sm dark:text-slate-100 flex items-center gap-2">
         <span aria-hidden>💌</span> {t("friendInvite.title")}
       </p>
@@ -82,14 +82,14 @@ export default function FriendInviteCard({ appName }: { appName: string }) {
           </p>
           <div className="flex gap-2 flex-wrap">
             {canShare && (
-              <button className="btn-primary !px-4 !py-2" onClick={share}>
+              <button className="btn-primary !px-4 !py-1.5" onClick={share}>
                 {t("friendInvite.share")}
               </button>
             )}
-            <button className={`${canShare ? "btn-secondary" : "btn-primary"} !px-4 !py-2`} onClick={copy}>
+            <button className={`${canShare ? "btn-secondary" : "btn-primary"} !px-4 !py-1.5`} onClick={copy}>
               {t("friendInvite.copy")}
             </button>
-            <button className="btn-secondary !px-4 !py-2" disabled={busy} onClick={regenerate}>
+            <button className="btn-secondary !px-4 !py-1.5" disabled={busy} onClick={regenerate}>
               {busy ? t("courses.busy") : t("friendInvite.regenerate")}
             </button>
           </div>

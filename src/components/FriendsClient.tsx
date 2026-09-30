@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { Clock3, Flame, MoreHorizontal, Snowflake, Star } from "lucide-react";
 import { formatTag } from "@/lib/handle";
 import { getSocket } from "@/lib/socketClient";
 import UserTag from "@/components/UserTag";
@@ -10,6 +11,7 @@ import { useT } from "@/components/I18nProvider";
 import { useConfirm } from "@/components/ConfirmProvider";
 import { translateServerText } from "@/lib/i18n/serverTexts";
 import { rich } from "@/lib/i18n/rich";
+import { iconButton } from "@/components/versado/styles";
 
 interface FriendUser {
   id: string;
@@ -38,6 +40,58 @@ interface SearchResult {
   handle: string;
   discriminator: string;
   friendshipStatus: "PENDING" | "ACCEPTED" | "DECLINED" | null;
+}
+
+function FriendOverflowMenu({ onRemove }: { onRemove: () => void }) {
+  const t = useT();
+  const [open, setOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const closeOnOutsideClick = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) setOpen(false);
+    };
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setOpen(false);
+    };
+    document.addEventListener("mousedown", closeOnOutsideClick);
+    document.addEventListener("keydown", closeOnEscape);
+    return () => {
+      document.removeEventListener("mousedown", closeOnOutsideClick);
+      document.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [open]);
+
+  return (
+    <div ref={menuRef} className="relative shrink-0">
+      <button
+        type="button"
+        className={iconButton}
+        aria-label={t("friends.moreOptions")}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        onClick={() => setOpen((value) => !value)}
+      >
+        <MoreHorizontal className="h-5 w-5" aria-hidden />
+      </button>
+      {open && (
+        <div role="menu" className="absolute right-0 top-full z-10 mt-1 min-w-36 rounded-xl border border-slate-200 bg-white p-1 shadow-lg dark:border-slate-700 dark:bg-slate-900">
+          <button
+            type="button"
+            role="menuitem"
+            className="flex min-h-10 w-full items-center rounded-lg px-3 text-left text-sm font-semibold text-red-600 hover:bg-red-50 dark:text-red-300 dark:hover:bg-red-950/40"
+            onClick={() => {
+              setOpen(false);
+              onRemove();
+            }}
+          >
+            {t("friends.unfriend")}
+          </button>
+        </div>
+      )}
+    </div>
+  );
 }
 
 export default function FriendsClient({ appName }: { appName: string }) {
@@ -185,7 +239,7 @@ export default function FriendsClient({ appName }: { appName: string }) {
   );
 
   return (
-    <div className="max-w-5xl mx-auto flex flex-col gap-6">
+    <div className="max-w-5xl mx-auto flex flex-col gap-5 sm:gap-6">
       <div className="flex flex-col gap-1">
         <div className="flex items-center justify-between gap-3 flex-wrap">
           <h1 className="text-2xl font-extrabold text-brand-800 dark:text-brand-300 flex items-center gap-2">
@@ -199,18 +253,18 @@ export default function FriendsClient({ appName }: { appName: string }) {
 
       {data.friends.length > 0 && (
         <div className="grid grid-cols-2 gap-3">
-          <div className="card !py-4 flex flex-col items-center gap-0.5">
+          <div className="card !py-3 flex flex-col items-center gap-0.5">
             <div className="text-xl font-extrabold text-brand-600 dark:text-brand-300">👥 {data.friends.length}</div>
             <div className="text-xs font-bold uppercase text-slate-400 dark:text-slate-500">{t("nav.friends")}</div>
           </div>
-          <div className="card !py-4 flex flex-col items-center gap-0.5">
+          <div className="card !py-3 flex flex-col items-center gap-0.5">
             <div className="text-xl font-extrabold text-green-600 dark:text-green-400">🟢 {onlineCount}</div>
             <div className="text-xs font-bold uppercase text-slate-400 dark:text-slate-500">{t("friendPicker.onlineNow")}</div>
           </div>
         </div>
       )}
 
-      <div className="card flex flex-col gap-3">
+      <div className="card flex flex-col gap-2.5 sm:gap-3">
         <p className="font-bold text-sm dark:text-slate-100 flex items-center gap-2">
           <span aria-hidden>➕</span> {t("friends.addFriend")}
         </p>
@@ -320,47 +374,45 @@ export default function FriendsClient({ appName }: { appName: string }) {
           {t("friends.yourFriends")}
         </h2>
         {data.friends.length === 0 && <p className="text-slate-400 dark:text-slate-500">{t("friends.none")}</p>}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 sm:gap-3">
           {sortedFriends.map(({ friendshipId, user: f }) => {
             const status = data.statusByUserId[f.id];
             return (
-              <div key={f.id} className="card flex flex-col gap-3">
-                <div className="flex items-center gap-3">
-                  <span
-                    className={`shrink-0 rounded-full ${status?.online ? "ring-2 ring-green-400 ring-offset-2 dark:ring-offset-slate-800" : ""}`}
-                  >
+              <div key={f.id} className="card !p-3 sm:!p-4">
+                <div className="flex min-w-0 items-start gap-3">
+                  <span className="relative shrink-0">
                     <UserAvatar id={f.id} handle={f.handle} avatarEmoji={f.avatarEmoji} size="md" />
+                    {status?.online && <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-white bg-green-500 dark:border-slate-800" aria-label={t("friendPicker.online")} />}
                   </span>
-                  <div className="min-w-0">
-                    <div className="font-bold flex items-center gap-1.5 dark:text-slate-100">
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate font-bold dark:text-slate-100">
                       <UserTag handle={f.handle} discriminator={f.discriminator} className="truncate" />
-                      {status?.online && (
-                        <span className="text-[10px] font-bold uppercase text-green-600 dark:text-green-400 shrink-0">{t("friendPicker.online")}</span>
-                      )}
                     </div>
-                    {status?.activity ? (
-                      <div className="text-xs text-brand-600 dark:text-brand-300 font-semibold truncate">
-                        {status.activity.icon} {translateServerText(status.activity.label, t)}
+                    {status?.online ? (
+                      <div className="truncate text-xs font-semibold text-green-600 dark:text-green-400">
+                        {status.activity ? `${t("friendPicker.online")} · ${status.activity.icon} ${translateServerText(status.activity.label, t)}` : t("friendPicker.online")}
                       </div>
-                    ) : status && !status.online && status.lastSeenLabel ? (
-                      <div className="text-xs text-slate-400 dark:text-slate-500 truncate">{t("friends.lastActive", { when: translateServerText(status.lastSeenLabel, t) })}</div>
+                    ) : status?.lastSeenLabel ? (
+                      <div className="flex min-w-0 items-center gap-1 truncate text-xs text-slate-500 dark:text-slate-400">
+                        <Clock3 className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                        <span className="truncate">{t("friends.lastActive", { when: translateServerText(status.lastSeenLabel, t) })}</span>
+                      </div>
                     ) : null}
+                    <div className="mt-1.5 flex flex-wrap gap-1.5">
+                      <span className="no-select inline-flex items-center gap-1 rounded-full bg-gold-50 px-2 py-0.5 text-xs font-bold text-gold-700 dark:bg-slate-700 dark:text-gold-400">
+                        <Flame className="h-3.5 w-3.5" aria-hidden /> {f.currentStreak}
+                      </span>
+                      <span className="no-select inline-flex items-center gap-1 rounded-full bg-brand-50 px-2 py-0.5 text-xs font-bold text-brand-700 dark:bg-slate-700 dark:text-brand-300">
+                        <Star className="h-3.5 w-3.5" aria-hidden /> {f.xpTotal} XP
+                      </span>
+                    </div>
                   </div>
+                  <FriendOverflowMenu onRemove={() => removeFriendship(friendshipId, "friendship")} />
                 </div>
-                <div className="flex gap-2 flex-wrap">
-                  <span className="no-select inline-flex items-center gap-1 rounded-full bg-gold-50 text-gold-700 dark:bg-slate-700 dark:text-gold-400 text-xs font-bold px-2.5 py-1">
-                    🔥 {f.currentStreak}
-                  </span>
-                  <span className="no-select inline-flex items-center gap-1 rounded-full bg-brand-50 text-brand-700 dark:bg-slate-700 dark:text-brand-300 text-xs font-bold px-2.5 py-1">
-                    ⭐ {f.xpTotal} XP
-                  </span>
-                </div>
-                <div className="flex gap-2">
-                  <button className="btn-ice flex-1 !py-2" onClick={() => setPendingFreeze(f)} disabled={giftedTo === f.id}>
+                <div className="mt-2 flex justify-end">
+                  <button className="btn-ice !min-h-9 !px-3 !py-1.5 !text-xs" onClick={() => setPendingFreeze(f)} disabled={giftedTo === f.id}>
+                    <Snowflake className="h-4 w-4" aria-hidden />
                     {giftedTo === f.id ? t("friends.sentExcl") : t("friends.giveFreeze")}
-                  </button>
-                  <button className="btn-secondary !px-3 !py-2 !text-xs" onClick={() => removeFriendship(friendshipId, "friendship")}>
-                    {t("friends.unfriend")}
                   </button>
                 </div>
               </div>
