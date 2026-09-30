@@ -633,6 +633,12 @@ model PodcastEpisode {
   // Uit <podcast:transcript> in de feed (meestal een .vtt), als de makers
   // die meeleveren: de bron voor nieuwe oefeningen.
   transcriptUrl String?
+  // Hoofdstukken uit <podcast:chapters> in de feed: de URL van het
+  // hoofdstukkenbestand (om alleen bij een wijziging opnieuw op te halen) en
+  // de hoofdstukken zelf als JSON-tekst: [{ "start": seconden, "title": "..." }],
+  // oplopend. Null als de feed er geen meegeeft.
+  chaptersUrl String?
+  chapters    String?
   publishedAt DateTime?
   order       Int       @default(0)
 

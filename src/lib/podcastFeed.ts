@@ -1,6 +1,7 @@
 import Parser from "rss-parser";
 import type { PrismaClient } from "@prisma/client";
 import { ensurePodcasts, PODCASTS, type PodcastDefinition } from "./podcasts";
+import { parseChaptersFile } from "./podcastChapters";
 
 interface FeedItem {
   title?: string;
@@ -14,6 +15,7 @@ interface FeedItem {
   "itunes:episode"?: string;
   "itunes:summary"?: string;
   transcripts?: { $?: { url?: string; type?: string } }[];
+  chaptersTag?: { $?: { url?: string; type?: string } };
 }
 
 const FETCH_TIMEOUT_MS = 10_000;
@@ -28,7 +30,12 @@ const FETCH_TIMEOUT_MS = 10_000;
 // de content-import mag blokkeren.
 const parser = new Parser<Record<string, unknown>, FeedItem>({
   customFields: {
-    item: ["itunes:episode", "itunes:summary", ["podcast:transcript", "transcripts", { keepArray: true }]],
+    item: [
+      "itunes:episode",
+      "itunes:summary",
+      ["podcast:transcript", "transcripts", { keepArray: true }],
+      ["podcast:chapters", "chaptersTag"],
+    ],
   },
 });
 
@@ -94,6 +101,61 @@ function extractTranscriptUrl(item: FeedItem): string | null {
   return (vtt ?? transcripts[0])?.url ?? null;
 }
 
+function extractChaptersUrl(item: FeedItem): string | null {
+  const url = item.chaptersTag?.$?.url?.trim();
+  return url && /^https?:\/\//i.test(url) ? url : null;
+}
+
+async function fetchChapters(url: string): Promise<string> {
+  const res = await fetch(url, {
+    signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+    headers: { "User-Agent": "Geloof-je-dat-ook-app/1.0 (+podcastfeed-sync)" },
+  });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return JSON.stringify(parseChaptersFile(await res.json()));
+}
+
+/**
+ * Haalt de hoofdstukkenbestanden op die nieuw of veranderd zijn. Een bestand
+ * dat niet te laden is, laat de vorige hoofdstukken staan en wordt bij de
+ * volgende sync opnieuw geprobeerd (chaptersUrl blijft dan de oude waarde).
+ */
+async function syncChapters(
+  client: PrismaClient,
+  podcast: PodcastDefinition,
+  wanted: { id: string; url: string | null; storedUrl: string | null; hasChapters: boolean }[],
+  log: (msg: string) => void
+): Promise<void> {
+  const removed = wanted.filter((w) => !w.url && (w.storedUrl || w.hasChapters));
+  for (const w of removed) {
+    await client.podcastEpisode.update({ where: { id: w.id }, data: { chaptersUrl: null, chapters: null } });
+  }
+  const todo = wanted.filter((w) => w.url && (w.url !== w.storedUrl || !w.hasChapters));
+  let fetched = 0;
+  const failed: string[] = [];
+  const queue = [...todo];
+  async function worker() {
+    for (let next = queue.shift(); next; next = queue.shift()) {
+      try {
+        const chapters = await fetchChapters(next.url!);
+        await client.podcastEpisode.update({ where: { id: next.id }, data: { chaptersUrl: next.url, chapters } });
+        fetched++;
+      } catch (e) {
+        failed.push(e instanceof Error ? e.message : String(e));
+      }
+    }
+  }
+  await Promise.all(Array.from({ length: 4 }, worker));
+  if (todo.length || removed.length) {
+    log(
+      `  Hoofdstukken van ${podcast.name}: ${fetched} opgehaald` +
+        (removed.length ? `, ${removed.length} weggehaald` : "") +
+        (failed.length ? `, ${failed.length} mislukt (volgende sync opnieuw)` : "") +
+        "."
+    );
+  }
+}
+
 /**
  * Haalt de feed van elke podcast op (zie src/lib/podcasts.ts) en zet elke
  * aflevering die erin staat neer als PodcastEpisode-rij (titel/omschrijving/
@@ -132,6 +194,7 @@ async function syncOnePodcast(
 
   let created = 0;
   let updated = 0;
+  const chapterWork: { id: string; url: string | null; storedUrl: string | null; hasChapters: boolean }[] = [];
   for (const item of feed.items) {
     const number = extractEpisodeNumber(item);
     if (number === null) {
@@ -153,15 +216,18 @@ async function syncOnePodcast(
 
     const where = { podcastId_number: { podcastId: podcast.id, number } };
     const data = { title, summary, listenUrl, audioUrl, transcriptUrl, publishedAt, order: -number };
-    const existing = await client.podcastEpisode.findUnique({ where, select: { id: true } });
-    await client.podcastEpisode.upsert({
+    const existing = await client.podcastEpisode.findUnique({ where, select: { id: true, chaptersUrl: true, chapters: true } });
+    const saved = await client.podcastEpisode.upsert({
       where,
       update: data,
       create: { podcastId: podcast.id, number, ...data },
+      select: { id: true },
     });
+    chapterWork.push({ id: saved.id, url: extractChaptersUrl(item), storedUrl: existing?.chaptersUrl ?? null, hasChapters: !!existing?.chapters });
     if (existing) updated++;
     else created++;
   }
 
   log(`Feed van ${podcast.name} gesynchroniseerd: ${created} nieuw, ${updated} bijgewerkt.`);
+  await syncChapters(client, podcast, chapterWork, log);
 }

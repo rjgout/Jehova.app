@@ -18,13 +18,21 @@ function formatTime(seconds: number): string {
  */
 export default function PodcastMiniPlayer() {
   const t = useT();
-  const { episode, isPlaying, currentTime, duration, isSuppressed, togglePlay, seek, close } = usePodcastPlayer();
+  const { episode, isPlaying, currentTime, duration, isSuppressed, togglePlay, seek, chapterIndex, previousChapter, nextChapter, close } = usePodcastPlayer();
 
   if (!episode || isSuppressed) return null;
+  const chapters = episode.chapters ?? [];
+  const hasChapters = chapters.length >= 2;
+  const chapter = hasChapters && chapterIndex >= 0 ? chapters[chapterIndex] : null;
 
   return (
     <div className="bg-brand-50 dark:bg-slate-800 border-b border-brand-100 dark:border-slate-700">
-      <div className="mx-auto max-w-5xl px-4 py-2 flex items-center gap-3">
+      <div className={`mx-auto max-w-5xl px-4 py-2 flex items-center ${hasChapters ? "gap-2" : "gap-3"}`}>
+        {hasChapters && (
+          <button onClick={previousChapter} className="shrink-0 w-8 h-8 rounded-full text-slate-500 dark:text-slate-300" aria-label={t("player.prevChapter")} title={t("player.prevChapter")}>
+            ⏮️
+          </button>
+        )}
         <button
           onClick={togglePlay}
           className="shrink-0 w-9 h-9 rounded-full bg-brand-500 text-white flex items-center justify-center text-lg"
@@ -32,11 +40,21 @@ export default function PodcastMiniPlayer() {
         >
           {isPlaying ? "⏸" : "▶"}
         </button>
+        {hasChapters && (
+          <button onClick={nextChapter} disabled={chapterIndex >= chapters.length - 1} className="shrink-0 w-8 h-8 rounded-full text-slate-500 dark:text-slate-300 disabled:opacity-30" aria-label={t("player.nextChapter")} title={t("player.nextChapter")}>
+            ⏭️
+          </button>
+        )}
 
         <div className="min-w-0 flex-1">
           <p className="text-xs font-bold text-brand-700 dark:text-brand-300 truncate">
             {t("player.episode", { n: episode.number, title: episode.title })}
           </p>
+          {chapter && (
+            <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
+              {t("player.chapterOf", { n: chapterIndex + 1, total: chapters.length, title: chapter.title })}
+            </p>
+          )}
           <div className="flex items-center gap-2 mt-1">
             <span className="text-[10px] text-slate-400 dark:text-slate-500 tabular-nums shrink-0">{formatTime(currentTime)}</span>
             <input

@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
+import { chapterIndexAt, type PodcastChapter } from "@/lib/podcastChapters";
 
 export interface PodcastEpisodeInfo {
   id: string;
@@ -8,6 +9,10 @@ export interface PodcastEpisodeInfo {
   title: string;
   audioUrl: string;
   podcastName: string;
+  /** Hoofdstukken uit de feed (oplopend); leeg als de aflevering er geen heeft. */
+  chapters?: PodcastChapter[];
+  /** Opgeslagen luisterpositie, als de pagina die al kent (zie playEpisode). */
+  startAt?: number;
 }
 
 interface PodcastPlayerContextValue {
@@ -19,6 +24,10 @@ interface PodcastPlayerContextValue {
   playEpisode: (episode: PodcastEpisodeInfo) => void;
   togglePlay: () => void;
   seek: (time: number) => void;
+  /** Index van het huidige hoofdstuk, of -1 (geen hoofdstukken of vóór het eerste). */
+  chapterIndex: number;
+  previousChapter: () => void;
+  nextChapter: () => void;
   close: () => void;
 }
 
@@ -191,20 +200,33 @@ export function PodcastPlayerProvider({ children }: { children: React.ReactNode 
       return;
     }
 
+    // Bron zetten en play() aanroepen gebeurt bewust nog binnen de klik:
+    // Safari en iOS staan afspelen alleen toe als direct gevolg van een
+    // tik. Eerst de opgeslagen positie ophalen en pas daarna play() liet de
+    // eerste klik daar stilletjes niets doen. De positie wordt toegepast
+    // zodra de metadata binnen is (onLoadedMetadata), vóór er geluid klinkt.
+    loadedEpisodeIdRef.current = newEpisode.id;
+    pendingSeekRef.current = newEpisode.startAt ?? null;
     setDuration(0);
-    fetch(`/api/podcast-playback?episodeId=${newEpisode.id}`)
-      .then((r) => r.json())
-      .then((data) => {
-        pendingSeekRef.current = data.positionSeconds ?? 0;
-        setCurrentTime(data.positionSeconds ?? 0);
-        setEpisode(newEpisode);
-        requestAnimationFrame(() => audio.play().catch(() => {}));
-      })
-      .catch(() => {
-        pendingSeekRef.current = 0;
-        setEpisode(newEpisode);
-        requestAnimationFrame(() => audio.play().catch(() => {}));
-      });
+    setCurrentTime(newEpisode.startAt ?? 0);
+    setEpisode(newEpisode);
+    audio.src = newEpisode.audioUrl;
+    audio.play().catch(() => {});
+
+    // Zonder bekende positie (bv. vanaf een andere pagina) alsnog ophalen;
+    // dan springt de speler er heen zodra het antwoord er is.
+    if (newEpisode.startAt === undefined) {
+      fetch(`/api/podcast-playback?episodeId=${newEpisode.id}`)
+        .then((r) => r.json())
+        .then((data) => {
+          const position = Number(data.positionSeconds) || 0;
+          if (position <= 0 || loadedEpisodeIdRef.current !== newEpisode.id) return;
+          if (audio.readyState >= 1) audio.currentTime = position;
+          else pendingSeekRef.current = position;
+          setCurrentTime(position);
+        })
+        .catch(() => {});
+    }
   }, []);
 
   const togglePlay = useCallback(() => {
@@ -218,6 +240,44 @@ export function PodcastPlayerProvider({ children }: { children: React.ReactNode 
     const audio = audioRef.current;
     if (audio) audio.currentTime = time;
   }, []);
+
+  const chapters = episode?.chapters ?? [];
+  const chapterIndex = chapterIndexAt(chapters, currentTime);
+
+  // Zoals bij een cd-speler: eerst terug naar het begin van het huidige
+  // hoofdstuk, pas binnen de eerste seconden ervan naar het vorige.
+  const previousChapter = useCallback(() => {
+    const audio = audioRef.current;
+    const list = episode?.chapters ?? [];
+    if (!audio || list.length === 0) return;
+    const index = chapterIndexAt(list, audio.currentTime);
+    const target = index >= 0 && audio.currentTime - list[index].start > 3 ? index : index - 1;
+    audio.currentTime = target >= 0 ? list[target].start : 0;
+    setCurrentTime(audio.currentTime);
+  }, [episode]);
+
+  const nextChapter = useCallback(() => {
+    const audio = audioRef.current;
+    const list = episode?.chapters ?? [];
+    if (!audio || list.length === 0) return;
+    const next = list[chapterIndexAt(list, audio.currentTime) + 1];
+    if (!next) return;
+    audio.currentTime = next.start;
+    setCurrentTime(next.start);
+  }, [episode]);
+
+  // Vorige/volgende op het vergrendelscherm en koptelefoon springen per
+  // hoofdstuk, net als de knoppen in de minispeler.
+  useEffect(() => {
+    if (!("mediaSession" in navigator)) return;
+    const hasChapters = (episode?.chapters?.length ?? 0) >= 2;
+    try {
+      navigator.mediaSession.setActionHandler("previoustrack", hasChapters ? previousChapter : null);
+      navigator.mediaSession.setActionHandler("nexttrack", hasChapters ? nextChapter : null);
+    } catch {
+      // Niet elke browser kent deze acties.
+    }
+  }, [episode, previousChapter, nextChapter]);
 
   const close = useCallback(() => {
     const audio = audioRef.current;
@@ -237,7 +297,7 @@ export function PodcastPlayerProvider({ children }: { children: React.ReactNode 
   }, [episode, savePosition]);
 
   return (
-    <PodcastPlayerContext.Provider value={{ episode, isPlaying, currentTime, duration, isSuppressed: suppressedByOtherPlayer, playEpisode, togglePlay, seek, close }}>
+    <PodcastPlayerContext.Provider value={{ episode, isPlaying, currentTime, duration, isSuppressed: suppressedByOtherPlayer, playEpisode, togglePlay, seek, chapterIndex, previousChapter, nextChapter, close }}>
       {children}
       {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
       <audio ref={audioRef} className="hidden" />

@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/session";
 import { prisma } from "@/lib/db";
+import { parseStoredChapters } from "@/lib/podcastChapters";
 import { isEmailConfigured } from "@/lib/email";
 import { advanceCourseProgress, syncCourses } from "@/lib/courses";
 import { isContentCollectionSelectable } from "@/lib/contentCollections";
@@ -85,6 +86,7 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ c
             bomBestScore: bomProgress ? bomProgress.bestScore : null,
             hasBomExercises: episode.exercises.some((e) => e.mode === "BOM_CONNECTION"),
             resumeSeconds: episode.playbackProgress[0]?.positionSeconds ?? 0,
+            chapters: parseStoredChapters(episode.chapters),
           };
         })}
       />

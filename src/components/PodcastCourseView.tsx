@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePodcastPlayer } from "@/lib/podcastPlayerContext";
 import { useT } from "@/components/I18nProvider";
 import AppSelect from "@/components/AppSelect";
+import type { PodcastChapter } from "@/lib/podcastChapters";
 
 interface EpisodeView {
   id: string;
@@ -20,6 +21,7 @@ interface EpisodeView {
   bomBestScore: number | null;
   hasBomExercises: boolean;
   resumeSeconds: number;
+  chapters: PodcastChapter[];
 }
 
 interface Props {
@@ -218,6 +220,8 @@ function EpisodePlayButton({ episode, podcastName }: { episode: EpisodeView; pod
         title: episode.title,
         audioUrl: episode.audioUrl!,
         podcastName,
+        chapters: episode.chapters,
+        startAt: episode.resumeSeconds,
       });
     }
   }
