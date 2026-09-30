@@ -2,6 +2,7 @@
 
 import { useEffect, useState, type MouseEvent } from "react";
 import Link from "next/link";
+import { ArrowRight, Gamepad2, X } from "lucide-react";
 import { getSocket } from "@/lib/socketClient";
 import UserAvatar from "@/components/UserAvatar";
 import { useT } from "@/components/I18nProvider";
@@ -26,13 +27,6 @@ interface ActivityStatus {
   activeGames: ActivityItem[];
   activeContentCollectionId: string;
 }
-
-const KIND_ICON: Record<ActivityItem["kind"], string> = {
-  challenge: "⚔️",
-  scrabble: "🔤",
-  live: "🎮",
-  "chapter-guess-solo": "🔎",
-};
 
 // Blok "Actieve spellen" bovenaan /live ("Spelen"): openstaande
 // uitnodigingen en lopende spellen (Uitdagingen, Woordspel, Live spel), zodat
@@ -129,6 +123,38 @@ export default function ActiveGamesBanner() {
 
   const heading = <h2 className="text-sm font-extrabold text-slate-700 dark:text-slate-200">{t("activeGames.title")}</h2>;
 
+  function statusLabel(item: ActivityItem, invitation = false) {
+    if (invitation) return t("activeGames.invitedLabel");
+    if (item.myTurn === true) return t("activeGames.turnLabel");
+    if (item.myTurn === false && item.opponentName) return t("activeGames.waitingLabel", { name: item.opponentName });
+    return null;
+  }
+
+  function ActivityRow({ item, invitation = false }: { item: ActivityItem; invitation?: boolean }) {
+    const statusLabelText = statusLabel(item, invitation);
+    return (
+      <Link
+        href={item.link}
+        onClick={(event) => openGame(item, event)}
+        className={`flex min-h-14 items-center gap-3 rounded-2xl px-2.5 py-2 transition active:scale-[0.99] motion-reduce:transition-none ${
+          item.myTurn === true
+            ? "bg-brand-50 text-brand-800 ring-1 ring-brand-200 hover:bg-brand-100 dark:bg-slate-800 dark:text-brand-200 dark:ring-brand-700 dark:hover:bg-slate-700"
+            : "hover:bg-slate-50 dark:hover:bg-slate-800/70"
+        }`}
+      >
+        {item.opponentId ? <UserAvatar id={item.opponentId} handle={item.opponentName ?? ""} size="sm" /> : <Gamepad2 className="h-8 w-8 shrink-0 rounded-full bg-slate-100 p-1.5 text-slate-500 dark:bg-slate-700 dark:text-slate-300" aria-hidden />}
+        <span className="min-w-0 flex-1">
+          <span className="block truncate text-sm font-extrabold text-slate-800 dark:text-slate-100">
+            {item.opponentName ?? item.label}
+          </span>
+          {(item.opponentName ? item.label : statusLabelText) && <span className="block truncate text-xs text-slate-500 dark:text-slate-400">{item.opponentName ? item.label : statusLabelText}</span>}
+          {item.opponentName && statusLabelText && <span className={`block truncate text-xs font-bold ${item.myTurn ? "text-brand-600 dark:text-brand-300" : "text-slate-500 dark:text-slate-400"}`}>{statusLabelText}</span>}
+        </span>
+        <ArrowRight className="h-4 w-4 shrink-0 text-slate-400 dark:text-slate-500" aria-hidden />
+      </Link>
+    );
+  }
+
   if (!status) {
     return (
       <div className="card flex flex-col gap-2 !py-3">
@@ -166,24 +192,22 @@ export default function ActiveGamesBanner() {
     <div className="card flex flex-col gap-2 !py-3">
       {heading}
       {liveInvitesReceived.length > 0 && (
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-1">
           {liveInvitesReceived.map((item) => (
             <Link
               key={`live-invite-${item.id}`}
               href={item.link}
               onClick={(event) => openGame(item, event)}
-              className="animate-invite-glow flex items-center gap-3 rounded-2xl border-2 border-brand-400 bg-gradient-to-r from-brand-50 to-gold-50 dark:from-slate-800 dark:to-slate-800 dark:border-brand-500 px-3 py-2.5 transition active:scale-[0.98]"
+              className="animate-invite-glow flex min-h-14 items-center gap-3 rounded-2xl border border-brand-300 bg-gradient-to-r from-brand-50 to-gold-50 px-2.5 py-2 transition active:scale-[0.99] dark:from-slate-800 dark:to-slate-800 dark:border-brand-600"
             >
               {item.opponentId ? (
                 <UserAvatar id={item.opponentId} handle={item.opponentName ?? ""} />
               ) : (
-                <span className="text-2xl" aria-hidden>🎮</span>
+                <Gamepad2 className="h-8 w-8 shrink-0 rounded-full bg-white/60 p-1.5 text-brand-700 dark:bg-slate-700 dark:text-brand-300" aria-hidden />
               )}
               <span className="min-w-0 flex-1">
-                <span className="block text-sm font-extrabold text-brand-800 dark:text-brand-200 leading-snug">
-                  {t("activeGames.invitesYou", { name: item.opponentName ?? "" })}
-                </span>
-                <span className="block text-xs text-slate-500 dark:text-slate-400 leading-snug">{t("activeGames.liveGame", { name: item.label })}</span>
+                <span className="block truncate text-sm font-extrabold text-brand-800 dark:text-brand-200 leading-snug">{item.opponentName ?? item.label}</span>
+                <span className="block truncate text-xs text-slate-500 dark:text-slate-400 leading-snug">{t("activeGames.invitedLabel")} · {item.label}</span>
               </span>
               <span className="btn-primary !px-3 !py-1.5 !text-xs shrink-0">{t("activeGames.join")}</span>
             </Link>
@@ -194,59 +218,40 @@ export default function ActiveGamesBanner() {
       {invitesReceived.length > 0 && (
         <div className="flex flex-col gap-1">
           {invitesReceived.map((item) => (
-            <Link
-              key={`${item.kind}-${item.id}`}
-              href={item.link}
-              onClick={(event) => openGame(item, event)}
-              className="flex items-center gap-2 text-sm font-semibold text-brand-700 dark:text-brand-300 hover:underline"
-            >
-              {item.opponentId ? (
-                <UserAvatar id={item.opponentId} handle={item.opponentName ?? ""} size="xs" />
-              ) : (
-                <span>{KIND_ICON[item.kind]}</span>
-              )}
-              <span>
-                {t("activeGames.invitesYouTo", { name: item.opponentName ?? "", label: item.label })}
-              </span>
-            </Link>
+            <ActivityRow key={`${item.kind}-${item.id}`} item={item} invitation />
           ))}
         </div>
       )}
 
       {activeGames.length > 0 && (
-        <div className="flex flex-wrap gap-2">
-          {activeGames.map((item) => (
-            <Link key={`${item.kind}-${item.id}`} href={item.link} className={item.myTurn ? "btn-primary" : "btn-secondary"}>
-              {item.opponentId ? (
-                <UserAvatar id={item.opponentId} handle={item.opponentName ?? ""} size="xs" className="mr-1.5 -my-1" />
-              ) : (
-                <span className="mr-1.5">{KIND_ICON[item.kind]}</span>
-              )}
-              {item.opponentName ? `${item.opponentName} — ` : ""}
-              {item.label}
-              {item.myTurn ? t("activeGames.yourTurn") : ""}
-            </Link>
+        <div className="flex flex-col gap-1">
+          {[...activeGames].sort((a, b) => Number(b.myTurn === true) - Number(a.myTurn === true)).map((item) => (
+            <ActivityRow key={`${item.kind}-${item.id}`} item={item} />
           ))}
         </div>
       )}
 
       {invitesSent.length > 0 && (
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-col gap-1">
           {invitesSent.map((item) => (
             // Een verstuurde uitnodiging blijft anders eindeloos wachten; daarom
             // naast de knop naar het spel altijd een knop om in te trekken.
-            <div key={`sent-${item.kind}-${item.id}-${item.opponentId}`} className="flex items-stretch">
+            <div key={`sent-${item.kind}-${item.id}-${item.opponentId}`} className="flex min-h-14 items-center gap-2 rounded-2xl px-2.5 py-2 hover:bg-slate-50 dark:hover:bg-slate-800/70">
               <Link
                 href={item.link}
                 onClick={(event) => openGame(item, event)}
-                className="btn-secondary !rounded-r-none !pr-3"
+                className="flex min-w-0 flex-1 items-center gap-3"
               >
                 {item.opponentId ? (
-                  <UserAvatar id={item.opponentId} handle={item.opponentName ?? ""} size="xs" className="mr-1.5 -my-1" />
+                  <UserAvatar id={item.opponentId} handle={item.opponentName ?? ""} size="sm" />
                 ) : (
-                  <span className="mr-1.5">{KIND_ICON[item.kind]}</span>
+                  <Gamepad2 className="h-8 w-8 shrink-0 rounded-full bg-slate-100 p-1.5 text-slate-500 dark:bg-slate-700 dark:text-slate-300" aria-hidden />
                 )}
-                {t("activeGames.waitingFor", { name: item.opponentName ?? "", label: item.label })}
+                <span className="min-w-0">
+                  <span className="block truncate text-sm font-extrabold text-slate-800 dark:text-slate-100">{item.opponentName ?? item.label}</span>
+                  <span className="block truncate text-xs text-slate-500 dark:text-slate-400">{t("activeGames.waitingLabel", { name: item.opponentName ?? "" })} · {item.label}</span>
+                </span>
+                <ArrowRight className="ml-auto h-4 w-4 shrink-0 text-slate-400 dark:text-slate-500" aria-hidden />
               </Link>
               <button
                 onClick={() => cancelInvite(item)}
@@ -257,9 +262,9 @@ export default function ActiveGamesBanner() {
                     : t("activeGames.cancelAria", { name: item.opponentName ?? "" })
                 }
                 title={item.kind === "live" ? t("activeGames.end") : t("activeGames.cancel")}
-                className="btn-secondary !rounded-l-none !border-l-0 !px-3 !text-red-500 dark:!text-red-400"
+                className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-red-500 transition hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/40"
               >
-                ✕
+                <X className="h-4 w-4" aria-hidden />
               </button>
             </div>
           ))}
