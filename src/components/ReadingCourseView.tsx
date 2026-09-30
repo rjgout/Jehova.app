@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { Lock, Play } from "lucide-react";
 import { useT } from "@/components/I18nProvider";
 
 interface ChapterView {
@@ -50,7 +51,7 @@ export default function ReadingCourseView({ courseId, courseName, today, chapter
     const completed = chapter.completedLessons === chapter.lessonCount;
     const rowClass = `flex min-h-14 items-center gap-3 rounded-xl px-3 py-2 transition motion-reduce:transition-none ${
       chapter.locked
-        ? "opacity-60"
+        ? "text-slate-600 dark:text-slate-300"
         : current
           ? "bg-brand-50 ring-1 ring-brand-200 dark:bg-slate-800 dark:ring-brand-700"
           : "hover:bg-slate-50 dark:hover:bg-slate-800/70"
@@ -62,17 +63,17 @@ export default function ReadingCourseView({ courseId, courseName, today, chapter
             completed
               ? "bg-brand-500 text-white"
               : chapter.locked
-                ? "bg-slate-100 text-slate-400 dark:bg-slate-700 dark:text-slate-300"
+                ? "bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-300"
                 : current
                   ? "bg-gold-400 text-white"
                   : "border-2 border-gold-400 text-gold-600 dark:text-gold-300"
           }`}
         >
-          {completed ? "✓" : chapter.locked ? "🔒" : chapter.number}
+          {completed ? "✓" : chapter.locked ? <Lock className="h-4 w-4" strokeWidth={2.25} aria-hidden /> : current ? <Play className="h-4 w-4 fill-current" strokeWidth={2.25} aria-hidden /> : chapter.number}
         </div>
         <div className="min-w-0">
-          <div className="truncate font-extrabold dark:text-slate-100">{chapter.bookName} {chapter.number}</div>
-          <div className="text-xs text-slate-400 dark:text-slate-500">
+          <div className={`truncate font-extrabold ${chapter.locked ? "text-slate-600 dark:text-slate-300" : "dark:text-slate-100"}`}>{chapter.bookName} {chapter.number}</div>
+          <div className={`text-xs ${chapter.locked ? "text-slate-500 dark:text-slate-400" : "text-slate-400 dark:text-slate-500"}`}>
             {t("courseView.stepsDone", { done: chapter.completedLessons, total: chapter.lessonCount })}
           </div>
         </div>
@@ -148,7 +149,7 @@ export default function ReadingCourseView({ courseId, courseName, today, chapter
                   <span className="transition-transform group-open:rotate-180" aria-hidden>▾</span>
                 </span>
               </summary>
-                <div className="ml-2 flex flex-col gap-1 border-l-2 border-slate-200 pl-3 pt-2 dark:border-slate-700 sm:ml-4 sm:pl-4">
+              <div className="flex flex-col gap-1 px-1 pt-2 sm:px-2">
                   {book.chapters.map((chapter) => (
                     <ChapterRow key={chapter.id} chapter={chapter} current={today?.bookName === chapter.bookName && today.chapterNumber === chapter.number} />
                   ))}

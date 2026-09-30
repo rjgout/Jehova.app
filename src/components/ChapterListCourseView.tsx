@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { Lock, Play } from "lucide-react";
 import { useT } from "@/components/I18nProvider";
 
 const WORDS_PER_MINUTE = 130; // rustig lees-/nadenktempo
@@ -75,7 +76,7 @@ export default function ChapterListCourseView({ courseId, courseName, currentCha
     const current = chapter.id === currentChapterId;
     const rowClass = `flex min-h-14 items-center gap-3 rounded-xl px-3 py-2 transition motion-reduce:transition-none ${
       locked
-        ? "opacity-60"
+        ? "text-slate-600 dark:text-slate-300"
         : current
           ? "bg-brand-50 ring-1 ring-brand-200 dark:bg-slate-800 dark:ring-brand-700"
           : "hover:bg-slate-50 dark:hover:bg-slate-800/70"
@@ -87,19 +88,19 @@ export default function ChapterListCourseView({ courseId, courseName, currentCha
             chapter.completed
               ? "bg-brand-500 text-white"
               : locked
-                ? "bg-slate-100 text-slate-400 dark:bg-slate-700 dark:text-slate-300"
+                ? "bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-300"
                 : current
                   ? "bg-gold-400 text-white"
                   : "border-2 border-gold-400 text-gold-600 dark:text-gold-300"
           }`}
         >
-          {chapter.completed ? "✓" : locked ? "🔒" : chapter.number}
+          {chapter.completed ? "✓" : locked ? <Lock className="h-4 w-4" strokeWidth={2.25} aria-hidden /> : current ? <Play className="h-4 w-4 fill-current" strokeWidth={2.25} aria-hidden /> : chapter.number}
         </div>
         <div className="min-w-0">
-          <div className="truncate font-extrabold dark:text-slate-100">
+          <div className={`truncate font-extrabold ${locked ? "text-slate-600 dark:text-slate-300" : "dark:text-slate-100"}`}>
             {chapter.bookName} {chapter.number}
           </div>
-          <div className="text-xs text-slate-400 dark:text-slate-500">
+          <div className={`text-xs ${locked ? "text-slate-500 dark:text-slate-400" : "text-slate-400 dark:text-slate-500"}`}>
             {t("courseView.verseCount", { n: chapter.verseCount })}
             {chapter.bestScore !== null ? t("courseView.bestScore", { n: chapter.bestScore }) : ""}
           </div>
@@ -186,7 +187,7 @@ export default function ChapterListCourseView({ courseId, courseName, currentCha
                     </span>
                   </span>
                 </summary>
-                <div className="ml-2 flex flex-col gap-1 border-l-2 border-slate-200 pl-3 pt-2 dark:border-slate-700 sm:ml-4 sm:pl-4">
+                <div className="flex flex-col gap-1 px-1 pt-2 sm:px-2">
                   {book.chapters.map((chapter) => (
                     <ChapterCard key={chapter.id} chapter={chapter} />
                   ))}
