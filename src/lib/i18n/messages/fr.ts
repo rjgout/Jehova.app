@@ -2121,6 +2121,7 @@ export const fr: PartialMessages = {
     oneOnline: "1 utilisateur en ligne",
     manyOnline: "{n} utilisateurs en ligne",
     deployNow: "🚀 Déployer maintenant",
+    reloadNotice: "Déploiement démarré. Cette page sera actualisée dans 2 secondes...",
     phases: {
       idle: "Rien à signaler",
       pulling: "Récupération de la nouvelle version...",

@@ -2125,6 +2125,7 @@ export const nl = {
     oneOnline: "1 gebruiker online",
     manyOnline: "{n} gebruikers online",
     deployNow: "🚀 Nu deployen",
+    reloadNotice: "Deploy gestart. Deze pagina wordt over 2 seconden vernieuwd...",
     phases: {
       idle: "Niets aan de hand",
       pulling: "Nieuwe versie ophalen...",

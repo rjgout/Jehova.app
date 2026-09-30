@@ -25,6 +25,7 @@ export default function AdminDeployClient({ configured, onlineUserCount }: { con
   const [error, setError] = useState<string | null>(null);
   const [actionBusy, setActionBusy] = useState(false);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const reloadTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const statusRef = useRef<DeployStatus | null>(null);
   // Tijdens een echte deploy/rollback stopt jehova-app zelf even helemaal —
   // en dat is precies de container waar deze pagina op draait. Een gewone
@@ -37,10 +38,17 @@ export default function AdminDeployClient({ configured, onlineUserCount }: { con
   // herlaad veroorzaakt.
   const deployInFlightRef = useRef(false);
   const transientStatusErrorsRef = useRef(0);
+  const [reloadPending, setReloadPending] = useState(false);
+
+  function scheduleReload() {
+    if (reloadTimerRef.current) return;
+    setReloadPending(true);
+    reloadTimerRef.current = setTimeout(() => window.location.reload(), 2000);
+  }
 
   function handleUnreachable() {
     if (deployInFlightRef.current) {
-      window.location.reload();
+      scheduleReload();
       return;
     }
     setError(t("adminDeploy.unreachable"));
@@ -79,6 +87,7 @@ export default function AdminDeployClient({ configured, onlineUserCount }: { con
     pollRef.current = setInterval(refresh, 3000);
     return () => {
       if (pollRef.current) clearInterval(pollRef.current);
+      if (reloadTimerRef.current) clearTimeout(reloadTimerRef.current);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [configured]);
@@ -98,6 +107,12 @@ export default function AdminDeployClient({ configured, onlineUserCount }: { con
       if (!res.ok) {
         if (startsOutage) deployInFlightRef.current = false;
         setError((await res.json().catch(() => null))?.error ?? t("adminDeploy.actionFailed"));
+      } else if (startsOutage) {
+        // De agent antwoordt zodra de deploy is aangenomen; daarna kan deze
+        // container elk moment tijdelijk verdwijnen. De korte wachttijd geeft
+        // de gebruiker eerst feedback en laat de proxy daarna de nieuwe app of
+        // de onderhoudspagina tonen.
+        scheduleReload();
       }
       await refresh();
     } catch {
@@ -174,6 +189,7 @@ export default function AdminDeployClient({ configured, onlineUserCount }: { con
           {t("adminDeploy.deployNow")}
         </button>
       </div>
+      {reloadPending && <p className="text-sm font-semibold text-brand-700 dark:text-brand-300">{t("adminDeploy.reloadNotice")}</p>}
       {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
 
       {status && status.logs.length > 0 && (
