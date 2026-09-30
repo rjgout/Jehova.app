@@ -7,6 +7,7 @@ import bomAudio from "../../prisma/bomAudio.json";
 import bomAudioEn from "../../prisma/bomAudio.en.json";
 import bomAudioDe from "../../prisma/bomAudio.de.json";
 import bomAudioFr from "../../prisma/bomAudio.fr.json";
+import bomAudioEs from "../../prisma/bomAudio.es.json";
 import dcContent from "../../prisma/dcContent.json";
 import pgpContent from "../../prisma/pgpContent.json";
 import bomContentEn from "../../prisma/bomContent.en.json";
@@ -92,6 +93,7 @@ const audioByCollection: Partial<Record<string, ChapterAudioSeed[]>> = {
   [BOM_EN_COLLECTION_ID]: bomAudioEn as ChapterAudioSeed[],
   [BOM_DE_COLLECTION_ID]: bomAudioDe as ChapterAudioSeed[],
   [BOM_FR_COLLECTION_ID]: bomAudioFr as ChapterAudioSeed[],
+  [BOM_ES_COLLECTION_ID]: bomAudioEs as ChapterAudioSeed[],
 };
 
 export async function runSeed(client: PrismaClient, log: (msg: string) => void = console.log): Promise<void> {
