@@ -69,7 +69,9 @@ async function pickForDay<K extends AlleskennerItemKind>(
   const ids = shuffle(rows.filter((r) => accept(JSON.parse(r.data) as AlleskennerDataFor<K>)).map((r) => ({ id: r.id })));
   const fresh = ids.filter((r) => !used.has(r.id));
   const old = ids.filter((r) => used.has(r.id));
-  return [...interleave(fresh), ...old].slice(0, count).map((r) => r.id);
+  // De voorkeur voor nieuwe inhoud blijft behouden, maar de spelvolgorde
+  // mag niet de vaste volgorde van de generatorgroepen volgen.
+  return shuffle([...interleave(fresh), ...old].slice(0, count)).map((r) => r.id);
 }
 
 async function chooseDailyItems(): Promise<SoloItems> {

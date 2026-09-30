@@ -32,6 +32,15 @@ export interface PickedItem<K extends AlleskennerItemKind> {
   data: AlleskennerDataFor<K>;
 }
 
+function shuffle<T>(items: T[]): T[] {
+  const copy = [...items];
+  for (let index = copy.length - 1; index > 0; index--) {
+    const other = Math.floor(Math.random() * (index + 1));
+    [copy[index], copy[other]] = [copy[other], copy[index]];
+  }
+  return copy;
+}
+
 /** Soort generator ("gen-persoon", "gen-galerij-citaat"), of "hand" voor handgeschreven. */
 function family(id: string): string {
   if (!id.startsWith("gen-")) return "hand";
@@ -39,9 +48,10 @@ function family(id: string): string {
 }
 
 /**
- * Nog niet geziene onderdelen in speelvolgorde: eerst alle handgeschreven
- * (willekeurig), daarna om en om per generator, zodat een spel niet uit
- * vijftien vragen van hetzelfde soort bestaat.
+ * Nog niet geziene onderdelen in een gevarieerde volgorde: eerst alle
+ * handgeschreven onderdelen, daarna om en om per generator, zodat de
+ * selectie niet uit vijftien vragen van hetzelfde soort bestaat. De
+ * uiteindelijke spelvolgorde wordt na de voorkeursselectie opnieuw geschud.
  */
 export function interleave<T extends { id: string }>(items: T[]): T[] {
   const hand = items.filter((i) => family(i.id) === "hand");
@@ -100,7 +110,10 @@ export async function pickItems<K extends AlleskennerItemKind>(
 
   const unseen = candidates.filter((c) => c.lastSeen === 0);
   const seen = candidates.filter((c) => c.lastSeen !== 0);
-  return [...interleave(unseen), ...seen].slice(0, count).map(({ id, data }) => ({ id, data }));
+  // Nieuwe inhoud blijft voorrang houden, maar de vaste volgorde van
+  // interleave mag niet zichtbaar worden als speelvolgorde.
+  const selected = [...interleave(unseen), ...interleave(seen)].slice(0, count);
+  return shuffle(selected).map(({ id, data }) => ({ id, data }));
 }
 
 /**
