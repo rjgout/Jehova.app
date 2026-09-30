@@ -5,6 +5,8 @@ import { importChapterAudio, type ChapterAudioSeed } from "../../prisma/importAu
 import { mirrorChapterAudio } from "./audioMirror";
 import bomAudio from "../../prisma/bomAudio.json";
 import bomAudioEn from "../../prisma/bomAudio.en.json";
+import bomAudioDe from "../../prisma/bomAudio.de.json";
+import bomAudioFr from "../../prisma/bomAudio.fr.json";
 import dcContent from "../../prisma/dcContent.json";
 import pgpContent from "../../prisma/pgpContent.json";
 import bomContentEn from "../../prisma/bomContent.en.json";
@@ -83,6 +85,15 @@ const achievementDefs = [
  * zodat de adminbackend de voortgangsregels kan opvangen en teruggeven aan
  * de admin, in plaats van dat ze alleen in de containerlogs verdwijnen.
  */
+// Begintijden per vers in de voorgelezen hoofdstukken per uitgave (berekend
+// met scripts/bom-audio). De Nederlandse staat hierboven los, omdat die bij
+// de standaardcollectie hoort die altijd bestaat.
+const audioByCollection: Partial<Record<string, ChapterAudioSeed[]>> = {
+  [BOM_EN_COLLECTION_ID]: bomAudioEn as ChapterAudioSeed[],
+  [BOM_DE_COLLECTION_ID]: bomAudioDe as ChapterAudioSeed[],
+  [BOM_FR_COLLECTION_ID]: bomAudioFr as ChapterAudioSeed[],
+};
+
 export async function runSeed(client: PrismaClient, log: (msg: string) => void = console.log): Promise<void> {
   log("Seeding boeken, hoofdstukken, verzen en oefeningen...");
   await importBooks(client, seedBooks, log);
@@ -107,9 +118,8 @@ export async function runSeed(client: PrismaClient, log: (msg: string) => void =
     if (!(await client.contentCollection.findUnique({ where: { id: collectionId }, select: { id: true } }))) continue;
     log(`Seeding ${label}...`);
     await importBooks(client, books, log, collectionId);
-    if (collectionId === BOM_EN_COLLECTION_ID) {
-      await importChapterAudio(client, bomAudioEn as ChapterAudioSeed[], BOM_EN_COLLECTION_ID, log);
-    }
+    const audio = audioByCollection[collectionId];
+    if (audio) await importChapterAudio(client, audio, collectionId, log);
   }
 
   log("Seeding podcastafleveringen...");
