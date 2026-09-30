@@ -1731,7 +1731,7 @@ export const es: PartialMessages = {
     "lessonNotFound": "Lección no encontrada",
     "notificationNotFound": "Notificación no encontrada.",
     "finaleNoNewMembers": "Después de que haya comenzado la final de la temporada, no pueden ingresar más miembros. únete.",
-    "notLoggedIn": "No he iniciado sesión",
+    "notLoggedIn": "No has iniciado sesión",
     "notSaved": "No guardado.",
     "nothingToSave": "No hay nada que guardar",
     "exerciseNotFound": "Ejercicio no encontrado",

@@ -34,10 +34,9 @@ const MAX_DISCRIMINATOR_ATTEMPTS = 25;
 const REGISTRATION_NOTICE_WINDOW_MS = 24 * 60 * 60 * 1000;
 const noticeSentAt = new Map<string, number>();
 
-const GENERIC_RESPONSE = {
-  ok: true,
-  message: "Als registratie mogelijk is, ontvang je een e-mail met vervolgstappen.",
-};
+// Bewust zonder tekst: het registratiescherm toont zelf de (vertaalde)
+// melding, en een vaste Nederlandse zin hier liep buiten de vertalingen om.
+const GENERIC_RESPONSE = { ok: true };
 
 function noticeKey(email: string): string {
   // Het e-mailadres mag niet in de rate-limit-sleutel blijven staan als deze

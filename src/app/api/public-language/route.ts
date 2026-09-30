@@ -1,13 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { LANGUAGES } from "@/lib/languages";
+import { apiError } from "@/lib/apiError";
 
 const schema = z.object({ language: z.enum(LANGUAGES.filter((language) => language.uiReady).map((language) => language.code) as [string, ...string[]]) });
 
 export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => null);
   const parsed = schema.safeParse(body);
-  if (!parsed.success) return NextResponse.json({ error: "Ongeldige taal." }, { status: 400 });
+  if (!parsed.success) return await apiError("apiErrors.invalidInput", 400);
 
   const response = NextResponse.json({ ok: true });
   response.cookies.set("versado_language", parsed.data.language, {

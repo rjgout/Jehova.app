@@ -1,22 +1,23 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { getCurrentUser } from "@/lib/session";
+import { apiError } from "@/lib/apiError";
 import { prisma } from "@/lib/db";
 import { playableAudioUrl } from "@/lib/audioMirror";
 import { LANGUAGES } from "@/lib/languages";
 
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ chapterId: string }> }) {
   const user = await getCurrentUser();
-  if (!user) return NextResponse.json({ error: "Niet ingelogd." }, { status: 401 });
+  if (!user) return await apiError("apiErrors.notLoggedIn", 401);
   const parsed = z.object({ chapterId: z.string().min(1).max(200) }).safeParse(await params);
-  if (!parsed.success) return NextResponse.json({ error: "Ongeldig hoofdstuk." }, { status: 400 });
+  if (!parsed.success) return await apiError("apiErrors.invalidInput", 400);
 
   const selectable = { enabled: true, ...(user.isAdmin ? {} : { visibleToUsers: true }) };
   const chapter = await prisma.chapter.findFirst({
     where: { id: parsed.data.chapterId, book: { contentCollection: selectable } },
     include: { book: { include: { contentCollection: true } } },
   });
-  if (!chapter) return NextResponse.json({ error: "Hoofdstuk niet gevonden." }, { status: 404 });
+  if (!chapter) return await apiError("apiErrors.itemNotFound", 404);
   const { key, contentCollection } = chapter.book;
   if (!key || !contentCollection.work) return NextResponse.json({ editions: [] });
 
