@@ -87,7 +87,12 @@ export default function AppSelect({ value, options, onChange, disabled = false, 
         <span className={`shrink-0 text-slate-400 transition-transform ${open ? "rotate-180" : ""}`} aria-hidden>▾</span>
       </button>
       {open && (
-        <div id={listId} role="listbox" aria-label={ariaLabel} className="absolute left-0 top-full z-50 mt-1 max-h-64 w-full min-w-max overflow-auto rounded-2xl border border-slate-200 bg-white p-1 shadow-xl dark:border-slate-700 dark:bg-slate-800">
+        // Staat de keuzelijst in een <label> (zo gebruikt op o.a. profiel,
+        // winkel en voorlezen), dan stuurt de browser een klik op een optie
+        // door naar de eerste knop in dat label: de openklapknop. Het menu
+        // ging dan na het kiezen meteen weer open. preventDefault houdt die
+        // doorverwijzing tegen; de keuze zelf is dan al verwerkt.
+        <div id={listId} role="listbox" aria-label={ariaLabel} onClick={(event) => event.preventDefault()} className="absolute left-0 top-full z-50 mt-1 max-h-64 w-full min-w-max overflow-auto rounded-2xl border border-slate-200 bg-white p-1 shadow-xl dark:border-slate-700 dark:bg-slate-800">
           {options.map((option, index) => (
             <button
               key={option.value}
