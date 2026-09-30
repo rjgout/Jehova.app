@@ -11,7 +11,7 @@ hoofdstukken.
 Elk verhaal heeft in elke taal hetzelfde nummer: het volgnummer uit de
 inhoudsopgave min één (01 is een inleiding zonder verhaal en wordt
 overgeslagen, dus 02 wordt verhaal 1). Het script stopt als een taal een ander aantal verhalen
-heeft, want de cursussen en De Alleskenner koppelen talen op dat nummer.
+heeft, want de cursussen en De Slimste Heilige koppelen talen op dat nummer.
 
 Werkmap voor de opgehaalde pagina's: $CHURCH_TEXT_WORK, standaard
 .bom-audio-work/kids-<taal> (in .gitignore). Draaien vanuit de repo-root:

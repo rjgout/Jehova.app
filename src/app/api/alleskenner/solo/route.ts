@@ -5,7 +5,7 @@ import { getGameSettings } from "@/lib/gameSettings";
 import { getSoloOverview, startSoloRun } from "@/lib/alleskenner/solo";
 import { apiError, apiErrorText } from "@/lib/apiError";
 
-// De Alleskenner alleen spelen: overzicht met klassementen, en een nieuw potje
+// De Slimste Heilige alleen spelen: overzicht met klassementen, en een nieuw potje
 // beginnen. Het spel zelf loopt via de socketserver (ak:solo_join).
 export async function GET() {
   const user = await getCurrentUser();

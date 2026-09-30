@@ -1,7 +1,7 @@
 import type { AlleskennerItemKind } from "@prisma/client";
 import type { MemoryData, PuzzleData, QuestionData, TopicData } from "@/lib/alleskenner/content";
 
-// Een spel De Alleskenner rekent intern met de Nederlandse teksten van de
+// Een spel De Slimste Heilige rekent intern met de Nederlandse teksten van de
 // onderdelen: dezelfde vraag, dezelfde opties, dezelfde controle voor
 // iedereen. Spelers in een andere contenttaal zien die teksten via een
 // woordenboek per taal (Nederlandse tekst -> tekst in die taal), opgebouwd

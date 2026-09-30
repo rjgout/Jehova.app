@@ -4,7 +4,7 @@ import { getGameSettings } from "@/lib/gameSettings";
 import { createAlleskennerGame } from "@/lib/alleskenner/game";
 import { apiError } from "@/lib/apiError";
 
-// Maakt een lobby voor De Alleskenner (zie docs/ALLESKENNER.md). De maker is
+// Maakt een lobby voor De Slimste Heilige (zie docs/ALLESKENNER.md). De maker is
 // host en standaard quizmaster; spelers en toeschouwers melden zich in de
 // lobby zelf aan via de socketserver (src/server/alleskenner.ts).
 export async function POST() {

@@ -1129,7 +1129,7 @@ export function initGameServer(httpServer: HttpServer) {
       }
       // Wie in de lobby zat, vóór het verwijderen ophalen (de spelersrijen
       // gaan mee met het spel). Via ieders eigen user-room en niet via de
-      // spelcode: De Alleskenner zet spelers niet in die socket-room, en zo
+      // spelcode: De Slimste Heilige zet spelers niet in die socket-room, en zo
       // krijgen ook andere open tabbladen (bv. de actieve-spellenbanner) het
       // mee.
       const playerIds = (

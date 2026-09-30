@@ -14,7 +14,7 @@ import {
 } from "@/lib/alleskenner/pool";
 import { DEFAULT_LANGUAGE } from "@/lib/languages";
 
-// De Alleskenner alleen spelen (zie docs/ALLESKENNER.md, "Alleen spelen"). Het
+// De Slimste Heilige alleen spelen (zie docs/ALLESKENNER.md, "Alleen spelen"). Het
 // spel zelf draait in dezelfde spelserver als een quizavond
 // (src/server/alleskenner.ts, een kamer met één deelnemer); hier staat wat
 // eromheen hoort: onderdelen kiezen, het resultaat vastleggen en de
@@ -55,7 +55,7 @@ export function soloXp(mode: AlleskennerSoloMode, seconds: number): number {
 // --- Onderdelen kiezen ------------------------------------------------------------
 
 /**
- * Voor de Alleskenner van de dag telt niet wat één speler al zag, maar wat al
+ * Voor De Slimste Heilige van de dag telt niet wat één speler al zag, maar wat al
  * eerder van de dag was: dat komt pas terug als al het andere op is.
  */
 async function pickForDay<K extends AlleskennerItemKind>(
@@ -91,7 +91,7 @@ async function chooseDailyItems(): Promise<SoloItems> {
 }
 
 // Oefenen: alleen onderdelen die in de taal van de speler bestaan. De
-// Alleskenner van de dag is voor iedereen dezelfde rij; daar valt een speler
+// De Slimste Heilige van de dag is voor iedereen dezelfde rij; daar valt een speler
 // in een andere taal bij een onvertaald onderdeel terug op het Nederlands.
 async function choosePracticeItems(userId: string): Promise<SoloItems> {
   const user = await prisma.user.findUnique({ where: { id: userId }, select: { contentLanguage: true } });
@@ -138,7 +138,7 @@ export async function startSoloRun(userId: string, mode: AlleskennerSoloMode): P
     const existing = await prisma.alleskennerSoloRun.findUnique({ where: { userId_dayKey: { userId, dayKey: today } } });
     if (existing) {
       if (existing.status === "IN_PROGRESS") return { runId: existing.id };
-      return { error: "Je hebt de Alleskenner van vandaag al gespeeld. Morgen staat er een nieuwe klaar." };
+      return { error: "Je hebt De Slimste Heilige van vandaag al gespeeld. Morgen staat er een nieuwe klaar." };
     }
   }
 
@@ -153,7 +153,7 @@ export async function startSoloRun(userId: string, mode: AlleskennerSoloMode): P
       skipDuplicates: true,
     });
     const run = await prisma.alleskennerSoloRun.findUniqueOrThrow({ where: { userId_dayKey: { userId, dayKey: today } } });
-    if (run.status !== "IN_PROGRESS") return { error: "Je hebt de Alleskenner van vandaag al gespeeld." };
+    if (run.status !== "IN_PROGRESS") return { error: "Je hebt De Slimste Heilige van vandaag al gespeeld." };
     runId = run.id;
   } else {
     // Een eerder oefenpotje dat nog open stond, telt niet meer.

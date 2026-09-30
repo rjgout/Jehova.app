@@ -64,7 +64,7 @@ import {
   type AkStateView,
 } from "@/lib/alleskenner/types";
 
-// Spelserver voor De Alleskenner (zie docs/ALLESKENNER.md). Wordt geladen via
+// Spelserver voor De Slimste Heilige (zie docs/ALLESKENNER.md). Wordt geladen via
 // gameServer.ts en valt dus onder de eager-importketen van server.ts: hier
 // nooit request-scoped Next-API's importeren (zie CLAUDE.md). De spelstatus
 // leeft in het geheugen van deze ene instantie, net als bij de andere
@@ -154,7 +154,7 @@ interface SeasonInfo {
   names: Record<string, string>;
   memberIds: string[];
   managerIds: string[]; // host en vervangende host van het seizoen (mogen altijd binnen)
-  safeId: string | null; // Alleskenner van de avond (hoogste stand na de rondes)
+  safeId: string | null; // De Slimste Heilige van de avond (hoogste stand na de rondes)
   afterRounds: { userId: string; seconds: number }[];
 }
 
@@ -1472,15 +1472,15 @@ function beginFinale(room: Room) {
   state.finalists = [ranked[0], ranked[1]];
   if (room.season) {
     room.season.afterRounds = ranked.map((userId) => ({ userId, seconds: secondsOf(room, userId) }));
-    // Seizoensavond: de hoogste stand is Alleskenner van de avond en is door;
+    // Seizoensavond: de hoogste stand is De Slimste Heilige van de avond en is door;
     // de andere twee spelen om de laatste plek. Alleen op de laatste
     // finaleavond spelen de twee hoogsten om de titel.
     if (!room.season.isLast && ranked.length >= 3) {
       room.season.safeId = ranked[0];
       state.finalists = [ranked[1], ranked[2]];
-      subtitle = `${contestantName(room, ranked[0])} is Alleskenner van de avond! ${contestantName(room, ranked[1])} en ${contestantName(room, ranked[2])} spelen om de laatste plek; de verliezer ligt eruit.`;
+      subtitle = `${contestantName(room, ranked[0])} is De Slimste Heilige van de avond! ${contestantName(room, ranked[1])} en ${contestantName(room, ranked[2])} spelen om de laatste plek; de verliezer ligt eruit.`;
     } else if (room.season.isLast) {
-      subtitle = `${contestantName(room, ranked[0])} tegen ${contestantName(room, ranked[1])} om de titel Alleskenner van het seizoen.`;
+      subtitle = `${contestantName(room, ranked[0])} tegen ${contestantName(room, ranked[1])} om de titel De Slimste Heilige van het seizoen.`;
     }
   }
   room.phase = "FINALE";
@@ -1560,7 +1560,7 @@ function recordSolo(room: Room, solo: NonNullable<Room["solo"]>, finished: boole
       solo.result = result;
       broadcast(room);
     })
-    .catch((e) => console.error("Alleskenner alleen: resultaat vastleggen mislukt:", e));
+    .catch((e) => console.error("De Slimste Heilige alleen: resultaat vastleggen mislukt:", e));
 }
 
 // --- Lobby: teams -----------------------------------------------------------------
@@ -1764,7 +1764,7 @@ async function inviteSeasonMembers(room: Room, hostName: string) {
       code: room.code,
       fromDisplayName: hostName,
       fromUserId: room.hostId,
-      gameLabel: "De Alleskenner",
+      gameLabel: "De Slimste Heilige",
     });
     // Altijd in het meldingencentrum; een push alleen als de app nergens open staat (zie notifyUser).
     notifyGameInvite(userId, hostName, (t) => t("pages.alleskenner"), room.code).catch(() => {});
@@ -1857,7 +1857,7 @@ export function registerAlleskennerHandlers(server: SocketIOServer, socket: Sock
   socket.on("ak:solo_join", async ({ runId }: { runId?: unknown }) => {
     if (typeof runId !== "string" || runId.length > 64) return;
     const result = await joinSoloRoom(socket, user, runId).catch((e) => {
-      console.error("Alleskenner alleen: starten mislukt:", e);
+      console.error("De Slimste Heilige alleen: starten mislukt:", e);
       return "Kon het spel niet starten.";
     });
     if (typeof result === "string") {
@@ -1958,7 +1958,7 @@ export function registerAlleskennerHandlers(server: SocketIOServer, socket: Sock
     if (!room) return;
     room.starting = true;
     const error = await startGame(room).catch((e) => {
-      console.error("Alleskenner starten mislukt:", e);
+      console.error("De Slimste Heilige starten mislukt:", e);
       return "Kon het spel niet starten.";
     });
     room.starting = false;

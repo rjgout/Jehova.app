@@ -30,7 +30,7 @@ function summary(item: Item, t: TFunction): string {
 }
 
 /**
- * Editor voor bestaande onderdelen van De Alleskenner (zie docs/ALLESKENNER.md,
+ * Editor voor bestaande onderdelen van De Slimste Heilige (zie docs/ALLESKENNER.md,
  * "Inhoud"): corrigeren, uitschakelen of terugzetten naar het inhoudsbestand.
  * Nieuwe onderdelen komen bewust niet via hier binnen.
  */

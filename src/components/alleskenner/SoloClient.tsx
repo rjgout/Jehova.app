@@ -12,7 +12,7 @@ type Board = "today" | "week" | "friends";
 const BOARDS: Board[] = ["today", "week", "friends"];
 
 /**
- * Alleen spelen: de Alleskenner van de dag (één poging, klassement) en vrij
+ * Alleen spelen: De Slimste Heilige van de dag (één poging, klassement) en vrij
  * oefenen. Het potje zelf draait in AlleskennerRoom, met dezelfde rondes als
  * een quizavond behalve de finale.
  */

@@ -324,7 +324,7 @@ verwerken". Fundamenteel anders dan de rest van de API:
 ## Talen (Nederlands, Engels, Duits, Frans, Spaans)
 
 Doel: één app in vijf talen, met één gezamenlijke competitie en spellen die
-spelers in verschillende talen samen kunnen spelen (bv. De Alleskenner, Raad
+spelers in verschillende talen samen kunnen spelen (bv. De Slimste Heilige, Raad
 het hoofdstuk). Het fundament ligt er; zichtbaar is alles nog Nederlands.
 
 - **Twee losse taalkeuzes per gebruiker**: `User.uiLanguage` (menu's,

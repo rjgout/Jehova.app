@@ -401,7 +401,7 @@ export async function completeWordGame(userId: string, xpEarned: number): Promis
 }
 
 /**
- * De Alleskenner alleen gespeeld (van de dag of vrij oefenen): telt als
+ * De Slimste Heilige alleen gespeeld (van de dag of vrij oefenen): telt als
  * gestudeerd voor de reeks, net als het woordspel. De XP is al berekend uit
  * de eindstand (soloXp in src/lib/alleskenner/solo.ts).
  */

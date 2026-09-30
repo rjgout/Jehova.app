@@ -21,7 +21,7 @@ const PAGE_ACTIVITIES: { match: (pathname: string) => boolean; activity: Activit
   { match: (p) => p === "/streak" || p === "/xp", activity: { icon: "🔥", label: "Bekijkt de voortgang" } },
   { match: (p) => p.startsWith("/word-game"), activity: { icon: "🟩", label: "Speelt Woord van de dag" } },
   { match: (p) => p.startsWith("/scrabble"), activity: { icon: "🔤", label: "Speelt Woordspel" } },
-  { match: (p) => p.startsWith("/alleskenner"), activity: { icon: "🧠", label: "Speelt De Alleskenner" } },
+  { match: (p) => p.startsWith("/alleskenner"), activity: { icon: "🧠", label: "Speelt De Slimste Heilige" } },
   { match: (p) => p.startsWith("/gezinsavond"), activity: { icon: "🎉", label: "Speelt Gezinsavond" } },
   { match: (p) => p.startsWith("/chapter-guess"), activity: { icon: "🔎", label: "Speelt Raad het hoofdstuk" } },
   { match: (p) => p.startsWith("/challenges"), activity: { icon: "⚔️", label: "Doet een uitdaging" } },

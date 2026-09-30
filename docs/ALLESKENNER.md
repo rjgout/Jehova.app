@@ -1,4 +1,4 @@
-# De Alleskenner
+# De Slimste Heilige
 
 Een live quizspel voor mensen die **fysiek bij elkaar** zijn. Iedereen speelt op
 zijn eigen telefoon met zijn eigen account; de server bewaakt de spelstatus,
@@ -57,13 +57,13 @@ de minste seconden; na een pas of als je klaar bent, mag de volgende aanvullen.
   (achteraan de wachtrij).
 - Elke avond **3 kandidaten**: de blijvers + nieuwkomers uit de wachtrij
   (de nieuwkomer krijgt de eerste 3-6-9-vraag). De rest is toeschouwer.
-- Na de rondes: hoogste stand = Alleskenner van de avond (door); de andere twee
+- Na de rondes: hoogste stand = De Slimste Heilige van de avond (door); de andere twee
   spelen de finale; winnaar door, **verliezer ligt eruit** (dit seizoen niet
   meer spelen, ook niet na één avond).
 - **Maximaal 3 avonden**; daarna stop je met eer (ongeslagen).
 - Afwezige blijver: een nieuwkomer neemt de stoel; de blijver houdt zijn
   resterende avonden en speelt later verder.
-- **Klassement**: seizoenspunten 3 (Alleskenner van de avond) / 2 (finale
+- **Klassement**: seizoenspunten 3 (De Slimste Heilige van de avond) / 2 (finale
   gewonnen) / 1 (finale verloren), opgeteld (max 9); gelijkstand → totaal
   verdiende seconden. Altijd zichtbaar op de seizoenspagina.
 
@@ -77,7 +77,7 @@ de minste seconden; na een pas of als je klaar bent, mag de volgende aanvullen.
   **Instapvolgorde op klassement**: laagst geplaatsten beginnen, de nummer 1
   stapt als laatste in. Aantal finaleavonden = finalisten − 2.
 - Laatste avond: 3 over; na de rondes spelen de beste twee de finale; wie de
-  ander op 0 zet is **Alleskenner van het seizoen**.
+  ander op 0 zet is **De Slimste Heilige van het seizoen**.
 - Host kan een afwezige finalist overslaan; die stapt later in.
 
 - Finaleavonden tellen niet mee voor het klassement: dat bepaalt alleen de
@@ -97,7 +97,7 @@ de minste seconden; na een pas of als je klaar bent, mag de volgende aanvullen.
 
 ## Alleen spelen (`/alleskenner/alleen`)
 
-- **Alleskenner van de dag**: elke dag voor iedereen dezelfde onderdelen,
+- **De Slimste Heilige van de dag**: elke dag voor iedereen dezelfde onderdelen,
   vastgelegd door wie als eerste speelt (`AlleskennerDailySet`, zelfde idee
   als het woord van de dag). Eén poging per dag (unieke index op
   `AlleskennerSoloRun(userId, dayKey)`); een lopend potje kun je hervatten.
@@ -170,7 +170,7 @@ de minste seconden; na een pas of als je klaar bent, mag de volgende aanvullen.
   zijn goed in elke taal van het spel.
 - Speelt er iemand in een andere taal mee (quizavond, of alleen oefenen), dan
   kiest het spel alleen onderdelen die in die taal bestaan; een Nederlands
-  spel verandert niet. De Alleskenner van de dag is voor iedereen dezelfde rij;
+  spel verandert niet. De Slimste Heilige van de dag is voor iedereen dezelfde rij;
   een onvertaald onderdeel ziet een speler in een andere taal in het Nederlands.
 - Een onderdeel dat in de beheeromgeving is aangepast, gebruikt geen
   vertalingen meer (die horen bij de oorspronkelijke tekst).

@@ -117,7 +117,7 @@ export async function pickItems<K extends AlleskennerItemKind>(
 }
 
 /**
- * Onderdelen op volgorde van `ids` (bv. de vastgelegde Alleskenner van de
+ * Onderdelen op volgorde van `ids` (bv. de vastgelegde Slimste Heilige van de
  * dag). Wat inmiddels is uitgeschakeld of verwijderd, valt weg.
  */
 export async function itemsByIds<K extends AlleskennerItemKind>(kind: K, ids: string[]): Promise<PickedItem<K>[]> {
@@ -213,7 +213,7 @@ export async function alleskennerLanguages(): Promise<string[]> {
   return languagesCache.languages;
 }
 
-/** De taal waarin iemand De Alleskenner speelt: de eigen contenttaal, anders langs de terugvalvolgorde. */
+/** De taal waarin iemand De Slimste Heilige speelt: de eigen contenttaal, anders langs de terugvalvolgorde. */
 export function alleskennerLanguageFor(contentLanguage: string | null | undefined, available: string[]): string {
   return fallbackChain(contentLanguage).find((code) => code === DEFAULT_LANGUAGE || available.includes(code)) ?? DEFAULT_LANGUAGE;
 }

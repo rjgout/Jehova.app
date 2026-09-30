@@ -133,7 +133,7 @@ export async function runSeed(client: PrismaClient, log: (msg: string) => void =
   log("Seeding introductiecursus (Ontdek het Boek van Mormon)...");
   await importIntroLessons(client, introLessons, log);
 
-  log("Seeding De Alleskenner...");
+  log("Seeding De Slimste Heilige...");
   const alleskennerAll = [...alleskennerItems, ...generatedAlleskennerItems()];
   await importAlleskennerItems(client, alleskennerAll, log);
   await importAlleskennerTranslations(client, alleskennerTranslations(alleskennerAll), log);

@@ -5,7 +5,7 @@ import { getCurrentUser } from "@/lib/session";
 import { getGameSettings } from "@/lib/gameSettings";
 import { apiError } from "@/lib/apiError";
 
-// Seizoenen van De Alleskenner waar je host, vervangende host of lid van bent.
+// Seizoenen van De Slimste Heilige waar je host, vervangende host of lid van bent.
 export async function GET() {
   const user = await getCurrentUser();
   if (!user) return await apiError("apiErrors.notLoggedIn", 401);

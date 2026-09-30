@@ -42,7 +42,7 @@ interface Friend {
 }
 
 /**
- * Speelruimte van De Alleskenner. Alle spelstatus komt van de server
+ * Speelruimte van De Slimste Heilige. Alle spelstatus komt van de server
  * (src/server/alleskenner.ts) via "ak:state"; elke deelnemer krijgt een eigen
  * weergave, dus dit component beslist niets zelf over goed/fout of seconden.
  */

@@ -1,7 +1,7 @@
 import type { AlleskennerSeason, AlleskennerSeasonMember } from "@prisma/client";
 import { prisma } from "@/lib/db";
 
-// Seizoenslogica van De Alleskenner (zie docs/ALLESKENNER.md, "Seizoen").
+// Seizoenslogica van De Slimste Heilige (zie docs/ALLESKENNER.md, "Seizoen").
 // Wordt gebruikt door de seizoensroutes én door de spelserver
 // (src/server/alleskenner.ts) — dus onderdeel van de eager-importketen van
 // server.ts: hier nooit request-scoped Next-API's importeren.
@@ -149,10 +149,10 @@ export interface EveningOutcome {
 
 /**
  * Verwerkt de uitslag van een seizoensavond. Gewone avond: hoogste stand na de
- * rondes = Alleskenner van de avond (3 punten, door), finalewinnaar 2 punten
+ * rondes = De Slimste Heilige van de avond (3 punten, door), finalewinnaar 2 punten
  * (door), verliezer 1 punt en eruit. Na drie avonden stop je ongeslagen.
  * Finaleavonden tellen niet mee voor het klassement (dat bepaalde alleen de
- * instapvolgorde); de laatste levert de Alleskenner van het seizoen op.
+ * instapvolgorde); de laatste levert De Slimste Heilige van het seizoen op.
  */
 export async function recordSeasonEvening(eveningId: string, outcome: EveningOutcome): Promise<void> {
   const evening = await prisma.alleskennerEvening.findUnique({

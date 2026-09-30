@@ -169,7 +169,7 @@ export interface AkStateView {
     isFinale: boolean;
     isLast: boolean;
     lineup: { userId: string; name: string }[];
-    safeId: string | null; // Alleskenner van de avond
+    safeId: string | null; // De Slimste Heilige van de avond
   } | null;
   personal: { mine: number | null; ranking: { userId: string; name: string; points: number }[] | null } | null;
   // Alleen spelen. xpEarned/rank komen pas na afloop, als het resultaat is vastgelegd.
