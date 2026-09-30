@@ -51,11 +51,20 @@ const COURSES: Record<string, ArtworkAsset> = {
 };
 const COURSE_TYPES: Record<string, ArtworkAsset> = {};
 
-// Spelcovers, per id uit src/lib/gameCatalog.ts. Een spel zonder cover houdt
-// de neutrale placeholder; een nieuwe cover is hier één regel, bv.
-// jigsaw: { src: "/images/games/jigsaw.png", tone: "#..." }.
+// Spelcovers, per id uit src/lib/gameCatalog.ts: dezelfde cover op elke plek
+// waar een spel als kaart staat (Vandaag, Voor jou, Spelen). Een spel zonder
+// cover houdt de neutrale placeholder; een nieuwe cover is hier één regel.
+// Een brandpunt alleen waar bijsnijden vanuit het midden aantoonbaar iets
+// wegvalt (bij woordspel de W in het vierkante kader).
 const GAME_COVERS: Partial<Record<GameId, ArtworkAsset>> = {
+  "word-game": { src: "/images/games/woord-van-de-dag.png", tone: "#a4764e" },
+  "word-search": { src: "/images/games/woordzoeker.png", tone: "#a76c3a" },
+  jigsaw: { src: "/images/games/legpuzzel.png", tone: "#9a7356" },
   alleskenner: { src: "/images/games/de-slimste-heilige.png", position: "38% 75%", tone: "#a4714a" },
+  scrabble: { src: "/images/games/woordspel.png", position: "35% 50%", tone: "#a67953" },
+  "chapter-guess": { src: "/images/games/raad-het-hoofdstuk.png", tone: "#9d6e49" },
+  gezinsavond: { src: "/images/games/gezinsavond.png", tone: "#a27141" },
+  // challenges (Uitdagingen): nog geen cover aangeleverd.
 };
 
 const PODCASTS: Record<string, ArtworkAsset> = {

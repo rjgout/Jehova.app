@@ -64,8 +64,10 @@ lijst hierboven nog volledig.
   en anders de placeholder; er is geen algemeen beeld per werk. Eerste
   set: 1 Nephi, Alma, Het leven van Christus (voor een cursus met slug
   `life-of-christ`, die er nog niet is), podcast (algemeen), De Slimste
-  Heilige en de tekst van de dag. Spelcovers komen per spel-id in
-  `GAME_COVERS`. `versado/MascotSlot.tsx` rendert niets tot de mascottes er zijn.
+  Heilige en de tekst van de dag. Spelcovers staan per spel-id in
+  `GAME_COVERS` en worden overal gebruikt waar een spel als kaart staat
+  (Vandaag, Voor jou en de spelkaarten op Spelen in `LiveLobbyForm`);
+  Uitdagingen heeft nog geen cover. `versado/MascotSlot.tsx` rendert niets tot de mascottes er zijn.
   `versado/Carousel.tsx` is de veegrij met puntjes en pijlen.
 
 ## Wat Versado is

@@ -9,6 +9,8 @@ import { applyPersonalOrder, fetchListOrder, saveListOrder } from "@/lib/listOrd
 import { useT } from "@/components/I18nProvider";
 import AppSelect from "@/components/AppSelect";
 import { GAME_CATALOG, type GameCatalogEntry } from "@/lib/gameCatalog";
+import { gameArtworkKeys } from "@/lib/artwork";
+import MediaArtwork from "@/components/versado/MediaArtwork";
 
 interface ChapterOption {
   id: string;
@@ -36,23 +38,11 @@ interface Props {
   contentName: string;
 }
 
-interface GameEntry extends GameCatalogEntry {
-  icon: string;
-}
-
 // De catalogus zelf staat in src/lib/gameCatalog.ts (gedeeld met Vandaag);
-// de iconen horen bij dit overzicht.
-const GAME_ICONS: Record<string, string> = {
-  jigsaw: "🧩",
-  "word-search": "🔎",
-  "word-game": "🟩",
-  scrabble: "🔤",
-  alleskenner: "🧠",
-  gezinsavond: "🎉",
-  "chapter-guess": "🔎",
-  challenges: "⚔️",
-};
-const GAMES: GameEntry[] = GAME_CATALOG.map((game) => ({ ...game, icon: GAME_ICONS[game.id] ?? "" }));
+// het beeld per spel in src/lib/artwork.ts (GAME_COVERS), zodat een spel
+// overal dezelfde cover heeft.
+type GameEntry = GameCatalogEntry;
+const GAMES: GameEntry[] = GAME_CATALOG;
 
 export default function LiveLobbyForm({ settings, isAdmin, allowedGameKeys, contentName }: Props) {
   const t = useT();
@@ -180,48 +170,56 @@ function GameCardBody({ game, enabled, handle }: { game: GameEntry; enabled: boo
 
   return (
     <div
-      className={`card flex items-start gap-3 ${!enabled ? "!border-2 !border-red-300 dark:!border-red-800" : ""}`}
+      className={`card flex flex-col gap-4 ${!enabled ? "!border-2 !border-red-300 dark:!border-red-800" : ""}`}
     >
-      <div className="pt-0.5 shrink-0">
-        <DragHandle {...handle} />
-      </div>
-      <div className="min-w-0 flex-1 flex flex-col gap-3">
-        {!enabled && (
-          <span className="text-xs font-bold uppercase text-red-500 dark:text-red-400 bg-red-50 dark:bg-red-950 rounded-full px-2 py-0.5 self-start">
-            {t("gamesHub.disabledForUsers")}
-          </span>
+      {/* Cover over de volle breedte van de kaart (tegen de padding van .card
+          in). Op een telefoon lager (21:9), vanaf twee kolommen 2:1. */}
+      <MediaArtwork
+        kind="game"
+        artworkKey={gameArtworkKeys(game.id)}
+        ratio="21/9"
+        sizes="(min-width: 1024px) 500px, (min-width: 640px) 50vw, 100vw"
+        className="-mx-6 -mt-6 rounded-t-[calc(1.5rem-1px)] sm:aspect-[2/1]"
+      />
+      <div className="flex items-start gap-3">
+        <div className="pt-0.5 shrink-0">
+          <DragHandle {...handle} />
+        </div>
+        <div className="min-w-0 flex-1 flex flex-col gap-3">
+          {!enabled && (
+            <span className="text-xs font-bold uppercase text-red-500 dark:text-red-400 bg-red-50 dark:bg-red-950 rounded-full px-2 py-0.5 self-start">
+              {t("gamesHub.disabledForUsers")}
+            </span>
+          )}
+          <div className="flex items-center gap-2 min-w-0">
+            <h2 className="font-extrabold dark:text-slate-100 leading-tight flex-1 min-w-0">{title}</h2>
+            <button
+              type="button"
+              onClick={() => setShowRules(true)}
+              className="w-8 h-8 shrink-0 rounded-full border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-300 font-extrabold flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-800"
+              aria-label={t("gamesHub.rulesFor", { title })}
+              title={t("gamesHub.rules")}
+            >
+              i
+            </button>
+          </div>
+          <p className="text-sm text-slate-500 dark:text-slate-400">{text("description")}</p>
+          <Link href={game.href} className="btn-secondary self-start">
+            {text("linkLabel")}
+          </Link>
+          {showRules && (
+          <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4" role="presentation" onClick={() => setShowRules(false)}>
+            <div className="card max-w-lg w-full max-h-[85vh] overflow-y-auto relative" role="dialog" aria-modal="true" aria-labelledby={`game-rules-${game.id}`} onClick={(event) => event.stopPropagation()}>
+              <button type="button" onClick={() => setShowRules(false)} className="absolute top-3 right-3 w-9 h-9 rounded-full text-slate-500 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 text-xl" aria-label={t("gamesHub.rulesClose")}>×</button>
+              <h3 id={`game-rules-${game.id}`} className="text-xl font-extrabold text-brand-800 dark:text-brand-300 pr-10">{t("gamesHub.rules")}</h3>
+              <h4 className="mt-4 font-extrabold dark:text-slate-100">{t("gamesHub.howToPlay")}</h4>
+              <ul className="mt-2 list-disc pl-5 space-y-2 text-sm text-slate-700 dark:text-slate-200">
+                {(["rule1", "rule2", "rule3"] as const).map((rule) => <li key={rule}>{text(rule)}</li>)}
+              </ul>
+            </div>
+          </div>
         )}
-        <div className="flex items-center gap-2 min-w-0">
-          <div className="text-2xl shrink-0" aria-hidden>
-            {game.icon}
-          </div>
-          <h2 className="font-extrabold dark:text-slate-100 leading-tight flex-1 min-w-0">{title}</h2>
-          <button
-            type="button"
-            onClick={() => setShowRules(true)}
-            className="w-8 h-8 shrink-0 rounded-full border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-300 font-extrabold flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-800"
-            aria-label={t("gamesHub.rulesFor", { title })}
-            title={t("gamesHub.rules")}
-          >
-            i
-          </button>
         </div>
-        <p className="text-sm text-slate-500 dark:text-slate-400">{text("description")}</p>
-        <Link href={game.href} className="btn-secondary self-start">
-          {text("linkLabel")}
-        </Link>
-        {showRules && (
-        <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4" role="presentation" onClick={() => setShowRules(false)}>
-          <div className="card max-w-lg w-full max-h-[85vh] overflow-y-auto relative" role="dialog" aria-modal="true" aria-labelledby={`game-rules-${game.id}`} onClick={(event) => event.stopPropagation()}>
-            <button type="button" onClick={() => setShowRules(false)} className="absolute top-3 right-3 w-9 h-9 rounded-full text-slate-500 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 text-xl" aria-label={t("gamesHub.rulesClose")}>×</button>
-            <h3 id={`game-rules-${game.id}`} className="text-xl font-extrabold text-brand-800 dark:text-brand-300 pr-10">{t("gamesHub.rules")}</h3>
-            <h4 className="mt-4 font-extrabold dark:text-slate-100">{t("gamesHub.howToPlay")}</h4>
-            <ul className="mt-2 list-disc pl-5 space-y-2 text-sm text-slate-700 dark:text-slate-200">
-              {(["rule1", "rule2", "rule3"] as const).map((rule) => <li key={rule}>{text(rule)}</li>)}
-            </ul>
-          </div>
-        </div>
-      )}
       </div>
     </div>
   );
