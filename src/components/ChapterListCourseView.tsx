@@ -17,6 +17,8 @@ interface ChapterView {
 }
 
 interface Props {
+  /** Ingang naar Samen studeren, naast de titel (zie StudyTogetherButton). */
+  studyAction?: React.ReactNode;
   courseId: string;
   courseName: string;
   currentChapterId: string | null;
@@ -36,7 +38,7 @@ interface Props {
 // en in welke volgorde/vergrendeling. Bij meerdere boeken (van-voor-naar-
 // achter, vrije keuze) wordt elk boek een inklapbare sectie — anders werd dit
 // bij het hele Boek van Mormon in één keer een erg lange pagina.
-export default function ChapterListCourseView({ courseId, courseName, currentChapterId, chapters, sequential = true, unitPlural = "hoofdstukken" }: Props) {
+export default function ChapterListCourseView({ courseId, courseName, currentChapterId, chapters, sequential = true, unitPlural = "hoofdstukken", studyAction }: Props) {
   const t = useT();
   const allDone = chapters.length > 0 && chapters.every((c) => c.completed);
   const todayChapter =
@@ -105,7 +107,10 @@ export default function ChapterListCourseView({ courseId, courseName, currentCha
   return (
     <div className="flex flex-col gap-10">
       <div className="flex flex-col gap-4">
-        <h1 className="text-2xl font-extrabold text-brand-800 dark:text-brand-300">{courseName}</h1>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h1 className="text-2xl font-extrabold text-brand-800 dark:text-brand-300">{courseName}</h1>
+          {studyAction}
+        </div>
 
         {chapters.length > 0 && (
           <div className="card flex flex-col gap-2">

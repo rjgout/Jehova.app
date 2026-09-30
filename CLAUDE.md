@@ -121,6 +121,12 @@ Controleer bij twijfel: `grep -rn "next/headers" src/lib src/server server.ts`
 - `src/server/gameServer.ts` — Socket.io-logica voor live multiplayer (lobby,
   scores, "Raad het hoofdstuk"); state van een lopend spel leeft in-memory
   in deze ene instantie (zie Beperkingen in `README.md`)
+- `src/server/study.ts` + `src/lib/study/` — Samen studeren (LiveGame mode
+  STUDY): een cursus met vrienden stap voor stap, iedereen dezelfde vragen in
+  eigen tempo, uitslag per stap en een groeiende totaalstand. Wat een "stap"
+  per cursustype is en welke vragen erbij horen staat alleen in
+  `src/lib/study/units.ts`; de puntentelling in `src/lib/study/scoring.ts`
+  (getest met `npm run test:study`)
 - `src/app/**` — App Router: pagina's (`page.tsx`) + API-routes (`app/api/**/route.ts`)
 - `src/lib/**` — kernlogica, georganiseerd per domein; vermijd onnodige
   versnippering (`streak.ts`, `xp.ts`, `leagues.ts`, `competitionXp.ts`,

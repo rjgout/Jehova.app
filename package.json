@@ -18,6 +18,7 @@
     "db:backfill-hints": "tsx prisma/backfillExerciseHints.ts",
     "alleskenner:check": "tsx prisma/checkAlleskenner.ts",
     "test:word-search": "tsx --test tests/word-search.test.ts",
+    "test:study": "tsx --test tests/study-scoring.test.ts",
     "audio:mirror": "tsx scripts/mirrorAudio.ts"
   },
   "dependencies": {

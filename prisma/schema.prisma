@@ -222,6 +222,7 @@ model User {
   hostedGames LiveGame[]       @relation("GameHost")
   gamePlayers LiveGamePlayer[]
   gameInvites LiveGameInvite[]
+  studyAnswers StudyAnswer[]
   alleskennerSeen AlleskennerSeen[]
   alleskennerSeasonsHosted AlleskennerSeason[]       @relation("AlleskennerSeasonHost")
   alleskennerSeasonsDeputy AlleskennerSeason[]       @relation("AlleskennerSeasonDeputy")
@@ -494,6 +495,7 @@ model Course {
   userProgress   UserCourseProgress[]
   activeForUsers User[]               @relation("ActiveCourse")
   lessons        CourseLesson[]
+  studySessions  StudySession[]
 }
 
 model CourseChapter {
@@ -1221,6 +1223,8 @@ enum XPReason {
   ALLESKENNER_SOLO
   // Een onbeperkte woordzoeker afgerond. De spelronde zelf staat los van een dag.
   WORD_SEARCH_COMPLETED
+  // Een ronde Samen studeren gespeeld. Zie completeStudyRound.
+  STUDY_TOGETHER
 }
 
 model XPTransaction {
@@ -1529,6 +1533,9 @@ enum LiveGameMode {
   CHAPTER_GUESS
   FAMILY_GAME
   ALLESKENNER
+  // Samen studeren: een cursus met vrienden, stap voor stap (zie
+  // StudySession hieronder en src/server/study.ts).
+  STUDY
 }
 
 // Alleen relevant bij mode FAMILY_GAME. DIGITAL = de app gooit (server-
@@ -1560,6 +1567,8 @@ model LiveGame {
   invites       LiveGameInvite[]
   // Alleen bij een seizoensavond van De Alleskenner.
   alleskennerEvening AlleskennerEvening?
+  // Alleen bij mode STUDY.
+  studySession StudySession?
 
   @@index([chapterId])
 }
@@ -1593,6 +1602,60 @@ model LiveGameInvite {
   createdAt DateTime @default(now())
 
   @@unique([gameId, userId])
+}
+
+// --- Samen studeren ----------------------------------------------------------
+//
+// Een cursus met vrienden doorwerken: de host kiest telkens een stap, die
+// start voor iedereen tegelijk met dezelfde vragen; daarna een ranglijst
+// voor die stap (goed beantwoord telt het zwaarst, wie eerst klaar is krijgt
+// een kleine bonus) en een totaalranglijst die groeit zolang er gespeeld
+// wordt. De lobby, uitnodigingen en deelnemers lopen via LiveGame (mode
+// STUDY); hier staat wat een sessie langer dan één ronde bijhoudt, zodat de
+// ranglijst ook een herstart van de server overleeft. Zie src/server/study.ts.
+model StudySession {
+  id        String       @id @default(cuid())
+  gameId    String       @unique
+  game      LiveGame     @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  courseId  String
+  course    Course       @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  createdAt DateTime     @default(now())
+  rounds    StudyRound[]
+
+  @@index([courseId])
+}
+
+model StudyRound {
+  id        String        @id @default(cuid())
+  sessionId String
+  session   StudySession  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  number    Int
+  // Welke stap: "ch:<chapterId>", "rl:<courseLessonId>", "in:<introLessonId>",
+  // "kd:<kidsStoryId>" of "pc:<episodeId>:<mode>" (zie src/lib/study/units.ts).
+  unitKey   String
+  unitLabel String
+  // JSON: de vragen zoals iedereen ze kreeg (bron, id, en de geschudde
+  // opties), zodat antwoorden later nog tegen dezelfde vraag kloppen.
+  questions String
+  startedAt DateTime
+  closedAt  DateTime?
+  answers   StudyAnswer[]
+
+  @@unique([sessionId, number])
+}
+
+model StudyAnswer {
+  id         String     @id @default(cuid())
+  roundId    String
+  round      StudyRound @relation(fields: [roundId], references: [id], onDelete: Cascade)
+  userId     String
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  index      Int
+  correct    Boolean
+  answeredAt DateTime   @default(now())
+
+  @@unique([roundId, userId, index])
+  @@index([userId])
 }
 
 // --- Raad het hoofdstuk ------------------------------------------------------

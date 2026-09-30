@@ -5,6 +5,8 @@ import GameRoom from "@/components/GameRoom";
 import ChapterGuessGameRoom from "@/components/ChapterGuessGameRoom";
 import FamilyGameRoom from "@/components/FamilyGameRoom";
 import AlleskennerRoom from "@/components/alleskenner/AlleskennerRoom";
+import StudyRoom from "@/components/study/StudyRoom";
+import { localizedCourse } from "@/lib/courseText";
 
 export default async function LiveGamePage({ params }: { params: Promise<{ code: string }> }) {
   const user = await getCurrentUser();
@@ -16,10 +18,21 @@ export default async function LiveGamePage({ params }: { params: Promise<{ code:
   // juiste client-component renderen. Bestaat de code niet (of nog niet
   // gesynchroniseerd), dan valt dit terug op GameRoom — dat toont zelf al
   // een nette foutmelding zodra de socket "join_game" niets vindt.
-  const game = await prisma.liveGame.findUnique({ where: { code: upperCode }, select: { mode: true } });
+  const game = await prisma.liveGame.findUnique({
+    where: { code: upperCode },
+    select: {
+      mode: true,
+      studySession: { select: { course: { select: { type: true, name: true, description: true, contentCollection: { select: { work: true } } } } } },
+    },
+  });
 
   if (game?.mode === "CHAPTER_GUESS") {
     return <ChapterGuessGameRoom code={upperCode} myUserId={user.id} />;
+  }
+  if (game?.mode === "STUDY" && game.studySession) {
+    const course = game.studySession.course;
+    const courseName = localizedCourse({ ...course, work: course.contentCollection.work }, user.uiLanguage).name;
+    return <StudyRoom code={upperCode} myUserId={user.id} courseName={courseName} />;
   }
   if (game?.mode === "ALLESKENNER") {
     return <AlleskennerRoom code={upperCode} />;

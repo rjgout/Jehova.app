@@ -294,6 +294,59 @@ export async function completeQuickPractice(userId: string, correctCount: number
 }
 
 /**
+ * Rondt een stap van Samen studeren af voor één deelnemer (zie
+ * src/server/study.ts). Zelfde opzet als completeQuickPractice: telt voor de
+ * dagstreak en geeft een lichte XP per goed antwoord, maar schuift de cursus
+ * zelf niet door — de stap is door de host gekozen, niet noodzakelijk de
+ * volgende stap van deze deelnemer. De competitie-XP heeft een eigen
+ * dagelijkse limiet, zodat steeds dezelfde stap herhalen niets oplevert.
+ */
+export async function completeStudyRound(userId: string, correctCount: number, total: number, won: boolean): Promise<StudyResult> {
+  return prisma.$transaction(async (tx) => {
+    const daily = await applyDailyStreak(tx, userId);
+    const freezeCount = daily.freezeCountBeforeMilestone + daily.freezesEarned;
+
+    await tx.user.update({
+      where: { id: userId },
+      data: {
+        currentStreak: daily.currentStreak,
+        longestStreak: daily.longestStreak,
+        lastStudyDate: daily.today,
+        freezeCount,
+      },
+    });
+
+    if (daily.freezesEarned > 0) {
+      await tx.freezeTransaction.create({
+        data: { userId, type: "EARNED", amount: daily.freezesEarned, reason: "Mijlpaal bereikt" },
+      });
+    }
+
+    const xp = correctCount * XP_PER_CORRECT_LIGHT;
+    if (xp > 0) {
+      await awardXp(tx, userId, xp, "STUDY_TOGETHER", { correctCount, total, won });
+      await awardCompetitionXp(tx, userId, "STUDY_TOGETHER", xp, { won, metadata: { correctCount, total } });
+    }
+
+    const newAchievements = await checkAndAwardAchievements(tx, userId);
+
+    return {
+      xpEarned: xp,
+      chapterCompleted: false,
+      scorePercent: total === 0 ? 0 : Math.round((correctCount / total) * 100),
+      currentStreak: daily.currentStreak,
+      longestStreak: daily.longestStreak,
+      streakBroken: daily.streakBroken,
+      freezeUsed: daily.freezeUsed,
+      freezesEarned: daily.freezesEarned,
+      freezeCount,
+      newAchievements,
+      alreadyStudiedToday: daily.alreadyStudiedToday,
+    };
+  });
+}
+
+/**
  * Rondt een potje "Raad het hoofdstuk" af (alleen of live, zie
  * src/lib/chapterGuess.ts en src/server/gameServer.ts) — zelfde opzet als
  * completeQuickPractice: geen vaste cursus/hoofdstuk om aan te haken, dus

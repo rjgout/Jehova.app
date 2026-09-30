@@ -1,6 +1,8 @@
 import { prisma } from "@/lib/db";
 import { getContentContext } from "@/lib/contentCollections";
 import { getT } from "@/lib/i18n";
+import { localizedCourse } from "@/lib/courseText";
+import type { CourseType } from "@prisma/client";
 
 // Alles wat een gebruiker "open" heeft staan over de asynchrone spellen
 // heen (Uitdagingen, Woordspel), het realtime Live spel, en een eigen
@@ -40,6 +42,8 @@ export interface ActiveGameStatus {
 
 export async function getActiveGameStatus(user: { id: string; uiLanguage: string | null }): Promise<ActiveGameStatus> {
   const t = getT(user.uiLanguage);
+  const studyLabel = (course: { type: CourseType; name: string; description: string | null; contentCollection: { work: string | null } }) =>
+    t("study.inviteLabel", { course: localizedCourse({ ...course, work: course.contentCollection.work }, user.uiLanguage).name });
 
   const [challenges, scrabbleGames, liveGames, soloChapterGuessGames, gameScopes, contentContext, receivedLiveInvites] = await Promise.all([
     prisma.challenge.findMany({
@@ -64,6 +68,7 @@ export async function getActiveGameStatus(user: { id: string; uiLanguage: string
       },
       include: {
         chapter: { include: { book: true } },
+        studySession: { select: { course: { select: { type: true, name: true, description: true, contentCollectionId: true, contentCollection: { select: { work: true } } } } } },
         players: { select: { userId: true } },
         invites: { include: { user: { select: { handle: true } } } },
       },
@@ -83,7 +88,12 @@ export async function getActiveGameStatus(user: { id: string; uiLanguage: string
     prisma.liveGameInvite.findMany({
       where: {
         userId: user.id,
-        game: { status: "LOBBY", players: { none: { userId: user.id } } },
+        // Bij Samen studeren kun je ook later nog instappen, dus daar blijft
+        // de uitnodiging staan zolang de sessie loopt.
+        game: {
+          OR: [{ status: "LOBBY" }, { mode: "STUDY", status: "IN_PROGRESS" }],
+          players: { none: { userId: user.id } },
+        },
       },
       orderBy: { createdAt: "desc" },
       include: {
@@ -94,6 +104,7 @@ export async function getActiveGameStatus(user: { id: string; uiLanguage: string
             mode: true,
             host: { select: { id: true, handle: true } },
             chapter: { select: { number: true, book: { select: { name: true, contentCollectionId: true } } } },
+            studySession: { select: { course: { select: { type: true, name: true, description: true, contentCollectionId: true, contentCollection: { select: { work: true } } } } } },
           },
         },
       },
@@ -192,10 +203,13 @@ export async function getActiveGameStatus(user: { id: string; uiLanguage: string
   for (const lg of liveGames) {
     const suffix = lg.status === "LOBBY" ? t("activeGames.lobbySuffix") : "";
     const contentCollectionId =
+      lg.studySession?.course.contentCollectionId ??
       lg.chapter?.book.contentCollectionId ??
       (lg.mode === "FAMILY_GAME" ? singleScope("gezinsavond") : singleScope("chapter-guess"));
     const label =
-      lg.mode === "CHAPTER_GUESS"
+      lg.mode === "STUDY" && lg.studySession
+        ? `${studyLabel(lg.studySession.course)}${suffix}`
+        : lg.mode === "CHAPTER_GUESS"
         ? `${t("activeGames.liveGame", { name: t("pages.chapterGuess") })}${suffix}`
         : lg.mode === "ALLESKENNER"
           ? `${t("pages.alleskenner")}${suffix}`
@@ -276,7 +290,9 @@ export async function getActiveGameStatus(user: { id: string; uiLanguage: string
     opponentName: game.host.handle,
     opponentId: game.host.id,
     label:
-      game.mode === "CHAPTER_GUESS"
+      game.mode === "STUDY" && game.studySession
+        ? studyLabel(game.studySession.course)
+        : game.mode === "CHAPTER_GUESS"
         ? t("pages.chapterGuess")
         : game.mode === "ALLESKENNER"
           ? t("pages.alleskenner")
@@ -286,6 +302,7 @@ export async function getActiveGameStatus(user: { id: string; uiLanguage: string
     link: `/live/${game.code}`,
     myTurn: null,
     contentCollectionId:
+      game.studySession?.course.contentCollectionId ??
       game.chapter?.book.contentCollectionId ??
       (game.mode === "FAMILY_GAME" ? singleScope("gezinsavond") : singleScope("chapter-guess")),
     code: game.code,

@@ -13,6 +13,8 @@ interface LessonView {
 }
 
 interface Props {
+  /** Ingang naar Samen studeren, naast de titel (zie StudyTogetherButton). */
+  studyAction?: React.ReactNode;
   courseName: string;
   lessons: LessonView[];
 }
@@ -20,14 +22,17 @@ interface Props {
 // Sequentieel, net als "Van voor naar achter"/"Per boek" (zie
 // ChapterListCourseView) — de lessen bouwen bewust op elkaar voort, dus een
 // les is pas te openen als de vorige is afgerond.
-export default function IntroCourseView({ courseName, lessons }: Props) {
+export default function IntroCourseView({ courseName, lessons, studyAction }: Props) {
   const t = useT();
   let previousCompleted = true;
 
   return (
     <div className="flex flex-col gap-8">
       <div className="flex flex-col gap-4">
-        <h1 className="text-2xl font-extrabold text-brand-800 dark:text-brand-300">{courseName}</h1>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h1 className="text-2xl font-extrabold text-brand-800 dark:text-brand-300">{courseName}</h1>
+          {studyAction}
+        </div>
         <div className="card bg-gradient-to-br from-brand-500 to-brand-600 text-white flex flex-col gap-2">
           <p className="text-brand-100 font-bold uppercase text-xs tracking-wide">{t("courseViews.about")}</p>
           <p>{t("courseViews.introAbout")}</p>

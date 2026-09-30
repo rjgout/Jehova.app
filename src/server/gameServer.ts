@@ -36,6 +36,7 @@ import {
   type FamilyDifficulty,
 } from "@/lib/familyGame";
 import { forgetAlleskennerRoom, registerAlleskennerHandlers } from "@/server/alleskenner";
+import { forgetStudyRoom, registerStudyHandlers } from "@/server/study";
 
 const EXERCISES_TIME_MS = 20_000;
 // "Raad het hoofdstuk" krijgt bewust ruim meer tijd (1 minuut, zoals
@@ -667,6 +668,7 @@ export function initGameServer(httpServer: HttpServer) {
     socket.data.displayName = user.handle;
     socket.join(`user:${user.id}`);
     registerAlleskennerHandlers(ioInstance!, socket, user);
+    registerStudyHandlers(ioInstance!, socket, user);
 
     // Aanwezigheid voor het adminoverzicht (/adminbackend): zie de opmerking
     // bij User.onlineSocketCount in schema.prisma voor waarom dit in de
@@ -1139,6 +1141,7 @@ export function initGameServer(httpServer: HttpServer) {
       await prisma.liveGame.delete({ where: { id: game.id } }).catch(() => {});
       rooms.delete(upperCode);
       forgetAlleskennerRoom(upperCode);
+      forgetStudyRoom(upperCode);
       for (const playerId of new Set([...playerIds, user.id])) {
         ioInstance?.to(`user:${playerId}`).emit("game_cancelled", { code: upperCode });
       }

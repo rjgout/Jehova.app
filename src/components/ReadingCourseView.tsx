@@ -13,6 +13,8 @@ interface ChapterView {
 }
 
 interface Props {
+  /** Ingang naar Samen studeren, naast de titel (zie StudyTogetherButton). */
+  studyAction?: React.ReactNode;
   courseId: string;
   courseName: string;
   today: {
@@ -28,7 +30,7 @@ interface Props {
   unitPlural?: string;
 }
 
-export default function ReadingCourseView({ courseId, courseName, today, chapters, unitPlural = "hoofdstukken" }: Props) {
+export default function ReadingCourseView({ courseId, courseName, today, chapters, unitPlural = "hoofdstukken", studyAction }: Props) {
   const t = useT();
   const allDone = chapters.length > 0 && chapters.every((chapter) => chapter.completedLessons === chapter.lessonCount);
   const currentChapterIndex = today
@@ -47,7 +49,10 @@ export default function ReadingCourseView({ courseId, courseName, today, chapter
   return (
     <div className="flex flex-col gap-10">
       <div className="flex flex-col gap-4">
-        <h1 className="text-2xl font-extrabold text-brand-800 dark:text-brand-300">{courseName}</h1>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h1 className="text-2xl font-extrabold text-brand-800 dark:text-brand-300">{courseName}</h1>
+          {studyAction}
+        </div>
 
         {chapters.length > 0 && (
           <div className="card flex flex-col gap-2">

@@ -11,6 +11,8 @@ import KidsCourseView from "@/components/KidsCourseView";
 import IntroCourseView from "@/components/IntroCourseView";
 import FsyCourseView from "@/components/FsyCourseView";
 import ReadingCourseView from "@/components/ReadingCourseView";
+import StudyTogetherButton from "@/components/study/StudyTogetherButton";
+import { supportsStudy } from "@/lib/study/units";
 import { chapterTerm, localizeTerm } from "@/lib/chapterTerm";
 import { localizedCourse } from "@/lib/courseText";
 import { getT } from "@/lib/i18n";
@@ -48,6 +50,8 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ c
   // Naam in de taal van de app; voor Nederlands de databasewaarde.
   const courseName = localizedCourse({ ...course, work: course.contentCollection.work }, user.uiLanguage).name;
   const t = getT(user.uiLanguage);
+  // Samen studeren kan bij elke cursus met vragen (dus niet bij FSY).
+  const studyAction = supportsStudy(course.type) ? <StudyTogetherButton courseId={course.id} /> : null;
 
   if (course.type === "PODCAST") {
     const [podcast, episodes] = await Promise.all([
@@ -67,6 +71,7 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ c
 
     return (
       <PodcastCourseView
+        studyAction={studyAction}
         courseName={courseName}
         podcastName={podcast?.name ?? courseName}
         episodes={episodes.map((episode) => {
@@ -102,6 +107,7 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ c
 
     return (
       <KidsCourseView
+        studyAction={studyAction}
         courseName={courseName}
         stories={stories.map((story) => {
           const images = JSON.parse(story.images) as string[];
@@ -126,6 +132,7 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ c
 
     return (
       <IntroCourseView
+        studyAction={studyAction}
         courseName={courseName}
         lessons={lessons.map((lesson) => ({
           id: lesson.id,
@@ -245,6 +252,7 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ c
 
     return (
       <ReadingCourseView
+        studyAction={studyAction}
         courseId={course.id}
         courseName={courseName}
         unitPlural={localizeTerm(chapterTerm(null, course.contentCollectionId), t).plural}
@@ -292,6 +300,7 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ c
 
   return (
     <ChapterListCourseView
+      studyAction={studyAction}
       courseId={course.id}
       courseName={courseName}
       currentChapterId={courseProgress?.currentChapterId ?? null}

@@ -515,6 +515,8 @@ export function ExerciseCard({
   onSkip,
   disabled,
   checkEndpoint,
+  onCheck,
+  showHint = true,
 }: {
   exercise: Exercise;
   onDone: (given: string[], correct: boolean) => void;
@@ -522,6 +524,10 @@ export function ExerciseCard({
   disabled: boolean;
   /** Standaard /api/exercises/{id}/check — voor bv. podcastoefeningen kan een ander endpoint meegegeven worden. */
   checkEndpoint?: string;
+  /** Eigen controle in plaats van een endpoint, bv. via de socket bij Samen studeren (daar telt ook het tijdstip). */
+  onCheck?: (given: string[]) => Promise<{ correct: boolean; correctAnswer: string[] | null }>;
+  /** Hints uit bij een wedstrijd tegen anderen, waar iedereen gelijke kansen moet hebben. */
+  showHint?: boolean;
 }) {
   const t = useT();
   const [checked, setChecked] = useState(false);
@@ -558,6 +564,13 @@ export function ExerciseCard({
 
     setChecking(true);
     try {
+      if (onCheck) {
+        const result = await onCheck(given);
+        setWasCorrect(result.correct);
+        setCorrectAnswer(result.correctAnswer);
+        setGivenAnswer(given);
+        return;
+      }
       const res = await fetch(checkEndpoint ?? `/api/exercises/${exercise.id}/check`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -601,7 +614,7 @@ export function ExerciseCard({
     return (
       <div className="card flex flex-col gap-5">
         <p className="text-xs font-bold uppercase text-slate-400 dark:text-slate-500">{exercise.verseRef}</p>
-        <HintControl exercise={exercise} checked={checked} />
+        {showHint && <HintControl exercise={exercise} checked={checked} />}
         <p className="text-xl leading-relaxed dark:text-slate-100">{exercise.prompt}</p>
         <div className="flex gap-3">
           {(["true", "false"] as const).map((value) => {
@@ -663,7 +676,7 @@ export function ExerciseCard({
     return (
       <div className="card flex flex-col gap-5">
         <p className="text-xs font-bold uppercase text-slate-400 dark:text-slate-500">{exercise.verseRef}</p>
-        <HintControl exercise={exercise} checked={checked} />
+        {showHint && <HintControl exercise={exercise} checked={checked} />}
         <p className="text-xl leading-relaxed dark:text-slate-100">
           {promptParts.map((part, i) => (
             <span key={i}>
@@ -719,7 +732,7 @@ export function ExerciseCard({
     return (
       <div className="card flex flex-col gap-5">
         <p className="text-xs font-bold uppercase text-slate-400 dark:text-slate-500">{exercise.verseRef}</p>
-        <HintControl exercise={exercise} checked={checked} />
+        {showHint && <HintControl exercise={exercise} checked={checked} />}
         <p className="text-xl leading-relaxed dark:text-slate-100">{exercise.prompt}</p>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {options.map((opt) => {
@@ -764,7 +777,7 @@ export function ExerciseCard({
     return (
       <div className="card flex flex-col gap-5">
         <p className="text-xs font-bold uppercase text-slate-400 dark:text-slate-500">{exercise.verseRef}</p>
-        <HintControl exercise={exercise} checked={checked} />
+        {showHint && <HintControl exercise={exercise} checked={checked} />}
         <p className="text-xl leading-relaxed dark:text-slate-100">{exercise.prompt}</p>
         <div className="grid grid-cols-2 gap-3">
           {options.map((opt) => {
@@ -810,7 +823,7 @@ export function ExerciseCard({
   return (
     <div className="card flex flex-col gap-5">
       <p className="text-xs font-bold uppercase text-slate-400 dark:text-slate-500">{exercise.verseRef}</p>
-      <HintControl exercise={exercise} checked={checked} />
+      {showHint && <HintControl exercise={exercise} checked={checked} />}
       <p className="text-xl leading-relaxed dark:text-slate-100">{exercise.prompt}</p>
 
       <div className="flex flex-wrap gap-2 min-h-[3rem] p-3 rounded-2xl bg-slate-50 dark:bg-slate-900 border-2 border-dashed border-slate-200 dark:border-slate-700">
