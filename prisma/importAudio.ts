@@ -5,8 +5,7 @@ import type { PrismaClient } from "@prisma/client";
 // elk vers en van de hoofdstukkop. De tijden zijn eenmalig berekend met
 // spraakherkenning op de audio, uitgelijnd op de bekende tekst en afgerond
 // op het einde van de pauze vóór elk vers (zodat een vers nooit midden in een
-// woord begint). De bestanden zelf worden niet gehost: de app speelt ze af
-// vanaf de server van de kerk.
+// woord begint). De bestanden worden lokaal opgeslagen en via /api/audio/ geserveeerd.
 
 export interface ChapterAudioSeed {
   book: string; // Book.slug
@@ -24,6 +23,22 @@ const CHUNK = 500;
  * verschilt, en haalt audio weg bij hoofdstukken die niet (meer) in de lijst
  * staan. Draait na importBooks, want die maakt de verzen aan.
  */
+
+/**
+ * Transformeer een kerk-audio-URL naar een lokale API-route.
+ * Van: https://assets.churchofjesuschrist.org/...-64k-nl.mp3
+ * Naar: /api/audio/nl/1-nephi/001.mp3
+ */
+function transformAudioUrl(
+  entry: ChapterAudioSeed
+): string {
+  // Taal uit de entry bepalen (kan extensie zijn of meegegeven)
+  // Voor nu: Nederlands hardcoded, toekomstig uitgebreid
+  const language = "nl";
+  const chapterNumber = String(entry.chapter).padStart(3, "0");
+  return `/api/audio/${language}/${entry.book}/${chapterNumber}.mp3`;
+}
+
 export async function importChapterAudio(
   prisma: PrismaClient,
   entries: ChapterAudioSeed[],
@@ -55,7 +70,7 @@ export async function importChapterAudio(
     if (usable) withAudio += 1;
 
     const data = {
-      audioUrl: usable?.url ?? null,
+      audioUrl: usable ? transformAudioUrl(usable) : null,
       audioHeadingStart: usable?.headingStart ?? null,
       audioHeadingEnd: usable?.headingEnd ?? null,
     };

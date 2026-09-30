@@ -60,6 +60,9 @@ services:
       # veilig om te wijzigen.
       DATABASE_URL: "postgresql://${POSTGRES_USER:-bom}:${POSTGRES_PASSWORD:?Zet POSTGRES_PASSWORD in .env}@jehova-db:5432/${POSTGRES_DB:-bom}?schema=public"
       REDIS_URL: "redis://:${REDIS_PASSWORD:?Zet REDIS_PASSWORD in .env}@jehova-redis:6379"
+      AUDIO_STORAGE_DIR: "/data/audio"
+    volumes:
+      - jehova_audio_data:/data/audio
     # Bewust GEEN "ports" meer hier: jehova-proxy hierboven is nu het enige
     # dat van buitenaf bereikbaar is; jehova-app is alleen nog intern op het
     # Docker-netwerk bereikbaar (als "jehova-app:3000").
@@ -112,6 +115,10 @@ volumes:
   # alpine sh -c "cp -a /from/. /to/"` met beide containers gestopt) vóórdat
   # je deze compose-file met de nieuwe naam opnieuw opstart.
   jehova_db_data:
+  # Lokale kopieën van audiobestanden voor schriftboeken (Nederlands, straks
+  # ook Engels, Duits, Frans). Eenmalig via `npx tsx scripts/download-audio.ts`,
+  # daarna persistent opgeslagen zodat herstart van jehova-app de bestanden behoudt.
+  jehova_audio_data:
   # Bestandsvlag waarmee jehova-proxy bepaalt of bezoekers de app of de
   # onderhoudspagina zien (zie de toelichting bovenaan dit bestand).
   maintenance_flag:

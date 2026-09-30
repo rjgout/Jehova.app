@@ -12,3 +12,7 @@ backups/
 
 # Werkmap van scripts/bom-audio (pagina's, herkende woorden, tijden)
 .bom-audio-work/
+
+# Lokale kopieën van audiobestanden (via scripts/download-audio.ts)
+public/audio/
+.audio/
