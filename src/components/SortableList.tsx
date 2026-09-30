@@ -1,6 +1,6 @@
 "use client";
 
-import { type ReactNode } from "react";
+import { Fragment, type ReactNode } from "react";
 import { useT } from "@/components/I18nProvider";
 import {
   DndContext,
@@ -31,12 +31,16 @@ export function SortableList<T extends { id: string }>({
   onReorder,
   renderItem,
   className,
+  getItemClassName,
+  renderBeforeItem,
   dndId,
 }: {
   items: T[];
   onReorder: (newItems: T[]) => void;
   renderItem: (item: T, handle: DragHandleProps) => ReactNode;
   className?: string;
+  getItemClassName?: (item: T) => string | undefined;
+  renderBeforeItem?: (item: T, index: number) => ReactNode;
   /**
    * Vaste, unieke id voor deze DndContext (bv. "courses-list") — dnd-kit
    * genereert anders zelf een intern teller-ID voor aria-describedby, dat
@@ -66,10 +70,13 @@ export function SortableList<T extends { id: string }>({
     <DndContext id={dndId} sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
       <SortableContext items={items.map((i) => i.id)} strategy={rectSortingStrategy}>
         <div className={className}>
-          {items.map((item) => (
-            <SortableRow key={item.id} id={item.id}>
-              {(handle) => renderItem(item, handle)}
-            </SortableRow>
+          {items.map((item, index) => (
+            <Fragment key={item.id}>
+              {renderBeforeItem?.(item, index)}
+              <SortableRow id={item.id} className={getItemClassName?.(item)}>
+                {(handle) => renderItem(item, handle)}
+              </SortableRow>
+            </Fragment>
           ))}
         </div>
       </SortableContext>
@@ -77,7 +84,7 @@ export function SortableList<T extends { id: string }>({
   );
 }
 
-function SortableRow({ id, children }: { id: string; children: (handle: DragHandleProps) => ReactNode }) {
+function SortableRow({ id, className, children }: { id: string; className?: string; children: (handle: DragHandleProps) => ReactNode }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -88,7 +95,7 @@ function SortableRow({ id, children }: { id: string; children: (handle: DragHand
     <div
       ref={setNodeRef}
       style={style}
-      className={`relative transition-shadow ${isDragging ? "shadow-xl scale-[1.02] opacity-95" : ""}`}
+      className={`relative transition-shadow ${className ?? ""} ${isDragging ? "shadow-xl scale-[1.02] opacity-95" : ""}`}
     >
       {children({ attributes, listeners, isDragging })}
     </div>
