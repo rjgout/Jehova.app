@@ -15,3 +15,6 @@ backups/
 
 # Lokale kopie van de voorgelezen hoofdstukken (AUDIO_DIR bij ontwikkelen)
 .audio/
+
+# Python-cache van de scripts
+__pycache__/
