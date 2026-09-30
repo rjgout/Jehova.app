@@ -118,7 +118,7 @@ export default function WordSearchClient({ initialGame = null }: Props) {
     const cells = new Set<string>();
     game.words
       .filter((word) => game.foundWords.includes(word.normalized))
-      .forEach((word) => lineCoordinates(word.start, word.end, game.size)?.forEach((cell) => cells.add(keyOf(cell))));
+      .forEach((word) => word.start && word.end && lineCoordinates(word.start, word.end, game.size)?.forEach((cell) => cells.add(keyOf(cell))));
     return cells;
   }, [game]);
 

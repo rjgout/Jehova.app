@@ -3,7 +3,7 @@ import { getContentContext, BOFM_WORK } from "@/lib/contentCollections";
 import { dayKey } from "@/lib/dates";
 import { awardCompetitionXp } from "@/lib/competitionXp";
 import { awardXp } from "@/lib/xp";
-import { generateWordSearch, selectionMatches, type WordSearchDifficulty, type WordSearchPlacedWord, type WordSearchPosition } from "./generator";
+import { generateWordSearch, selectionMatches, type WordSearchCandidate, type WordSearchDifficulty, type WordSearchPlacedWord, type WordSearchPosition } from "./generator";
 import { getWordSearchCandidates } from "./content";
 
 interface StoredGame {
@@ -24,7 +24,8 @@ export interface WordSearchView {
   difficulty: WordSearchDifficulty;
   size: number;
   grid: string[][];
-  words: WordSearchPlacedWord[];
+  /** Positie alleen bij gevonden woorden, of bij een afgelopen puzzel. */
+  words: (WordSearchCandidate & Partial<Pick<WordSearchPlacedWord, "start" | "end">>)[];
   foundWords: string[];
   status: StoredGame["status"];
   xpEarned: number;
@@ -40,13 +41,21 @@ function parseJson<T>(value: string, fallback: T): T {
 }
 
 function toView(game: StoredGame): WordSearchView {
+  const foundWords = parseJson<string[]>(game.foundWords, []);
+  const finished = game.status !== "IN_PROGRESS";
   return {
     id: game.id,
     difficulty: game.difficulty,
     size: game.size,
     grid: parseJson<string[][]>(game.grid, []),
-    words: parseJson<WordSearchPlacedWord[]>(game.words, []),
-    foundWords: parseJson<string[]>(game.foundWords, []),
+    // Waar een nog niet gevonden woord ligt, is precies de oplossing: die
+    // hoort pas na afloop in het antwoord aan de browser te staan.
+    words: parseJson<WordSearchPlacedWord[]>(game.words, []).map((word) =>
+      finished || foundWords.includes(word.normalized)
+        ? word
+        : { display: word.display, normalized: word.normalized }
+    ),
+    foundWords,
     status: game.status,
     xpEarned: game.xpEarned,
     finishedAt: game.finishedAt?.toISOString() ?? null,
@@ -119,13 +128,30 @@ export async function abandonWordSearch(userId: string, gameId: string) {
 }
 
 export async function findWordSearchWord(userId: string, gameId: string, start: WordSearchPosition, end: WordSearchPosition) {
+  // Twee verzoeken tegelijk (dubbelklik, een herhaald verzoek na een
+  // netwerkhapering) zien allebei dezelfde stand. Zonder controle bij het
+  // opslaan zou het laatste woord dan twee keer de puzzel afronden en twee
+  // keer XP opleveren. Daarom slaat de update alleen op als de stand nog
+  // dezelfde is; anders opnieuw lezen en opnieuw beoordelen.
+  for (let attempt = 0; attempt < 5; attempt++) {
+    const result = await tryFindWordSearchWord(userId, gameId, start, end);
+    if (result !== "CONFLICT") return result;
+  }
   const game = await prisma.wordSearchGame.findFirst({ where: { id: gameId, userId } });
-  if (!game || game.status !== "IN_PROGRESS") return null;
+  return game ? { correct: false, view: toView(game) } : null;
+}
+
+async function tryFindWordSearchWord(userId: string, gameId: string, start: WordSearchPosition, end: WordSearchPosition) {
+  const game = await prisma.wordSearchGame.findFirst({ where: { id: gameId, userId } });
+  if (!game) return null;
   const grid = parseJson<string[][]>(game.grid, []);
   const words = parseJson<WordSearchPlacedWord[]>(game.words, []);
   const foundWords = parseJson<string[]>(game.foundWords, []);
   const match = selectionMatches(grid, words, start, end, game.difficulty === "HARD");
-  if (!match || foundWords.includes(match.normalized)) return { correct: false, view: toView(game) };
+  // Een herhaald verzoek voor een al gevonden woord (ook als dat de puzzel
+  // net afrondde) krijgt hetzelfde antwoord als het eerste, zonder XP.
+  if (match && foundWords.includes(match.normalized)) return { correct: true, word: match.normalized, view: toView(game) };
+  if (!match || game.status !== "IN_PROGRESS") return { correct: false, view: toView(game) };
   const nextFound = [...foundWords, match.normalized];
   const completed = nextFound.length === words.length;
   const updated = await prisma.$transaction(async (tx) => {
@@ -138,8 +164,8 @@ export async function findWordSearchWord(userId: string, gameId: string, start: 
       },
     });
     const xpEarned = completed && xpToday < 3 ? xpForDifficulty(game.difficulty) : 0;
-    const saved = await tx.wordSearchGame.update({
-      where: { id: game.id },
+    const saved = await tx.wordSearchGame.updateMany({
+      where: { id: game.id, status: "IN_PROGRESS", foundWords: game.foundWords },
       data: {
         foundWords: JSON.stringify(nextFound),
         status: completed ? "COMPLETED" : "IN_PROGRESS",
@@ -147,6 +173,7 @@ export async function findWordSearchWord(userId: string, gameId: string, start: 
         xpEarned,
       },
     });
+    if (saved.count === 0) return null;
     if (completed && xpEarned > 0) {
       await awardXp(tx, userId, xpEarned, "WORD_SEARCH_COMPLETED", { difficulty: game.difficulty, wordCount: words.length });
       await awardCompetitionXp(tx, userId, "WORD_SEARCH", xpEarned, {
@@ -155,7 +182,8 @@ export async function findWordSearchWord(userId: string, gameId: string, start: 
         metadata: { difficulty: game.difficulty, wordCount: words.length },
       });
     }
-    return saved;
+    return tx.wordSearchGame.findUniqueOrThrow({ where: { id: game.id } });
   });
+  if (!updated) return "CONFLICT" as const;
   return { correct: true, word: match.normalized, view: toView(updated) };
 }
