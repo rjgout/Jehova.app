@@ -36,6 +36,10 @@ self.addEventListener("push", (event) => {
     Promise.all([
       self.registration.showNotification(data.title, {
         body: data.body,
+        // Zonder icoon toont het systeem het icoon van de geïnstalleerde app,
+        // bij een oudere installatie nog het groene standaardicoon. Deze
+        // route geeft het eigen favicon, of het standaardicoon als er geen is.
+        icon: "/api/branding/favicon",
         data: { url: data.url },
       }),
       setBadge(),
