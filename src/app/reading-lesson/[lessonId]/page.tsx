@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/session";
 import { prisma } from "@/lib/db";
+import { playableAudioUrl } from "@/lib/audioMirror";
 import { advanceCourseProgress } from "@/lib/courses";
 import ReadingLessonFlow from "@/components/ReadingLessonFlow";
 import { chapterTerm, localizeTerm } from "@/lib/chapterTerm";
@@ -90,7 +91,8 @@ export default async function ReadingLessonPage({
         select: { audioStart: true },
       })
     : null;
-  const audio = lesson.chapter.audioUrl ? { url: lesson.chapter.audioUrl, end: verseAfter?.audioStart ?? null } : null;
+  const audioUrl = playableAudioUrl(lesson.chapter.audioUrl);
+  const audio = audioUrl ? { url: audioUrl, end: verseAfter?.audioStart ?? null } : null;
 
   const [nextLesson, firstChapterLesson] = await Promise.all([
     prisma.courseLesson.findFirst({

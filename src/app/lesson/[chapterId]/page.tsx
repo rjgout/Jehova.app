@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/session";
 import { prisma } from "@/lib/db";
+import { playableAudioUrl } from "@/lib/audioMirror";
 import LessonFlow from "@/components/LessonFlow";
 import { chapterTerm, localizeTerm } from "@/lib/chapterTerm";
 import { getT } from "@/lib/i18n";
@@ -99,7 +100,7 @@ export default async function LessonPage({
         note: notesByVerseId[v.id] ?? "",
         audioStart: v.audioStart,
       }))}
-      audio={chapter.audioUrl ? { url: chapter.audioUrl, end: null } : null}
+      audio={chapter.audioUrl ? { url: playableAudioUrl(chapter.audioUrl), end: null } : null}
       term={localizeTerm(chapterTerm(chapter.book.slug), getT(user.uiLanguage))}
       exercises={exercises}
       challengeId={challengeId}

@@ -72,6 +72,11 @@ services:
       # /adminbackend — zelfde geheim als hieronder bij jehova-deploy.
       DEPLOY_AGENT_URL: "http://jehova-deploy:4000"
       DEPLOY_AGENT_TOKEN: CHANGE_THIS_TO_A_DIFFERENT_LONG_RANDOM_STRING
+    volumes:
+      # Eigen kopie van de voorgelezen hoofdstukken (ruim een gigabyte per
+      # taal), gevuld bij "Inhoud opnieuw laden" in /adminbackend. Op de NAS
+      # zelf, zodat een nieuwe image de bestanden niet opnieuw hoeft te halen.
+      - /volume1/docker/jehova-app/audio:/data/audio
     depends_on:
       jehova-db:
         condition: service_healthy

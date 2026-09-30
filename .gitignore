@@ -12,3 +12,6 @@ backups/
 
 # Werkmap van scripts/bom-audio (pagina's, herkende woorden, tijden)
 .bom-audio-work/
+
+# Lokale kopie van de voorgelezen hoofdstukken (AUDIO_DIR bij ontwikkelen)
+.audio/

@@ -20,6 +20,10 @@ RUN npm run build
 FROM base AS runner
 ARG NEXT_PUBLIC_BUILD_SHA=unknown
 ENV NODE_ENV=production
+# Eigen kopie van de voorgelezen hoofdstukken (zie src/lib/audioMirror.ts).
+# Koppel hier een volume of map aan, anders gaat de kopie bij elke nieuwe
+# container verloren en wordt hij bij de volgende contentlading opnieuw gehaald.
+ENV AUDIO_DIR=/data/audio
 ENV NEXT_PUBLIC_BUILD_SHA=$NEXT_PUBLIC_BUILD_SHA
 COPY --from=deps /app/node_modules ./node_modules
 COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma

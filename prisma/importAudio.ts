@@ -5,8 +5,8 @@ import type { PrismaClient } from "@prisma/client";
 // De tijden zijn eenmalig berekend met
 // spraakherkenning op de audio, uitgelijnd op de bekende tekst en afgerond
 // op het einde van de pauze vóór elk vers (zodat een vers nooit midden in een
-// woord begint). De bestanden zelf worden niet gehost: de app speelt ze af
-// vanaf de server van de kerk.
+// woord begint). audioUrl blijft de bron-URL van de kerk; de eigen kopie en
+// welke link de speler krijgt regelt src/lib/audioMirror.ts.
 
 export interface ChapterAudioSeed {
   /** Book.key voor taaloverschrijdende data; oude Nederlandse data gebruikt Book.slug. */

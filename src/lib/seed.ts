@@ -2,6 +2,7 @@ import { PrismaClient } from "@prisma/client";
 import { seedBooks } from "../../prisma/content";
 import { importBooks } from "../../prisma/importContent";
 import { importChapterAudio, type ChapterAudioSeed } from "../../prisma/importAudio";
+import { mirrorChapterAudio } from "./audioMirror";
 import bomAudio from "../../prisma/bomAudio.json";
 import bomAudioEn from "../../prisma/bomAudio.en.json";
 import dcContent from "../../prisma/dcContent.json";
@@ -146,6 +147,12 @@ export async function runSeed(client: PrismaClient, log: (msg: string) => void =
       create: def,
     });
   }
+
+  // Als laatste: het ophalen van de audio kan bij een eerste keer lang duren
+  // (ruim een gigabyte per taal), en de content hierboven hoort daar niet op
+  // te wachten. Hoofdstukken zonder kopie spelen intussen van de bron.
+  log("Voorgelezen hoofdstukken spiegelen...");
+  await mirrorChapterAudio(client, log);
 
   log("Seed klaar.");
 }

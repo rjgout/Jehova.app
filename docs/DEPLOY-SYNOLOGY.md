@@ -105,6 +105,15 @@ npm run db:seed
 ```
 
 Dit laadt alle content (zie de auteursrechtnotitie in de hoofd-README).
+Hetzelfde kan zonder console via **Inhoud opnieuw laden** in `/adminbackend`.
+
+Als laatste stap haalt dit ook de voorgelezen hoofdstukken op van de kerk
+naar `/volume1/docker/jehova-app/audio` (zie `volumes:` bij `jehova-app` in
+`deploy/docker-compose.yml`), zodat de app ze vanaf de NAS afspeelt. De
+eerste keer is dat ruim een gigabyte per taal en duurt het even; daarna
+worden alleen nieuwe bestanden opgehaald. Zolang een bestand nog niet lokaal
+staat, speelt de app het gewoon van de kerk af. Los opnieuw proberen kan met
+`npm run audio:mirror` in dezelfde console.
 Wil je een andere (toegestane) bron gebruiken, kopieer die dan eerst naar de
 container (**Containers → jehova-app → Volumes**, of `docker cp` via SSH) en
 draai vervolgens `npm run db:import -- /pad/naar/bestand.json`.
@@ -177,7 +186,9 @@ plaats van een half-bijgewerkte database.
 
 De database staat op je NAS onder `/volume1/docker/jehova-app/postgres` (zie
 het `volumes:`-pad in `deploy/docker-compose.yml`) — neem die map mee in je
-bestaande Synology-back-upplan (Hyper Backup e.d.).
+bestaande Synology-back-upplan (Hyper Backup e.d.). De map `audio` ernaast
+hoeft niet in de back-up: die wordt bij de volgende contentlading vanzelf
+opnieuw gevuld.
 
 Wil je liever een los, herstelbaar databasedump-bestand, gebruik dan de
 meegeleverde scripts (`scripts/backup.sh` / `scripts/restore.sh`) — die

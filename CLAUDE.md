@@ -294,10 +294,16 @@ verwerken". Fundamenteel anders dan de rest van de API:
   losstaand bestand/export met een instantie die die toestemming niet apart
   heeft. Een andere bron laden kan via `npm run db:import`. Er is geen
   demo-inhoud meer.
-- De voorgelezen hoofdstukken (Nederlandse audio van de kerk, dezelfde
-  uitgave als de tekst) worden niet gehost: de app speelt ze af vanaf de
-  server van de kerk (`Chapter.audioUrl`). De begintijd per vers en van de
-  hoofdstukkop staan in `prisma/bomAudio.json`, berekend met de scripts in
+- De voorgelezen hoofdstukken (audio van de kerk, dezelfde uitgave als de
+  tekst) worden gespiegeld naar de eigen server: `Chapter.audioUrl` blijft
+  de bron-URL van de kerk, `mirrorChapterAudio` (`src/lib/audioMirror.ts`,
+  laatste stap van de seed en `npm run audio:mirror`) haalt elk bestand op
+  naar `AUDIO_DIR`, en `playableAudioUrl()` geeft de speler de eigen kopie
+  (`/api/audio/<bestand>`, alleen ingelogd) of, zolang die ontbreekt, de
+  bron. Geef een audiolink dus nooit rechtstreeks uit `Chapter.audioUrl` aan
+  de client, altijd via `playableAudioUrl()`. Elke uitgave met audio in de
+  database (elke taal) gaat vanzelf mee. De begintijd per vers en van de
+  hoofdstukkop staan in `prisma/bomAudio*.json`, berekend met de scripts in
   `scripts/bom-audio/` (zie de README daar). Verandert de tekst van een
   hoofdstuk, draai die scripts dan opnieuw; `importChapterAudio` slaat een
   hoofdstuk over als het aantal verzen niet meer klopt.

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { getCurrentUser } from "@/lib/session";
 import { prisma } from "@/lib/db";
+import { playableAudioUrl } from "@/lib/audioMirror";
 import { LANGUAGES } from "@/lib/languages";
 
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ chapterId: string }> }) {
@@ -35,7 +36,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ cha
   return NextResponse.json({
     editions: LANGUAGES.flatMap(({ code }) => {
       const edition = chapters.find((item) => item.book.contentCollection.language === code);
-      return edition?.verses.length ? [{ language: code, url: edition.audioUrl, verses: edition.verses }] : [];
+      return edition?.verses.length ? [{ language: code, url: playableAudioUrl(edition.audioUrl), verses: edition.verses }] : [];
     }),
   });
 }

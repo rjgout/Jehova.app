@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/db";
+import { playableAudioUrl } from "@/lib/audioMirror";
 import { BOFM_WORK, resolveEditionId } from "@/lib/contentCollections";
 import { shuffle } from "@/lib/scrabble/tiles";
 import { completeChapterGuess } from "@/lib/streak";
@@ -66,7 +67,7 @@ export async function getChapterIntroAudio(chapterId: string): Promise<IntroAudi
     select: { audioUrl: true, audioHeadingStart: true, audioHeadingEnd: true },
   });
   if (!chapter?.audioUrl || chapter.audioHeadingStart == null || chapter.audioHeadingEnd == null) return null;
-  return { url: chapter.audioUrl, start: chapter.audioHeadingStart, end: chapter.audioHeadingEnd };
+  return { url: playableAudioUrl(chapter.audioUrl), start: chapter.audioHeadingStart, end: chapter.audioHeadingEnd };
 }
 
 export async function pickRandomChapterIds(count: number, excludeIds: string[] = [], editionId?: string): Promise<string[]> {

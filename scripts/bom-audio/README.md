@@ -1,7 +1,8 @@
 # Begintijden per vers in de Nederlandse en Engelse audio
 
-De app speelt de voorgelezen hoofdstukken af vanaf de server van de kerk (één
-mp3 per hoofdstuk) en springt per vers naar de juiste plek. Die plekken staan
+De app speelt de voorgelezen hoofdstukken af (één mp3 per hoofdstuk van de
+kerk, gespiegeld naar de eigen server door `src/lib/audioMirror.ts`) en
+springt per vers naar de juiste plek. Die plekken staan
 in `prisma/bomAudio.json` en `prisma/bomAudio.en.json` en worden bij "Content opnieuw laden" in de
 database gezet (`prisma/importAudio.ts`). Deze map bevat de scripts waarmee
 dat bestand gemaakt is; alleen opnieuw nodig als de tekst of de audio van de

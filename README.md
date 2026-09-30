@@ -142,6 +142,10 @@ docker exec jehova-app npm run db:import -- /pad/naar/bestand.json
 (kopieer het bestand eerst de container in met `docker cp`). Zie de
 comments in `prisma/import.ts` voor het verwachte JSON-formaat.
 
+De voorgelezen hoofdstukken zijn audio van de kerk. De seed spiegelt ze naar
+de eigen server (`AUDIO_DIR`, zie `src/lib/audioMirror.ts`) en de app biedt
+ze alleen aan ingelogde gebruikers aan, niet als openbare download.
+
 De tekst en illustraties van de kindercursus komen uit **"Verhalen uit het
 Boek van Mormon"** (© 1980, 1988, 1999 De Kerk van Jezus Christus van de
 Heiligen der Laatste Dagen; illustraties: Jerry Thompson en Robert T.
