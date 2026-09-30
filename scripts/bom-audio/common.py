@@ -27,6 +27,24 @@ LANGUAGES = {
         "output": "bomAudio.en.json",
         "model": "vosk-model-small-en-us-0.15",
     },
+    "de": {
+        "church": "deu",
+        "content": "bomContent.de.json",
+        "output": "bomAudio.de.json",
+        "model": "vosk-model-small-de-0.15",
+    },
+    "fr": {
+        "church": "fra",
+        "content": "bomContent.fr.json",
+        "output": "bomAudio.fr.json",
+        "model": "vosk-model-small-fr-0.22",
+    },
+    "es": {
+        "church": "spa",
+        "content": "bomContent.es.json",
+        "output": "bomAudio.es.json",
+        "model": "vosk-model-small-es-0.42",
+    },
 }
 
 # Afkortingen in de URL's van de kerkwebsite, in de volgorde van prisma/bomContent.json.

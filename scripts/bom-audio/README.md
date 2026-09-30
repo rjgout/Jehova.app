@@ -1,9 +1,9 @@
-# Begintijden per vers in de Nederlandse en Engelse audio
+# Begintijden per vers in de audio (Nederlands, Engels, Duits, Frans, Spaans)
 
 De app speelt de voorgelezen hoofdstukken af (één mp3 per hoofdstuk van de
 kerk, gespiegeld naar de eigen server door `src/lib/audioMirror.ts`) en
 springt per vers naar de juiste plek. Die plekken staan
-in `prisma/bomAudio.json` en `prisma/bomAudio.en.json` en worden bij "Content opnieuw laden" in de
+in `prisma/bomAudio.json` en `prisma/bomAudio.<taal>.json` en worden bij "Content opnieuw laden" in de
 database gezet (`prisma/importAudio.ts`). Deze map bevat de scripts waarmee
 dat bestand gemaakt is; alleen opnieuw nodig als de tekst of de audio van de
 kerk verandert.
@@ -48,6 +48,19 @@ python3 fetch_pages.py en
 python3 run.py en
 python3 export.py en        # schrijft prisma/bomAudio.en.json
 ```
+
+Duits, Frans en Spaans gaan net zo, met hun eigen model:
+
+| taal | model |
+|---|---|
+| `de` | `vosk-model-small-de-0.15` |
+| `fr` | `vosk-model-small-fr-0.22` |
+| `es` | `vosk-model-small-es-0.42` |
+
+Pak het model uit in `.bom-audio-work/<taal>/` en draai `fetch_pages.py`,
+`run.py` en `export.py` met die taal. Lukt het installeren van `srt` (een
+afhankelijkheid van vosk) niet, dan volstaat een leeg bestand `srt.py` op
+`PYTHONPATH`: het wordt alleen voor ondertitels gebruikt.
 
 Een los hoofdstuk opnieuw: verwijder het timingbestand uit de werkmap en geef
 de taalonafhankelijke boeksleutel mee, bijvoorbeeld
