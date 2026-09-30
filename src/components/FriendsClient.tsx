@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { formatTag } from "@/lib/handle";
 import { getSocket } from "@/lib/socketClient";
 import UserTag from "@/components/UserTag";
@@ -187,9 +188,14 @@ export default function FriendsClient({ appName }: { appName: string }) {
   return (
     <div className="max-w-5xl mx-auto flex flex-col gap-6">
       <div className="flex flex-col gap-1">
-        <h1 className="text-2xl font-extrabold text-brand-800 dark:text-brand-300 flex items-center gap-2">
-          <span aria-hidden>👥</span> {t("nav.friends")}
-        </h1>
+        <div className="flex items-center justify-between gap-3 flex-wrap">
+          <h1 className="text-2xl font-extrabold text-brand-800 dark:text-brand-300 flex items-center gap-2">
+            <span aria-hidden>👥</span> {t("nav.friends")}
+          </h1>
+          <Link href="/activity" className="btn-secondary !px-3 !py-1.5 text-sm">
+            ✨ {t("pages.activity")}
+          </Link>
+        </div>
         <p className="text-sm text-slate-500 dark:text-slate-400">
           {t("friends.intro")}
         </p>

@@ -7,7 +7,7 @@ const items: { href: string; label: MessageKey; icon: string }[] = [
   { href: "/friends", label: "nav.friends", icon: "👥" },
   { href: "/competition", label: "nav.competition", icon: "🏆" },
   { href: "/live", label: "nav.play", icon: "🎮" },
-  { href: "/shop", label: "nav.shop", icon: "🛒" },
+  { href: "/activity", label: "nav.activity", icon: "✨" },
   { href: "/profile", label: "nav.profile", icon: "🙂" },
 ];
 

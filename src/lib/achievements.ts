@@ -1,4 +1,5 @@
 import type { Prisma } from "@prisma/client";
+import { recordAchievementActivity } from "@/lib/activityFeed";
 
 interface AchievementDef {
   slug: string;
@@ -172,6 +173,7 @@ export async function checkAndAwardAchievements(tx: Prisma.TransactionClient, us
     if (!achievement) continue; // nog niet geseed
 
     await tx.userAchievement.create({ data: { userId, achievementId: achievement.id } });
+    await recordAchievementActivity(tx, userId, achievement);
     newlyEarned.push(def.slug);
   }
   return newlyEarned;

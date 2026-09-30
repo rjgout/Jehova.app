@@ -65,7 +65,19 @@ export const es: PartialMessages = {
     "competition": "Liga",
     "play": "Jugar",
     "shop": "Comprar",
+    "activity": "Actividad",
     "profile": "Perfil"
+  },
+  "activityFeed": {
+    "loadFailed": "No se han podido cargar las actividades.",
+    "intro": "Mira lo que tú y tus amigos han conseguido.",
+    "empty": "Todavía no hay actividades que mostrar.",
+    "xpFallback": "una actividad",
+    "xpText": "ganó {amount} XP con {reason}",
+    "achievementText": "consiguió el logro {achievement}",
+    "achievementFallback": "un logro",
+    "react": "Reaccionar",
+    "reactWith": "Reaccionar con {emoji}"
   },
   "common": {
     "loading": "Cargando...",
@@ -81,6 +93,7 @@ export const es: PartialMessages = {
     "persons": "Personas",
     "feedback": "Comentarios",
     "profile": "Perfil",
+    "activity": "Actividad",
     "play": "Jugar",
     "wordOfTheDay": "Palabra del día",
     "wordGame": "Juego de palabras",

@@ -208,6 +208,8 @@ model User {
   freezeTx        FreezeTransaction[] @relation("FreezeOwner")
   freezeTxRelated FreezeTransaction[] @relation("FreezeRelated")
   xpTx            XPTransaction[]
+  activityFeedItems ActivityFeedItem[]
+  activityFeedReactions ActivityFeedReaction[]
   weeklyScores    WeeklyScore[]
   bookmarks       Bookmark[]
   highlights      Highlight[]
@@ -1245,6 +1247,42 @@ model UserAchievement {
   earnedAt      DateTime    @default(now())
 
   @@unique([userId, achievementId])
+}
+
+// Sociale feed-items worden server-side aangemaakt bij XP en prestaties.
+// XP-items worden binnen één activiteitstype maximaal vijftien minuten
+// samengevoegd, zodat de feed geen rij per antwoord krijgt.
+model ActivityFeedItem {
+  id              String       @id @default(cuid())
+  userId          String
+  user            User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  kind            String       // XP of ACHIEVEMENT
+  groupKey        String       // activiteitstype voor het XP-venster
+  xpAmount        Int          @default(0)
+  xpReason        XPReason?
+  achievementSlug String?
+  achievementName String?
+  achievementIcon String?
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  reactions ActivityFeedReaction[]
+
+  @@index([userId, updatedAt])
+  @@index([userId, kind, groupKey, createdAt])
+}
+
+model ActivityFeedReaction {
+  id        String           @id @default(cuid())
+  itemId    String
+  item      ActivityFeedItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  emoji     String
+  createdAt DateTime         @default(now())
+
+  @@unique([itemId, userId])
+  @@index([userId])
 }
 
 // --- Streak freezes -------------------------------------------------------

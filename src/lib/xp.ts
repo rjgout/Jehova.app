@@ -1,4 +1,5 @@
 import type { Prisma, XPReason } from "@prisma/client";
+import { recordXpActivity } from "@/lib/activityFeed";
 
 /**
  * Bron van waarheid voor XP: elke mutatie wordt gelogd als XPTransaction
@@ -22,6 +23,7 @@ export async function awardXp(
       metadata: metadata ? JSON.stringify(metadata) : undefined,
     },
   });
+  await recordXpActivity(tx, userId, amount, reason);
   await tx.user.update({
     where: { id: userId },
     data: { xpTotal: { increment: amount } },

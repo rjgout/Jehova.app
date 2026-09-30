@@ -407,7 +407,12 @@ export default function ProfileClient() {
         <Link href="/feedback" className="btn-secondary">
           {t("profile.giveFeedback")}
         </Link>
-        <ThemeToggle />
+        <div className="flex items-center gap-2">
+          <Link href="/shop" className="btn-secondary">
+            🛒 {t("nav.shop")}
+          </Link>
+          <ThemeToggle />
+        </div>
       </div>
 
       <div className="card bg-gradient-to-br from-brand-500 to-brand-700 dark:from-brand-600 dark:to-brand-900 text-white flex flex-col gap-5">
