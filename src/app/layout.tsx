@@ -8,6 +8,12 @@ import { getCurrentUser } from "@/lib/session";
 import { getBranding } from "@/lib/branding";
 import { cacheDetectedAppUrl, getAppUrl } from "@/lib/baseUrl";
 import NavUserBadges from "@/components/NavUserBadges";
+import PrimaryNav from "@/components/shell/PrimaryNav";
+import HeaderAvatar from "@/components/shell/HeaderAvatar";
+import SocialTabs from "@/components/shell/SocialTabs";
+import { prisma } from "@/lib/db";
+import { displayTierFor } from "@/lib/leagues";
+import { dayKey } from "@/lib/dates";
 import InviteListener from "@/components/InviteListener";
 import ChangelogPopup from "@/components/ChangelogPopup";
 import ThemeScript from "@/components/ThemeScript";
@@ -132,7 +138,9 @@ async function detectAppUrlFromHeaders(): Promise<void> {
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   detectAppUrlFromHeaders().catch(() => {});
   const [user, { logoDataUrl, appName }] = await Promise.all([getCurrentUser(), getBranding()]);
-  const contentContext = user ? await getContentContext(user.id) : null;
+  const [contentContext, tier] = user
+    ? await Promise.all([getContentContext(user.id), displayTierFor(prisma, user.id).catch(() => null)])
+    : [null, null];
   const displayName = resolveAppName(appName);
   const uiLanguage = await requestLanguage(user);
 
@@ -151,19 +159,24 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             één geheel bovenaan blijven staan, ongeacht de exacte hoogte van
             de header — zie PodcastMiniPlayer.tsx. */}
         <StickyHeader>
-        <header className="bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800">
-          <div className="mx-auto max-w-5xl px-4 py-3 flex items-center gap-4 relative min-w-0">
-            {/* Op brede schermen staat het logo los gecentreerd; het menu blijft
-                links staan en kan daardoor een lange contentnaam afkappen. */}
-            <Link href={user ? "/dashboard" : "/"} className={`${user ? "hidden lg:flex absolute left-1/2 -translate-x-1/2" : "flex"} items-center gap-2 font-extrabold text-brand-700 dark:text-brand-300 text-lg shrink-0 cursor-pointer`}>
+        {/* Compacte header (vaste hoogte, geen groot logo): links de
+            contentkiezer, op desktop de primaire navigatie in het midden,
+            rechts reeks, XP en divisie, meldingen en de avatar (ingang naar
+            profiel). Op telefoon en tablet staat de navigatie onderaan
+            (BottomNav). Zie docs/VERSADO-DESIGN.md. */}
+        <header className="border-b border-vs-line bg-vs-elevated pt-[env(safe-area-inset-top)]">
+          {/* Vanaf xl iets breder dan de pagina: logo, contentkiezer, navigatie en
+            status passen anders niet naast elkaar. */}
+          <div className="relative mx-auto flex h-14 max-w-5xl min-w-0 items-center gap-2 px-4 sm:h-16 sm:gap-3 xl:max-w-6xl">
+            <Link
+              href={user ? "/dashboard" : "/"}
+              className={`${user ? "hidden xl:flex mr-3" : "flex"} shrink-0 items-center gap-2 text-lg font-extrabold text-vs-accent`}
+            >
               {logoDataUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={logoDataUrl} alt={displayName} className="h-8 w-auto" />
+                <img src={logoDataUrl} alt={displayName} className="h-7 w-auto" />
               ) : (
-                <>
-                  <span aria-hidden>📖</span>
-                  {displayName}
-                </>
+                displayName
               )}
             </Link>
 
@@ -180,11 +193,22 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             {!user && <div className="ml-auto"><PublicLanguageSwitcher language={uiLanguage} /></div>}
 
             {user ? (
-              <nav className="ml-auto flex items-center gap-4">
-                <div className="hidden lg:block"><HeaderInstallHint /></div>
-                <NotificationCenter />
-                <NavUserBadges streak={user.currentStreak} xp={user.xpTotal} />
-              </nav>
+              <>
+                <div className="flex flex-1 justify-center">
+                  <PrimaryNav />
+                </div>
+                <div className="flex shrink-0 items-center gap-0.5 sm:gap-1">
+                  <div className="hidden xl:block"><HeaderInstallHint /></div>
+                  <NavUserBadges
+                    streak={user.currentStreak}
+                    xp={user.xpTotal}
+                    studiedToday={user.lastStudyDate === dayKey()}
+                    tier={tier}
+                  />
+                  <NotificationCenter />
+                  <HeaderAvatar id={user.id} handle={user.handle} avatarEmoji={user.avatarEmoji} />
+                </div>
+              </>
             ) : null}
           </div>
         </header>
@@ -195,10 +219,11 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         {user && <ReadAloudMiniPlayer />}
         {user && <ActivityTracker />}
         </StickyHeader>
-        <main className="mx-auto max-w-5xl px-4 pb-[calc(6rem+env(safe-area-inset-bottom))] pt-[calc(var(--header-height,4.5rem)+2rem)]">
+        <main className="mx-auto max-w-5xl px-4 pb-[calc(6rem+env(safe-area-inset-bottom))] pt-[calc(var(--header-height,4.5rem)+2rem)] lg:pb-16">
+          {user && <SocialTabs />}
           {children}
         </main>
-        {user && <BottomNav language={uiLanguage} />}
+        {user && <BottomNav />}
         {user && <InviteListener />}
         {user && <ChangelogPopup />}
       {user && <FreezeGiftPopup />}

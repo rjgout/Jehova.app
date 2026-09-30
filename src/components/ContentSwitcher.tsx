@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { ChevronDown, LibraryBig } from "lucide-react";
 import { getLanguage } from "@/lib/languages";
 import { useT } from "@/components/I18nProvider";
 
@@ -91,23 +92,27 @@ export default function ContentSwitcher({
     // Het menu blijft links staan op ieder scherm. De contentnaam krijgt een
     // begrensde breedte, zodat de taalbadge en de navigatie rechts zichtbaar
     // blijven wanneer een werk een lange naam heeft.
-    <div ref={ref} className="relative -ml-2 self-stretch flex min-w-0 max-w-full">
+    <div ref={ref} className="relative -ml-2 self-stretch flex min-w-0 max-w-full lg:shrink-0">
       <button
         type="button"
         onClick={() => setOpen((value) => !value)}
         aria-expanded={open}
         aria-haspopup="listbox"
+        title={active.name}
         aria-label={t("contentSwitcher.activeAria", {
           name: active.name + (showLanguage ? ` (${getLanguage(active.language).nativeName})` : ""),
         })}
-        className="h-full min-w-0 inline-flex items-center justify-center gap-1.5 px-2 text-sm font-bold text-slate-600 dark:text-slate-300 hover:text-brand-600 dark:hover:text-brand-300"
+        className="h-full min-w-0 inline-flex items-center justify-start gap-1.5 px-2 text-sm font-bold text-slate-600 dark:text-slate-300 hover:text-brand-600 dark:hover:text-brand-300"
       >
-        <span aria-hidden>{active.icon}</span>
-        <span className="min-w-0 max-w-[10rem] sm:max-w-[15rem] lg:max-w-[18rem] truncate">{active.name}</span>
+        <LibraryBig className="h-5 w-5 shrink-0" aria-hidden />
+        {/* De naam alleen waar er ruimte is: op een telefoon vechten reeks,
+            XP en meldingen om dezelfde regel, op desktop de hoofdnavigatie.
+            De volledige naam staat in het label en de tooltip. */}
+        <span className="hidden min-w-0 max-w-[15rem] truncate sm:block lg:hidden">{active.name}</span>
         {showLanguage && (
           <span className="text-[10px] font-extrabold leading-none rounded-full bg-slate-100 dark:bg-slate-700 px-1.5 py-1">{badge}</span>
         )}
-        <span className="text-[10px] leading-none" aria-hidden>{open ? "▲" : "▼"}</span>
+        <ChevronDown className={`h-4 w-4 shrink-0 transition-transform ${open ? "rotate-180" : ""}`} aria-hidden />
       </button>
 
       {open && (

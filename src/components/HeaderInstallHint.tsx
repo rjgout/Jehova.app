@@ -1,5 +1,6 @@
 "use client";
 
+import { Lightbulb } from "lucide-react";
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { hasInstallPrompt, onInstallPromptChange, promptInstall, isStandalone, isIOS } from "@/lib/pwaInstall";
@@ -60,9 +61,10 @@ export default function HeaderInstallHint() {
       <button
         onClick={onClick}
         disabled={busy}
-        className="inline-flex items-center gap-1.5 rounded-full bg-gold-50 dark:bg-slate-800 border border-gold-400/40 text-gold-700 dark:text-gold-400 text-xs font-extrabold px-3 py-1.5 animate-pulse hover:animate-none"
+        className="inline-flex items-center gap-1.5 rounded-full bg-gold-50 dark:bg-slate-800 border border-gold-400/40 text-gold-700 dark:text-gold-400 text-xs font-extrabold px-3 py-1.5 animate-pulse hover:animate-none motion-reduce:animate-none"
       >
-        💡 {t("header.installTip")}
+        <Lightbulb className="h-3.5 w-3.5" aria-hidden />
+        {t("header.installTip")}
       </button>
 
       {expanded && (

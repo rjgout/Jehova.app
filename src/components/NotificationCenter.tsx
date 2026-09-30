@@ -175,7 +175,7 @@ export default function NotificationCenter() {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="relative flex h-8 w-8 items-center justify-center rounded-full text-slate-500 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
+        className="relative flex h-10 w-10 items-center justify-center rounded-full text-vs-fg-2 transition-colors hover:bg-vs-subtle hover:text-vs-fg"
         aria-label={count > 0 ? t("notifications.titleWithCount", { count }) : t("notifications.title")}
       >
         <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden>

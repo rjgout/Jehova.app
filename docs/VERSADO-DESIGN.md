@@ -6,11 +6,12 @@ navigatie, dashboard, lay-out, beeld of onboarding verandert.**
 
 De app (repository `Jehova.app`, technische namen nog vaak `jehova`/`bom`)
 heet voortaan **Versado**. Er komt een omvangrijk visueel redesign op basis
-van Figma-ontwerpen en nieuwe beeldassets. **Dat redesign is nog niet
-uitgevoerd.** Dit document beschrijft de richting, de huidige stand en de
-aandachtspunten; het is geen ontwerp.
+van Figma-ontwerpen en nieuwe beeldassets. Dat redesign gaat in fasen; zie
+"Stand van de uitvoering" hieronder voor wat al gebouwd is. Dit document
+beschrijft de richting, de huidige stand en de aandachtspunten; het is geen
+ontwerp.
 
-Zolang de Figma-ontwerpen en assets er niet zijn, geldt:
+Voor alles wat nog niet in een fase is opgepakt, geldt:
 
 - Geen visueel redesign en geen vervanging van bestaande schermen.
 - Geen nieuw dashboard, geen nieuwe navigatie en geen tijdelijke visuele stijl
@@ -21,6 +22,40 @@ Zolang de Figma-ontwerpen en assets er niet zijn, geldt:
 - Bestaande werkende functionaliteit gaat altijd voor op cosmetische
   wijzigingen. Niets verwijderen omdat het niet in de nieuwe hoofdnavigatie
   genoemd wordt.
+
+## Stand van de uitvoering
+
+**Fase 1 (app-shell en Vandaag) is gebouwd.** Leren, Spelen, Vrienden,
+Competitie, Activiteit en Profiel zijn nog niet herontworpen; daar geldt de
+lijst hierboven nog volledig.
+
+- **Semantische tokens**: CSS-variabelen `--vs-*` in `src/app/globals.css`
+  (licht op `:root`, donker op `.dark`, gelaagd en niet puur zwart), in
+  Tailwind beschikbaar als kleurgroep `vs` (`bg-vs-surface`, `text-vs-fg-3`,
+  `border-vs-line`, `text-vs-xp`, ...). Tekstcontrast is gecontroleerd op
+  minimaal 4,5:1. Nieuwe schermen gebruiken deze tokens, geen losse
+  `slate`/`brand`-kleuren.
+- **Beweging**: zet `vs-motion` op een container; onder
+  `prefers-reduced-motion` staan transities en animaties daarbinnen dan stil.
+  `vs-rise` is een rustige binnenkomst, `vs-scroller` verbergt de scrollbalk
+  van een veegrij.
+- **Iconen**: `lucide-react`. Geen emoji als structureel icoon.
+- **Shell**: vier hoofdbestemmingen in `src/lib/navigation.ts`
+  (`PRIMARY_NAV`, met per bestemming de routes die erbij horen);
+  `BottomNav.tsx` op telefoon en tablet, `shell/PrimaryNav.tsx` op desktop,
+  `shell/SocialTabs.tsx` als tabs tussen `/friends`, `/competition` en
+  `/activity`, en `shell/HeaderAvatar.tsx` als ingang naar het profiel. Reeks,
+  XP en divisie staan in `NavUserBadges.tsx`. Alle bestaande routes werken
+  ongewijzigd.
+- **Vandaag**: `src/app/dashboard/page.tsx` met de data uit
+  `src/lib/today.ts` (`getTodayData`) en de blokken in
+  `src/components/today/`. Gedeelde serverlogica staat in
+  `activeGames.ts`, `courseSummaries.ts` en `gameCatalog.ts`, zodat de
+  bestaande API-routes en Vandaag dezelfde bron gebruiken.
+- **Plekken voor beeld**: `versado/MediaArtwork.tsx` (neutrale placeholder
+  met icoon zolang er geen asset is; assets komen in `src/lib/artwork.ts`)
+  en `versado/MascotSlot.tsx` (rendert niets tot de mascottes er zijn).
+  `versado/Carousel.tsx` is de veegrij met puntjes en pijlen.
 
 ## Wat Versado is
 

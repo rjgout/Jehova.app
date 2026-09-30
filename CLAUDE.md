@@ -56,8 +56,10 @@ praktijk toegepast wordt.
 
 De app heet voortaan **Versado** (technische namen als `jehova`/`bom` blijven
 voorlopig staan). Er komt een visueel redesign op basis van Figma en nieuwe
-assets (mascottes VARO, VERA en NOVI, illustraties, eventueel Rive). Dat is
-**nog niet uitgevoerd**. Lees `docs/VERSADO-DESIGN.md` vóór je iets aan
+assets (mascottes VARO, VERA en NOVI, illustraties, eventueel Rive). Dat gaat
+in fasen: de app-shell en Vandaag zijn gebouwd (semantische `vs`-tokens,
+`lucide-react`-iconen, `src/components/versado/`), de rest nog niet. Lees
+`docs/VERSADO-DESIGN.md` vóór je iets aan
 navigatie, dashboard, lay-out, thema, beeld, onboarding of profiel verandert:
 daar staan de Design Constitution, de richting voor de informatiearchitectuur
 (Vandaag, Leren, Spelen, Vrienden) en wat wel en niet mag zolang de ontwerpen

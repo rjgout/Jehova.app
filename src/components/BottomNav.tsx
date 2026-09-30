@@ -1,45 +1,51 @@
+"use client";
+
 import Link from "next/link";
-import { getT, type MessageKey } from "@/lib/i18n";
-import type { LanguageCode } from "@/lib/languages";
+import { usePathname } from "next/navigation";
+import { useT } from "@/components/I18nProvider";
+import NavIcon from "@/components/shell/NavIcon";
+import { PRIMARY_NAV, activeDestination } from "@/lib/navigation";
 
-const items: { href: string; label: MessageKey; icon: string }[] = [
-  { href: "/courses", label: "nav.courses", icon: "📖" },
-  { href: "/friends", label: "nav.friends", icon: "👥" },
-  { href: "/competition", label: "nav.competition", icon: "🏆" },
-  { href: "/live", label: "nav.play", icon: "🎮" },
-  { href: "/activity", label: "nav.activity", icon: "✨" },
-  { href: "/profile", label: "nav.profile", icon: "🙂" },
-];
-
-// Dezelfde navigatie blijft op elk scherm onderaan staan, zodat de app niet
-// van navigatiepatroon wisselt zodra er meer ruimte beschikbaar is.
-export default function BottomNav({ language }: { language: LanguageCode }) {
-  const t = getT(language);
+// Primaire navigatie op telefoon en tablet: Vandaag, Leren, Spelen,
+// Vrienden. Vanaf desktopbreedte (lg) staat dezelfde navigatie in de header
+// (PrimaryNav) en verdwijnt deze balk. Profiel zit achter de avatar
+// rechtsboven; Competitie en Activiteit zijn tabs onder Vrienden.
+export default function BottomNav() {
+  const t = useT();
+  const active = activeDestination(usePathname());
   return (
     <nav
-      // pb-[...] i.p.v. py-1 voor de onderkant: telt de homeindicator-ruimte
-      // van een geïnstalleerde iOS-PWA (env(safe-area-inset-bottom), zie ook
-      // viewportFit: "cover" in layout.tsx) op bij de gewone 0.25rem padding,
-      // zodat de navigatie daar nooit onder valt. In een gewone browsertab
-      // is die env()-waarde 0, dus daar verandert niets.
-      className="fixed bottom-0 inset-x-0 z-20 bg-white/95 dark:bg-slate-800/95 backdrop-blur border-t border-slate-100 dark:border-slate-700 shadow-[0_-2px_12px_rgba(0,0,0,0.04)] dark:shadow-[0_-2px_12px_rgba(0,0,0,0.2)]"
+      // pb-[...]: telt de homeindicator-ruimte van een geïnstalleerde
+      // iOS-PWA op (env(safe-area-inset-bottom), zie viewportFit: "cover"
+      // in layout.tsx), zodat de navigatie daar nooit onder valt.
+      className="vs-motion fixed bottom-0 inset-x-0 z-20 border-t border-vs-line bg-vs-elevated/95 backdrop-blur-md lg:hidden"
       // data-main-nav voor de CSS in globals.css: het aria-label is vertaald.
       data-main-nav
       aria-label={t("nav.main")}
     >
-      <div className="mx-auto flex w-full max-w-3xl justify-around pt-1 pb-[calc(0.25rem+env(safe-area-inset-bottom))]">
-      {items.map((item) => (
-        <Link
-          key={item.href}
-          href={item.href}
-          className="flex flex-col items-center gap-0.5 px-3 py-1.5 text-slate-500 dark:text-slate-300 text-xs font-bold min-w-[3.5rem]"
-        >
-          <span className="text-xl" aria-hidden>
-            {item.icon}
-          </span>
-          {t(item.label)}
-        </Link>
-      ))}
+      <div className="mx-auto grid w-full max-w-xl grid-cols-4 px-2 pt-1.5 pb-[calc(0.375rem+env(safe-area-inset-bottom))]">
+        {PRIMARY_NAV.map((item) => {
+          const isActive = item.id === active;
+          return (
+            <Link
+              key={item.id}
+              href={item.href}
+              aria-current={isActive ? "page" : undefined}
+              className={`group flex min-h-[52px] flex-col items-center justify-center gap-1 rounded-2xl text-[11px] font-bold tracking-wide transition-colors ${
+                isActive ? "text-vs-accent" : "text-vs-fg-3 hover:text-vs-fg-2"
+              }`}
+            >
+              <span
+                className={`flex h-8 w-14 items-center justify-center rounded-full transition-colors duration-200 ${
+                  isActive ? "bg-vs-accent-soft" : "group-active:bg-vs-subtle"
+                }`}
+              >
+                <NavIcon id={item.id} className="h-[22px] w-[22px]" strokeWidth={isActive ? 2.4 : 2} />
+              </span>
+              {t(item.labelKey)}
+            </Link>
+          );
+        })}
       </div>
     </nav>
   );

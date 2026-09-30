@@ -66,7 +66,9 @@ export const es: PartialMessages = {
     "play": "Jugar",
     "shop": "Comprar",
     "activity": "Actividad",
-    "profile": "Perfil"
+    "profile": "Perfil",
+    "today": "Hoy",
+    "learn": "Aprender"
   },
   "activityFeed": {
     "loadFailed": "No se han podido cargar las actividades.",
@@ -120,8 +122,11 @@ export const es: PartialMessages = {
     "backToAria": "Volver a {name}"
   },
   "header": {
-    "streak": "Raya",
+    "streak": "Racha",
     "xp": "Puntos de experiencia",
+    "streakAria": "Racha: {n} días",
+    "xpAria": "{n} puntos de experiencia",
+    "divisionAria": "División: {name}",
     "installTip": "Consejo",
     "installTitleIos": "Añade la aplicación a tu pantalla de inicio",
     "installTitle": "Añade la aplicación a tu pantalla de inicio",
@@ -240,6 +245,75 @@ export const es: PartialMessages = {
     "readInPieces": "Lee {thisOne} en trozos pequeños. Solo puedes seguir adelante en el orden correcto.",
     "stepN": "Paso {n}",
     "verseRange": "Versos {from}–{to} · {n} versos"
+  },
+  "today": {
+    "greeting": {
+      "morning": "Buenos días, {name}",
+      "afternoon": "Buenas tardes, {name}",
+      "evening": "Buenas noches, {name}",
+      "night": "Buenas noches, {name}"
+    },
+    "streakDone": "Tu racha está asegurada por hoy.",
+    "streakKeep": "Estudia hoy para mantener tu racha de {n} días.",
+    "streakKeepOne": "Estudia hoy y serán dos días seguidos.",
+    "streakStart": "Empieza hoy una nueva racha.",
+    "actionsTitle": "Te está esperando",
+    "allGames": "Todos los juegos",
+    "action": {
+      "friendRequest": "{name} quiere ser tu amigo",
+      "liveInvite": "{name} te invita a jugar",
+      "challengeInvite": "{name} te desafía",
+      "gameInvite": "{name} te invita a una partida",
+      "yourTurn": "Tu turno contra {name}",
+      "liveActive": "Sigues en esta partida",
+      "soloActive": "Lo dejaste a medias"
+    },
+    "cta": {
+      "accept": "Aceptar",
+      "join": "Unirme",
+      "play": "Jugar",
+      "view": "Ver",
+      "continue": "Seguir jugando",
+      "backToGame": "Volver a la partida",
+      "resume": "Continuar"
+    },
+    "declineAria": "Rechazar la solicitud de {name}",
+    "continueTitle": "Continúa",
+    "kind": {
+      "course": "Curso",
+      "podcast": "Pódcast",
+      "game": "Juego"
+    },
+    "listenedTo": "Escuchado hasta {time}",
+    "progressOf": "{done} de {total} {unit}",
+    "carouselPosition": "{n} de {total}",
+    "carouselPrev": "Anterior",
+    "carouselNext": "Siguiente",
+    "dailyTitle": "Hoy",
+    "wordGame": {
+      "todo": "Adivina la palabra de hoy.",
+      "inProgress": "Ya has empezado.",
+      "won": "¡Acertaste! Mañana, una palabra nueva.",
+      "lost": "Mañana, otra oportunidad."
+    },
+    "dailyQuiz": {
+      "title": "{name} del día",
+      "todo": "Un intento, las mismas preguntas para todos.",
+      "inProgress": "Termina tu intento.",
+      "done": "Jugado. Mañana, uno nuevo."
+    },
+    "socialTitle": "Amigos",
+    "social": {
+      "noFriends": "Aprender juntos motiva. Encuentra a tu primer amigo.",
+      "findFriends": "Buscar amigos",
+      "shareOff": "Comparte tu estado en línea para ver quién está conectado.",
+      "shareOffCta": "Configurar",
+      "noneOnline": "Ahora no hay nadie en línea.",
+      "onlineOne": "1 amigo en línea",
+      "onlineMany": "{n} amigos en línea",
+      "online": "En línea"
+    },
+    "discoverTitle": "Para ti"
   },
   "dashboard": {
     "dailyText": "Verso del día",

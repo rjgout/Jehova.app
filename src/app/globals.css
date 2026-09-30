@@ -36,6 +36,116 @@ body {
   --reader-font-scale: 1;
 }
 
+/* --- Versado-designtokens ---------------------------------------------------
+ *
+ * Semantische kleuren voor de nieuwe app-shell en Vandaag (zie
+ * docs/VERSADO-DESIGN.md), als "R G B" zodat Tailwind er opacity aan kan
+ * geven (tailwind.config.ts, kleurgroep `vs`). Nieuwe onderdelen gebruiken
+ * deze tokens in plaats van vaste Tailwind-kleuren met een dark:-variant,
+ * zodat een palet uit Figma later op één plek verandert. De achtergrond is
+ * bewust gelijk aan die van body hieronder (brand-50 / slate-900): pagina's
+ * die nog niet zijn omgezet, zien er zo precies hetzelfde uit.
+ *
+ * Donker is geen omgekeerd licht: gelaagde, blauwgrijze vlakken (nooit puur
+ * zwart), randen die net zichtbaar blijven, en accentkleuren die lichter en
+ * minder verzadigd zijn zodat ze niet verblinden. Tekstkleuren halen op hun
+ * eigen vlak minstens 4,5:1 contrast. */
+:root {
+  --vs-app: 238 246 255;
+  --vs-surface: 255 255 255;
+  --vs-elevated: 255 255 255;
+  --vs-subtle: 243 247 252;
+  --vs-fg: 15 23 42;
+  --vs-fg-2: 51 65 85;
+  --vs-fg-3: 91 105 125;
+  --vs-line: 222 231 243;
+  --vs-line-strong: 190 205 225;
+  --vs-accent: 21 101 192;
+  --vs-accent-soft: 225 239 254;
+  --vs-on-accent: 255 255 255;
+  --vs-success: 21 128 61;
+  --vs-success-soft: 220 247 231;
+  --vs-warning: 180 83 9;
+  --vs-warning-soft: 254 243 199;
+  --vs-danger: 185 28 28;
+  --vs-danger-soft: 254 226 226;
+  --vs-xp: 150 86 4;
+  --vs-xp-fill: 246 185 59;
+  --vs-xp-soft: 253 243 224;
+  --vs-streak: 194 65 12;
+  --vs-streak-soft: 255 237 213;
+  --vs-league: 109 40 217;
+  --vs-league-soft: 237 233 254;
+  --vs-overlay: 15 23 42;
+  --vs-shadow: 15 23 42;
+}
+
+.dark {
+  --vs-app: 15 23 42;
+  --vs-surface: 23 33 53;
+  --vs-elevated: 31 43 66;
+  --vs-subtle: 27 38 60;
+  --vs-fg: 241 245 249;
+  --vs-fg-2: 203 213 225;
+  --vs-fg-3: 150 164 186;
+  --vs-line: 44 58 84;
+  --vs-line-strong: 66 83 114;
+  --vs-accent: 116 180 250;
+  --vs-accent-soft: 26 52 90;
+  --vs-on-accent: 10 22 40;
+  --vs-success: 74 222 128;
+  --vs-success-soft: 20 54 38;
+  --vs-warning: 251 191 36;
+  --vs-warning-soft: 60 45 14;
+  --vs-danger: 248 113 113;
+  --vs-danger-soft: 69 26 30;
+  --vs-xp: 250 204 92;
+  --vs-xp-fill: 236 178 58;
+  --vs-xp-soft: 58 45 20;
+  --vs-streak: 251 146 60;
+  --vs-streak-soft: 67 38 20;
+  --vs-league: 196 181 253;
+  --vs-league-soft: 46 36 84;
+  --vs-overlay: 0 0 0;
+  --vs-shadow: 0 0 0;
+}
+
+/* Beweging in de nieuwe onderdelen gaat via deze klassen, zodat
+ * prefers-reduced-motion op één plek alles stilzet. */
+@media (prefers-reduced-motion: reduce) {
+  .vs-motion,
+  .vs-motion * {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+@keyframes vs-rise {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.vs-rise {
+  animation: vs-rise 0.32s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+/* Horizontale lijsten die je met de vinger veegt: geen zichtbare balk,
+ * wel gewoon scrollbaar met muis, toetsenbord en trackpad. */
+.vs-scroller {
+  scrollbar-width: none;
+}
+.vs-scroller::-webkit-scrollbar {
+  display: none;
+}
+
 .reader-text {
   font-size: calc(1.125rem * var(--reader-font-scale));
   line-height: 1.9;

@@ -243,6 +243,17 @@ export async function tierForWeek(tx: Tx, userId: string, weekStart: string): Pr
 }
 
 /**
+ * De divisie om te tonen (header, competitie): die van deze week als je al
+ * XP verdiende, anders de divisie waarin je begint zodra je dat doet. Alleen
+ * lezen, claimt nooit een plek in een groep.
+ */
+export async function displayTierFor(tx: Tx, userId: string): Promise<LeagueTier> {
+  const weekStart = weekStartKey();
+  const score = await tx.weeklyScore.findUnique({ where: { userId_weekStart: { userId, weekStart } }, select: { tier: true } });
+  return score?.tier ?? tierForWeek(tx, userId, weekStart);
+}
+
+/**
  * Divisie én groep voor deze week. Wordt "lazy" aangeroepen zodra iemand
  * voor het eerst deze week XP verdient (zie applyWeeklyXp) in plaats van via
  * een wekelijkse cron-taak — functioneel gelijkwaardig, zonder extra infra.
