@@ -208,6 +208,11 @@ export const en: PartialMessages = {
     busy: "Working...",
     choose: "Choose this course",
     addNew: "Add a new course",
+    currentJourney: "Your current learning journey",
+    discoverMore: "Discover more",
+    noActive: "Choose a course to set your current learning journey.",
+    progressLabel: "Progress",
+    completed: "Completed",
     allAdded: "You've already added everything there is — nothing left to choose.",
     add: "Add",
     types: {

@@ -156,6 +156,11 @@ export const nl = {
     busy: "Bezig...",
     choose: "Kies deze cursus",
     addNew: "Voeg nieuwe cursus toe",
+    currentJourney: "Jouw huidige leerreis",
+    discoverMore: "Ontdek verder",
+    noActive: "Kies een cursus om je huidige leerreis te bepalen.",
+    progressLabel: "Voortgang",
+    completed: "Voltooid",
     allAdded: "Je hebt alles al toegevoegd wat er is — niets meer om te kiezen.",
     add: "Toevoegen",
     types: {
