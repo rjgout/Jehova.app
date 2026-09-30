@@ -398,22 +398,25 @@ export default function FriendsClient({ appName }: { appName: string }) {
                         <span className="truncate">{t("friends.lastActive", { when: translateServerText(status.lastSeenLabel, t) })}</span>
                       </div>
                     ) : null}
-                    <div className="mt-1.5 flex flex-wrap gap-1.5">
+                    <div className="mt-1.5 flex min-w-0 flex-wrap items-center gap-1.5">
                       <span className="no-select inline-flex items-center gap-1 rounded-full bg-gold-50 px-2 py-0.5 text-xs font-bold text-gold-700 dark:bg-slate-700 dark:text-gold-400">
                         <Flame className="h-3.5 w-3.5" aria-hidden /> {f.currentStreak}
                       </span>
                       <span className="no-select inline-flex items-center gap-1 rounded-full bg-brand-50 px-2 py-0.5 text-xs font-bold text-brand-700 dark:bg-slate-700 dark:text-brand-300">
                         <Star className="h-3.5 w-3.5" aria-hidden /> {f.xpTotal} XP
                       </span>
+                      <button
+                        className="btn-ice inline-flex !min-h-9 shrink-0 items-center gap-1 !px-2 !py-1 !text-xs"
+                        onClick={() => setPendingFreeze(f)}
+                        disabled={giftedTo === f.id}
+                        aria-label={giftedTo === f.id ? t("friends.sentExcl") : t("friends.giveFreeze")}
+                      >
+                        <Snowflake className="h-3.5 w-3.5" aria-hidden />
+                        {giftedTo === f.id ? t("friends.sentExcl") : t("friends.giveFreeze")}
+                      </button>
                     </div>
                   </div>
                   <FriendOverflowMenu onRemove={() => removeFriendship(friendshipId, "friendship")} />
-                </div>
-                <div className="mt-2 flex justify-end">
-                  <button className="btn-ice !min-h-9 !px-3 !py-1.5 !text-xs" onClick={() => setPendingFreeze(f)} disabled={giftedTo === f.id}>
-                    <Snowflake className="h-4 w-4" aria-hidden />
-                    {giftedTo === f.id ? t("friends.sentExcl") : t("friends.giveFreeze")}
-                  </button>
                 </div>
               </div>
             );

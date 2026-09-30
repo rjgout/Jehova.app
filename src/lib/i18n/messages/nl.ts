@@ -1300,7 +1300,7 @@ export const nl = {
     none: "Nog geen vrienden — zoek iemand hierboven!",
     lastActive: "Laatst actief {when}",
     sentExcl: "Verstuurd!",
-    giveFreeze: "Geef streak-freeze",
+    giveFreeze: "Geef",
     unfriend: "Ontvrienden",
     freezeTitle: "Freeze geven?",
     freezeConfirm: "Weet je zeker dat je een streak freeze wilt geven aan {tag}?",

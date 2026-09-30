@@ -1296,7 +1296,7 @@ export const fr: PartialMessages = {
     none: "Pas encore d’amis — cherche quelqu’un ci-dessus !",
     lastActive: "Actif {when}",
     sentExcl: "Envoyé !",
-    giveFreeze: "Offrir un gel de série",
+    giveFreeze: "Offrir",
     unfriend: "Retirer des amis",
     freezeTitle: "Offrir un gel ?",
     freezeConfirm: "Veux-tu vraiment offrir un gel de série à {tag} ?",

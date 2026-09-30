@@ -1296,7 +1296,7 @@ export const en: PartialMessages = {
     none: "No friends yet — search for someone above!",
     lastActive: "Last active {when}",
     sentExcl: "Sent!",
-    giveFreeze: "Gift streak freeze",
+    giveFreeze: "Give",
     unfriend: "Unfriend",
     freezeTitle: "Give a freeze?",
     freezeConfirm: "Are you sure you want to give a streak freeze to {tag}?",

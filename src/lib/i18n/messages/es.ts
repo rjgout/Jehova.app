@@ -1306,7 +1306,7 @@ export const es: PartialMessages = {
     "none": "Aún no hay amigos: ¡busca a alguien arriba!",
     "lastActive": "Última actividad: {when}",
     "sentExcl": "¡Enviado!",
-    "giveFreeze": "Regalar congelación de racha",
+    "giveFreeze": "Regalar",
     "unfriend": "Dejar de ser amigo",
     "freezeTitle": "¿Dar una congelación?",
     "freezeConfirm": "¿Estás seguro de que quieres congelar una racha? ¿{tag}?",
