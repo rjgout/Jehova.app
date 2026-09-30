@@ -188,9 +188,11 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             ) : null}
           </div>
         </header>
+        {/* Eerst de terugbalk, dan de spelers: de navigatie blijft zo op een
+            vaste plek direct onder de header, ook als er een speler bij komt. */}
+        {user && <SubpageBackBar />}
         {user && <PodcastMiniPlayer />}
         {user && <ReadAloudMiniPlayer />}
-        {user && <SubpageBackBar />}
         {user && <ActivityTracker />}
         </StickyHeader>
         <main className="mx-auto max-w-5xl px-4 pb-[calc(6rem+env(safe-area-inset-bottom))] pt-[calc(var(--header-height,4.5rem)+2rem)]">

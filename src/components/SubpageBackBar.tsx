@@ -74,8 +74,8 @@ function backTargetFor(pathname: string): BackTarget | null {
  * Paginabrede terugbalk voor onderliggende pagina's (Hulpmiddelen, Feedback,
  * een woordspel, een les of hoofdstuk), in plaats van losse "← Terug"-tekst
  * per pagina. Staat in de vaste bovenbalk (StickyHeader in layout.tsx),
- * direct onder de miniplayers: zo plakt hij onder een actieve miniplayer, of
- * anders onder de header, en telt zijn hoogte vanzelf mee in --header-height.
+ * direct onder de header en boven eventuele miniplayers, en telt zijn hoogte
+ * vanzelf mee in --header-height.
  */
 export default function SubpageBackBar() {
   const pathname = usePathname();
