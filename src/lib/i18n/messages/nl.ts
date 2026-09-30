@@ -139,7 +139,7 @@ export const nl = {
     fsyDesc: "Het wekelijkse leerplan met tekst en afbeeldingen uit de officiële bron.",
   },
   courses: {
-    intro: "Dit zijn jouw cursussen — je voortgang per cursus blijft bewaard als je wisselt. Wil je er nog eentje proberen, voeg 'm dan toe met de knop hieronder.",
+    intro: "Hier staan je cursussen. Je voortgang blijft bewaard: ga verder of kies een andere cursus.",
     error: "Er ging iets mis.",
     errorStatus: "Er ging iets mis ({status}).",
     retry: "Opnieuw proberen",

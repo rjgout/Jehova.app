@@ -191,7 +191,7 @@ export const de: PartialMessages = {
     fsyDesc: "Die wöchentlichen Lektionen mit Text und Bildern aus der offiziellen Quelle.",
   },
   courses: {
-    intro: "Das sind deine Kurse – dein Fortschritt in jedem Kurs bleibt gespeichert, wenn du wechselst. Möchtest du noch einen ausprobieren? Füge ihn mit der Schaltfläche unten hinzu.",
+    intro: "Hier findest du deine Kurse. Dein Fortschritt bleibt erhalten – lerne weiter oder wähle einen anderen Kurs.",
     error: "Etwas ist schiefgelaufen.",
     errorStatus: "Etwas ist schiefgelaufen ({status}).",
     retry: "Erneut versuchen",

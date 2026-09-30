@@ -191,7 +191,7 @@ export const fr: PartialMessages = {
     fsyDesc: "Les leçons hebdomadaires avec texte et images de la source officielle.",
   },
   courses: {
-    intro: "Voici tes cours — ta progression dans chaque cours est conservée quand tu changes. Envie d’en essayer un autre ? Ajoute-le avec le bouton ci-dessous.",
+    intro: "Retrouve ici tes cours. Ta progression est conservée : continue ou choisis un autre cours.",
     error: "Une erreur s’est produite.",
     errorStatus: "Une erreur s’est produite ({status}).",
     retry: "Réessayer",

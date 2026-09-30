@@ -191,7 +191,7 @@ export const en: PartialMessages = {
     fsyDesc: "The weekly lessons with text and pictures from the official source.",
   },
   courses: {
-    intro: "These are your courses — your progress in each course is saved when you switch. Want to try another one? Add it with the button below.",
+    intro: "These are your courses. Your progress is saved, so you can continue or choose another course.",
     error: "Something went wrong.",
     errorStatus: "Something went wrong ({status}).",
     retry: "Try again",

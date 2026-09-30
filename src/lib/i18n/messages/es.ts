@@ -201,7 +201,7 @@ export const es: PartialMessages = {
     "fsyDesc": "Las lecciones semanales con texto e imágenes de la fuente oficial."
   },
   "courses": {
-    "intro": "Estos son sus cursos: su progreso en cada curso se guarda cuando cambia. ¿Quieres probar otro? Añádelo con el botón de abajo.",
+    "intro": "Aquí están tus cursos. Tu progreso se conserva para que puedas continuar o elegir otro curso.",
     "error": "Algo ha salido mal.",
     "errorStatus": "Algo ha salido mal ({status}).",
     "retry": "Inténtalo de nuevo",
