@@ -290,7 +290,11 @@ async function runStreakRolloverTick(): Promise<void> {
   const candidates = await prisma.user.findMany({
     where: {
       currentStreak: { gt: 0 },
-      lastStudyDate: { not: null, lt: today },
+      // Alleen wie vóór gisteren voor het laatst studeerde heeft een dag
+      // gemist. Met "vóór vandaag" kwam iedereen die vandaag nog niet
+      // studeerde elke minuut opnieuw langs voor een transactie die niets
+      // deed (missedDays = 0).
+      lastStudyDate: { not: null, lt: addDays(today, -1) },
     },
     select: { id: true },
   });
