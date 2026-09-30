@@ -6,15 +6,23 @@ De app kan voorgelezen schriftboeken lokaal serveren in plaats van ze streaming 
 
 ### 1. Audiobestanden Downloaden
 
-Het eerste keer moeten alle bestanden worden opgehaald van de kerkserver. Dit duurt enkele minuten (205 hoofdstukken × ~3-4 MB).
+De audiobestanden worden automatisch gedownload bij elke content-sync:
 
+**Via Admin Panel (aanbevolen):**
+- Ga naar `/adminbackend` → Instellingen → "Inhoud opnieuw laden"
+- Audio wordt samen met content gedownload
+
+**Via CLI (dev):**
 ```bash
-# Lokaal (dev):
 npm run audio:download
+```
 
-# In Docker (productie):
+**Via Docker:**
+```bash
 docker exec jehova-app npm run audio:download
 ```
+
+De eerste download duurt enkele minuten (205 hoofdstukken × ~3-4 MB).
 
 De bestanden worden opgeslagen in:
 - **Lokaal dev:** `public/audio/`
@@ -28,24 +36,28 @@ Bij wijziging van de schrifttekst moet `audioStart` opnieuw worden berekend (zie
 
 ### 3. Talen
 
-Momenteel alleen Nederlands (`nl`). De structuur ondersteunt toekomstige expansie naar Engels, Duits en Frans:
+**Momenteel beschikbaar:** Nederlands (NL)
 
+**Structuur:**
 ```
 public/audio/
-├── nl/
-│   └── 1-nephi/
-│       ├── 001.mp3
-│       └── ...
-└── en/
-    └── 1-nephi/
-        └── ...
+├── nl/1-nephi/001.mp3
+├── nl/1-nephi/002.mp3
+└── en/1-nephi/001.mp3  (toekomstig)
 ```
 
-Voor nieuwe talen:
-1. Download-script uitbreiden in `scripts/download-audio.ts`
-2. Audio-metadata-bestand toevoegen (bijv. `prisma/bomAudio.en.json`)
-3. `transformAudioUrl()` in `prisma/importAudio.ts` updaten
-4. Audio importeren met `npm run db:seed`
+**Nieuwe taal toevoegen** (Engels/Duits/Frans):
+
+1. Zorg dat audio-metadata bestaat (bijv. `prisma/bomAudio.en.json`)
+2. Uncomment de taal in `scripts/download-audio.ts`:
+   ```typescript
+   const AUDIO_LANGUAGES: AudioLanguageConfig[] = [
+     { code: "nl", name: "Nederlands", metadataFile: "prisma/bomAudio.json" },
+     { code: "en", name: "English", metadataFile: "prisma/bomAudio.en.json" }, // ← uncomment
+   ];
+   ```
+3. Voer "Inhoud opnieuw laden" uit via admin → audio verschijnt automatisch
+4. Geen verdere code-wijzigingen nodig
 
 ### 4. API-Route
 
