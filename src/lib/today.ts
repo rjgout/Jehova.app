@@ -13,6 +13,7 @@ import { applyPersonalOrder } from "@/lib/listOrder";
 import { localizedCourse } from "@/lib/courseText";
 import { chapterTerm, localizeTerm } from "@/lib/chapterTerm";
 import { getT } from "@/lib/i18n";
+import { courseArtworkKeys, gameArtworkKeys, podcastArtworkKeys } from "@/lib/artwork";
 
 // Alle gegevens voor Vandaag (src/app/dashboard/page.tsx), in één keer en
 // parallel opgehaald. Elke bron is bestaande functionaliteit: de open
@@ -47,6 +48,8 @@ export interface ContinueItem {
   /** Naam van de podcast, of het type cursus (vertaald) voor het label. */
   context: string;
   at: string;
+  /** Sleutels in het artworkregister (src/lib/artwork.ts), van specifiek naar algemeen. */
+  artwork: string[];
 }
 
 export interface DailyGameState {
@@ -71,6 +74,7 @@ export interface DiscoverItem {
   meta: string | null;
   /** Voor spellen: de sleutel in de vertalingen (gamesHub.<textKey>). */
   gameTextKey?: GameCatalogEntry["textKey"];
+  artwork: string[];
 }
 
 export interface TodayData {
@@ -177,7 +181,7 @@ export async function getTodayData(user: User): Promise<TodayData> {
       where: { userId: user.id, subscribed: true, currentLessonId: { not: null } },
       select: {
         courseId: true,
-        currentLesson: { select: { startVerse: true, endVerse: true, chapter: { select: { number: true, book: { select: { name: true } } } } } },
+        currentLesson: { select: { startVerse: true, endVerse: true, chapter: { select: { number: true, book: { select: { name: true, key: true } } } } } },
       },
     }),
     prisma.podcastPlaybackProgress.findMany({
@@ -187,7 +191,7 @@ export async function getTodayData(user: User): Promise<TodayData> {
       select: {
         positionSeconds: true,
         updatedAt: true,
-        episode: { select: { id: true, number: true, title: true, podcast: { select: { name: true, courses: { select: { id: true }, take: 1 } } } } },
+        episode: { select: { id: true, number: true, title: true, podcastId: true, podcast: { select: { name: true, courses: { select: { id: true }, take: 1 } } } } },
       },
     }),
     getTextOfTheDay(new Date(), user.contentLanguage),
@@ -238,6 +242,8 @@ export async function getTodayData(user: User): Promise<TodayData> {
         href: `/courses/${course.id}`,
         context: contentContext.active.name,
         at: course.lastActivityAt!,
+        // Het beeld volgt het boek waar je nu bent (bv. Alma), niet alleen de cursus.
+        artwork: courseArtworkKeys({ slug: course.slug, work: course.work, bookKey: lesson?.chapter.book.key ?? course.currentChapter?.bookKey }),
       };
     });
   const podcastItems: ContinueItem[] = podcastPositions
@@ -252,6 +258,7 @@ export async function getTodayData(user: User): Promise<TodayData> {
       href: `/courses/${p.episode.podcast.courses[0].id}`,
       context: p.episode.podcast.name,
       at: p.updatedAt.toISOString(),
+      artwork: podcastArtworkKeys(p.episode.podcastId),
     }));
   const continueItems = [...courseItems, ...podcastItems].sort((a, b) => b.at.localeCompare(a.at)).slice(0, MAX_CONTINUE);
 
@@ -284,6 +291,7 @@ export async function getTodayData(user: User): Promise<TodayData> {
         description: text.description,
         href: "/courses",
         meta: course._count.chapters > 0 ? `${course._count.chapters} ${unit}` : null,
+        artwork: courseArtworkKeys({ slug: course.slug, work: course.contentCollection.work }),
       };
     });
   const gameCards: DiscoverItem[] = games.map((game) => ({
@@ -294,6 +302,7 @@ export async function getTodayData(user: User): Promise<TodayData> {
       href: game.href,
       meta: null,
       gameTextKey: game.textKey,
+      artwork: gameArtworkKeys(game.id),
     }));
   // Afwisselend een cursus en een spel, zodat beide soorten zichtbaar zijn
   // ook als er van één soort veel is.

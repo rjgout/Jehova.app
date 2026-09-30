@@ -92,6 +92,7 @@ export async function getSubscribedCourseSummaries(
         slug: course.slug,
         type: course.type,
         ...localizedCourse({ ...course, work: course.contentCollection.work }, user.uiLanguage),
+        work: course.contentCollection.work,
         totalChapters,
         unitPlural: localizeTerm(chapterTerm(course.book?.slug, course.contentCollectionId), t).plural,
         completedCount,
@@ -102,6 +103,7 @@ export async function getSubscribedCourseSummaries(
           ? {
               id: progress.currentChapter.id,
               bookName: progress.currentChapter.book.name,
+              bookKey: progress.currentChapter.book.key,
               number: progress.currentChapter.number,
             }
           : null,

@@ -6,6 +6,7 @@ import MascotSlot from "@/components/versado/MascotSlot";
 import SectionHeader from "@/components/today/SectionHeader";
 import { interactiveCard, secondaryButton, surfaceCard } from "@/components/versado/styles";
 import type { DailyGameState, TodayData } from "@/lib/today";
+import { gameArtworkKeys } from "@/lib/artwork";
 import type { MessageKey } from "@/lib/i18n/core";
 
 // Dagelijkse content: de tekst van de dag, het woord van de dag en De
@@ -15,12 +16,14 @@ import type { MessageKey } from "@/lib/i18n/core";
 function DailyGameCard({
   state,
   kind,
+  artwork,
   title,
   statusKey,
   language,
 }: {
   state: DailyGameState;
   kind: "game" | "quiz";
+  artwork: string[];
   title: string;
   statusKey: MessageKey;
   language: string;
@@ -29,7 +32,7 @@ function DailyGameCard({
   const done = state.status === "done";
   return (
     <Link href={state.href} className={`${interactiveCard} flex items-center gap-4 p-3 pr-4`}>
-      <MediaArtwork kind={kind} artworkKey={`daily:${kind}`} ratio="1/1" className="w-16 shrink-0 rounded-xl sm:w-[4.5rem]" />
+      <MediaArtwork kind={kind} artworkKey={artwork} ratio="1/1" sizes="72px" className="w-16 shrink-0 rounded-xl sm:w-[4.5rem]" />
       <div className="min-w-0 flex-1">
         <h3 className="truncate text-[15px] font-extrabold text-vs-fg">{title}</h3>
         <p className={`mt-0.5 flex items-center gap-1 text-sm ${done ? "font-semibold text-vs-success" : "text-vs-fg-3"}`}>
@@ -69,7 +72,7 @@ export default function TodaySection({ data, language }: { data: TodayData; lang
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
         {dailyText && (
           <article className={`${surfaceCard} relative min-w-0 overflow-hidden sm:col-span-2`}>
-            <MediaArtwork kind="daily" artworkKey="daily:text" ratio="21/9" className="!aspect-auto h-24 sm:h-28">
+            <MediaArtwork kind="daily" artworkKey="daily:text" ratio="21/9" sizes="(min-width: 1024px) 640px, 100vw" className="!aspect-auto h-24 sm:h-28">
               <span className="absolute left-4 top-4 rounded-full bg-vs-elevated/90 px-2.5 py-1 text-xs font-bold text-vs-fg-2 backdrop-blur">
                 {t("dashboard.dailyText")}
               </span>
@@ -93,10 +96,10 @@ export default function TodaySection({ data, language }: { data: TodayData; lang
           </article>
         )}
         {wordGame && wordStatus && (
-          <DailyGameCard state={wordGame} kind="game" title={t("pages.wordOfTheDay")} statusKey={wordStatus} language={language} />
+          <DailyGameCard state={wordGame} kind="game" artwork={gameArtworkKeys("word-game")} title={t("pages.wordOfTheDay")} statusKey={wordStatus} language={language} />
         )}
         {dailyQuiz && quizStatus && (
-          <DailyGameCard state={dailyQuiz} kind="quiz" title={t("today.dailyQuiz.title", { name: t("pages.alleskenner") })} statusKey={quizStatus} language={language} />
+          <DailyGameCard state={dailyQuiz} kind="quiz" artwork={gameArtworkKeys("alleskenner")} title={t("today.dailyQuiz.title", { name: t("pages.alleskenner") })} statusKey={quizStatus} language={language} />
         )}
       </div>
     </section>

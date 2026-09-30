@@ -21,7 +21,12 @@ export default function DiscoverySection({ items, language }: { items: DiscoverI
           // Op een telefoon vier kaarten (twee rijen); meer maakt de pagina lang.
           <li key={item.key} className={i >= 4 ? "max-sm:hidden" : undefined}>
             <Link href={item.href} className={`${interactiveCard} flex h-full flex-col overflow-hidden`}>
-              <MediaArtwork kind={item.kind === "game" ? "game" : "course"} artworkKey={item.key} ratio="4/3" />
+              <MediaArtwork
+                kind={item.kind === "game" ? "game" : "course"}
+                artworkKey={item.artwork}
+                ratio="4/3"
+                sizes="(min-width: 1024px) 220px, (min-width: 640px) 33vw, 50vw"
+              />
               <div className="flex flex-1 flex-col gap-1 p-3 sm:p-4">
                 <p className="text-[11px] font-bold uppercase tracking-wide text-vs-fg-3">
                   {item.kind === "game" ? t("today.kind.game") : t("today.kind.course")}

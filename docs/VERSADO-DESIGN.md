@@ -52,9 +52,17 @@ lijst hierboven nog volledig.
   `src/components/today/`. Gedeelde serverlogica staat in
   `activeGames.ts`, `courseSummaries.ts` en `gameCatalog.ts`, zodat de
   bestaande API-routes en Vandaag dezelfde bron gebruiken.
-- **Plekken voor beeld**: `versado/MediaArtwork.tsx` (neutrale placeholder
-  met icoon zolang er geen asset is; assets komen in `src/lib/artwork.ts`)
-  en `versado/MascotSlot.tsx` (rendert niets tot de mascottes er zijn).
+- **Beeld bij content**: `src/lib/artwork.ts` is de enige plek die weet
+  welke afbeelding bij welke content hoort (register plus helpers die per
+  cursus, boek, podcast of spel sleutels geven, van specifiek naar
+  algemeen). Bestanden staan in `public/images/`, zonder tekst erin;
+  `versado/MediaArtwork.tsx` toont ze via `next/image` (WebP per
+  schermbreedte, vaste verhouding, gemiddelde kleur tijdens laden, neutrale
+  placeholder met icoon als er geen beeld is of het niet laadt). Eerste
+  set: 1 Nephi (ook het algemene beeld voor het Boek van Mormon), Alma,
+  Het leven van Christus (voor een cursus met slug `life-of-christ`, die er
+  nog niet is), podcast (algemeen), De Slimste Heilige en de tekst van de
+  dag. `versado/MascotSlot.tsx` rendert niets tot de mascottes er zijn.
   `versado/Carousel.tsx` is de veegrij met puntjes en pijlen.
 
 ## Wat Versado is

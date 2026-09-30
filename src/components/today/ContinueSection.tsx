@@ -22,7 +22,12 @@ function ContinueCard({ item, language }: { item: ContinueItem; language: string
       : item.position;
   return (
     <Link href={item.href} className={`${interactiveCard} flex h-full flex-col overflow-hidden`}>
-      <MediaArtwork kind={item.kind === "podcast" ? "podcast" : "reading"} artworkKey={item.key} ratio="21/9">
+      <MediaArtwork
+        kind={item.kind === "podcast" ? "podcast" : "reading"}
+        artworkKey={item.artwork}
+        ratio="21/9"
+        sizes="(min-width: 1024px) 300px, (min-width: 640px) 46vw, 82vw"
+      >
         <span className="absolute left-3 top-3 rounded-full bg-vs-elevated/90 px-2.5 py-1 text-xs font-bold text-vs-fg-2 backdrop-blur">
           {item.kind === "podcast" ? t("today.kind.podcast") : t("today.kind.course")}
         </span>
