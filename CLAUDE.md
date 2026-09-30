@@ -52,6 +52,19 @@ praktijk toegepast wordt.
 - Begin bij de bestanden die direct bij de taak horen en volg
   imports/referenties wanneer meer context nodig is.
 
+## Versado: redesign in voorbereiding
+
+De app heet voortaan **Versado** (technische namen als `jehova`/`bom` blijven
+voorlopig staan). Er komt een visueel redesign op basis van Figma en nieuwe
+assets (mascottes VARO, VERA en NOVI, illustraties, eventueel Rive). Dat is
+**nog niet uitgevoerd**. Lees `docs/VERSADO-DESIGN.md` vóór je iets aan
+navigatie, dashboard, lay-out, thema, beeld, onboarding of profiel verandert:
+daar staan de Design Constitution, de richting voor de informatiearchitectuur
+(Vandaag, Leren, Spelen, Vrienden) en wat wel en niet mag zolang de ontwerpen
+er niet zijn. Kort: geen redesign of nieuwe schermen op eigen initiatief, geen
+tijdelijke mascottes of vervangende afbeeldingen, geen nieuwe emoji als
+structureel icoon, en bestaande functionaliteit en routes blijven werken.
+
 ## Techstack
 
 - Next.js 16 (App Router) + TypeScript (strict) + Tailwind CSS + React 19
