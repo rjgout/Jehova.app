@@ -1,0 +1,29 @@
+import type { MessageKey } from "@/lib/i18n/core";
+
+// De onderdelen van het profiel. Elk heeft een eigen adres
+// (/profile?view=...), zodat terug en vooruit van de browser ertussen werken.
+// De terugbalk (SubpageBackBar) haalt hier de titel vandaan; ProfileClient
+// toont de inhoud.
+
+export const PROFILE_VIEWS = {
+  competition: { title: "nav.competition", subtitle: "profile.thisWeek" },
+  achievements: { title: "profile.achievements" },
+  reading: { title: "profile.readingProgress" },
+  language: { title: "languageSettings.title" },
+  readAloud: { title: "profile.readAloud" },
+  notifications: { title: "profile.notifications" },
+  privacy: { title: "profile.privacy" },
+  presence: { title: "profile.onlineActivity" },
+  about: { title: "profile.aboutSection" },
+  twoFactor: { title: "profile.twoFactor" },
+} satisfies Record<string, { title: MessageKey; subtitle?: MessageKey }>;
+
+export type ProfileView = keyof typeof PROFILE_VIEWS;
+
+export function parseProfileView(value: string | null | undefined): ProfileView | null {
+  return value && Object.hasOwn(PROFILE_VIEWS, value) ? (value as ProfileView) : null;
+}
+
+export function profileViewHref(view: ProfileView): string {
+  return `/profile?view=${view}`;
+}

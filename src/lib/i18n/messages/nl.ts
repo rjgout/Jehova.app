@@ -64,10 +64,6 @@ export const nl = {
     introLesson: "Introductieles",
     chapter: "Hoofdstuk",
   },
-  backBar: {
-    backTo: "Terug naar",
-    backToAria: "Terug naar {name}",
-  },
   header: {
     streak: "Reeks",
     xp: "Ervaringspunten",
@@ -1166,7 +1162,7 @@ export const nl = {
   profile: {
     progressSection: "Jouw voortgang",
     preferencesSection: "Voorkeuren",
-    socialPrivacySection: "Sociaal & privacy",
+    accountSecuritySection: "Account en beveiliging",
     aboutSection: "Over Versado",
     pushToggleFailed: "Kon pushnotificaties niet in-/uitschakelen.",
     testPushFailed: "Kon geen testmelding versturen.",
@@ -1176,7 +1172,6 @@ export const nl = {
     oneEmoji: "Kies precies één emoji.",
     voiceSample: "Dit is een voorbeeld van de stem die wordt gebruikt bij het voorlezen.",
     toAdmin: "⚙️ Naar adminbeheer",
-    giveFeedback: "💬 Feedback geven",
     changeAvatar: "Avatar wijzigen",
     changeHandle: "Gebruikersnaam wijzigen",
     save: "Opslaan",
@@ -1242,7 +1237,6 @@ export const nl = {
     deleteAccount: "Account verwijderen",
     deleteWarning: "Dit verwijdert je account en alle bijbehorende gegevens (voortgang, vrienden, quizresultaten) definitief. Dit kan niet ongedaan worden gemaakt.",
     deleteConfirm: "Ja, definitief verwijderen",
-    account: "Account",
     twoFactor: "Tweestapsverificatie",
     changePassword: "Wachtwoord wijzigen",
     logout: "Uitloggen",
@@ -1541,10 +1535,10 @@ export const nl = {
     cookies: "Cookiebeleid",
   },
   theme: {
-    lightOn: "Zet lichte modus aan",
-    darkOn: "Zet donkere modus aan",
-    light: "Lichte modus",
-    dark: "Donkere modus",
+    appearance: "Weergave",
+    system: "Systeem",
+    light: "Licht",
+    dark: "Donker",
   },
   auth: {
     codeWrong: "De verificatiecode klopt niet.",

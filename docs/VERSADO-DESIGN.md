@@ -47,6 +47,17 @@ lijst hierboven nog volledig.
   `/activity`, en `shell/HeaderAvatar.tsx` als ingang naar het profiel. Reeks,
   XP en divisie staan in `NavUserBadges.tsx`. Alle bestaande routes werken
   ongewijzigd.
+- **Terug en scrollen**: één centrale laag, geen code per pagina.
+  Detailpagina's krijgen hun kop ("← Titel", optioneel een ondertitel) uit
+  `SubpageBackBar.tsx` (lijst van pagina's met titel en terugval). De pijl
+  werkt als de terugknop van de browser (`useBackNavigation` in
+  `src/lib/navigationHistory.ts`); alleen zonder vorige pagina in de app
+  (deeplink) gaat hij met replace naar de terugval. `shell/NavigationScroll.tsx`
+  zet een nieuwe pagina bovenaan en herstelt bij terug/vooruit de oude
+  positie (ook als de pagina zijn inhoud pas na het tonen ophaalt). Het
+  venster is de scrollcontainer: zet `overflow` dus niet op `html` (zie
+  `globals.css`). Onderdelen van het profiel hebben een eigen adres
+  (`/profile?view=...`, `src/lib/profileViews.ts`).
 - **Vandaag**: `src/app/dashboard/page.tsx` met de data uit
   `src/lib/today.ts` (`getTodayData`) en de blokken in
   `src/components/today/`. Gedeelde serverlogica staat in
@@ -247,8 +258,8 @@ Gecontroleerd in de code; bestandsnamen om snel terug te vinden.
   gebruikers pas vanaf desktopbreedte `lg`), contentkiezer
   (`ContentSwitcher`), meldingen (`NotificationCenter`), reeks en XP
   (`NavUserBadges`). Geen avatar of profielingang in de header.
-- Daaronder in dezelfde vaste balk: terugbalk (`SubpageBackBar`), podcast- en
-  voorlees-minispeler. `--header-height` wordt gemeten en door `<main>`
+- Daaronder in dezelfde vaste balk: kop van detailpagina's met terugpijl
+  (`SubpageBackBar`), podcast- en voorlees-minispeler. `--header-height` wordt gemeten en door `<main>`
   gebruikt.
 - Breedte: `max-w-5xl` als standaard (zie CLAUDE.md "Paginabreedte"). De
   lay-out is overwegend één kolom; tablet/desktop krijgen vooral meer breedte,
@@ -317,11 +328,14 @@ Gecontroleerd in de code; bestandsnamen om snel terug te vinden.
   contentcollectie (`GameContentScope`).
 - Live spellen draaien in-memory in `src/server/gameServer.ts` (Socket.io).
 
-**Profiel** (`ProfileClient`, ruim 1100 regels)
-- Mengt statistieken (reeks, XP, freezes, hoofdstukken, competitie,
-  seizoenen, leesvoortgang, prestaties) met instellingen (taal, thema,
-  rondleiding, voorlezen, meldingen, privacy, online-activiteit, account, 2FA,
-  account verwijderen) en links (feedback, winkel, beheer).
+**Profiel** (`ProfileClient`)
+- Bovenaan wie je bent (avatar, naam, reeks, XP, freezes, hoofdstukken,
+  divisie), daaronder de acties Winkel en Feedback (de enige ingang naar de
+  winkel), dan competitie en voortgang (prestaties, leesvoortgang),
+  Voorkeuren (weergave, taal, voorlezen, meldingen, online en activiteit,
+  privacy), Over (wat is nieuw, rondleiding) en Account en beveiliging
+  (2FA, wachtwoord, uitloggen). Account verwijderen staat los en klein
+  onderaan. Onderdelen openen op een eigen adres (`src/lib/profileViews.ts`).
 
 **PWA en meldingen**
 - Dynamisch manifest `/api/branding/manifest` (ook op `/manifest.webmanifest`),
@@ -334,8 +348,10 @@ Gecontroleerd in de code; bestandsnamen om snel terug te vinden.
   categorie).
 
 **Thema**
-- Dark mode via de klasse `dark` (`ThemeScript` zet hem vóór het tekenen,
-  `ThemeToggle` in het profiel, voorkeur in localStorage).
+- Dark mode via de klasse `dark` (`ThemeScript` zet hem vóór het tekenen en
+  volgt een wisseling van het systeemthema). Keuze Systeem, Licht of Donker
+  onder Voorkeuren in het profiel (`ThemePreference`); geen opgeslagen
+  voorkeur in localStorage betekent Systeem.
 - Kleuren: Tailwind-palet `brand`/`gold`/`ice` in `tailwind.config.ts`, font
   Nunito, animaties `pop` en `shake`. Kleuren staan als vaste klassen in de
   componenten (ruim 1200 `dark:`-varianten), niet als centrale variabelen.

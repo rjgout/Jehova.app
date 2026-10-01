@@ -118,10 +118,6 @@ export const de: PartialMessages = {
     introLesson: "Einführungslektion",
     chapter: "Kapitel",
   },
-  backBar: {
-    backTo: "Zurück zu",
-    backToAria: "Zurück zu {name}",
-  },
   header: {
     streak: "Serie",
     xp: "Erfahrungspunkte",
@@ -1162,7 +1158,7 @@ export const de: PartialMessages = {
   profile: {
     progressSection: "Dein Fortschritt",
     preferencesSection: "Einstellungen",
-    socialPrivacySection: "Soziales & Datenschutz",
+    accountSecuritySection: "Konto & Sicherheit",
     aboutSection: "Über Versado",
     pushToggleFailed: "Push-Benachrichtigungen konnten nicht ein- oder ausgeschaltet werden.",
     testPushFailed: "Es konnte keine Testbenachrichtigung gesendet werden.",
@@ -1172,7 +1168,6 @@ export const de: PartialMessages = {
     oneEmoji: "Wähle genau ein Emoji.",
     voiceSample: "Dies ist ein Beispiel für die Stimme, die beim Vorlesen verwendet wird.",
     toAdmin: "⚙️ Zur Verwaltung",
-    giveFeedback: "💬 Feedback geben",
     changeAvatar: "Avatar ändern",
     changeHandle: "Benutzernamen ändern",
     save: "Speichern",
@@ -1238,7 +1233,6 @@ export const de: PartialMessages = {
     deleteAccount: "Konto löschen",
     deleteWarning: "Damit werden dein Konto und alle zugehörigen Daten (Fortschritt, Freunde, Quizergebnisse) endgültig gelöscht. Das kann nicht rückgängig gemacht werden.",
     deleteConfirm: "Ja, endgültig löschen",
-    account: "Konto",
     twoFactor: "Zwei-Schritt-Verifizierung",
     changePassword: "Passwort ändern",
     logout: "Abmelden",
@@ -1537,10 +1531,10 @@ export const de: PartialMessages = {
     cookies: "Cookie-Richtlinie",
   },
   theme: {
-    lightOn: "Hellen Modus einschalten",
-    darkOn: "Dunklen Modus einschalten",
-    light: "Heller Modus",
-    dark: "Dunkler Modus",
+    appearance: "Darstellung",
+    system: "System",
+    light: "Hell",
+    dark: "Dunkel",
   },
   auth: {
     codeWrong: "Der Bestätigungscode ist falsch.",

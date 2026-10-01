@@ -3,8 +3,9 @@
 import { useEffect, useSyncExternalStore } from "react";
 
 // De terugbalk (SubpageBackBar) kijkt alleen naar het adres. Een les weet
-// zelf uit welke cursus hij komt; die geeft de pagina hier door, zodat
-// "terug" naar die cursus gaat in plaats van naar de cursussenlijst.
+// zelf uit welke cursus hij komt; die geeft de pagina hier door. De balk
+// toont de cursusnaam dan als ondertitel, en een rechtstreeks geopende les
+// gaat terug naar die cursus in plaats van naar de cursussenlijst.
 
 export interface BackTargetOverride {
   pathname: string;

@@ -19,14 +19,18 @@ body {
      `touch-none`), die deze algemene regel overschrijft. */
   touch-action: pan-y pinch-zoom;
   overscroll-behavior-x: none;
-  /* Vangnet: geen enkel element hoort de pagina breder dan het scherm te
-     maken, maar mocht dat toch gebeuren dan voorkomt dit alsnog dat dat een
-     horizontale scrollruimte (en daarmee een edge-swipe-aangrijpingspunt)
-     oplevert. */
-  overflow-x: hidden;
 }
 
 body {
+  /* Vangnet: geen enkel element hoort de pagina breder dan het scherm te
+     maken, maar mocht dat toch gebeuren dan voorkomt dit alsnog dat dat een
+     horizontale scrollruimte (en daarmee een edge-swipe-aangrijpingspunt)
+     oplevert. Bewust alleen op body: de browser geeft het dan door aan het
+     venster. Stond het ook op html, dan werd body (met height: 100%) zelf
+     de scrollcontainer in plaats van het venster, en werkten naar boven
+     scrollen bij navigatie, terug naar de oude positie en scroll-locks
+     (body.style.overflow) niet meer. */
+  overflow-x: hidden;
   @apply bg-brand-50 text-slate-800 font-display transition-colors;
   @apply dark:bg-slate-900 dark:text-slate-100;
 }

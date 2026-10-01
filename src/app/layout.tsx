@@ -2,6 +2,7 @@ import FreezeGiftPopup from "@/components/FreezeGiftPopup";
 import { ConfirmProvider } from "@/components/ConfirmProvider";
 import type { Metadata, Viewport } from "next";
 import Link from "next/link";
+import { Suspense } from "react";
 import { headers } from "next/headers";
 import "./globals.css";
 import { getCurrentUser } from "@/lib/session";
@@ -22,6 +23,7 @@ import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
 import NotificationCenter from "@/components/NotificationCenter";
 import EdgeSwipeGuard from "@/components/EdgeSwipeGuard";
 import SubpageBackBar from "@/components/SubpageBackBar";
+import NavigationScroll from "@/components/shell/NavigationScroll";
 import PodcastMiniPlayer from "@/components/PodcastMiniPlayer";
 import HeaderInstallHint from "@/components/HeaderInstallHint";
 import PublicLanguageSwitcher from "@/components/PublicLanguageSwitcher";
@@ -214,11 +216,12 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         </header>
         {/* Eerst de terugbalk, dan de spelers: de navigatie blijft zo op een
             vaste plek direct onder de header, ook als er een speler bij komt. */}
-        {user && <SubpageBackBar />}
+        {user && <Suspense fallback={null}><SubpageBackBar /></Suspense>}
         {user && <PodcastMiniPlayer />}
         {user && <ReadAloudMiniPlayer />}
         {user && <ActivityTracker />}
         </StickyHeader>
+        <Suspense fallback={null}><NavigationScroll /></Suspense>
         <main className="mx-auto max-w-5xl px-4 pb-[calc(6rem+env(safe-area-inset-bottom))] pt-[calc(var(--header-height,4.5rem)+2rem)] lg:pb-16">
           {user && <SocialTabs />}
           {children}

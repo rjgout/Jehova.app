@@ -118,10 +118,6 @@ export const es: PartialMessages = {
     "introLesson": "Lección de introducción",
     "chapter": "Capítulo"
   },
-  "backBar": {
-    "backTo": "Volver a",
-    "backToAria": "Volver a {name}"
-  },
   "header": {
     "streak": "Racha",
     "xp": "Puntos de experiencia",
@@ -1172,7 +1168,7 @@ export const es: PartialMessages = {
   "profile": {
     "progressSection": "Tu progreso",
     "preferencesSection": "Preferencias",
-    "socialPrivacySection": "Social y privacidad",
+    "accountSecuritySection": "Cuenta y seguridad",
     "aboutSection": "Acerca de Versado",
     "pushToggleFailed": "No se pudieron activar las notificaciones push o desactivado.",
     "testPushFailed": "No se pudo enviar una notificación de prueba.",
@@ -1182,7 +1178,6 @@ export const es: PartialMessages = {
     "oneEmoji": "Elige exactamente un emoji.",
     "voiceSample": "Esta es una muestra de la voz utilizada para leer en voz alta.",
     "toAdmin": "⚙️ Al administrador",
-    "giveFeedback": "💬 Dar comentarios",
     "changeAvatar": "Cambiar avatar",
     "changeHandle": "Cambiar nombre de usuario",
     "save": "Guardar",
@@ -1248,7 +1243,6 @@ export const es: PartialMessages = {
     "deleteAccount": "Eliminar cuenta",
     "deleteWarning": "Esto elimina permanentemente tu cuenta y todos los datos relacionados (progreso, amigos, resultados de pruebas). Esto no se puede deshacer.",
     "deleteConfirm": "Sí, eliminar permanentemente",
-    "account": "Cuenta",
     "twoFactor": "Verificación en dos pasos",
     "changePassword": "Cambiar contraseña",
     "logout": "Cerrar sesión",
@@ -1547,10 +1541,10 @@ export const es: PartialMessages = {
     "cookies": "Política de cookies"
   },
   "theme": {
-    "lightOn": "Encender la luz mode",
-    "darkOn": "Activar modo oscuro",
-    "light": "Modo claro",
-    "dark": "Modo oscuro"
+    "appearance": "Apariencia",
+    "system": "Sistema",
+    "light": "Claro",
+    "dark": "Oscuro"
   },
   "auth": {
     "codeWrong": "El código de verificación es incorrecto.",

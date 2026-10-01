@@ -118,10 +118,6 @@ export const en: PartialMessages = {
     introLesson: "Introduction lesson",
     chapter: "Chapter",
   },
-  backBar: {
-    backTo: "Back to",
-    backToAria: "Back to {name}",
-  },
   header: {
     streak: "Streak",
     xp: "Experience points",
@@ -1162,7 +1158,7 @@ export const en: PartialMessages = {
   profile: {
     progressSection: "Your progress",
     preferencesSection: "Preferences",
-    socialPrivacySection: "Social & privacy",
+    accountSecuritySection: "Account & security",
     aboutSection: "About Versado",
     pushToggleFailed: "Couldn't turn push notifications on or off.",
     testPushFailed: "Couldn't send a test notification.",
@@ -1172,7 +1168,6 @@ export const en: PartialMessages = {
     oneEmoji: "Choose exactly one emoji.",
     voiceSample: "This is a sample of the voice used for reading aloud.",
     toAdmin: "⚙️ To admin",
-    giveFeedback: "💬 Give feedback",
     changeAvatar: "Change avatar",
     changeHandle: "Change username",
     save: "Save",
@@ -1238,7 +1233,6 @@ export const en: PartialMessages = {
     deleteAccount: "Delete account",
     deleteWarning: "This permanently deletes your account and all related data (progress, friends, quiz results). This can't be undone.",
     deleteConfirm: "Yes, delete permanently",
-    account: "Account",
     twoFactor: "Two-step verification",
     changePassword: "Change password",
     logout: "Log out",
@@ -1537,10 +1531,10 @@ export const en: PartialMessages = {
     cookies: "Cookie policy",
   },
   theme: {
-    lightOn: "Turn on light mode",
-    darkOn: "Turn on dark mode",
-    light: "Light mode",
-    dark: "Dark mode",
+    appearance: "Appearance",
+    system: "System",
+    light: "Light",
+    dark: "Dark",
   },
   auth: {
     codeWrong: "The verification code is incorrect.",

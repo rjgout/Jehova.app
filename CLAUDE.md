@@ -134,6 +134,14 @@ Controleer bij twijfel: `grep -rn "next/headers" src/lib src/server server.ts`
   `notify.ts`, `email.ts`, `auth.ts`, `session.ts`, `baseUrl.ts`, `dates.ts`, ...)
 - `src/components/**` — client components (`"use client"`), meestal één
   `<Feature>Client.tsx` per pagina die de eigen data fetcht
+- Terug en scrollen zijn centraal geregeld: de kop van een detailpagina
+  ("← Titel") komt uit `SubpageBackBar.tsx`, de pijl werkt als browser-terug
+  (`useBackNavigation`, `src/lib/navigationHistory.ts`), en
+  `shell/NavigationScroll.tsx` zet een nieuwe pagina bovenaan en herstelt
+  bij terug/vooruit de oude positie. Geen eigen terugknoppen of
+  `window.scrollTo(0, 0)` per pagina, en geen `overflow` op `html` (dan
+  scrolt het venster niet meer, zie `globals.css`). Zie
+  `docs/VERSADO-DESIGN.md`.
 - `prisma/schema.prisma` + `prisma/migrations/**` — datamodel en migraties
 - `prisma/seed.ts`, `import.ts`, `importKids.ts`, `importPodcast.ts` — content laden
 - `deploy/`, `docs/DEPLOY-SYNOLOGY.md` — self-host-referentiedeploy (Synology + Portainer)

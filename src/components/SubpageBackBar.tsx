@@ -1,126 +1,122 @@
 "use client";
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
+import { ArrowLeft } from "lucide-react";
 import { useBackTargetOverride } from "@/lib/backTarget";
+import { useBackNavigation } from "@/lib/navigationHistory";
+import { parseProfileView, PROFILE_VIEWS } from "@/lib/profileViews";
 import { useT } from "@/components/I18nProvider";
 import type { MessageKey } from "@/lib/i18n/core";
-import SystemIcon from "@/components/versado/SystemIcon";
 
-type BackIcon = string | { kind: "streak" | "xp" };
-
-interface BackTarget {
-  href: string; // waar "terug" naartoe gaat
-  parent: MessageKey; // naam van die pagina
-  title: MessageKey; // de huidige pagina
-  icon: BackIcon;
+interface DetailPage {
+  /** Alleen gebruikt zonder vorige pagina in de app (een deeplink). */
+  fallback: string;
+  title: MessageKey;
+  subtitle?: MessageKey;
 }
 
 // De onderliggende pagina's van Hulpmiddelen. Bladwijzers staat bewust op
 // /bookmarks (ouder dan de hulpmiddelenpagina), maar hoort daar wel bij.
-const TOOL_SUBPAGES: Record<string, { title: MessageKey; icon: BackIcon }> = {
-  "/tools/dictionary": { title: "pages.dictionary", icon: "📚" },
-  "/bookmarks": { title: "pages.bookmarks", icon: "🔖" },
-  "/tools/xp-guide": { title: "pages.xpGuide", icon: { kind: "xp" } },
-  "/tools/persons": { title: "pages.persons", icon: "👤" },
+const TOOL_SUBPAGES: Record<string, MessageKey> = {
+  "/tools/dictionary": "pages.dictionary",
+  "/bookmarks": "pages.bookmarks",
+  "/tools/xp-guide": "pages.xpGuide",
+  "/tools/persons": "pages.persons",
 };
 
-// De spellen op Spelen (/live, zie LiveLobbyForm.tsx): de eigen pagina van
-// een spel gaat terug naar Spelen. Een lopend spel (/live/<code>) bewust niet:
-// daar leidt een terugbalk alleen af.
-const GAME_PAGES: Record<string, { title: MessageKey; icon: string }> = {
-  "/jigsaw": { title: "jigsaw.title", icon: "🧩" },
-  "/word-game": { title: "pages.wordOfTheDay", icon: "🟩" },
-  "/scrabble": { title: "pages.wordGame", icon: "🔤" },
-  "/alleskenner": { title: "pages.alleskenner", icon: "🧠" },
-  "/gezinsavond": { title: "pages.familyNight", icon: "🎉" },
-  "/chapter-guess": { title: "pages.chapterGuess", icon: "🔎" },
-  "/challenges": { title: "pages.challenges", icon: "⚔️" },
+// Pagina's die je vanuit het profiel opent (zie docs/VERSADO-DESIGN.md).
+const PROFILE_SUBPAGES: Record<string, MessageKey> = {
+  "/feedback": "pages.feedback",
+  "/shop": "nav.shop",
+  "/xp": "header.xp",
+  "/streak": "header.streak",
+  "/change-password": "profile.changePassword",
 };
 
-const LESSON_PAGES: [RegExp, MessageKey, string][] = [
-  [/^\/lesson\/[^/]+$/, "pages.lesson", "📖"],
-  [/^\/reading-lesson\/[^/]+$/, "pages.step", "📖"],
-  [/^\/podcast\/[^/]+\/[^/]+$/, "pages.podcastLesson", "🎙️"],
-  [/^\/kids\/[^/]+$/, "pages.kidsStory", "🧒"],
-  [/^\/intro\/[^/]+$/, "pages.introLesson", "✨"],
+// De spellen op Spelen (/live, zie LiveLobbyForm.tsx). Een lopend spel
+// (/live/<code>) bewust niet: daar leidt een terugbalk alleen af.
+const GAME_PAGES: Record<string, MessageKey> = {
+  "/jigsaw": "jigsaw.title",
+  "/word-game": "pages.wordOfTheDay",
+  "/scrabble": "pages.wordGame",
+  "/alleskenner": "pages.alleskenner",
+  "/gezinsavond": "pages.familyNight",
+  "/chapter-guess": "pages.chapterGuess",
+  "/challenges": "pages.challenges",
+};
+
+const LESSON_PAGES: [RegExp, MessageKey][] = [
+  [/^\/lesson\/[^/]+$/, "pages.lesson"],
+  [/^\/reading-lesson\/[^/]+$/, "pages.step"],
+  [/^\/podcast\/[^/]+\/[^/]+$/, "pages.podcastLesson"],
+  [/^\/kids\/[^/]+$/, "pages.kidsStory"],
+  [/^\/intro\/[^/]+$/, "pages.introLesson"],
 ];
 
-function backTargetFor(pathname: string): BackTarget | null {
+function detailPageFor(pathname: string, profileView: string | null): DetailPage | null {
+  if (pathname === "/profile") {
+    const view = parseProfileView(profileView);
+    return view ? { fallback: "/profile", ...PROFILE_VIEWS[view] } : null;
+  }
+  const profileSubpage = PROFILE_SUBPAGES[pathname];
+  if (profileSubpage) return { fallback: "/profile", title: profileSubpage };
   const tool = TOOL_SUBPAGES[pathname];
-  if (tool) return { href: "/tools", parent: "pages.tools", ...tool };
-  if (pathname === "/feedback") return { href: "/profile", parent: "pages.profile", title: "pages.feedback", icon: "💬" };
+  if (tool) return { fallback: "/tools", title: tool };
   const game = GAME_PAGES[pathname];
-  if (game) return { href: "/live", parent: "pages.play", ...game };
-  if (pathname === "/alleskenner/alleen") return { href: "/alleskenner", parent: "pages.alleskenner", title: "pages.playAlone", icon: "🧠" };
-  if (pathname === "/alleskenner/seizoen") return { href: "/alleskenner", parent: "pages.alleskenner", title: "pages.seasons", icon: "📅" };
-  if (/^\/alleskenner\/seizoen\/[^/]+$/.test(pathname)) {
-    return { href: "/alleskenner/seizoen", parent: "pages.seasons", title: "pages.season", icon: "📅" };
-  }
-  if (/^\/chapter-guess\/solo\/[^/]+$/.test(pathname)) {
-    return { href: "/chapter-guess", parent: "pages.chapterGuess", title: "pages.playAlone", icon: "🔎" };
-  }
-  if (/^\/scrabble\/[^/]+$/.test(pathname)) return { href: "/scrabble", parent: "pages.wordGames", title: "pages.wordGame", icon: "🔤" };
-  if (/^\/fsy\/[^/]+$/.test(pathname)) return { href: "/courses", parent: "pages.courses", title: "pages.lesson", icon: "📘" };
+  if (game) return { fallback: "/live", title: game };
+  if (pathname === "/alleskenner/alleen") return { fallback: "/alleskenner", title: "pages.playAlone" };
+  if (pathname === "/alleskenner/seizoen") return { fallback: "/alleskenner", title: "pages.seasons" };
+  if (/^\/alleskenner\/seizoen\/[^/]+$/.test(pathname)) return { fallback: "/alleskenner/seizoen", title: "pages.season" };
+  if (/^\/chapter-guess\/solo\/[^/]+$/.test(pathname)) return { fallback: "/chapter-guess", title: "pages.playAlone" };
+  if (/^\/scrabble\/[^/]+$/.test(pathname)) return { fallback: "/scrabble", title: "pages.wordGame" };
+  if (/^\/fsy\/[^/]+$/.test(pathname)) return { fallback: "/courses", title: "pages.lesson" };
   // Lessen uit een cursus. Weet de pagina uit welke cursus de les komt, dan
-  // geeft hij die door (zie CourseBackTarget); anders, bv. vanuit
-  // bladwijzers of zoeken, gaat terug naar de cursussenlijst.
+  // geeft hij die door (zie CourseBackTarget) als terugval en ondertitel.
   const lesson = LESSON_PAGES.find(([pattern]) => pattern.test(pathname));
-  if (lesson) return { href: "/courses", parent: "pages.courses", title: lesson[1], icon: lesson[2] };
+  if (lesson) return { fallback: "/courses", title: lesson[1] };
   const chapter = /^\/courses\/([^/]+)\/chapter\/[^/]+$/.exec(pathname);
-  if (chapter) return { href: `/courses/${chapter[1]}`, parent: "pages.course", title: "pages.chapter", icon: "📖" };
-  if (/^\/courses\/[^/]+$/.test(pathname)) return { href: "/courses", parent: "pages.courses", title: "pages.course", icon: "📚" };
+  if (chapter) return { fallback: `/courses/${chapter[1]}`, title: "pages.chapter" };
+  if (/^\/courses\/[^/]+$/.test(pathname)) return { fallback: "/courses", title: "pages.course" };
   return null;
 }
 
 /**
- * Paginabrede terugbalk voor onderliggende pagina's (Hulpmiddelen, Feedback,
- * een woordspel, een les of hoofdstuk), in plaats van losse "← Terug"-tekst
- * per pagina. Staat in de vaste bovenbalk (StickyHeader in layout.tsx),
- * direct onder de header en boven eventuele miniplayers, en telt zijn hoogte
- * vanzelf mee in --header-height.
+ * De kop van elke detailpagina: "← Paginatitel" met eventueel een
+ * ondertitel, in de vaste bovenbalk (StickyHeader in layout.tsx), direct
+ * onder de header en boven eventuele miniplayers. Telt vanzelf mee in
+ * --header-height.
+ *
+ * De pijl werkt als de terugknop van de browser (useBackNavigation): je
+ * komt terug waar je vandaan kwam, ook als dat Vandaag of een melding was.
+ * Alleen bij een rechtstreeks geopende link gaat hij naar de logische
+ * bovenliggende pagina (`fallback`).
  */
 export default function SubpageBackBar() {
   const pathname = usePathname();
+  const profileView = useSearchParams().get("view");
   const t = useT();
   const override = useBackTargetOverride(pathname);
-  const base = backTargetFor(pathname);
-  if (!base) return null;
-  const isCourseDetail = /^\/courses\/[^/]+$/.test(pathname);
+  const page = detailPageFor(pathname, profileView);
+  const goBack = useBackNavigation(override?.href ?? page?.fallback ?? "/dashboard");
+  if (!page) return null;
   // Een cursusnaam (override) komt al als tekst uit de database.
-  const page = {
-    href: override?.href ?? base.href,
-    parent: override?.parent ?? t(base.parent),
-    title: t(base.title),
-    icon: base.icon,
-  };
+  const subtitle = override?.parent ?? (page.subtitle ? t(page.subtitle) : null);
 
   return (
-    <div className="bg-gradient-to-r from-brand-600 to-brand-500 dark:from-brand-800 dark:to-brand-700 text-white shadow-md shadow-brand-900/10">
-      <div className="mx-auto max-w-5xl px-4 py-2 flex items-center gap-3">
-        <Link
-          href={page.href}
-          className="group flex shrink-0 items-center gap-2.5 rounded-full pr-2 -ml-1 py-0.5 transition active:scale-95"
-          aria-label={t("backBar.backToAria", { name: page.parent })}
+    <div className="border-b border-vs-line bg-vs-elevated">
+      <div className="mx-auto flex max-w-5xl min-w-0 items-center gap-1 px-4 py-1">
+        <button
+          type="button"
+          onClick={goBack}
+          aria-label={t("common.back")}
+          className="-ml-3 flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-vs-fg-2 transition hover:text-vs-fg active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-vs-accent"
         >
-          <span className="h-8 w-8 shrink-0 rounded-full bg-white/20 ring-1 ring-white/30 flex items-center justify-center transition group-hover:bg-white/30">
-            <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={3} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-              <path d="M15 18l-6-6 6-6" />
-            </svg>
-          </span>
-          <span className="flex flex-col leading-tight min-w-0">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-white/70">{t("backBar.backTo")}</span>
-            {/* Cursusnamen kunnen lang zijn ("Verhalen uit het Boek van Mormon (voor kinderen)"). */}
-            <span className="font-extrabold truncate max-w-[55vw] sm:max-w-md">{page.parent}</span>
-          </span>
-        </Link>
-
-        {!isCourseDetail && (
-          <span className="ml-auto flex min-w-0 items-center gap-1.5 rounded-full bg-white/15 px-2.5 py-1 text-sm font-bold">
-            {typeof page.icon === "string" ? <span aria-hidden>{page.icon}</span> : <SystemIcon kind={page.icon.kind} className="h-4 w-4" fill="currentColor" aria-hidden />}
-            <span className="truncate">{page.title}</span>
-          </span>
-        )}
+          <ArrowLeft className="h-5 w-5" strokeWidth={2.25} aria-hidden />
+        </button>
+        <div className="min-w-0 leading-tight">
+          <p className="truncate font-extrabold text-vs-fg">{t(page.title)}</p>
+          {subtitle && <p className="truncate text-xs font-semibold text-vs-fg-2">{subtitle}</p>}
+        </div>
       </div>
     </div>
   );

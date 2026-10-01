@@ -3,13 +3,13 @@
 import { useEffect, useState, type ReactNode, type SyntheticEvent } from "react";
 import Link from "next/link";
 import LanguageSettings from "@/components/LanguageSettings";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import type { LeagueTier } from "@prisma/client";
 import { TIER_ICONS } from "@/lib/leagues";
 import { formatTag, firstGrapheme, isSingleEmoji } from "@/lib/handle";
 import { enableBrowserPush, disableBrowserPush, isPushSupported } from "@/lib/pushClient";
 import { getSocket } from "@/lib/socketClient";
-import ThemeToggle from "@/components/ThemeToggle";
+import ThemePreference from "@/components/ThemePreference";
 import TwoFactorSettings from "@/components/TwoFactorSettings";
 import { getDutchVoices, saveSelectedDutchVoice } from "@/lib/readAloud";
 import { useT, useUiLanguage } from "@/components/I18nProvider";
@@ -18,8 +18,8 @@ import { getLanguage } from "@/lib/languages";
 import { translateOr } from "@/lib/i18n/core";
 import AppSelect from "@/components/AppSelect";
 import SystemIcon from "@/components/versado/SystemIcon";
+import { parseProfileView, profileViewHref, PROFILE_VIEWS, type ProfileView } from "@/lib/profileViews";
 import {
-  ArrowLeft,
   Bell,
   BookOpen,
   ChevronRight,
@@ -33,6 +33,7 @@ import {
   ShieldCheck,
   ShoppingBag,
   Sparkles,
+  SunMoon,
   Trash2,
   Trophy,
   Users,
@@ -92,19 +93,6 @@ interface ProfileData {
   achievements: AchievementView[];
 }
 
-type ProfileView =
-  | "overview"
-  | "competition"
-  | "achievements"
-  | "reading"
-  | "language"
-  | "readAloud"
-  | "notifications"
-  | "privacy"
-  | "presence"
-  | "about"
-  | "twoFactor";
-
 // Kleine, willekeurige greep uit veelgebruikte emoji — puur een handig
 // startpunt, geen uitputtende lijst; het invoerveld ernaast accepteert
 // elke andere emoji (behalve de geweerde, zie isSingleEmoji/containsForbiddenEmoji).
@@ -142,8 +130,10 @@ export default function ProfileClient() {
   const [selectedReadAloudVoice, setSelectedReadAloudVoice] = useState("");
   const [testingReadAloudVoice, setTestingReadAloudVoice] = useState(false);
   const [readAloudSpeed, setReadAloudSpeed] = useState(1);
-  const [view, setView] = useState<ProfileView>("overview");
   const router = useRouter();
+  // Elk onderdeel heeft een eigen adres (zie src/lib/profileViews.ts); de
+  // kop met terugpijl staat in de terugbalk (SubpageBackBar).
+  const view = parseProfileView(useSearchParams().get("view"));
 
   useEffect(() => {
     if (typeof window === "undefined" || !("speechSynthesis" in window)) return;
@@ -454,37 +444,33 @@ export default function ProfileClient() {
     </div>
   ) : null;
 
-  const profileHeading = (title: string, subtitle?: string) => (
-    <div className="flex items-start gap-3">
-      <button type="button" onClick={() => setView("overview")} className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-vs-fg-2 transition hover:bg-vs-subtle focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-vs-accent" aria-label={t("common.back")}>
-        <ArrowLeft className="h-5 w-5" aria-hidden />
-      </button>
-      <div>
-        <h1 className="text-2xl font-extrabold text-vs-fg">{title}</h1>
-        {subtitle && <p className="mt-1 text-sm text-vs-fg-2">{subtitle}</p>}
-      </div>
-    </div>
-  );
+  // Een gewone pushState in plaats van router.push: Next.js houdt dan
+  // useSearchParams bij zonder de pagina opnieuw te laden, zodat het
+  // overzicht bij terug meteen (en op dezelfde hoogte) weer klaarstaat.
+  function openView(next: ProfileView) {
+    window.history.pushState(null, "", profileViewHref(next));
+  }
 
-  if (view !== "overview") {
+  if (view) {
     return (
       <div className="mx-auto flex max-w-5xl flex-col gap-5">
-        {view === "competition" && <>{profileHeading(t("nav.competition"), t("profile.thisWeek"))}<CompetitionDetail data={data} tier={tier} t={t} /></>}
-        {view === "achievements" && <>{profileHeading(t("profile.achievements"))}<AchievementDetail data={data} earnedCount={earnedCount} t={t} /></>}
-        {view === "reading" && <>{profileHeading(t("profile.readingProgress"))}<ReadingDetail t={t} resetting={resettingReadingProgress} message={resetReadingMessage} onReset={async () => {
+        <h1 className="sr-only">{t(PROFILE_VIEWS[view].title)}</h1>
+        {view === "competition" && <CompetitionDetail data={data} tier={tier} t={t} />}
+        {view === "achievements" && <AchievementDetail data={data} earnedCount={earnedCount} t={t} />}
+        {view === "reading" && <ReadingDetail t={t} resetting={resettingReadingProgress} message={resetReadingMessage} onReset={async () => {
           if (!(await confirm(t("profile.readingResetConfirm")))) return;
           setResettingReadingProgress(true);
           const response = await fetch("/api/progress/reset-reading", { method: "POST" });
           setResettingReadingProgress(false);
           if (response.ok) { setResetReadingMessage(t("profile.readingResetDone")); router.refresh(); }
-        }} /></>}
-        {view === "language" && <>{profileHeading(t("languageSettings.title"))}<LanguageSettings uiLanguage={data.uiLanguage} isAdmin={data.isAdmin} /></>}
-        {view === "readAloud" && <>{profileHeading(t("profile.readAloud"))}<ReadAloudDetail t={t} voices={readAloudVoices} selectedVoice={selectedReadAloudVoice} speed={readAloudSpeed} testing={testingReadAloudVoice} onVoice={changeReadAloudVoice} onSpeed={changeReadAloudSpeed} onTest={testReadAloudVoice} /></>}
-        {view === "notifications" && <>{profileHeading(t("profile.notifications"))}<NotificationDetail data={data} t={t} saving={savingNotifications} pushError={pushError} testingPush={testingPush} pushCountdown={pushCountdown} pushTestMessage={pushTestMessage} onEmail={toggleEmailNotifications} onPush={togglePushNotifications} onTest={sendTestPush} onCategory={toggleCategory} onReminder={changeReminderTime} onDailyText={(time) => saveAccountPatch({ dailyTextTime: time }).then(() => setData((current) => current ? { ...current, dailyTextTime: time } : current))} /></>}
-        {view === "privacy" && <>{profileHeading(t("profile.privacy"))}<PrivacyDetail data={data} t={t} saving={savingPrivacy} onToggle={toggleSearchableByEmail} /></>}
-        {view === "presence" && <>{profileHeading(t("profile.onlineActivity"))}<PresenceDetail data={data} t={t} saving={savingPresence} onOnline={toggleShareOnlineStatus} onActivity={toggleShareCurrentActivity} onIncognito={activateIncognito} onIncognitoOff={deactivateIncognito} /></>}
-        {view === "about" && <>{profileHeading(t("profile.aboutSection"))}<AboutDetail data={data} t={t} saving={savingNotifications} onToggle={() => toggleCategory("changelogEnabled")} /></>}
-        {view === "twoFactor" && <>{profileHeading(t("profile.twoFactor"))}<section className="vs-surface rounded-2xl border border-vs-line p-4 sm:p-6"><TwoFactorSettings isAdmin={data.isAdmin} /></section></>}
+        }} />}
+        {view === "language" && <LanguageSettings uiLanguage={data.uiLanguage} isAdmin={data.isAdmin} />}
+        {view === "readAloud" && <ReadAloudDetail t={t} voices={readAloudVoices} selectedVoice={selectedReadAloudVoice} speed={readAloudSpeed} testing={testingReadAloudVoice} onVoice={changeReadAloudVoice} onSpeed={changeReadAloudSpeed} onTest={testReadAloudVoice} />}
+        {view === "notifications" && <NotificationDetail data={data} t={t} saving={savingNotifications} pushError={pushError} testingPush={testingPush} pushCountdown={pushCountdown} pushTestMessage={pushTestMessage} onEmail={toggleEmailNotifications} onPush={togglePushNotifications} onTest={sendTestPush} onCategory={toggleCategory} onReminder={changeReminderTime} onDailyText={(time) => saveAccountPatch({ dailyTextTime: time }).then(() => setData((current) => current ? { ...current, dailyTextTime: time } : current))} />}
+        {view === "privacy" && <PrivacyDetail data={data} t={t} saving={savingPrivacy} onToggle={toggleSearchableByEmail} />}
+        {view === "presence" && <PresenceDetail data={data} t={t} saving={savingPresence} onOnline={toggleShareOnlineStatus} onActivity={toggleShareCurrentActivity} onIncognito={activateIncognito} onIncognitoOff={deactivateIncognito} />}
+        {view === "about" && <AboutDetail data={data} t={t} saving={savingNotifications} onToggle={() => toggleCategory("changelogEnabled")} />}
+        {view === "twoFactor" && <section className="vs-surface rounded-2xl border border-vs-line p-4 sm:p-6"><TwoFactorSettings isAdmin={data.isAdmin} /></section>}
       </div>
     );
   }
@@ -519,49 +505,57 @@ export default function ProfileClient() {
       </section>
       {avatarPicker}
 
-      <div className="flex flex-wrap items-center justify-end gap-2">
-        <Link href="/feedback" className="inline-flex min-h-10 items-center gap-2 rounded-xl px-3 text-sm font-bold text-vs-fg-2 hover:bg-vs-subtle"><MessageSquare className="h-4 w-4" aria-hidden />{t("profile.giveFeedback")}</Link>
-        <Link href="/shop" className="inline-flex min-h-10 items-center gap-2 rounded-xl px-3 text-sm font-bold text-vs-fg-2 hover:bg-vs-subtle"><ShoppingBag className="h-4 w-4" aria-hidden />{t("nav.shop")}</Link>
-        <ThemeToggle />
+      {/* Acties direct onder de statistieken. Dit is de enige ingang naar
+          de winkel; feedback staat er bewust naast. */}
+      <div className="grid grid-cols-2 gap-3">
+        <ProfileAction icon={<ShoppingBag className="h-5 w-5 text-vs-xp" aria-hidden />} label={t("nav.shop")} href="/shop" />
+        <ProfileAction icon={<MessageSquare className="h-5 w-5 text-vs-accent" aria-hidden />} label={t("pages.feedback")} href="/feedback" />
       </div>
 
       <section className="vs-surface rounded-2xl border border-vs-line p-4 sm:p-5">
         <SectionHeading icon={<Trophy className="h-5 w-5 text-vs-xp" aria-hidden />} title={t("nav.competition")} />
-        <button type="button" onClick={() => setView("competition")} className="mt-3 flex min-h-12 w-full items-center justify-between gap-3 rounded-xl px-2 py-2 text-left hover:bg-vs-subtle">
+        <button type="button" onClick={() => openView("competition")} className="mt-3 flex min-h-12 w-full items-center justify-between gap-3 rounded-xl px-2 py-2 text-left hover:bg-vs-subtle">
           <span className="min-w-0"><span className="block font-bold text-vs-fg">{data.tier ? `${TIER_ICONS[data.tier]} ${tier(data.tier)}` : "—"}</span><span className="block text-sm text-vs-fg-2">{data.groupPosition ? `#${data.groupPosition} · ` : ""}{t("profile.thisWeek")}</span></span>
           <span className="flex shrink-0 items-center gap-2 text-sm font-bold text-vs-fg-2">{data.bestTierEver ? `${t("profile.bestTier")}: ${tier(data.bestTierEver)}` : "—"}<ChevronRight className="h-5 w-5" aria-hidden /></span>
         </button>
       </section>
 
       <ProfileSection title={t("profile.progressSection")}>
-        <ProfileRow icon={<Trophy className="h-5 w-5 text-vs-xp" aria-hidden />} label={t("profile.achievements")} value={`${earnedCount}/${data.achievements.length}`} onClick={() => setView("achievements")} />
-        <ProfileRow icon={<BookOpen className="h-5 w-5 text-vs-accent" aria-hidden />} label={t("profile.readingProgress")} value={`${data.chaptersCompleted} ${t("profile.chapters").toLowerCase()}`} onClick={() => setView("reading")} />
+        <ProfileRow icon={<Trophy className="h-5 w-5 text-vs-xp" aria-hidden />} label={t("profile.achievements")} value={`${earnedCount}/${data.achievements.length}`} onClick={() => openView("achievements")} />
+        <ProfileRow icon={<BookOpen className="h-5 w-5 text-vs-accent" aria-hidden />} label={t("profile.readingProgress")} value={`${data.chaptersCompleted} ${t("profile.chapters").toLowerCase()}`} onClick={() => openView("reading")} />
       </ProfileSection>
 
       <ProfileSection title={t("profile.preferencesSection")}>
-        <ProfileRow icon={<Globe2 className="h-5 w-5 text-vs-accent" aria-hidden />} label={t("languageSettings.title")} value={getLanguage(data.uiLanguage).nativeName} onClick={() => setView("language")} />
-        <ProfileRow icon={<Volume2 className="h-5 w-5 text-vs-accent" aria-hidden />} label={t("profile.readAloud")} onClick={() => setView("readAloud")} />
-        <ProfileRow icon={<Bell className="h-5 w-5 text-vs-accent" aria-hidden />} label={t("profile.notifications")} onClick={() => setView("notifications")} />
-      </ProfileSection>
-
-      <ProfileSection title={t("profile.socialPrivacySection")}>
-        <ProfileRow icon={<LockKeyhole className="h-5 w-5 text-vs-accent" aria-hidden />} label={t("profile.privacy")} onClick={() => setView("privacy")} />
-        <ProfileRow icon={<Users className="h-5 w-5 text-vs-accent" aria-hidden />} label={t("profile.onlineActivity")} value={data.shareOnlineStatus ? t("twoFactor.on") : t("twoFactor.off")} onClick={() => setView("presence")} />
+        {/* Weergave direct hier te kiezen: één tik, en je ziet meteen wat aan staat. */}
+        <div className="flex flex-col gap-2 px-2 py-3 sm:flex-row sm:items-center sm:gap-3">
+          <span className="flex min-w-0 flex-1 items-center gap-3"><SunMoon className="h-5 w-5 shrink-0 text-vs-accent" aria-hidden /><span className="truncate font-bold text-vs-fg">{t("theme.appearance")}</span></span>
+          <div className="sm:w-80"><ThemePreference /></div>
+        </div>
+        <ProfileRow icon={<Globe2 className="h-5 w-5 text-vs-accent" aria-hidden />} label={t("languageSettings.title")} value={getLanguage(data.uiLanguage).nativeName} onClick={() => openView("language")} />
+        <ProfileRow icon={<Volume2 className="h-5 w-5 text-vs-accent" aria-hidden />} label={t("profile.readAloud")} onClick={() => openView("readAloud")} />
+        <ProfileRow icon={<Bell className="h-5 w-5 text-vs-accent" aria-hidden />} label={t("profile.notifications")} onClick={() => openView("notifications")} />
+        <ProfileRow icon={<Users className="h-5 w-5 text-vs-accent" aria-hidden />} label={t("profile.onlineActivity")} value={data.shareOnlineStatus ? t("twoFactor.on") : t("twoFactor.off")} onClick={() => openView("presence")} />
+        <ProfileRow icon={<LockKeyhole className="h-5 w-5 text-vs-accent" aria-hidden />} label={t("profile.privacy")} onClick={() => openView("privacy")} />
       </ProfileSection>
 
       <ProfileSection title={t("profile.aboutSection")}>
-        <ProfileRow icon={<Sparkles className="h-5 w-5 text-vs-xp" aria-hidden />} label={t("profile.whatsNew")} onClick={() => setView("about")} />
-        <ProfileRow icon={<MoreHorizontal className="h-5 w-5 text-vs-fg-2" aria-hidden />} label={t("profile.tour")} onClick={() => router.push("/onboarding")} />
-        <ProfileRow icon={<MessageSquare className="h-5 w-5 text-vs-fg-2" aria-hidden />} label={t("profile.giveFeedback")} href="/feedback" />
-        <ProfileRow icon={<ShoppingBag className="h-5 w-5 text-vs-fg-2" aria-hidden />} label={t("nav.shop")} href="/shop" />
+        <ProfileRow icon={<Sparkles className="h-5 w-5 text-vs-xp" aria-hidden />} label={t("profile.whatsNew")} onClick={() => openView("about")} />
+        <ProfileRow icon={<MoreHorizontal className="h-5 w-5 text-vs-fg-2" aria-hidden />} label={t("profile.tour")} href="/onboarding" />
       </ProfileSection>
 
-      <ProfileSection title={t("profile.account")}>
-        <ProfileRow icon={<ShieldCheck className="h-5 w-5 text-vs-accent" aria-hidden />} label={t("profile.twoFactor")} value={data.totpEnabled ? t("twoFactor.on") : t("twoFactor.off")} onClick={() => setView("twoFactor")} />
+      <ProfileSection title={t("profile.accountSecuritySection")}>
+        <ProfileRow icon={<ShieldCheck className="h-5 w-5 text-vs-accent" aria-hidden />} label={t("profile.twoFactor")} value={data.totpEnabled ? t("twoFactor.on") : t("twoFactor.off")} onClick={() => openView("twoFactor")} />
         <ProfileRow icon={<KeyRound className="h-5 w-5 text-vs-fg-2" aria-hidden />} label={t("profile.changePassword")} href="/change-password" />
         {!confirmingLogout ? <ProfileRow icon={<LogOut className="h-5 w-5 text-vs-fg-2" aria-hidden />} label={t("profile.logout")} onClick={() => setConfirmingLogout(true)} /> : <div className="rounded-xl bg-vs-subtle p-3"><p className="text-sm text-vs-fg">{t("profile.logoutConfirm")}</p><div className="mt-2 flex gap-2"><button className="btn-primary !py-2 !text-sm" onClick={logout}>{t("profile.logoutYes")}</button><button className="btn-secondary !py-2 !text-sm" onClick={() => setConfirmingLogout(false)}>{t("activeGames.cancel")}</button></div></div>}
-        {!confirmingDelete ? <ProfileRow icon={<Trash2 className="h-5 w-5 text-red-500" aria-hidden />} label={t("profile.deleteAccount")} destructive onClick={() => setConfirmingDelete(true)} /> : <div className="rounded-xl border border-red-300/50 bg-red-50 p-3 dark:bg-red-950/30"><p className="text-sm text-red-700 dark:text-red-300">{t("profile.deleteWarning")}</p><div className="mt-2 flex gap-2"><button className="btn-primary !bg-red-500 !shadow-[0_4px_0_0_theme(colors.red.700)] !py-2 !text-sm" disabled={deleting} onClick={deleteAccount}>{deleting ? t("courses.busy") : t("profile.deleteConfirm")}</button><button className="btn-secondary !py-2 !text-sm" onClick={() => setConfirmingDelete(false)}>{t("activeGames.cancel")}</button></div></div>}
       </ProfileSection>
+
+      {/* Bewust geen gewone rij: verwijderen hoort niet tussen de dagelijkse
+          instellingen te concurreren. */}
+      {!confirmingDelete ? (
+        <button type="button" onClick={() => setConfirmingDelete(true)} className="inline-flex min-h-11 items-center gap-2 self-center rounded-xl px-3 text-sm font-bold text-red-600 transition hover:bg-red-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400 dark:text-red-400 dark:hover:bg-red-950/30"><Trash2 className="h-4 w-4" aria-hidden />{t("profile.deleteAccount")}</button>
+      ) : (
+        <div className="rounded-2xl border border-red-300/50 bg-red-50 p-4 dark:bg-red-950/30"><p className="text-sm text-red-700 dark:text-red-300">{t("profile.deleteWarning")}</p><div className="mt-3 flex gap-2"><button className="btn-primary !bg-red-500 !shadow-[0_4px_0_0_theme(colors.red.700)] !py-2 !text-sm" disabled={deleting} onClick={deleteAccount}>{deleting ? t("courses.busy") : t("profile.deleteConfirm")}</button><button className="btn-secondary !py-2 !text-sm" onClick={() => setConfirmingDelete(false)}>{t("activeGames.cancel")}</button></div></div>
+      )}
     </div>
   );
 }
@@ -582,6 +576,10 @@ function ProfileRow({ icon, label, value, href, onClick, destructive = false }: 
   const content = <><span className="shrink-0">{icon}</span><span className="min-w-0 flex-1 truncate font-bold">{label}</span>{value && <span className="max-w-[45%] truncate text-sm text-vs-fg-2">{value}</span>}<ChevronRight className="h-5 w-5 shrink-0 text-vs-fg-3" aria-hidden /></>;
   if (href) return <Link href={href} className={className}>{content}</Link>;
   return <button type="button" onClick={onClick} className={className}>{content}</button>;
+}
+
+function ProfileAction({ icon, label, href }: { icon: ReactNode; label: string; href: string }) {
+  return <Link href={href} className="vs-surface flex min-h-14 min-w-0 items-center justify-center gap-2 rounded-2xl border border-vs-line px-3 font-bold text-vs-fg transition hover:bg-vs-subtle focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-vs-accent"><span className="shrink-0">{icon}</span><span className="min-w-0 truncate">{label}</span></Link>;
 }
 
 function CompactHeroStat({ value, label, href }: { value: ReactNode; label: string; href?: string }) {
@@ -624,7 +622,7 @@ function PresenceDetail({ data, t, saving, onOnline, onActivity, onIncognito, on
 }
 
 function AboutDetail({ data, t, saving, onToggle }: { data: ProfileData; t: Translate; saving: boolean; onToggle: () => void }) {
-  return <div className="flex flex-col gap-4"><section className="vs-surface rounded-2xl border border-vs-line p-4"><ProfileRow icon={<Sparkles className="h-5 w-5 text-vs-xp" aria-hidden />} label={t("profile.whatsNew")} value={data.changelogEnabled ? t("twoFactor.on") : t("twoFactor.off")} onClick={onToggle} /></section><section className="vs-surface rounded-2xl border border-vs-line p-4"><ChangelogSection enabled={data.changelogEnabled} saving={saving} onToggle={onToggle} /></section><section className="vs-surface rounded-2xl border border-vs-line p-4"><ProfileRow icon={<MoreHorizontal className="h-5 w-5 text-vs-fg-2" aria-hidden />} label={t("profile.tour")} href="/onboarding" /><ProfileRow icon={<MessageSquare className="h-5 w-5 text-vs-fg-2" aria-hidden />} label={t("profile.giveFeedback")} href="/feedback" /><ProfileRow icon={<ShoppingBag className="h-5 w-5 text-vs-fg-2" aria-hidden />} label={t("nav.shop")} href="/shop" /></section></div>;
+  return <div className="flex flex-col gap-4"><section className="vs-surface rounded-2xl border border-vs-line p-4"><ProfileRow icon={<Sparkles className="h-5 w-5 text-vs-xp" aria-hidden />} label={t("profile.whatsNew")} value={data.changelogEnabled ? t("twoFactor.on") : t("twoFactor.off")} onClick={onToggle} /></section><section className="vs-surface rounded-2xl border border-vs-line p-4"><ChangelogSection enabled={data.changelogEnabled} saving={saving} onToggle={onToggle} /></section></div>;
 }
 
 interface ChangelogEntryView {
