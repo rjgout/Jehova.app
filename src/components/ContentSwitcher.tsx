@@ -69,7 +69,9 @@ export default function ContentSwitcher({
       const chevronWidth = chevronRef.current?.getBoundingClientRect().width ?? 16;
       // De button gebruikt px-2 en gap-1.5: trek de vaste ruimte af en laat
       // daarna de gemeten tekstbreedtes beslissen welke representatie past.
-      const available = button.clientWidth - iconWidth - chevronWidth - 28;
+      // De wrapper krijgt de resterende headerbreedte; de knop zelf blijft
+      // bewust content-sized zodat de vrije ruimte geen klikvlak wordt.
+      const available = root.clientWidth - iconWidth - chevronWidth - 28;
       const fullWidth = fullLabelRef.current?.scrollWidth ?? 0;
       const shortWidth = shortLabelRef.current?.scrollWidth ?? 0;
       const next: LabelMode = fullWidth <= available ? "full" : shortName && shortWidth <= available ? "short" : "icon";
@@ -136,14 +138,14 @@ export default function ContentSwitcher({
         aria-label={t("contentSwitcher.activeAria", {
           name: active.name + (showLanguage ? ` (${getLanguage(active.language).nativeName})` : ""),
         })}
-        className="h-full w-full min-w-0 inline-flex items-center justify-start gap-1.5 px-2 text-sm font-bold text-slate-600 dark:text-slate-300 hover:text-brand-600 dark:hover:text-brand-300"
+        className="h-full w-fit max-w-full min-w-0 inline-flex items-center justify-start gap-1.5 px-2 text-sm font-bold text-slate-600 dark:text-slate-300 hover:text-brand-600 dark:hover:text-brand-300"
       >
         <span ref={iconRef} className="shrink-0"><ContentIcon collection={active} className="h-5 w-5" /></span>
         <span className="pointer-events-none absolute -left-[9999px] whitespace-nowrap" aria-hidden>
           <span ref={fullLabelRef}>{active.name}</span>
           {shortName && <span ref={shortLabelRef}>{shortName}</span>}
         </span>
-        {labelMode !== "icon" && <span className="block min-w-0 flex-1 truncate">{labelMode === "short" && shortName ? shortName : active.name}</span>}
+        {labelMode !== "icon" && <span className="block shrink-0 whitespace-nowrap">{labelMode === "short" && shortName ? shortName : active.name}</span>}
         <ChevronDown ref={chevronRef} className={`h-4 w-4 shrink-0 transition-transform ${open ? "rotate-180" : ""}`} aria-hidden />
       </button>
 
