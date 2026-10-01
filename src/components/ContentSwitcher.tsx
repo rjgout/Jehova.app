@@ -65,7 +65,6 @@ export default function ContentSwitcher({
     if (!root || !button) return;
 
     const updateLabelMode = () => {
-      const compactLayout = window.matchMedia("(max-width: 1023px)").matches;
       const iconWidth = iconRef.current?.getBoundingClientRect().width ?? 20;
       const chevronWidth = chevronRef.current?.getBoundingClientRect().width ?? 16;
       // De button gebruikt px-2 en gap-1.5: trek de vaste ruimte af en laat
@@ -73,23 +72,14 @@ export default function ContentSwitcher({
       const available = button.clientWidth - iconWidth - chevronWidth - 28;
       const fullWidth = fullLabelRef.current?.scrollWidth ?? 0;
       const shortWidth = shortLabelRef.current?.scrollWidth ?? 0;
-      // Op compacte headers krijgt de stabiele afkorting voorrang. Zo blijft
-      // een groot telefoonscherm niet onnodig steken op alleen het icoon.
-      const next: LabelMode = compactLayout
-        ? shortName && shortWidth <= available ? "short" : "icon"
-        : fullWidth <= available ? "full" : shortName && shortWidth <= available ? "short" : "icon";
+      const next: LabelMode = fullWidth <= available ? "full" : shortName && shortWidth <= available ? "short" : "icon";
       setLabelMode((current) => current === next ? current : next);
     };
 
     updateLabelMode();
     const observer = new ResizeObserver(updateLabelMode);
     observer.observe(root);
-    const mediaQuery = window.matchMedia("(max-width: 1023px)");
-    mediaQuery.addEventListener("change", updateLabelMode);
-    return () => {
-      observer.disconnect();
-      mediaQuery.removeEventListener("change", updateLabelMode);
-    };
+    return () => observer.disconnect();
   }, [active.id, active.name, active.language, shortName]);
 
   if (!enabled) return null;
@@ -135,7 +125,7 @@ export default function ContentSwitcher({
     // Het menu blijft links staan op ieder scherm. De contentnaam krijgt een
     // flexibele breedte, zodat de lange naam afkapt zonder de navigatie rechts
     // weg te drukken.
-    <div ref={ref} className="relative -ml-2 self-stretch flex min-w-0 max-w-full flex-1 lg:flex-none lg:max-w-[18rem]">
+    <div ref={ref} className="relative -ml-2 self-stretch flex min-w-0 max-w-full flex-1 lg:max-w-[18rem]">
       <button
         ref={buttonRef}
         type="button"
@@ -146,7 +136,7 @@ export default function ContentSwitcher({
         aria-label={t("contentSwitcher.activeAria", {
           name: active.name + (showLanguage ? ` (${getLanguage(active.language).nativeName})` : ""),
         })}
-        className="h-full w-full min-w-0 inline-flex items-center justify-start gap-1.5 px-2 text-sm font-bold text-slate-600 dark:text-slate-300 hover:text-brand-600 dark:hover:text-brand-300 lg:w-auto"
+        className="h-full w-full min-w-0 inline-flex items-center justify-start gap-1.5 px-2 text-sm font-bold text-slate-600 dark:text-slate-300 hover:text-brand-600 dark:hover:text-brand-300"
       >
         <span ref={iconRef} className="shrink-0"><ContentIcon collection={active} className="h-5 w-5" /></span>
         <span className="pointer-events-none absolute -left-[9999px] whitespace-nowrap" aria-hidden>
