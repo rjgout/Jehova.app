@@ -5,7 +5,7 @@ import { getTextOfTheDay, type DailyText } from "@/lib/dailyText";
 import { wordGameDayKey } from "@/lib/wordGame";
 import { getActiveGameStatus, type ActivityItem } from "@/lib/activeGames";
 import { getSubscribedCourseSummaries } from "@/lib/courseSummaries";
-import { getContentContext } from "@/lib/contentCollections";
+import { BOFM_WORK, getContentContext } from "@/lib/contentCollections";
 import { getGameSettings } from "@/lib/gameSettings";
 import { GAME_CATALOG, isGameVisible, type GameCatalogEntry } from "@/lib/gameCatalog";
 import { getFriendStatusMap } from "@/lib/presence";
