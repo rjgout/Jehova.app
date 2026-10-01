@@ -77,8 +77,13 @@ lijst hierboven nog volledig.
   `life-of-christ`, die er nog niet is), podcast (algemeen), De Slimste
   Heilige en de tekst van de dag. Spelcovers staan per spel-id in
   `GAME_COVERS` en worden overal gebruikt waar een spel als kaart staat
-  (Vandaag, Voor jou en de spelkaarten op Spelen in `LiveLobbyForm`). `versado/MascotSlot.tsx` rendert niets tot de mascottes er zijn.
+  (Vandaag, Voor jou en de spelkaarten op Spelen in `LiveLobbyForm`).
   `versado/Carousel.tsx` is de veegrij met puntjes en pijlen.
+- **Mascottes**: de uitrol is begonnen, met NOVI als eerste (zie
+  "Mascottes" hieronder). `versado/MascotSlot.tsx` is de enige interface;
+  het register in `src/lib/mascots.ts` kent de bestanden in
+  `public/mascots/static/`. Zolang een asset ontbreekt, rendert een slot
+  niets.
 
 ## Wat Versado is
 
@@ -164,24 +169,109 @@ ook als een pagina onder een nieuwe bestemming valt.
 
 ## Mascottes
 
-Versado krijgt een familie van drie personages:
+Versado heeft uiteindelijk drie mascottes: **VARO**, **VERA** en **NOVI**.
+De uitrol gaat gefaseerd. **NOVI komt eerst**, met statische afbeeldingen.
+VARO en VERA volgen later: voeg hun assets nu nog niet toe.
 
-- **VARO**: ontdekken, voortgang, competitie en grotere doelen. Energiek en avontuurlijk.
-- **VERA**: begrijpen, lezen, verdieping en reflectie. Rustiger en bedachtzamer.
-- **NOVI**: spelen, korte oefeningen, dagelijkse motivatie en verrassingen. Speels en nieuwsgierig.
+### Character canon
 
-Afspraken:
+Gezamenlijk uitgangspunt: **"Ik ontdek dit samen met jou."** De mascottes
+zijn geen leraren die boven de gebruiker staan. Ze reageren op wat de
+gebruiker doet en ontdekken samen met de gebruiker.
+
+Visuele familie:
+- fantasie-vos/lynxachtige Versado-wezens: geen gewone vossen, geen mensen;
+- donkere, navyblauwe vacht overheerst, met een crème snuit, borst en buik
+  en herkenbare oranje accenten;
+- grote puntige oren, expressieve ogen en een pluimstaart;
+- dezelfde soort en familie, maar elk personage met een duidelijk eigen
+  silhouet.
+
+Rollen:
+- **VARO**: ontdekken, voortgang, competitie en grotere doelen. Energiek en
+  avontuurlijk.
+- **VERA**: begrijpen, lezen, verdieping en reflectie. Rustiger en
+  bedachtzamer.
+- **NOVI**: de kleine avonturier.
+  - Karakter: vrolijk, energiek, nieuwsgierig en ondeugend; impulsief,
+    enthousiast en wil overal bij zijn.
+  - Hoort bij spelen, experimenteren, korte oefeningen, dagelijkse
+    motivatie en verrassingen.
+  - Bij een fout antwoord nooit boos, verdrietig of teleurgesteld, maar
+    nieuwsgierig, positief of aanmoedigend (state `encourage`).
+
+Accessoires zijn optioneel en contextueel. Ze komen alleen in beeld als ze
+iets toevoegen aan de activiteit of het verhaal van de pose; NOVI kan bv. een
+kleine rugzak of speelse ontdekvoorwerpen hebben. Elk personage moet zonder
+accessoires direct herkenbaar zijn.
+
+### Consistentie
+
+De goedgekeurde Versado character sheet en de later goedgekeurde
+NOVI-master en -afbeeldingen zijn de visuele bron van waarheid. Een nieuwe
+asset mag een personage niet opnieuw interpreteren. Tussen alle afbeeldingen
+blijven gelijk:
+- lichaamsverhoudingen, grootte en leeftijdsindruk;
+- hoofdvorm, snuit, ogen en oren;
+- vachtpatroon en de navy/crème/oranje kleurverdeling;
+- staart, handen en poten;
+- de illustratie- en renderingstijl.
+
+Een state is een functionele toestand in Versado, niet zomaar een emotie.
+
+### Techniek
+
+- **Eén interface.** `MascotSlot` (`src/components/versado/MascotSlot.tsx`)
+  is de enige manier om een mascotte te tonen. Pagina's vragen om een
+  personage en een state:
+  `<MascotSlot character="novi" state="greeting" />`.
+- **Geen paden in pagina's.** Directe assetpaden (`/mascots/static/...`)
+  vanuit pagina's of andere componenten zijn verboden. Alleen het register
+  `src/lib/mascots.ts` kent paden.
+- **States.** `idle`, `greeting`, `thinking`, `discovery`, `reading`,
+  `playing`, `success`, `encourage`, `celebrate`, `sleep`. Geen synoniemen;
+  een nieuwe state is een bewuste ontwerpkeuze.
+- **Bestanden.** `public/mascots/static/<personage>/<personage>-<state>.webp`:
+  transparante WebP, kleine letters, zonder tekst, tekstballon of
+  achtergrond in de afbeelding. Zie `public/mascots/README.md`. Originele
+  bronbestanden horen niet in `public/`.
+- **Registreren.** Een asset staat pas in het register als het bestand
+  bestaat. Ontbreekt een asset, dan rendert het slot niets: geen emoji, geen
+  ander personage, geen placeholder. `npm run test:mascots` bewaakt dat
+  register en bestanden overeenkomen.
+- **Rive-klaar, nog geen Rive.**
+  - De keten is pagina → `MascotSlot(character, state)` → renderer. Nu is
+    de renderer een statische WebP; later kan er achter `MascotSlot` een
+    Rive-state machine komen, zonder dat pagina's veranderen.
+  - De statische WebP-assets blijven dan in gebruik: als terugval bij
+    `prefers-reduced-motion`, tijdens het laden en bij een fout, en op
+    plekken waar beweging niets toevoegt.
+  - Rive is nu bewust nog geen dependency, en er staan geen
+    `.riv`-bestanden in de repository.
+- **Beweging.** Mascottes vallen onder `vs-motion`, dus onder
+  `prefers-reduced-motion` staat beweging stil. Een toekomstige renderer
+  toont dan de statische afbeelding.
+- **Bestaande plekken.**
+  - Begroeting op Vandaag: `novi`/`greeting`.
+  - Tekst van de dag: `vera`/`reading`, die pas iets toont als VERA's
+    assets er zijn.
+
+### Afspraken
 
 - De gebruiker krijgt later een persoonlijke metgezel; de personages kunnen
-  daarnaast contextueel verschijnen (bv. VERA bij lezen, NOVI bij een kort spel).
+  daarnaast contextueel verschijnen (bv. VERA bij lezen, NOVI bij een kort
+  spel). Een keuze bij de onboarding en een databaseveld daarvoor komen
+  later.
 - **De hele familie samen alleen bij betekenisvolle momenten**: belangrijke
   mijlpaal, cursus afgerond, bijzondere prestatie, promotie in een divisie,
   lange reeks, belangrijk gezamenlijk spelmoment. Niet als standaarddecoratie.
+  Daar bestaan nog geen assets of states voor.
 - Communicatie vooral via houding, animatie en gezichtsuitdrukking.
   Tekstballonnen zijn uitzondering; tekst altijd via het i18n-systeem
   (`src/lib/i18n/messages/*`), nooit vast in een asset of component.
-- Er bestaan nog **geen** mascotte-assets. Maak geen vervangers (ook geen
-  emoji-mascottes of gegenereerde afbeeldingen).
+- Geen tijdelijke vervangers (emoji-mascottes, gegenereerde of willekeurige
+  afbeeldingen), en geen mascottes op eigen initiatief aan andere pagina's
+  toevoegen.
 
 ## Kinderen
 
@@ -226,7 +316,8 @@ CLAUDE.md ("Talen").
 De definitieve visuele assets worden **later aangeleverd** en zitten nu niet
 in de repository:
 
-- de drie Versado-mascottes (VARO, VERA, NOVI), in verschillende poses en emoties;
+- de drie Versado-mascottes (VARO, VERA, NOVI), in verschillende states
+  (NOVI eerst, in `public/mascots/static/novi/`, zie "Mascottes");
 - illustraties;
 - afbeeldingen voor cursussen en content;
 - afbeeldingen voor spellen;
@@ -372,8 +463,9 @@ Gecontroleerd in de code; bestandsnamen om snel terug te vinden.
   `ActivityFeedItem.achievementIcon`.
 - Goed voorbereid: `DivisionScroller` houdt het divisie-icoon bewust
   vervangbaar (alleen `TierIcon` hoeft later een afbeelding te tonen).
-- Geen mascotte-, illustratie- of animatiebibliotheek; geen
-  `prefers-reduced-motion`-afhandeling.
+- Geen illustratie- of animatiebibliotheek. Mascottes lopen via
+  `MascotSlot` met statische WebP (zie "Mascottes"); beweging valt onder
+  `vs-motion` (`prefers-reduced-motion`).
 
 ## Wat het redesign straks raakt
 
@@ -421,10 +513,12 @@ omgebouwd. Ze zijn bedoeld om bij het redesign de juiste keuze te maken.
    Tailwind-kleuren. Een nieuw palet uit Figma raakt dan elk component. Bij het
    redesign kleuren als semantische variabelen (CSS custom properties, via
    `tailwind.config.ts`) met een licht en een donker thema; niet vooraf.
-4. **Beweging.** Er is geen `prefers-reduced-motion`-afhandeling. Animaties en
-   Rive-mascottes moeten die voorkeur respecteren (stilstaande pose als
-   terugval) en mogen informatie niet alleen via beweging overbrengen.
-5. **Rive.** Rive is nog geen dependency. Het runtime draait alleen in de
+4. **Beweging.** `vs-motion` legt beweging stil onder
+   `prefers-reduced-motion`. Animaties en Rive-mascottes moeten die voorkeur
+   respecteren (de statische mascotte-WebP als terugval) en mogen informatie
+   niet alleen via beweging overbrengen.
+5. **Rive.** Rive is nog geen dependency; `MascotSlot` is wel al zo opgezet
+   dat een Rive-renderer er later achter kan (zie "Mascottes"). Het runtime draait alleen in de
    browser (component alleen client-side laden). Het gebruikt WebAssembly dat
    standaard van een externe CDN komt; voor deze self-hosted app het
    `.wasm`-bestand zelf meeleveren. Komt er ooit een Content-Security-Policy

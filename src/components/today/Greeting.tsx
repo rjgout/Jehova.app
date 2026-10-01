@@ -31,8 +31,8 @@ export default function Greeting({ data, language }: { data: TodayData; language
           {status}
         </p>
       </div>
-      {/* Persoonlijke metgezel; rendert niets tot de mascottes er zijn. */}
-      <MascotSlot character="novi" mood="happy" size={72} className="shrink-0" />
+      {/* NOVI begroet; rendert niets zolang novi-greeting.webp er niet is. */}
+      <MascotSlot character="novi" state="greeting" size={72} className="shrink-0" />
     </header>
   );
 }

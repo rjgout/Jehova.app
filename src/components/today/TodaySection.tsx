@@ -108,8 +108,8 @@ export default function TodaySection({ data, language }: { data: TodayData; lang
                   {t("dashboard.readMore")}
                 </Link>
               </div>
-              {/* VERA hoort bij lezen en verdieping; rendert niets tot de mascottes er zijn. */}
-              <MascotSlot character="vera" mood="calm" size={64} className="absolute bottom-4 right-4" />
+              {/* VERA hoort bij lezen en verdieping; rendert niets tot haar assets er zijn (latere fase). */}
+              <MascotSlot character="vera" state="reading" size={64} className="absolute bottom-4 right-4" />
             </div>
           </article>
         )}

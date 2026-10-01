@@ -66,6 +66,10 @@ daar staan de Design Constitution, de richting voor de informatiearchitectuur
 er niet zijn. Kort: geen redesign of nieuwe schermen op eigen initiatief, geen
 tijdelijke mascottes of vervangende afbeeldingen, geen nieuwe emoji als
 structureel icoon, en bestaande functionaliteit en routes blijven werken.
+Mascottes (NOVI eerst) alleen via `<MascotSlot character state />`
+(`src/components/versado/MascotSlot.tsx`, register in `src/lib/mascots.ts`),
+nooit via een direct pad naar `public/mascots/`; zie de sectie "Mascottes"
+in `docs/VERSADO-DESIGN.md` voor de character canon.
 
 ## Techstack
 

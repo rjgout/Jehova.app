@@ -1,45 +1,55 @@
-// Plek voor een Versado-mascotte (VARO, VERA, NOVI) of de hele familie.
-// De mascottes worden later aangeleverd (zie docs/VERSADO-DESIGN.md); tot
-// die tijd is het register leeg en rendert dit niets. Een pagina zet de
-// slot al op de juiste plek, met rol en stemming, zodat de mascotte er later
-// verschijnt zonder dat de pagina verandert.
+// De enige manier om een Versado-mascotte te tonen. Een pagina vraagt om een
+// personage en een functionele state, nooit om een bestand:
 //
-// Afspraken: de familie ("family") alleen bij betekenisvolle momenten;
-// mascottes communiceren vooral visueel; tekst (labelKey) altijd via i18n;
-// bij prefers-reduced-motion een stilstaande pose (vs-motion).
+//   <MascotSlot character="novi" state="greeting" />
+//
+// Welke afbeelding (of later animatie) daarbij hoort, bepaalt deze component
+// via het register in src/lib/mascots.ts. Ontbreekt de asset, dan rendert
+// dit niets: geen emoji, geen ander personage, geen placeholder.
+//
+// Renderers, zodat de pagina's nooit hoeven te veranderen:
+// - nu: StaticMascot (een transparante WebP uit public/mascots/static/);
+// - later eventueel: een Rive-renderer (state machine) hier achter dezelfde
+//   props. De statische WebP blijft dan de terugval bij
+//   prefers-reduced-motion, tijdens het laden, bij een fout en op plekken
+//   waar beweging niets toevoegt. Zie docs/VERSADO-DESIGN.md ("Mascottes").
+//
+// Afspraken: mascottes communiceren vooral visueel; tekst (labelKey) altijd
+// via i18n, nooit in de asset; beweging valt onder vs-motion, zodat die bij
+// prefers-reduced-motion stilstaat.
 
 import type { MessageKey } from "@/lib/i18n/core";
+import { staticMascotAsset, type MascotCharacter, type MascotState, type StaticMascotAsset } from "@/lib/mascots";
 
-export type MascotCharacter = "varo" | "vera" | "novi" | "family";
-export type MascotMood = "neutral" | "happy" | "cheer" | "thinking" | "calm" | "curious";
+export type { MascotCharacter, MascotState } from "@/lib/mascots";
 
-interface MascotAsset {
-  src: string;
-  width: number;
-  height: number;
-}
-
-// Sleutel "<character>:<mood>". Leeg tot de assets er zijn.
-const MASCOTS: Partial<Record<`${MascotCharacter}:${MascotMood}`, MascotAsset>> = {};
-
-export default function MascotSlot({
-  character,
-  mood = "neutral",
-  size = 72,
-  className = "",
-}: {
+interface MascotSlotProps {
   character: MascotCharacter;
-  mood?: MascotMood;
+  state: MascotState;
   /** Breedte in px; de hoogte volgt uit de asset. */
   size?: number;
   className?: string;
   /** Tekstuele betekenis als de mascotte iets uitdrukt; weglaten = decoratief. */
   labelKey?: MessageKey;
-}) {
-  const asset = MASCOTS[`${character}:${mood}`];
+}
+
+export default function MascotSlot({ character, state, size = 72, className = "" }: MascotSlotProps) {
+  const asset = staticMascotAsset(character, state);
   if (!asset) return null;
+  return <StaticMascot asset={asset} size={size} className={className} />;
+}
+
+function StaticMascot({ asset, size, className }: { asset: StaticMascotAsset; size: number; className: string }) {
   return (
     // eslint-disable-next-line @next/next/no-img-element
-    <img src={asset.src} width={size} height={Math.round((asset.height / asset.width) * size)} alt="" aria-hidden className={`vs-motion ${className}`} />
+    <img
+      src={asset.src}
+      width={size}
+      height={Math.round((asset.height / asset.width) * size)}
+      alt=""
+      aria-hidden
+      decoding="async"
+      className={`vs-motion ${className}`}
+    />
   );
 }
