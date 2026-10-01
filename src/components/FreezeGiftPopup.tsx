@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import UserTag from "@/components/UserTag";
 import { useT } from "@/components/I18nProvider";
 import { rich } from "@/lib/i18n/rich";
+import { Snowflake } from "lucide-react";
 
 interface Gift {
   id: string;
@@ -40,7 +41,7 @@ export default function FreezeGiftPopup() {
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 p-4">
       <div className="card !p-6 max-w-sm w-full shadow-xl animate-pop flex flex-col items-center text-center gap-4">
-        <div className="text-6xl" aria-hidden>🧊</div>
+        <Snowflake className="h-16 w-16 text-ice-500" aria-hidden />
         <div className="flex flex-col gap-2">
           <h2 className="text-xl font-extrabold dark:text-slate-100">{t("misc.freezeGiftTitle")}</h2>
           <p className="text-sm text-slate-500 dark:text-slate-400">

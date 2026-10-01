@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { useT, useUiLanguage } from "@/components/I18nProvider";
 import { getLanguage } from "@/lib/languages";
 import SystemIcon from "@/components/versado/SystemIcon";
+import { Snowflake } from "lucide-react";
 
 type XPReason =
   | "LESSON_COMPLETED"
@@ -31,7 +32,7 @@ interface XpTransaction {
   createdAt: string;
 }
 
-const REASON_ICONS: Record<XPReason, string> = {
+const REASON_ICONS: Record<XPReason, ReactNode> = {
   LESSON_COMPLETED: "📖",
   PERFECT_SCORE: "🎯",
   LIVE_GAME_PLAYED: "⚡",
@@ -41,7 +42,7 @@ const REASON_ICONS: Record<XPReason, string> = {
   PODCAST_LESSON_COMPLETED: "🎙️",
   KIDS_STORY_COMPLETED: "🧒",
   HINT_PURCHASED: "💡",
-  FREEZE_PURCHASED: "🧊",
+  FREEZE_PURCHASED: <Snowflake className="h-4 w-4 text-ice-500" aria-hidden />,
   CHAPTER_GUESS_COMPLETED: "🔍",
   WORD_GAME_WON: "🔤",
   INTRO_LESSON_COMPLETED: "🧭",

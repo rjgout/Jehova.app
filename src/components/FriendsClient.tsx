@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Clock3, Flame, MoreHorizontal, Snowflake, Star } from "lucide-react";
+import { Clock3, Flame, MoreHorizontal, Snowflake } from "lucide-react";
 import { formatTag } from "@/lib/handle";
 import { getSocket } from "@/lib/socketClient";
 import UserTag from "@/components/UserTag";
@@ -12,6 +12,7 @@ import { useConfirm } from "@/components/ConfirmProvider";
 import { translateServerText } from "@/lib/i18n/serverTexts";
 import { rich } from "@/lib/i18n/rich";
 import { iconButton } from "@/components/versado/styles";
+import SystemIcon from "@/components/versado/SystemIcon";
 
 interface FriendUser {
   id: string;
@@ -403,7 +404,7 @@ export default function FriendsClient({ appName }: { appName: string }) {
                         <Flame className="h-3.5 w-3.5" aria-hidden /> {f.currentStreak}
                       </span>
                       <span className="no-select inline-flex items-center gap-1 rounded-full bg-brand-50 px-2 py-0.5 text-xs font-bold text-brand-700 dark:bg-slate-700 dark:text-brand-300">
-                        <Star className="h-3.5 w-3.5" aria-hidden /> {f.xpTotal} XP
+                        <SystemIcon kind="xp" className="h-3.5 w-3.5" fill="currentColor" aria-hidden /> {f.xpTotal} XP
                       </span>
                       <button
                         className="btn-ice inline-flex !min-h-9 shrink-0 items-center gap-1 !px-2 !py-1 !text-xs"

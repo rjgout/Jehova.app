@@ -19,6 +19,7 @@ import { getLanguage } from "@/lib/languages";
 import { translateOr } from "@/lib/i18n/core";
 import AppSelect from "@/components/AppSelect";
 import SystemIcon from "@/components/versado/SystemIcon";
+import { Snowflake } from "lucide-react";
 
 interface AchievementView {
   slug: string;
@@ -554,7 +555,7 @@ export default function ProfileClient() {
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
           <HeroStat value={<><SystemIcon kind="streak" className="inline h-4 w-4" fill="currentColor" aria-hidden /> {data.currentStreak}</>} label={t("profile.streak")} href="/streak" />
           <HeroStat value={<><SystemIcon kind="xp" className="inline h-4 w-4" fill="currentColor" aria-hidden /> {data.xpTotal}</>} label="XP" href="/xp" />
-          <HeroStat value={`🧊 ${data.freezeCount}`} label={t("lesson.freezes")} />
+          <HeroStat value={<><Snowflake className="inline h-4 w-4" aria-hidden /> {data.freezeCount}</>} label={t("lesson.freezes")} />
           <HeroStat value={`📖 ${data.chaptersCompleted}`} label={t("profile.chapters")} />
         </div>
 

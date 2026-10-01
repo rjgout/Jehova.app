@@ -1,6 +1,7 @@
 "use client";
 
 import SystemIcon from "@/components/versado/SystemIcon";
+import { Snowflake } from "lucide-react";
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
@@ -948,7 +949,7 @@ function SummaryScreen({
           </div>
         )}
         <div>
-          <div className="text-xl font-extrabold text-ice-600">🧊 {summary.freezeCount}</div>
+          <div className="flex items-center gap-1 text-xl font-extrabold text-ice-600"><Snowflake className="h-5 w-5" aria-hidden />{summary.freezeCount}</div>
           <div className="text-xs text-slate-400 dark:text-slate-500 font-bold uppercase">{t("lesson.freezes")}</div>
         </div>
       </div>
