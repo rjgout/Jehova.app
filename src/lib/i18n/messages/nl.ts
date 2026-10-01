@@ -251,6 +251,12 @@ export const nl = {
     streakKeepOne: "Studeer vandaag en maak er twee dagen van.",
     streakStart: "Begin vandaag aan een nieuwe reeks.",
     actionsTitle: "Wacht op jou",
+    conference: {
+      title: "Algemene Conferentie",
+      inDays: "over {n} dagen",
+      tomorrow: "morgen",
+      today: "vandaag",
+    },
     allGames: "Alle spellen",
     action: {
       friendRequest: "{name} wil vrienden worden",
@@ -1239,6 +1245,8 @@ export const nl = {
     logoutConfirm: "Weet je zeker dat je wilt uitloggen?",
     logoutYes: "Ja, uitloggen",
     whatsNew: "Wat is er nieuw?",
+    conferenceCountdown: "Countdown Algemene Conferentie",
+    conferenceCountdownHint: "Toon een countdown wanneer de volgende Algemene Conferentie dichterbij komt.",
     changelogToggle: "Toon een melding bij het inloggen zodra er iets nieuws is.",
     changelogHint: "Ook uitgeschakeld kun je de changelog hieronder altijd terugvinden.",
     noChangelog: "Nog geen changelog-items.",

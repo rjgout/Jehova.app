@@ -313,6 +313,12 @@ export const es: PartialMessages = {
     "streakKeepOne": "Estudia hoy y serán dos días seguidos.",
     "streakStart": "Empieza hoy una nueva racha.",
     "actionsTitle": "Te está esperando",
+    "conference": {
+      "title": "Conferencia General",
+      "inDays": "en {n} días",
+      "tomorrow": "mañana",
+      "today": "hoy"
+    },
     "allGames": "Todos los juegos",
     "action": {
       "friendRequest": "{name} quiere ser tu amigo",
@@ -1245,6 +1251,8 @@ export const es: PartialMessages = {
     "logoutConfirm": "¿Estás seguro de que quieres iniciar sesión? ¿cerrar sesión?",
     "logoutYes": "Sí, cerrar sesión",
     "whatsNew": "¿Qué hay de nuevo?",
+    "conferenceCountdown": "Cuenta regresiva de la Conferencia General",
+    "conferenceCountdownHint": "Muestra una cuenta regresiva cuando se acerca la próxima Conferencia General.",
     "changelogToggle": "Mostrar una notificación al iniciar sesión tan pronto como haya algo nuevo.",
     "changelogHint": "Incluso cuando está desactivado, siempre puedes encontrar el registro de cambios a continuación.",
     "noChangelog": "Aún no hay elementos del registro de cambios."

@@ -44,6 +44,7 @@ const patchSchema = z.object({
   notifyWordGame: z.boolean().optional(),
   notifyFriendOnline: z.boolean().optional(),
   changelogEnabled: z.boolean().optional(),
+  conferenceCountdownEnabled: z.boolean().optional(),
   // Taal van de app (menu's, meldingen, e-mails); de taal van de content
   // loopt via /api/content-context, omdat die ook de actieve uitgave wisselt.
   uiLanguage: z.enum(LANGUAGES.map((language) => language.code) as [string, ...string[]]).optional(),

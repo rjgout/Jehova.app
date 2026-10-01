@@ -8,13 +8,16 @@ import ContinueSection from "@/components/today/ContinueSection";
 import TodaySection from "@/components/today/TodaySection";
 import SocialPreview from "@/components/today/SocialPreview";
 import DiscoverySection from "@/components/today/DiscoverySection";
+import GeneralConferenceCountdown from "@/components/today/GeneralConferenceCountdown";
+import { amsterdamDayKey } from "@/lib/dates";
+import { shouldShowGeneralConferenceCountdown } from "@/lib/generalConference";
 
 // Vandaag: de persoonlijke startpagina (zie docs/VERSADO-DESIGN.md). Eerst
 // wat op je wacht, dan waar je gebleven was, de dagelijkse content, je
 // vrienden en iets nieuws. Op desktop twee kolommen: de sociale context
 // staat dan rechts naast de rest in plaats van eronder.
 // Volledige klassennamen, zodat Tailwind ze vindt.
-const ROW_SPANS: Record<number, string> = { 1: "lg:row-span-1", 2: "lg:row-span-2", 3: "lg:row-span-3", 4: "lg:row-span-4" };
+const ROW_SPANS: Record<number, string> = { 1: "lg:row-span-1", 2: "lg:row-span-2", 3: "lg:row-span-3", 4: "lg:row-span-4", 5: "lg:row-span-5" };
 
 export default async function DashboardPage() {
   const user = await getCurrentUser();
@@ -25,14 +28,22 @@ export default async function DashboardPage() {
 
   const data = await getTodayData(user);
   const language = user.uiLanguage;
+  // De countdown beslist in de browser met de eigen kalenderdag of hij
+  // zichtbaar is; voor het tellen van de rijen hieronder volstaat de
+  // Nederlandse dag (hooguit op de grensdag een dag verschil).
+  const serverToday = amsterdamDayKey();
+  const countdownVisible = user.conferenceCountdownEnabled && shouldShowGeneralConferenceCountdown(serverToday);
   // Aantal blokken in de hoofdkolom: de sociale kolom overspant op desktop
   // precies zoveel rijen (lege extra rijen zouden anders ruimte kosten).
-  const mainBlocks = 1 + (data.actions.length > 0 ? 1 : 0) + (data.continueItems.length > 0 ? 1 : 0) + (data.discover.length > 0 ? 1 : 0);
+  const mainBlocks = 1 + (countdownVisible ? 1 : 0) + (data.actions.length > 0 ? 1 : 0) + (data.continueItems.length > 0 ? 1 : 0) + (data.discover.length > 0 ? 1 : 0);
 
   return (
     <div className="vs-motion mx-auto flex max-w-5xl flex-col gap-8 sm:gap-10">
       <Greeting data={data} language={language} />
       <div className="grid grid-cols-1 gap-8 sm:gap-10 lg:grid-cols-[minmax(0,1fr)_20rem] lg:gap-x-8 lg:gap-y-10">
+        {/* Vaste plek: direct boven "Wacht op jou". Rendert zelf niets (dus
+            ook geen lege rij of marge) als hij niet zichtbaar is. */}
+        {user.conferenceCountdownEnabled && <GeneralConferenceCountdown serverToday={serverToday} className="min-w-0 lg:col-start-1" />}
         {data.actions.length > 0 && (
           <div className="min-w-0 lg:col-start-1">
             <OpenActions actions={data.actions} language={language} />

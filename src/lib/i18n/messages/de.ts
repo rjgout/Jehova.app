@@ -303,6 +303,12 @@ export const de: PartialMessages = {
     streakKeepOne: "Lerne heute, dann sind es zwei Tage in Folge.",
     streakStart: "Starte heute eine neue Serie.",
     actionsTitle: "Wartet auf dich",
+    conference: {
+      title: "Generalkonferenz",
+      inDays: "in {n} Tagen",
+      tomorrow: "morgen",
+      today: "heute",
+    },
     allGames: "Alle Spiele",
     action: {
       friendRequest: "{name} möchte mit dir befreundet sein",
@@ -1235,6 +1241,8 @@ export const de: PartialMessages = {
     logoutConfirm: "Willst du dich wirklich abmelden?",
     logoutYes: "Ja, abmelden",
     whatsNew: "Was ist neu?",
+    conferenceCountdown: "Countdown zur Generalkonferenz",
+    conferenceCountdownHint: "Zeigt einen Countdown, wenn die nächste Generalkonferenz näher rückt.",
     changelogToggle: "Beim Anmelden eine Meldung zeigen, sobald es etwas Neues gibt.",
     changelogHint: "Auch ausgeschaltet findest du das Änderungsprotokoll unten jederzeit.",
     noChangelog: "Noch keine Einträge im Änderungsprotokoll.",

@@ -4,6 +4,9 @@ Alle belangrijke gebruikersgerichte wijzigingen en releases worden hieronder bij
 
 ## Nog niet uitgebracht
 
+- Op Vandaag verschijnt vanaf 60 dagen vooraf een kleine countdown naar de
+  eerstvolgende Algemene Conferentie, boven "Wacht op jou". Uit te zetten
+  bij Voorkeuren op je profiel.
 - De mascottes van Versado zijn er: Novi begroet je op Vandaag, en op de
   welkomstpagina stellen Varo, Vera en Novi zich samen voor.
 - Legpuzzels onder Spelen met de bestaande kinderillustraties, vier niveaus

@@ -303,6 +303,12 @@ export const fr: PartialMessages = {
     streakKeepOne: "Étudie aujourd’hui pour enchaîner deux jours.",
     streakStart: "Commence une nouvelle série aujourd’hui.",
     actionsTitle: "En attente de toi",
+    conference: {
+      title: "Conférence générale",
+      inDays: "dans {n} jours",
+      tomorrow: "demain",
+      today: "aujourd’hui",
+    },
     allGames: "Tous les jeux",
     action: {
       friendRequest: "{name} veut devenir ton ami",
@@ -1235,6 +1241,8 @@ export const fr: PartialMessages = {
     logoutConfirm: "Veux-tu vraiment te déconnecter ?",
     logoutYes: "Oui, me déconnecter",
     whatsNew: "Quoi de neuf ?",
+    conferenceCountdown: "Compte à rebours de la conférence générale",
+    conferenceCountdownHint: "Affiche un compte à rebours quand la prochaine conférence générale approche.",
     changelogToggle: "Afficher un message à la connexion dès qu’il y a du nouveau.",
     changelogHint: "Même désactivé, tu retrouves toujours le journal des modifications ci-dessous.",
     noChangelog: "Pas encore d’entrées dans le journal des modifications.",

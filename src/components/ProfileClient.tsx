@@ -22,6 +22,7 @@ import { parseProfileView, profileViewHref, PROFILE_VIEWS, type ProfileView } fr
 import {
   Bell,
   BookOpen,
+  CalendarDays,
   ChevronRight,
   Globe2,
   KeyRound,
@@ -71,6 +72,7 @@ interface ProfileData {
   notifyWordGame: boolean;
   notifyFriendOnline: boolean;
   changelogEnabled: boolean;
+  conferenceCountdownEnabled: boolean;
   uiLanguage: string;
   totpEnabled: boolean;
   xpTotal: number;
@@ -304,6 +306,7 @@ export default function ProfileClient() {
       | "notifyWordGame"
       | "notifyFriendOnline"
       | "changelogEnabled"
+      | "conferenceCountdownEnabled"
   ) {
     if (!data) return;
     const next = !data[field];
@@ -541,6 +544,7 @@ export default function ProfileClient() {
         <ProfileRow icon={<Bell className="h-5 w-5 text-vs-accent" aria-hidden />} label={t("profile.notifications")} onClick={() => openView("notifications")} />
         <ProfileRow icon={<Users className="h-5 w-5 text-vs-accent" aria-hidden />} label={t("profile.onlineActivity")} value={data.shareOnlineStatus ? t("twoFactor.on") : t("twoFactor.off")} onClick={() => openView("presence")} />
         <ProfileRow icon={<LockKeyhole className="h-5 w-5 text-vs-accent" aria-hidden />} label={t("profile.privacy")} onClick={() => openView("privacy")} />
+        <ProfileToggle icon={<CalendarDays className="h-5 w-5 text-vs-accent" aria-hidden />} label={t("profile.conferenceCountdown")} hint={t("profile.conferenceCountdownHint")} checked={data.conferenceCountdownEnabled} disabled={savingNotifications} onChange={() => toggleCategory("conferenceCountdownEnabled")} />
       </ProfileSection>
 
       <ProfileSection title={t("profile.aboutSection")}>
@@ -581,6 +585,11 @@ function ProfileRow({ icon, label, value, href, onClick, destructive = false }: 
   const content = <><span className="shrink-0">{icon}</span><span className="min-w-0 flex-1 truncate font-bold">{label}</span>{value && <span className="max-w-[45%] truncate text-sm text-vs-fg-2">{value}</span>}<ChevronRight className="h-5 w-5 shrink-0 text-vs-fg-3" aria-hidden /></>;
   if (href) return <Link href={href} className={className}>{content}</Link>;
   return <button type="button" onClick={onClick} className={className}>{content}</button>;
+}
+
+// Een aan/uit-instelling direct in de lijst, zonder eigen detailscherm.
+function ProfileToggle({ icon, label, hint, checked, disabled, onChange }: { icon: ReactNode; label: string; hint: string; checked: boolean; disabled: boolean; onChange: () => void }) {
+  return <label className="flex min-h-14 w-full cursor-pointer items-center gap-3 rounded-xl px-2 py-2 transition hover:bg-vs-subtle"><span className="shrink-0">{icon}</span><span className="min-w-0 flex-1"><span className="block font-bold text-vs-fg">{label}</span><span className="block text-sm text-vs-fg-2">{hint}</span></span><input type="checkbox" role="switch" className="h-5 w-5 shrink-0 accent-brand-500" checked={checked} disabled={disabled} onChange={onChange} /></label>;
 }
 
 function ProfileAction({ icon, label, href }: { icon: ReactNode; label: string; href: string }) {

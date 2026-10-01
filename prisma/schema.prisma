@@ -135,6 +135,11 @@ model User {
   changelogEnabled Boolean  @default(true)
   changelogSeenAt  DateTime @default(now())
 
+  // Countdown naar de Algemene Conferentie op Vandaag (zie
+  // src/lib/generalConference.ts). Standaard aan, ook voor bestaande
+  // accounts; uit te zetten op het profiel.
+  conferenceCountdownEnabled Boolean @default(true)
+
   // xpTotal/currentStreak/freezeCount zijn caches voor snelle reads (dashboard,
   // nav-badges). De bron van waarheid voor XP is XPTransaction; voor freezes
   // is dat FreezeTransaction. Zie src/lib/xp.ts en src/lib/streak.ts.
