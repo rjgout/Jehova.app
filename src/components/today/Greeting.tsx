@@ -31,7 +31,7 @@ export default function Greeting({ data, language }: { data: TodayData; language
           {status}
         </p>
       </div>
-      {/* NOVI begroet; rendert niets zolang novi-greeting.webp er niet is. */}
+      {/* NOVI begroet (novi/greeting via het mascotteregister). */}
       <MascotSlot character="novi" state="greeting" size={72} className="shrink-0" />
     </header>
   );

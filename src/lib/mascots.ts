@@ -45,7 +45,9 @@ export function staticMascotPath(character: MascotCharacter, state: MascotState)
 // tests/mascots.test.ts controleert dat elk geregistreerd bestand bestaat
 // en dat elk bestand in de map een geldige naam heeft.
 const STATIC_ASSETS: Record<MascotCharacter, Partial<Record<MascotState, { width: number; height: number }>>> = {
-  novi: {},
+  novi: {
+    greeting: { width: 512, height: 468 },
+  },
   // VARO en VERA bewust nog leeg: hun assets komen in een latere fase.
   vera: {},
   varo: {},
