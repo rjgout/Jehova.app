@@ -9,7 +9,9 @@ export type SystemIconKind = "streak" | "xp";
  * geen lijnicoon: hij neemt dus geen tekstkleur over. fill="none" geeft, net
  * als bij het oude lijnicoon, de "lege" vlam: vandaag nog niet gestudeerd.
  * De maat komt zoals altijd uit className (bv. h-4 w-4); beide bestanden
- * hebben dezelfde uitsnede, zodat er bij het wisselen niets verspringt.
+ * zijn strak om de vlam uitgesneden en even hoog, zodat de vlam bij het
+ * wisselen even groot blijft (in de bronbestanden is de lege vlam groter
+ * getekend).
  */
 export default function SystemIcon({ kind, strokeWidth = 2.4, ...props }: { kind: SystemIconKind } & LucideProps) {
   if (kind === "streak") {
