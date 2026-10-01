@@ -1615,7 +1615,7 @@ export const fr: PartialMessages = {
     mascots: {
       varo: "Curieux · Énergique · Joueur",
       vera: "Chaleureuse · Intelligente · Calme",
-      novi: "Enthousiaste · Intrépide · Espiègle",
+      novi: "Joyeux · Aventurier · Espiègle",
     },
     features: {
       lessons: {

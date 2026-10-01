@@ -253,8 +253,8 @@ Een state is een functionele toestand in Versado, niet zomaar een emotie.
   toont dan de statische afbeelding.
 - **Bestaande plekken.**
   - Begroeting op Vandaag: `novi`/`greeting`.
-  - Publieke homepage, bovenaan in plaats van het welkomstlogo:
-    `family`/`welcome`, met de namen en eigenschappen als gewone tekst
+  - Publieke homepage, als kennismaking direct ná de kernbelofte en de
+    aanmeldknoppen: `family`/`welcome`, met de namen en eigenschappen als gewone tekst
     eronder (het beeld zelf is decoratief, `alt=""`).
   - Tekst van de dag: `vera`/`reading`, die pas iets toont als VERA's
     assets er zijn.
@@ -287,8 +287,8 @@ Een state is een functionele toestand in Versado, niet zomaar een emotie.
   Vera, Novi) worden nooit vertaald. Eigenschappen en omschrijvingen wel, en
   niet letterlijk: kies per taal korte, natuurlijke woorden die dezelfde
   persoonlijkheid en rol overbrengen en in de interface passen. Grammaticaal
-  geslacht mag per taal worden toegepast (Varo mannelijk, Vera vrouwelijk);
-  voor NOVI ligt geen geslacht vast, dus daar woorden zonder geslachtsvorm.
+  geslacht mag per taal worden toegepast: Varo mannelijk, Vera vrouwelijk,
+  NOVI is een jongetje.
 - Communicatie vooral via houding, animatie en gezichtsuitdrukking.
   Tekstballonnen zijn uitzondering; tekst altijd via het i18n-systeem
   (`src/lib/i18n/messages/*`), nooit vast in een asset of component.

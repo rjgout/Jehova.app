@@ -1625,7 +1625,7 @@ export const es: PartialMessages = {
     "mascots": {
       "varo": "Curioso · Enérgico · Juguetón",
       "vera": "Cálida · Inteligente · Serena",
-      "novi": "Alegre · Audaz · Bromista"
+      "novi": "Alegre · Aventurero · Travieso"
     },
     "features": {
       "lessons": {
