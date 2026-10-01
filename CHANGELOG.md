@@ -4,6 +4,8 @@ Alle belangrijke gebruikersgerichte wijzigingen en releases worden hieronder bij
 
 ## Nog niet uitgebracht
 
+- De mascottes van Versado zijn er: Novi begroet je op Vandaag, en op de
+  welkomstpagina stellen Varo, Vera en Novi zich samen voor.
 - Legpuzzels onder Spelen met de bestaande kinderillustraties, vier niveaus
   (6–48 stukjes), touchbediening en teksten in Nederlands, Engels, Duits en Frans.
 - Lezen en oefenen staan voortaan los van elkaar. Een gelezen hoofdstuk

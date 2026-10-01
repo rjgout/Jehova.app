@@ -80,10 +80,11 @@ lijst hierboven nog volledig.
   (Vandaag, Voor jou en de spelkaarten op Spelen in `LiveLobbyForm`).
   `versado/Carousel.tsx` is de veegrij met puntjes en pijlen.
 - **Mascottes**: de uitrol is begonnen, met NOVI als eerste (zie
-  "Mascottes" hieronder). `versado/MascotSlot.tsx` is de enige interface;
-  het register in `src/lib/mascots.ts` kent de bestanden in
-  `public/mascots/static/`. Zolang een asset ontbreekt, rendert een slot
-  niets.
+  "Mascottes" hieronder). Er zijn twee definitieve assets: `novi`/`greeting`
+  (Vandaag) en `family`/`welcome` (publieke homepage).
+  `versado/MascotSlot.tsx` is de enige interface; het register in
+  `src/lib/mascots.ts` kent de bestanden in `public/mascots/static/`. Zolang
+  een asset ontbreekt, rendert een slot niets.
 
 ## Wat Versado is
 
@@ -188,19 +189,18 @@ Visuele familie:
   silhouet.
 
 Rollen:
-- **VARO**: ontdekken, voortgang, competitie en grotere doelen. Energiek en
-  avontuurlijk.
-- **VERA**: begrijpen, lezen, verdieping en reflectie. Rustiger en
-  bedachtzamer.
-- **NOVI**: de kleine avonturier.
-  - Karakter: vrolijk, energiek, nieuwsgierig en ondeugend; impulsief,
-    enthousiast en wil overal bij zijn.
+- **VARO**: nieuwsgierig · energiek · speels.
+  - Hoort bij ontdekken, voortgang, competitie en grotere doelen.
+- **VERA**: warm · slim · rustig.
+  - Hoort bij begrijpen, lezen, verdieping en reflectie.
+- **NOVI**: vrolijk · ontdekkend · ondeugend; de kleine avonturier.
+  - Karakter: impulsief, enthousiast en wil overal bij zijn.
   - Hoort bij spelen, experimenteren, korte oefeningen, dagelijkse
     motivatie en verrassingen.
   - Bij een fout antwoord nooit boos, verdrietig of teleurgesteld, maar
     nieuwsgierig, positief of aanmoedigend (state `encourage`).
 
-Accessoires zijn optioneel en contextueel. Ze komen alleen in beeld als ze
+Accessoires zijn niet permanent, maar optioneel en contextueel. Ze komen alleen in beeld als ze
 iets toevoegen aan de activiteit of het verhaal van de pose; NOVI kan bv. een
 kleine rugzak of speelse ontdekvoorwerpen hebben. Elk personage moet zonder
 accessoires direct herkenbaar zijn.
@@ -253,8 +253,19 @@ Een state is een functionele toestand in Versado, niet zomaar een emotie.
   toont dan de statische afbeelding.
 - **Bestaande plekken.**
   - Begroeting op Vandaag: `novi`/`greeting`.
+  - Publieke homepage, bovenaan in plaats van het welkomstlogo:
+    `family`/`welcome`, met de namen en eigenschappen als gewone tekst
+    eronder (het beeld zelf is decoratief, `alt=""`).
   - Tekst van de dag: `vera`/`reading`, die pas iets toont als VERA's
     assets er zijn.
+- **Personage-specifieke states.** `family` heeft een eigen, kleine lijst
+  (`welcome`, `celebrate`); de states van NOVI, VARO en VERA gelden daar
+  niet. Een combinatie als `family` + `greeting` is een typefout
+  (`MascotTarget` in `src/lib/mascots.ts`).
+- **Maat.** Een slot behoudt altijd de verhouding van de asset
+  (`h-auto` + `object-contain`): nooit afsnijden of uitrekken. `size` is een
+  breedte in px; een breedte-klasse (bv. `w-full max-w-md`) maakt hem
+  vloeiend.
 
 ### Afspraken
 
@@ -262,10 +273,16 @@ Een state is een functionele toestand in Versado, niet zomaar een emotie.
   daarnaast contextueel verschijnen (bv. VERA bij lezen, NOVI bij een kort
   spel). Een keuze bij de onboarding en een databaseveld daarvoor komen
   later.
-- **De hele familie samen alleen bij betekenisvolle momenten**: belangrijke
-  mijlpaal, cursus afgerond, bijzondere prestatie, promotie in een divisie,
-  lange reeks, belangrijk gezamenlijk spelmoment. Niet als standaarddecoratie.
-  Daar bestaan nog geen assets of states voor.
+- **De familie: `family-welcome` en `family-celebrate` zijn verschillend.**
+  - `family-welcome` is de algemene introductie van VARO, VERA en NOVI
+    samen. Hij hoort op plekken waar de mascottefamilie zelf wordt
+    voorgesteld, zoals de publieke homepage.
+  - `family-celebrate` (nog geen asset) is uitsluitend voor betekenisvolle
+    momenten in de app: een belangrijke mijlpaal, een afgeronde cursus, een
+    bijzondere prestatie, promotie in een divisie, een lange reeks of een
+    belangrijk gezamenlijk spelmoment.
+  - Dat `family-welcome` bestaat, betekent niet dat de familie overal als
+    decoratie mag verschijnen.
 - Communicatie vooral via houding, animatie en gezichtsuitdrukking.
   Tekstballonnen zijn uitzondering; tekst altijd via het i18n-systeem
   (`src/lib/i18n/messages/*`), nooit vast in een asset of component.
@@ -317,7 +334,8 @@ De definitieve visuele assets worden **later aangeleverd** en zitten nu niet
 in de repository:
 
 - de drie Versado-mascottes (VARO, VERA, NOVI), in verschillende states
-  (NOVI eerst, in `public/mascots/static/novi/`, zie "Mascottes");
+  (NOVI eerst, in `public/mascots/static/novi/`, en de familie in
+  `public/mascots/static/family/`; zie "Mascottes");
 - illustraties;
 - afbeeldingen voor cursussen en content;
 - afbeeldingen voor spellen;

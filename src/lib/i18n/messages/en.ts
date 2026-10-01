@@ -1611,6 +1611,12 @@ export const en: PartialMessages = {
     why1: "Versado is Spanish and Portuguese for “well-versed”: someone who really knows their subject.",
     why2: "And you can hear “verse” in it. That’s what it’s all about here: the verses of the scriptures, a little at a time.",
     why3: "So, learning and playing, you become well-versed in the scriptures.",
+    mascotsIntro: "Meet Varo, Vera and Novi: three companions who explore, learn and play alongside you.",
+    mascots: {
+      varo: "Curious · Energetic · Playful",
+      vera: "Warm · Smart · Calm",
+      novi: "Cheerful · Adventurous · Mischievous",
+    },
     features: {
       lessons: {
         title: "Short lessons",

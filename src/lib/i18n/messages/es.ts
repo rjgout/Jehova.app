@@ -1621,6 +1621,12 @@ export const es: PartialMessages = {
     "why1": "Versado significa “bien versado” en español y portugués: alguien que realmente conoce su tema.",
     "why2": "Y puedes escuchar “verso” en él. De eso se trata aquí: los versículos de las Escrituras, poco a poco.",
     "why3": "Así, aprendiendo y jugando, te familiarizarás con las Escrituras.",
+    "mascotsIntro": "Conoce a Varo, Vera y Novi: tres compañeros que descubren, aprenden y juegan contigo.",
+    "mascots": {
+      "varo": "Curioso · Enérgico · Juguetón",
+      "vera": "Cálida · Inteligente · Tranquila",
+      "novi": "Alegre · Con alma exploradora · Bromista"
+    },
     "features": {
       "lessons": {
         "title": "Lecciones breves",

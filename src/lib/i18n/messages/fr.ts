@@ -1611,6 +1611,12 @@ export const fr: PartialMessages = {
     why1: "Versado signifie en espagnol et en portugais « versé dans » : quelqu’un qui connaît vraiment son sujet.",
     why2: "Et on y entend « vers ». Ici, tout tourne autour des versets des Écritures, petit à petit.",
     why3: "Ainsi, en apprenant et en jouant, tu deviens versé dans les Écritures.",
+    mascotsIntro: "Voici Varo, Vera et Novi : trois compagnons qui découvrent, apprennent et jouent avec toi.",
+    mascots: {
+      varo: "Curieux · Énergique · Joueur",
+      vera: "Chaleureuse · Intelligente · Calme",
+      novi: "Enthousiaste · Avide de découvertes · Espiègle",
+    },
     features: {
       lessons: {
         title: "Leçons courtes",

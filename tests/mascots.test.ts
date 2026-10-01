@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { MASCOT_STATES, registeredStaticMascots, staticMascotAsset, staticMascotPath } from "../src/lib/mascots";
+import { MASCOT_CHARACTERS, MASCOT_STATES, mascotStates, registeredStaticMascots, staticMascotAsset, staticMascotPath } from "../src/lib/mascots";
 
 const PUBLIC = path.join(path.dirname(fileURLToPath(import.meta.url)), "..", "public");
 const STATIC_DIR = path.join(PUBLIC, "mascots", "static");
@@ -31,14 +31,11 @@ test("elk geregistreerd mascottebestand bestaat echt", () => {
   }
 });
 
-// Composities van de drie samen hebben eigen states en (nog) geen plek in het
-// register; zie public/mascots/README.md. "celebrate" is daar bewust iets
-// anders dan "welcome": alleen voor betekenisvolle mijlpalen.
-const FAMILY_STATES = ["welcome", "celebrate"];
-
 test("elk bestand in public/mascots/static volgt de naamconventie", () => {
+  const characters = new Set<string>(MASCOT_CHARACTERS);
   for (const character of readdirSync(STATIC_DIR)) {
-    const states = new Set<string>(character === "family" ? FAMILY_STATES : MASCOT_STATES);
+    assert.ok(characters.has(character), `static/${character}/: onbekend personage`);
+    const states = new Set<string>(mascotStates(character as (typeof MASCOT_CHARACTERS)[number]));
     for (const file of readdirSync(path.join(STATIC_DIR, character))) {
       if (file === ".gitkeep") continue;
       const match = new RegExp(`^${character}-([a-z]+)\\.webp$`).exec(file);
@@ -54,5 +51,7 @@ test("zonder bestand is er geen asset (en dus geen vervanger)", () => {
     assert.equal(staticMascotAsset("vera", state), null);
     assert.equal(staticMascotAsset("varo", state), null);
   }
+  assert.equal(staticMascotAsset("family", "celebrate"), null, "family-celebrate is gereserveerd en heeft nog geen asset");
   assert.equal(staticMascotPath("novi", "greeting"), "/mascots/static/novi/novi-greeting.webp");
+  assert.equal(staticMascotPath("family", "welcome"), "/mascots/static/family/family-welcome.webp");
 });

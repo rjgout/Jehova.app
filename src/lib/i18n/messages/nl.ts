@@ -1615,6 +1615,12 @@ export const nl = {
     why1: "Versado is Spaans en Portugees voor “goed thuis in iets”: iemand die de stof echt kent.",
     why2: "En je hoort er “vers” in. Daar draait het hier om: de verzen van de Schriften, stukje voor stukje.",
     why3: "Zo raak je, al lerend en spelend, thuis in de Schriften.",
+    mascotsIntro: "Maak kennis met Varo, Vera en Novi: drie metgezellen die samen met jou ontdekken, leren en spelen.",
+    mascots: {
+      varo: "Nieuwsgierig · Energiek · Speels",
+      vera: "Warm · Slim · Rustig",
+      novi: "Vrolijk · Ontdekkend · Ondeugend",
+    },
     features: {
       lessons: {
         title: "Korte lessen",

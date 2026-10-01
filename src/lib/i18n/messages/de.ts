@@ -1611,6 +1611,12 @@ export const de: PartialMessages = {
     why1: "Versado ist Spanisch und Portugiesisch für „bewandert“: jemand, der sich wirklich auskennt.",
     why2: "Und darin steckt „Vers“. Darum geht es hier: um die Verse der heiligen Schriften, Stück für Stück.",
     why3: "So wirst du lernend und spielend in den Schriften bewandert.",
+    mascotsIntro: "Lerne Varo, Vera und Novi kennen: drei Begleiter, die gemeinsam mit dir entdecken, lernen und spielen.",
+    mascots: {
+      varo: "Neugierig · Voller Energie · Verspielt",
+      vera: "Herzlich · Klug · Ruhig",
+      novi: "Fröhlich · Abenteuerlustig · Verschmitzt",
+    },
     features: {
       lessons: {
         title: "Kurze Lektionen",

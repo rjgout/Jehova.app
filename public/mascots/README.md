@@ -49,9 +49,9 @@ public/mascots/
 - Bestandsnamen: **lowercase kebab-case**.
   - Losse Novi-assets: `novi-<state>.webp`.
   - Family-assets: `family-<state>.webp`.
-- De eerste bestanden:
-  - `static/novi/novi-greeting.webp` (staat er al);
-  - `static/family/family-welcome.webp` (wordt nog handmatig toegevoegd).
+- De eerste bestanden (beide in gebruik):
+  - `static/novi/novi-greeting.webp`: begroeting op Vandaag;
+  - `static/family/family-welcome.webp`: introductie op de publieke homepage.
 - Niet in een bestandsnaam: `v1`, `v2`, `final` of synoniemen voor een
   bestaande state. Geen nieuwe states zonder bewuste ontwerpkeuze.
 - Niet in de afbeelding: tekst, tekstballonnen of een achtergrond. Tekst
@@ -80,10 +80,11 @@ Functionele toestanden in Versado, geen willekeurige emoties:
 | state | betekenis |
 |---|---|
 | `welcome` | de algemene introductie van de drie mascottes samen |
-| `celebrate` | gereserveerd voor betekenisvolle mijlpalen en prestaties, niet als algemene introductie |
+| `celebrate` | gereserveerd voor betekenisvolle momenten in de app (mijlpaal, cursus afgerond, bijzondere prestatie, promotie, lange reeks, gezamenlijk spelmoment); nog geen bestand |
 
 `family-welcome` en `family-celebrate` zijn dus nadrukkelijk verschillende
-afbeeldingen met een verschillend doel.
+afbeeldingen met een verschillend doel. Dat `family-welcome` bestaat,
+betekent niet dat de familie overal als decoratie mag verschijnen.
 
 ## Een afbeelding toevoegen
 
@@ -91,12 +92,16 @@ afbeeldingen met een verschillend doel.
    `static/novi/novi-greeting.webp`.
 2. Registreer het in `src/lib/mascots.ts` (`STATIC_ASSETS`) met de
    afmetingen van het bestand, bv. `greeting: { width: 512, height: 512 }`.
-   Een state die niet geregistreerd is, toont nergens iets. Family-assets
-   hebben nog geen plek in het register; dat volgt als ze in de app worden
-   gebruikt.
+   Een state die niet geregistreerd is, toont nergens iets. Welke states
+   per personage bestaan staat ook daar (`family` heeft zijn eigen lijst).
 3. Draai `npm run test:mascots`. Die controleert dat elk geregistreerd
    bestand bestaat en dat elk bestand in deze mappen een geldige naam heeft.
 
+Lever bronbestanden met echte transparantie aan (een alfakanaal). Een PNG
+waarin het transparantie-schaakbord is meegeschilderd moet eerst worden
+uitgesneden, en dat gaat ten koste van de randen.
+
 Pagina's verwijzen nooit rechtstreeks naar deze bestanden. Ze gebruiken
-alleen `<MascotSlot character="novi" state="greeting" />`
+alleen `<MascotSlot character="novi" state="greeting" />` of
+`<MascotSlot character="family" state="welcome" />`
 (`src/components/versado/MascotSlot.tsx`).
