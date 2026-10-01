@@ -84,13 +84,15 @@ export function staticMascotPath<C extends MascotCharacter>(character: C, state:
 const STATIC_ASSETS: { [C in MascotCharacter]: Partial<Record<MascotStateOf<C>, { width: number; height: number }>> } = {
   // Alle Novi-poses komen van hetzelfde canvas (1312x1199, verkleind naar
   // 512 px breed), zodat Novi in elke state even groot is. Nog zonder
-  // transparante versie, dus bewust niet geregistreerd: idle, thinking,
-  // discovery, reading, celebrate, sleep.
+  // transparante versie, dus bewust niet geregistreerd: idle, reading,
+  // celebrate, sleep.
   novi: {
     greeting: { width: 512, height: 468 },
     playing: { width: 512, height: 468 },
     success: { width: 512, height: 468 },
     encourage: { width: 512, height: 468 },
+    thinking: { width: 512, height: 468 },
+    discovery: { width: 512, height: 468 },
   },
   // Losse VARO- en VERA-afbeeldingen komen in een latere fase.
   vera: {},
