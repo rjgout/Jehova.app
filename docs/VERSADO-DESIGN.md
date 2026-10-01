@@ -80,8 +80,9 @@ lijst hierboven nog volledig.
   (Vandaag, Voor jou en de spelkaarten op Spelen in `LiveLobbyForm`).
   `versado/Carousel.tsx` is de veegrij met puntjes en pijlen.
 - **Mascottes**: de uitrol is begonnen, met NOVI als eerste (zie
-  "Mascottes" hieronder). Er zijn twee definitieve assets: `novi`/`greeting`
-  (Vandaag) en `family`/`welcome` (publieke homepage).
+  "Mascottes" hieronder). In gebruik: `novi`/`greeting` (Vandaag) en
+  `family`/`welcome` (publieke homepage). Beschikbaar maar nog nergens
+  ingezet: `novi`/`playing`, `success` en `encourage`.
   `versado/MascotSlot.tsx` is de enige interface; het register in
   `src/lib/mascots.ts` kent de bestanden in `public/mascots/static/`. Zolang
   een asset ontbreekt, rendert een slot niets.
@@ -207,8 +208,8 @@ accessoires direct herkenbaar zijn.
 
 ### Consistentie
 
-De goedgekeurde Versado character sheet en de later goedgekeurde
-NOVI-master en -afbeeldingen zijn de visuele bron van waarheid. Een nieuwe
+De goedgekeurde Versado character sheet en de goedgekeurde Novi-set in
+`public/mascots/static/novi/` zijn de visuele bron van waarheid. Een nieuwe
 asset mag een personage niet opnieuw interpreteren. Tussen alle afbeeldingen
 blijven gelijk:
 - lichaamsverhoudingen, grootte en leeftijdsindruk;
@@ -289,6 +290,11 @@ Een state is een functionele toestand in Versado, niet zomaar een emotie.
   persoonlijkheid en rol overbrengen en in de interface passen. Grammaticaal
   geslacht mag per taal worden toegepast: Varo mannelijk, Vera vrouwelijk,
   NOVI is een jongetje.
+- **Betekenis per state** (wanneer `success` en wanneer `celebrate`,
+  `encourage` bij fouten, de assets als bibliotheek en niet als decoratie)
+  staat in `public/mascots/README.md`. Kort: `success` voor gewone positieve
+  feedback, `celebrate` alleen voor duidelijk grotere individuele momenten,
+  en Novi reageert op fouten nooit afkeurend.
 - Communicatie vooral via houding, animatie en gezichtsuitdrukking.
   Tekstballonnen zijn uitzondering; tekst altijd via het i18n-systeem
   (`src/lib/i18n/messages/*`), nooit vast in een asset of component.

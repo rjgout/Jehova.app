@@ -12,9 +12,11 @@ in `docs/VERSADO-DESIGN.md` onder "Mascottes".
 
 Gezamenlijk principe: **"Ik ontdek dit samen met jou."**
 
-**NOVI**: vrolijk · ontdekkend · ondeugend.
+**NOVI**: vrolijk · ontdekkend · ondeugend. Een jongetje.
 Rol: spelen, experimenteren, korte oefeningen, dagelijkse motivatie en
-verrassingen.
+verrassingen. De goedgekeurde Novi-afbeeldingen in `static/novi/` vormen
+samen met de character sheet de visuele canon: nieuwe Novi-assets sluiten
+daar visueel op aan.
 
 **VARO**: nieuwsgierig · energiek · speels.
 Rol: ontdekken, voortgang, competitie en grotere doelen.
@@ -53,9 +55,13 @@ public/mascots/
 - Bestandsnamen: **lowercase kebab-case**.
   - Losse Novi-assets: `novi-<state>.webp`.
   - Family-assets: `family-<state>.webp`.
-- De eerste bestanden (beide in gebruik):
-  - `static/novi/novi-greeting.webp`: begroeting op Vandaag;
-  - `static/family/family-welcome.webp`: introductie op de publieke homepage.
+- Aanwezig en geregistreerd:
+  - Novi: `greeting` (in gebruik op Vandaag), `playing`, `success`,
+    `encourage` (beschikbaar, nog nergens ingezet);
+  - family: `welcome` (in gebruik op de publieke homepage).
+- Nog nodig, met echte transparantie: Novi `idle`, `thinking`,
+  `discovery`, `reading`, `celebrate` en `sleep`. De aangeleverde PNG's
+  daarvan hebben een zwarte achtergrond in plaats van een alfakanaal.
 - Niet in een bestandsnaam: `v1`, `v2`, `final` of synoniemen voor een
   bestaande state. Geen nieuwe states zonder bewuste ontwerpkeuze.
 - Niet in de afbeelding: tekst, tekstballonnen of een achtergrond. Tekst
@@ -64,20 +70,43 @@ public/mascots/
 
 ### States voor Novi
 
-Functionele toestanden in Versado, geen willekeurige emoties:
+Functionele toestanden in Versado, geen willekeurige emoties. Gebruik ze
+consequent met deze betekenis:
 
 | state | betekenis |
 |---|---|
-| `idle` | rustig aanwezig, er gebeurt niets bijzonders |
-| `greeting` | begroet de gebruiker |
-| `thinking` | denkt mee, wacht op een antwoord |
-| `discovery` | ontdekt iets nieuws, samen met de gebruiker |
-| `reading` | leest of verdiept zich |
-| `playing` | speelt of oefent kort |
-| `success` | een goed antwoord, een gelukte stap |
-| `encourage` | moedigt aan na een fout: nieuwsgierig of positief, nooit boos, verdrietig of teleurgesteld |
-| `celebrate` | viert een mijlpaal |
-| `sleep` | rust (bv. 's nachts of na lange inactiviteit) |
+| `idle` | neutrale, rustige Novi: aanwezig zonder specifieke reactie |
+| `greeting` | vriendelijke begroeting, bv. bovenaan Vandaag |
+| `playing` | actief, speels, klaar om iets te doen: spellen en speelse oefeningen |
+| `success` | positieve reactie op een goed antwoord of een kleine gelukte actie |
+| `encourage` | aanmoediging na een fout antwoord of mislukte poging, of als opnieuw proberen logisch is |
+| `thinking` | nadenken: een vraag, quiz of reflectiemoment waarop de gebruiker moet nadenken |
+| `discovery` | iets nieuws ontdekken: nieuwe content, een verrassing of een inzicht |
+| `reading` | daadwerkelijk lezen of studeren |
+| `celebrate` | een duidelijk groter individueel feestmoment; niet voor elk goed antwoord |
+| `sleep` | rust, inactiviteit of het einde van een dag; niet automatisch overal 's nachts tonen zonder productreden |
+
+**`success` of `celebrate`?** Voorkom beloningsinflatie. `success` is
+gewone positieve feedback: een goed antwoord, een kleine oefening gehaald.
+`celebrate` alleen voor duidelijk grotere individuele momenten. Echt
+belangrijke Versado-mijlpalen krijgen later de hele familie
+(`family`/`celebrate`). Dus niet na elk goed antwoord een springende Novi
+met confetti.
+
+**`encourage` bij fouten.** Novi reageert op een fout nooit boos,
+teleurgesteld, verdrietig, bestraffend of afkeurend. De betekenis is:
+"probeer het nog eens, je bent iets aan het ontdekken." Novi is een
+metgezel, geen beoordelende leraar.
+
+**Een bibliotheek, geen decoratie.** Dat een state bestaat, is geen reden
+om hem te gebruiken. Een feature toont Novi alleen als de state daar
+inhoudelijk iets toevoegt: niet elke kaart versieren, geen lege ruimte
+vullen, Novi niet permanent op elke pagina.
+
+**Betekenis nooit alleen in het beeld.** Mascottes zijn decoratief voor
+schermlezers (`alt=""`). Wat Novi uitdrukt, staat altijd ook als gewone
+tekst in de interface: een fout antwoord is nooit alleen te zien aan
+`encourage`; de bestaande tekstuele feedback blijft leidend.
 
 ### States voor family
 
@@ -102,10 +131,24 @@ betekent niet dat de familie overal als decoratie mag verschijnen.
    bestand bestaat en dat elk bestand in deze mappen een geldige naam heeft.
 
 Lever bronbestanden met echte transparantie aan (een alfakanaal). Een PNG
-waarin het transparantie-schaakbord is meegeschilderd moet eerst worden
-uitgesneden, en dat gaat ten koste van de randen.
+met een zwarte, witte of meegeschilderde schaakbord-achtergrond wordt niet
+omgezet: uitsnijden verandert de randen, en bij Novi's donkere vacht en
+zwarte lijnen gaat dat zichtbaar mis.
+
+Conversie (voor de hele set gelijk): het bron-canvas (bij Novi 1312x1199)
+proportioneel naar 512 px breed, LANCZOS, WebP kwaliteit 88, method 6,
+alpha_quality 100. Niet bijsnijden, zodat Novi in elke pose even groot is.
 
 Pagina's verwijzen nooit rechtstreeks naar deze bestanden. Ze gebruiken
-alleen `<MascotSlot character="novi" state="greeting" />` of
+alleen `MascotSlot` met een personage en state, bv.
+`<MascotSlot character="novi" state="success" />` of
 `<MascotSlot character="family" state="welcome" />`
 (`src/components/versado/MascotSlot.tsx`).
+
+## Later: Rive
+
+Als er later animatie (Rive) achter `MascotSlot` komt, blijven deze WebP's
+gewoon in gebruik: als terugval bij `prefers-reduced-motion`, tijdens het
+laden, bij een fout, op plekken waar beweging niets toevoegt, en op
+apparaten of browsers waar animatie ongewenst is. Pagina's veranderen dan
+niet; alleen de renderer in `MascotSlot` krijgt er een variant bij.
