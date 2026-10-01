@@ -65,6 +65,7 @@ export default function ContentSwitcher({
     if (!root || !button) return;
 
     const updateLabelMode = () => {
+      const compactLayout = window.matchMedia("(max-width: 1023px)").matches;
       const iconWidth = iconRef.current?.getBoundingClientRect().width ?? 20;
       const chevronWidth = chevronRef.current?.getBoundingClientRect().width ?? 16;
       // De button gebruikt px-2 en gap-1.5: trek de vaste ruimte af en laat
@@ -72,14 +73,23 @@ export default function ContentSwitcher({
       const available = button.clientWidth - iconWidth - chevronWidth - 28;
       const fullWidth = fullLabelRef.current?.scrollWidth ?? 0;
       const shortWidth = shortLabelRef.current?.scrollWidth ?? 0;
-      const next: LabelMode = fullWidth <= available ? "full" : shortName && shortWidth <= available ? "short" : "icon";
+      // Op compacte headers krijgt de stabiele afkorting voorrang. Zo blijft
+      // een groot telefoonscherm niet onnodig steken op alleen het icoon.
+      const next: LabelMode = compactLayout
+        ? shortName && shortWidth <= available ? "short" : "icon"
+        : fullWidth <= available ? "full" : shortName && shortWidth <= available ? "short" : "icon";
       setLabelMode((current) => current === next ? current : next);
     };
 
     updateLabelMode();
     const observer = new ResizeObserver(updateLabelMode);
     observer.observe(root);
-    return () => observer.disconnect();
+    const mediaQuery = window.matchMedia("(max-width: 1023px)");
+    mediaQuery.addEventListener("change", updateLabelMode);
+    return () => {
+      observer.disconnect();
+      mediaQuery.removeEventListener("change", updateLabelMode);
+    };
   }, [active.id, active.name, active.language, shortName]);
 
   if (!enabled) return null;
