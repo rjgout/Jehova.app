@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from "react";
 import { ChevronDown } from "lucide-react";
 import { getLanguage } from "@/lib/languages";
 import { useT } from "@/components/I18nProvider";
@@ -47,6 +47,9 @@ export default function ContentSwitcher({
   const fullLabelRef = useRef<HTMLSpanElement>(null);
   const shortLabelRef = useRef<HTMLSpanElement>(null);
   const [labelMode, setLabelMode] = useState<LabelMode>("full");
+  // Breedte die de knop met de volledige naam nodig heeft; vanaf desktop de
+  // basisbreedte van de kiezer (zie hieronder).
+  const [fullTriggerWidth, setFullTriggerWidth] = useState<number | null>(null);
 
   useEffect(() => {
     if (!open) return;
@@ -72,16 +75,31 @@ export default function ContentSwitcher({
       // De wrapper krijgt de resterende headerbreedte; de knop zelf blijft
       // bewust content-sized zodat de vrije ruimte geen klikvlak wordt.
       const available = root.clientWidth - iconWidth - chevronWidth - 28;
-      const fullWidth = fullLabelRef.current?.scrollWidth ?? 0;
-      const shortWidth = shortLabelRef.current?.scrollWidth ?? 0;
+      // getBoundingClientRect op block-spans: scrollWidth is voor inline-
+      // elementen altijd 0, en dan "paste" de volledige naam altijd.
+      const fullWidth = Math.ceil(fullLabelRef.current?.getBoundingClientRect().width ?? Infinity);
+      const shortWidth = Math.ceil(shortLabelRef.current?.getBoundingClientRect().width ?? Infinity);
       const next: LabelMode = fullWidth <= available ? "full" : shortName && shortWidth <= available ? "short" : "icon";
       setLabelMode((current) => current === next ? current : next);
+      const needed = fullWidth + iconWidth + chevronWidth + 28;
+      if (Number.isFinite(needed)) setFullTriggerWidth((current) => current === needed ? current : needed);
     };
 
     updateLabelMode();
+    // Ook de verborgen meetlabels volgen: die worden breder zodra het
+    // webfont geladen is, terwijl de beschikbare ruimte gelijk blijft.
     const observer = new ResizeObserver(updateLabelMode);
     observer.observe(root);
-    return () => observer.disconnect();
+    if (fullLabelRef.current) observer.observe(fullLabelRef.current);
+    if (shortLabelRef.current) observer.observe(shortLabelRef.current);
+    let cancelled = false;
+    document.fonts?.ready.then(() => {
+      if (!cancelled) updateLabelMode();
+    });
+    return () => {
+      cancelled = true;
+      observer.disconnect();
+    };
   }, [active.id, active.name, active.language, shortName]);
 
   if (!enabled) return null;
@@ -124,10 +142,16 @@ export default function ContentSwitcher({
     ...works.filter((option) => option.work !== activeWork),
   ];
   return (
-    // Het menu blijft links staan op ieder scherm. De contentnaam krijgt een
-    // flexibele breedte, zodat de lange naam afkapt zonder de navigatie rechts
-    // weg te drukken.
-    <div ref={ref} className="relative -ml-2 self-stretch flex min-w-0 max-w-full flex-1 lg:max-w-[18rem]">
+    // Het menu blijft links staan op ieder scherm; de items rechts worden
+    // nooit weggedrukt. Telefoon en tablet: alle ruimte tot de items rechts. Desktop: de
+    // breedte van de volledige naam als basis, zodat de navigatie in het
+    // midden de kiezer niet half opeet; is er te weinig, dan krimpt de kiezer
+    // (de navigatie houdt haar eigen minimale breedte) en volgt de afkorting.
+    <div
+      ref={ref}
+      className="relative -ml-2 self-stretch flex min-w-0 max-w-full flex-1 lg:max-w-[18rem] lg:flex-[0_1_var(--vs-switcher-full,18rem)]"
+      style={fullTriggerWidth ? ({ "--vs-switcher-full": `${fullTriggerWidth}px` } as CSSProperties) : undefined}
+    >
       <button
         ref={buttonRef}
         type="button"
@@ -142,8 +166,8 @@ export default function ContentSwitcher({
       >
         <span ref={iconRef} className="shrink-0"><ContentIcon collection={active} className="h-5 w-5" /></span>
         <span className="pointer-events-none absolute -left-[9999px] whitespace-nowrap" aria-hidden>
-          <span ref={fullLabelRef}>{active.name}</span>
-          {shortName && <span ref={shortLabelRef}>{shortName}</span>}
+          <span ref={fullLabelRef} className="block w-max">{active.name}</span>
+          {shortName && <span ref={shortLabelRef} className="block w-max">{shortName}</span>}
         </span>
         {labelMode !== "icon" && <span className="block shrink-0 whitespace-nowrap">{labelMode === "short" && shortName ? shortName : active.name}</span>}
         <ChevronDown ref={chevronRef} className={`h-4 w-4 shrink-0 transition-transform ${open ? "rotate-180" : ""}`} aria-hidden />

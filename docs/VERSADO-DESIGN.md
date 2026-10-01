@@ -258,6 +258,11 @@ Gecontroleerd in de code; bestandsnamen om snel terug te vinden.
   gebruikers pas vanaf desktopbreedte `lg`), contentkiezer
   (`ContentSwitcher`), meldingen (`NotificationCenter`), reeks en XP
   (`NavUserBadges`). Geen avatar of profielingang in de header.
+- Contentkiezer gesloten: volledige naam, anders de afkorting, anders alleen
+  het icoon, gekozen op de gemeten vrije ruimte in de header (niet op een
+  breakpoint). Icoon en afkorting per taal staan per contentbron in
+  `src/lib/contentMetadata.ts`; de volledige naam is de naam van de uitgave.
+  Het geopende menu en het aria-label tonen altijd de volledige naam.
 - Daaronder in dezelfde vaste balk: kop van detailpagina's met terugpijl
   (`SubpageBackBar`), podcast- en voorlees-minispeler. `--header-height` wordt gemeten en door `<main>`
   gebruikt.
