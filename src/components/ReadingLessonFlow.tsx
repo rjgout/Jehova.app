@@ -35,28 +35,25 @@ interface Props {
   audio?: ChapterAudio | null;
   term?: ChapterTerm;
   exercises: Exercise[];
+  /** De door de server uitgedeelde vragen van deze stap; null zonder vragen (dan alleen lezen). */
+  sessionId: string | null;
   /** Taal van de uitgave, voor de voorleesstem. */
   language?: string;
 }
 
 interface Result {
+  /** Een stap zonder vragen: alleen gelezen, geen XP en geen reeks. */
+  readOnly?: boolean;
   correctCount: number;
   total: number;
   xpEarned: number;
+  baseXp: number;
+  bonusXp: number;
   scorePercent: number;
   currentStreak: number;
-  freezesEarned: number;
-  freezeUsed: boolean;
-  streakBroken: boolean;
   alreadyStudiedToday: boolean;
   newAchievements: string[];
-  readingLessonCompleted: boolean;
-  comboCount: number;
-  comboMultiplier: number;
   nextLessonId: string | null;
-  alreadyCompleted: boolean;
-  nextXpEarned: number;
-  nextComboMultiplier: number;
 }
 
 type Phase = "read" | "exercises" | "summary";
@@ -75,6 +72,7 @@ export default function ReadingLessonFlow({
   audio,
   term,
   exercises,
+  sessionId,
   language,
 }: Props) {
   const t = useT();
@@ -83,6 +81,7 @@ export default function ReadingLessonFlow({
   const [answers, setAnswers] = useState<{ exerciseId: string; given: string[]; correct: boolean }[]>([]);
   const [result, setResult] = useState<Result | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const current = exercises[index];
   const exerciseById = useMemo(() => new Map(exercises.map((e) => [e.id, e])), [exercises]);
 
@@ -91,13 +90,12 @@ export default function ReadingLessonFlow({
     const res = await fetch("/api/reading-lessons/submit", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ lessonId, answers: finalAnswers }),
+      body: JSON.stringify({ lessonId, sessionId, answers: finalAnswers }),
     });
-    const data = await res.json();
+    const data = await res.json().catch(() => ({}));
     setSubmitting(false);
     if (!res.ok) {
-      setResult(null);
-      setPhase("read");
+      setError(data.error ?? t("courses.error"));
       return;
     }
     setResult(data);
@@ -137,13 +135,15 @@ export default function ReadingLessonFlow({
         />
         <button
           className="btn-primary self-start"
+          disabled={submitting}
           onClick={() => {
-            if (exercises.length === 0) finish([]);
+            if (sessionId === null || exercises.length === 0) finish([]);
             else setPhase("exercises");
           }}
         >
-          {exercises.length === 0 ? t("readingLesson.finishStep") : t("readingLesson.toQuestions")}
+          {sessionId === null || exercises.length === 0 ? t("readingLesson.finishStep") : t("readingLesson.toQuestions")}
         </button>
+        {error && <p className="text-sm font-bold text-red-600 dark:text-red-400">{error}</p>}
       </div>
     );
   }
@@ -165,12 +165,30 @@ export default function ReadingLessonFlow({
           onDone={onDone}
           disabled={submitting}
         />
+        {error && <p className="text-sm font-bold text-red-600 dark:text-red-400">{error}</p>}
       </div>
     );
   }
 
   if (phase === "summary" && result) {
     const effectiveNextLessonId = result.nextLessonId ?? nextLessonId;
+    if (result.readOnly) {
+      return (
+        <div className="max-w-md mx-auto card flex flex-col items-center gap-4 text-center animate-pop">
+          <p className="text-xs font-bold uppercase tracking-wide text-slate-400 dark:text-slate-500">
+            {t("readingLesson.stepDone", { n: lessonNumber })}
+          </p>
+          <h2 className="text-2xl font-extrabold text-brand-800 dark:text-brand-300">{t("progress.stepRead")}</h2>
+          <p className="text-sm text-vs-fg-2">{t("progress.stepReadText")}</p>
+          <div className="flex flex-wrap justify-center gap-3 mt-2">
+            <Link href="/courses" className="btn-secondary">{t("readingLesson.stop")}</Link>
+            {effectiveNextLessonId && (
+              <Link href={`/reading-lesson/${effectiveNextLessonId}`} className="btn-primary">{t("readingLesson.nextStep")}</Link>
+            )}
+          </div>
+        </div>
+      );
+    }
     return (
       <div className="max-w-md mx-auto card flex flex-col items-center gap-4 text-center animate-pop">
         <div className="text-5xl">{result.scorePercent >= 80 ? "🎉" : result.scorePercent >= 60 ? "👍" : "💪"}</div>
@@ -181,27 +199,17 @@ export default function ReadingLessonFlow({
           {t("readingLesson.score", { correct: result.correctCount, total: result.total })}
         </h2>
 
-        <>
-          <p className="text-gold-600 dark:text-gold-400 font-extrabold text-lg">
-            +{result.xpEarned} XP
+        <p className="text-gold-600 dark:text-gold-400 font-extrabold text-lg">
+          +{result.xpEarned} XP
+        </p>
+        {result.baseXp + result.bonusXp === 0 && result.total > 0 && (
+          <p className="-mt-2 text-sm text-vs-fg-2">{t("progress.repeatNote")}</p>
+        )}
+        {result.scorePercent < 60 && (
+          <p className="text-sm text-slate-500 dark:text-slate-400">
+            {t("readingLesson.lowScore")}
           </p>
-          {result.scorePercent < 60 && (
-            <p className="text-sm text-slate-500 dark:text-slate-400">
-              {t("readingLesson.lowScore")}
-            </p>
-          )}
-          {effectiveNextLessonId && (
-            <div className="rounded-2xl bg-gold-50 dark:bg-slate-700 px-4 py-3 w-full">
-              <p className="flex items-center gap-1 font-extrabold text-gold-700 dark:text-gold-300">
-                <SystemIcon kind="streak" className="h-4 w-4" fill="currentColor" aria-hidden />{t("readingLesson.keepGoing")}
-              </p>
-              <p className="text-sm text-gold-600 dark:text-gold-400">
-                {t("readingLesson.nextXpBefore")}<strong>+{result.nextXpEarned} XP</strong>
-                {t("readingLesson.nextXpAfter", { multiplier: result.nextComboMultiplier })}
-              </p>
-            </div>
-          )}
-        </>
+        )}
 
         {!result.alreadyStudiedToday && (
           <div className="mt-2">

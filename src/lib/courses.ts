@@ -1,6 +1,7 @@
 import type { PrismaClient } from "@prisma/client";
 import { capitalize, chapterTerm } from "./chapterTerm";
 import { ensurePodcasts, PODCASTS, PODCASTS_COLLECTION_ID } from "./podcasts";
+import { splitVerseRange } from "./learning/exercisePlan";
 
 export const FRONT_TO_BACK_SLUG = "voor-naar-achter";
 export const FREE_CHOICE_SLUG = "vrije-keuze";
@@ -11,24 +12,9 @@ export const READING_LESSONS_SLUG = "lezen-van-voor-naar-achter";
 export const FSY_SLUG = "voor-de-kracht-van-de-jeugd";
 
 
-/** Verdeelt een hoofdstuk in zo gelijk mogelijke stukken van maximaal 10 verzen.
- * Voor hoofdstukken van 5 verzen of meer komt elk stuk daardoor uit op 5-10 verzen.
- * Kleine hoofdstukken blijven één les, zodat we nooit kunstmatig een mini-les maken.
- */
-export function splitVerseRange(totalVerses: number): { startVerse: number; endVerse: number }[] {
-  if (totalVerses <= 0) return [];
-  const lessonCount = Math.max(1, Math.ceil(totalVerses / 10));
-  const baseSize = Math.floor(totalVerses / lessonCount);
-  const remainder = totalVerses % lessonCount;
-  const ranges: { startVerse: number; endVerse: number }[] = [];
-  let startVerse = 1;
-  for (let i = 0; i < lessonCount; i++) {
-    const size = baseSize + (i < remainder ? 1 : 0);
-    ranges.push({ startVerse, endVerse: startVerse + size - 1 });
-    startVerse += size;
-  }
-  return ranges;
-}
+// De stappen van Stap voor stap zijn de delen van het oefenplan (zie
+// src/lib/learning/exercisePlan.ts): één indeling voor elke route.
+export { splitVerseRange } from "./learning/exercisePlan";
 
 async function syncReadingLessons(
   db: PrismaClient,

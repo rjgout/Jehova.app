@@ -8,7 +8,7 @@ import { prisma } from "@/lib/db";
 import { verifySessionToken, SESSION_COOKIE } from "@/lib/auth";
 import { parseCookieHeader } from "@/lib/parseCookieHeader";
 import { isExerciseCorrect } from "@/lib/exerciseGen";
-import { completeLesson, completeChapterGuess } from "@/lib/streak";
+import { completeLiveQuiz, completeChapterGuess } from "@/lib/streak";
 import { checkAndAwardAchievements } from "@/lib/achievements";
 import { notifyGameInvite, notifyNewAchievements, removeNotificationsByUrl } from "@/lib/notify";
 import { setRealtimeServer } from "@/lib/realtime";
@@ -387,9 +387,9 @@ async function finishGame(room: RoomState) {
       const won = maxScore > 0 && p.score === maxScore;
       // Altijd aanroepen, ook bij xp === 0 (verloren met score 0): meespelen
       // telt als vandaag gestudeerd, net als bij CHAPTER_GUESS hieronder.
-      // completeLesson/awardXp behandelen xp = 0 zelf al als no-op voor de
+      // completeLiveQuiz/awardXp behandelen xp = 0 zelf al als no-op voor de
       // XP-boekhouding.
-      await completeLesson(p.userId, room.chapterId!, percent, xp, won ? "LIVE_GAME_WON" : "LIVE_GAME_PLAYED").catch(() => {});
+      await completeLiveQuiz(p.userId, room.chapterId!, percent, xp, won).catch(() => {});
     }
   } else if (room.mode === "CHAPTER_GUESS") {
     const total = room.cgQuestions.length;

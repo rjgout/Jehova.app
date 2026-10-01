@@ -15,6 +15,7 @@ import { announceXpChanged } from "@/lib/xpBroadcast";
 import ReadAloudPlayer from "@/components/ReadAloudPlayer";
 import { useReadAloudPlayer } from "@/lib/readAloudPlayerContext";
 import { chapterTerm, type ChapterTerm } from "@/lib/chapterTerm";
+import { ContentStatusLine, LongChapterNotice, type ReadState } from "@/components/learning/ContentStatus";
 
 export type ExerciseType = "FILL_BLANK" | "WORD_BANK" | "TRUE_FALSE" | "MULTIPLE_CHOICE" | "SEQUENCE" | "IMAGE_CHOICE";
 
@@ -55,6 +56,15 @@ interface Props {
   /** "hoofdstuk" of "afdeling" (Leer en Verbonden), zie src/lib/chapterTerm.ts. */
   term?: ChapterTerm;
   exercises: Exercise[];
+  /** De door de server uitgedeelde oefenset; null als dit hoofdstuk geen vragen heeft. */
+  sessionId: string | null;
+  /** Lees- en oefenvoortgang van deze inhoud, gedeeld over alle routes. */
+  content: { read: ReadState; exercisesAnswered: number; exercisesTotal: number; exercisesComplete: boolean };
+  /** De leesroute waaruit het hoofdstuk geopend is (bepaalt alleen de knoppen). */
+  route: "FREE_CHOICE" | "FRONT_TO_BACK" | "READING_LESSONS" | null;
+  readingMinutes: number;
+  /** Bij een lang hoofdstuk: dit hoofdstuk in Stap voor stap. */
+  stepsHref: string | null;
   // Gezet als deze les gespeeld wordt als iemands beurt in een uitdaging
   // (zie /challenges) — de score telt dan ook mee voor die uitdaging, zie
   // /api/chapters/[chapterId]/submit.
@@ -79,6 +89,10 @@ interface SummaryResult {
   correctCount: number;
   total: number;
   xpEarned: number;
+  baseXp: number;
+  bonusXp: number;
+  repeatXp: number;
+  content: { read: ReadState; exercisesAnswered: number; exercisesTotal: number };
   scorePercent: number;
   currentStreak: number;
   longestStreak: number;
@@ -94,9 +108,14 @@ const FONT_SCALE_KEY = "bom-reader-font-scale";
 const MIN_SCALE = 0.85;
 const MAX_SCALE = 1.5;
 
-export default function LessonFlow({ chapterId, bookName, chapterNumber, nextChapterId, verses, audio, term = chapterTerm(null), exercises, challengeId, courseId, focusVerse, language }: Props) {
+export default function LessonFlow({ chapterId, bookName, chapterNumber, nextChapterId, verses, audio, term = chapterTerm(null), exercises, sessionId, content, route, readingMinutes, stepsHref, challengeId, courseId, focusVerse, language }: Props) {
   const t = useT();
   const [phase, setPhase] = useState<Phase>("read");
+  const [read, setRead] = useState<ReadState>(content.read);
+  const [justMarkedRead, setJustMarkedRead] = useState(false);
+  const [showLongNotice, setShowLongNotice] = useState(stepsHref !== null);
+  const [error, setError] = useState<string | null>(null);
+  const hasExercises = sessionId !== null && exercises.length > 0;
   const [index, setIndex] = useState(0);
   const [answers, setAnswers] = useState<SubmittedAnswer[]>([]);
   const [reviewQueue, setReviewQueue] = useState<string[]>([]);
@@ -126,10 +145,14 @@ export default function LessonFlow({ chapterId, bookName, chapterNumber, nextCha
     const res = await fetch(`/api/chapters/${chapterId}/submit`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ answers: finalAnswers, challengeId }),
+      body: JSON.stringify({ sessionId, answers: finalAnswers, challengeId, courseId }),
     });
-    const data = await res.json();
+    const data = await res.json().catch(() => ({}));
     setSubmitting(false);
+    if (!res.ok) {
+      setError(data.error ?? t("courses.error"));
+      return;
+    }
     setSummary(data);
     setPhase("summary");
     announceXpChanged();
@@ -175,13 +198,53 @@ export default function LessonFlow({ chapterId, bookName, chapterNumber, nextCha
     finishExercises(answers);
   }
 
+  // Lezen levert geen XP en geen reeks op; het hoofdstuk staat daarna wel
+  // als gelezen in elke leesroute.
+  async function markRead(): Promise<boolean> {
+    const res = await fetch(`/api/chapters/${chapterId}/read`, { method: "POST" }).catch(() => null);
+    if (!res?.ok) return false;
+    setRead("READ");
+    setJustMarkedRead(true);
+    return true;
+  }
+
   if (phase === "read") {
+    const practiceLabel = t(content.exercisesComplete ? "progress.practiceAgain" : "progress.practice", { n: exercises.length });
+    // Hoofdstuk voor hoofdstuk: na het lezen volgt de oefenset. Vrije keuze
+    // (en een hoofdstuk buiten een route): lezen, oefenen mag daarna.
+    const afterReading = route === "FRONT_TO_BACK";
     return (
       <div className="max-w-2xl mx-auto flex flex-col gap-4">
+        {showLongNotice && stepsHref && <LongChapterNotice minutes={readingMinutes} stepsHref={stepsHref} onReadFull={() => setShowLongNotice(false)} />}
+        {(read !== "UNREAD" || content.exercisesAnswered > 0) && (
+          <ContentStatusLine read={read} exercisesAnswered={content.exercisesAnswered} exercisesTotal={content.exercisesTotal} />
+        )}
         <ReaderView chapterId={chapterId} bookName={bookName} chapterNumber={chapterNumber} verses={verses} audio={audio} term={term} focusVerse={focusVerse} language={language} />
-        <button className="btn-primary self-start" onClick={() => setPhase("exercises")}>
-          {t("lesson.startExercises")}
-        </button>
+        <div className="flex flex-col gap-3">
+          {justMarkedRead && <p className="text-sm text-vs-fg-2">{t("progress.readingNoXp")}</p>}
+          <div className="flex flex-wrap items-center gap-3">
+            {read !== "READ" && afterReading && hasExercises && (
+              <button className="btn-primary" onClick={async () => { if (await markRead()) setPhase("exercises"); }}>
+                {t("progress.readAndPractice", { n: exercises.length })}
+              </button>
+            )}
+            {read !== "READ" && !(afterReading && hasExercises) && (
+              <button className="btn-primary" onClick={markRead}>
+                {t("progress.markRead")}
+              </button>
+            )}
+            {hasExercises && (read === "READ" || !afterReading) && (
+              <button className={read === "READ" ? "btn-primary" : "btn-secondary"} onClick={() => setPhase("exercises")}>
+                {practiceLabel}
+              </button>
+            )}
+            {read === "READ" && !hasExercises && nextChapterId && (
+              <Link href={`/lesson/${nextChapterId}${courseId ? `?cursus=${courseId}` : ""}`} className="btn-primary">
+                {t(`terms.${term.kind}.next`)}
+              </Link>
+            )}
+          </div>
+        </div>
       </div>
     );
   }
@@ -191,6 +254,7 @@ export default function LessonFlow({ chapterId, bookName, chapterNumber, nextCha
       <div className="max-w-2xl mx-auto flex flex-col gap-6">
         <ProgressBar current={index} total={exercises.length} />
         <ExerciseCard key={current.id} exercise={current} onDone={onExerciseDone} disabled={submitting} />
+        {error && <p className="text-sm font-bold text-red-600 dark:text-red-400">{error}</p>}
       </div>
     );
   }
@@ -940,6 +1004,12 @@ function SummaryScreen({
         {t("lesson.score", { correct: summary.correctCount, total: summary.total, pct: summary.scorePercent })}
       </h2>
       <p className="text-gold-600 dark:text-gold-400 font-extrabold text-lg">+{summary.xpEarned} XP</p>
+      {summary.baseXp + summary.bonusXp === 0 && summary.total > 0 && (
+        <p className="-mt-2 text-sm text-vs-fg-2">{t("progress.repeatNote")}</p>
+      )}
+      {summary.content && (
+        <ContentStatusLine read={summary.content.read} exercisesAnswered={summary.content.exercisesAnswered} exercisesTotal={summary.content.exercisesTotal} className="justify-center" />
+      )}
 
       <div className="flex gap-6 mt-2">
         {!summary.alreadyStudiedToday && (

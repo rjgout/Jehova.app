@@ -12,11 +12,12 @@ export default async function PracticePage() {
   if (!user) redirect("/login");
   const t = getT(user.uiLanguage);
 
-  const completedChapters = await prisma.chapterProgress.findMany({
-    where: { userId: user.id, completed: true },
-    select: { chapterId: true },
+  // Herhaling uit hoofdstukken waarvan je de oefenset al eens hebt gemaakt.
+  const completedChapters = await prisma.contentProgress.findMany({
+    where: { userId: user.id, exercisesCompletedAt: { not: null }, lastChapterId: { not: null } },
+    select: { lastChapterId: true },
   });
-  const chapterIds = completedChapters.map((c) => c.chapterId);
+  const chapterIds = completedChapters.flatMap((c) => (c.lastChapterId ? [c.lastChapterId] : []));
 
   if (chapterIds.length === 0) {
     return (

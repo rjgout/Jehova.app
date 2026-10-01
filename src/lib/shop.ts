@@ -46,7 +46,8 @@ export async function buyHints(userId: string, quantity: number): Promise<BuyHin
 
 // Tweede artikel in de winkel: een streak freeze, ook inwisselbaar tegen
 // XP. Los van de freezes die je verdient op een streak-/hoofdstuk-mijlpaal
-// (zie completeLesson e.a. in src/lib/streak.ts) of cadeau krijgt van een
+// (zie recordLearningActivity in src/lib/streak.ts en submitExerciseSession
+// in src/lib/learning/contentProgress.ts) of cadeau krijgt van een
 // vriend (giftFreeze) — dit is gewoon een derde manier om aan User.freezeCount
 // te komen, en telt daarom net als die andere twee mee in een eigen
 // FreezeTransaction voor de audittrail.

@@ -398,7 +398,6 @@ export const es: PartialMessages = {
     "saveFailed": "No se ha podido guardar."
   },
   "lesson": {
-    "startExercises": "Iniciar ejercicios →",
     "reviewTitle": "Revisión ({pos}/{total})",
     "skipAll": "Omitir todo →",
     "reviewHint": "Te perdiste esta. ¿Quieres volver a intentarlo?",
@@ -449,9 +448,6 @@ export const es: PartialMessages = {
     "stepDone": "Paso {n} completado",
     "score": "{correct} / {total} correcto",
     "lowScore": "Tu puntuación está guardada, pero simplemente puedes continuar con el siguiente paso.",
-    "keepGoing": "¿Seguir?",
-    "nextXpBefore": "El siguiente paso genera hasta",
-    "nextXpAfter": "(×{multiplier}).",
     "stop": "Detener",
     "nextStep": "Siguiente paso →"
   },
@@ -1849,6 +1845,9 @@ export const es: PartialMessages = {
     "recoveryCodeWrong": "El código de recuperación es incorrecto.",
     "chapterNotFound": "Capítulo no encontrado",
     "chapterNotFoundDot": "Capítulo no encontrado.",
+    "exercisesAlreadySubmitted": "Estos ejercicios ya se han enviado.",
+    "exercisesIncomplete": "Responde primero a todas las preguntas.",
+    "stepLocked": "Este paso aún está bloqueado.",
     "currentPasswordWrong": "La contraseña actual es incorrecta.",
     "itemNotFound": "Artículo no encontrado.",
     "noHintCredit": "No tienes ninguna pista disponible: primero da una respuesta correcta o compra una en la tienda.",
@@ -2079,7 +2078,8 @@ export const es: PartialMessages = {
   "xpGuide": {
     "title": "¿Qué genera XP?",
     "subtitle": "Una descripción general de cada actividad en la aplicación.",
-    "chapter": "Lectura de un capítulo",
+    "chapter": "Ejercicios de un capítulo",
+    "chapterText": "{n} XP por respuesta correcta en la serie de ejercicios del capítulo, más {bonus} XP si toda la serie es correcta. Lo mismo en cada ruta de lectura; leer por sí solo no da XP ni alarga tu racha.",
     "intro": "Curso de introducción",
     "kids": "Niños historia",
     "podcast": "Lección de podcast",
@@ -2092,7 +2092,7 @@ export const es: PartialMessages = {
     "challengeText": "{n} XP para la semanal liga (no't cuenta hacia tu general XP  total — que ya viene del del capítulo mismo).",
     "wordGameText": "{win} XP for the winner, {rest} XP for the other player — for the weekly league, not your overall%2 0XP total.",
     "repeatTitle": "🔁 Repitiendo",
-    "repeatText": "Ya terminó a capítulo, introducción lección, niños's historia o podcast lección con a perfecto puntaje (100%)? Tú're bienvenido a lo it otra vez, pero it solo gana {pct}% of the normal XP — so repeating stays util as a refresher  without becoming an endless XP source."
+    "repeatText": "Un capítulo da sus XP una sola vez, en cualquier ruta de lectura o idioma en que lo practiques. Igual que una lección de introducción, un cuento infantil o una lección de pódcast que ya hiciste perfecta (100 %). Siempre puedes practicar de nuevo, pero solo da el {pct} % de los XP normales; así repasar sigue valiendo la pena sin convertirse en una fuente infinita de XP."
   },
   "privacy": {
     "title": "Privacidad política",
@@ -2452,5 +2452,27 @@ export const es: PartialMessages = {
     "fillName": "¿Qué nombre falta? “{verse}” ({ref})",
     "bookSubject": "el libro de {book}",
     "headingLabel": "título del capítulo"
+  },
+  "progress": {
+    "read": "Leído",
+    "reading": "Leyendo",
+    "alreadyRead": "Ya leído",
+    "exercises": "Ejercicios {done}/{total}",
+    "exercisesNotDone": "Ejercicios aún sin hacer",
+    "minutes": "± {n} min",
+    "markRead": "Marcar como leído",
+    "readAndPractice": "Leído, a los ejercicios ({n} preguntas)",
+    "practice": "Hacer los ejercicios · {n} preguntas",
+    "practiceAgain": "Practicar de nuevo · {n} preguntas",
+    "readingNoXp": "¡Leído! La lectura cuenta para tu progreso; los XP y tu racha los ganas con los ejercicios.",
+    "sharedInfo": "Tu progreso de lectura se actualiza automáticamente en todas las rutas de lectura.",
+    "longTitle": "Este es un capítulo más largo",
+    "longText": "Puedes leerlo de una vez, pero Paso a paso lo divide en partes más pequeñas con ejercicios entre medias.",
+    "longSteps": "Leer paso a paso",
+    "longFull": "Leer el capítulo completo de todos modos",
+    "repeatNote": "Repaso: ya habías ganado los XP de estas preguntas.",
+    "stepRead": "Paso leído",
+    "stepReadText": "Este paso no tiene preguntas. La lectura cuenta para tu progreso, no para los XP ni tu racha.",
+    "dismiss": "Entendido"
   }
 };

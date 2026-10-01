@@ -1,7 +1,9 @@
 "use client";
 
 import Link from "next/link";
+import { Lock } from "lucide-react";
 import { useT } from "@/components/I18nProvider";
+import { ContentStatusLine, type ReadState } from "@/components/learning/ContentStatus";
 
 interface LessonView {
   id: string;
@@ -21,9 +23,11 @@ interface Props {
   lessons: LessonView[];
   /** "dit hoofdstuk" of "deze afdeling" (zie src/lib/chapterTerm.ts). */
   thisOne?: string;
+  /** Gedeelde lees- en oefenvoortgang van dit hoofdstuk, uit elke route. */
+  content: { read: ReadState; exercisesAnswered: number; exercisesTotal: number };
 }
 
-export default function ReadingChapterView({ courseId, bookName, chapterNumber, lessons, thisOne = "dit hoofdstuk" }: Props) {
+export default function ReadingChapterView({ courseId, bookName, chapterNumber, lessons, thisOne = "dit hoofdstuk", content }: Props) {
   const t = useT();
   const completedCount = lessons.filter((lesson) => lesson.completed).length;
 
@@ -39,6 +43,9 @@ export default function ReadingChapterView({ courseId, bookName, chapterNumber, 
         <p className="text-slate-500 dark:text-slate-400 mt-1">
           {t("courseView.readInPieces", { thisOne })}
         </p>
+        {(content.read !== "UNREAD" || content.exercisesAnswered > 0) && (
+          <ContentStatusLine read={content.read} exercisesAnswered={content.exercisesAnswered} exercisesTotal={content.exercisesTotal} className="mt-3" />
+        )}
       </div>
 
       <div className="flex flex-col gap-3">
@@ -58,7 +65,7 @@ export default function ReadingChapterView({ courseId, bookName, chapterNumber, 
                     : "bg-gold-400 text-white"
               }`}
             >
-              {lesson.completed ? "✓" : lesson.locked ? "🔒" : lesson.number}
+              {lesson.completed ? "✓" : lesson.locked ? <Lock className="h-4 w-4" strokeWidth={2.25} aria-hidden /> : lesson.number}
             </div>
             <div className="min-w-0 flex-1">
               <div className="font-extrabold dark:text-slate-100">{t("courseView.stepN", { n: lesson.number })}</div>

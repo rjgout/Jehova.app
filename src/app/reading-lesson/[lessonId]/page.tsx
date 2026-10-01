@@ -2,7 +2,8 @@ import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/session";
 import { prisma } from "@/lib/db";
 import { playableAudioUrl } from "@/lib/audioMirror";
-import { advanceCourseProgress } from "@/lib/courses";
+import { getStepOverview } from "@/lib/readingLessons";
+import { issueExerciseSession } from "@/lib/learning/contentProgress";
 import ReadingLessonFlow from "@/components/ReadingLessonFlow";
 import { chapterTerm, localizeTerm } from "@/lib/chapterTerm";
 import { getT } from "@/lib/i18n";
@@ -24,43 +25,16 @@ export default async function ReadingLessonPage({
       chapter: {
         include: { book: { include: { contentCollection: { select: { language: true } } } } },
       },
-      exercises: {
-        orderBy: { order: "asc" },
-        include: {
-          exercise: {
-            include: { options: { orderBy: { order: "asc" } } },
-          },
-        },
-      },
     },
   });
 
   if (!lesson || lesson.course.type !== "READING_LESSONS") redirect("/courses");
 
-  let courseProgress = await prisma.userCourseProgress.findUnique({
-    where: { userId_courseId: { userId: user.id, courseId: lesson.courseId } },
-  });
-  if (!courseProgress) {
-    await advanceCourseProgress(prisma, user.id, lesson.courseId);
-    courseProgress = await prisma.userCourseProgress.findUnique({
-      where: { userId_courseId: { userId: user.id, courseId: lesson.courseId } },
-    });
-  }
-
-  const lessonProgress = await prisma.userCourseLessonProgress.findUnique({
-    where: {
-      userId_lessonId: {
-        userId: user.id,
-        lessonId: lesson.id,
-      },
-    },
-    select: { completed: true },
-  });
-
-  const isCompleted = lessonProgress?.completed ?? false;
-  const isCurrent = courseProgress?.currentLessonId === lesson.id;
-
-  if (!isCurrent && !isCompleted) {
+  // Open als de stap af is of aan de beurt (zie getStepOverview): ook een
+  // hoofdstuk dat je via een andere route begon, kun je hier afmaken.
+  const overview = await getStepOverview(prisma, user.id, lesson.courseId);
+  const step = overview.steps.find((item) => item.id === lesson.id);
+  if (!step?.available) {
     redirect(`/courses/${lesson.courseId}/chapter/${lesson.chapterId}`);
   }
 
@@ -106,19 +80,13 @@ export default async function ReadingLessonPage({
     }),
   ]);
 
-  const exercises = lesson.exercises
-    .map(({ exercise }) => ({
-      id: exercise.id,
-      type: exercise.type as "FILL_BLANK" | "WORD_BANK" | "TRUE_FALSE" | "MULTIPLE_CHOICE" | "SEQUENCE",
-      verseRef: exercise.verseRef,
-      prompt: exercise.prompt,
-      hint: exercise.hint ?? undefined,
-      blanks: (JSON.parse(exercise.answers) as string[]).length,
-      wordBank: exercise.wordBank ? (JSON.parse(exercise.wordBank) as string[]) : undefined,
-      options: exercise.options.length > 0 ? exercise.options.map((option) => option.label) : undefined,
-    }))
-    .sort(() => Math.random() - 0.5)
-    .slice(0, 3);
+  // De vragen van dit leesgedeelte uit het oefenplan van het hoofdstuk:
+  // samen met de andere stappen precies de oefenset van het hoofdstuk.
+  const issued = await issueExerciseSession(user.id, lesson.chapterId, {
+    lessonId: lesson.id,
+    startVerse: lesson.startVerse,
+    endVerse: lesson.endVerse,
+  });
 
   return (
     <>
@@ -144,7 +112,8 @@ export default async function ReadingLessonPage({
       }))}
       audio={audio}
       term={localizeTerm(chapterTerm(lesson.chapter.book.slug), getT(user.uiLanguage))}
-      exercises={exercises}
+      exercises={issued.exercises}
+      sessionId={issued.sessionId}
       language={lesson.chapter.book.contentCollection.language}
     />
     </>

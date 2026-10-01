@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { getCourseChapterProgress } from "@/lib/learning/courseProgress";
 import { getCurrentUser } from "@/lib/session";
 import { getContentContext } from "@/lib/contentCollections";
 import { chapterTerm, localizeTerm } from "@/lib/chapterTerm";
@@ -46,47 +47,11 @@ export async function GET() {
       let completedCount = 0;
       let xpAvailable = 0;
 
-      if (course.type === "READING_LESSONS") {
-        const lessons = await prisma.courseLesson.findMany({
-          where: { courseId: course.id },
-          select: { chapterId: true, id: true },
-        });
-        totalChapters = new Set(lessons.map((lesson) => lesson.chapterId)).size;
-        if (lessons.length > 0) {
-          const completedLessons = await prisma.userCourseLessonProgress.findMany({
-            where: { userId: user.id, lessonId: { in: lessons.map((lesson) => lesson.id) }, completed: true },
-            select: { lessonId: true },
-          });
-          const completedIds = new Set(completedLessons.map((lesson) => lesson.lessonId));
-          const completedByChapter = new Map<string, number>();
-          const totalByChapter = new Map<string, number>();
-          for (const lesson of lessons) {
-            totalByChapter.set(lesson.chapterId, (totalByChapter.get(lesson.chapterId) ?? 0) + 1);
-            if (completedIds.has(lesson.id)) {
-              completedByChapter.set(lesson.chapterId, (completedByChapter.get(lesson.chapterId) ?? 0) + 1);
-            }
-          }
-          completedCount = [...totalByChapter.keys()].filter(
-            (chapterId) => completedByChapter.get(chapterId) === totalByChapter.get(chapterId)
-          ).length;
-        }
-      } else if (course._count.chapters > 0) {
-        const chapterIds = (
-          await prisma.courseChapter.findMany({ where: { courseId: course.id }, select: { chapterId: true } })
-        ).map((c) => c.chapterId);
-        completedCount = await prisma.chapterProgress.count({
-          where: { userId: user.id, chapterId: { in: chapterIds }, completed: true },
-        });
-      }
-
-      if (progress?.currentChapterId) {
-        const currentChapter = await prisma.chapter.findUnique({
-          where: { id: progress.currentChapterId },
-          include: { _count: { select: { exercises: true } } },
-        });
-        if (currentChapter) {
-          xpAvailable = Math.min(currentChapter._count.exercises, 7) * 10 + (currentChapter._count.exercises ? 20 : 0);
-        }
+      const chapterProgress = await getCourseChapterProgress(prisma, user.id, course, progress?.currentChapterId ?? null);
+      if (chapterProgress) {
+        totalChapters = chapterProgress.totalChapters;
+        completedCount = chapterProgress.completedCount;
+        xpAvailable = chapterProgress.xpAvailable;
       }
 
       return {

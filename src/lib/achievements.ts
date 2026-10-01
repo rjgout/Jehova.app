@@ -9,6 +9,9 @@ interface AchievementDef {
 // Voorwaarden worden bij elke aanroep herberekend vanuit de huidige data
 // (i.p.v. losse "event" tracking) — eenvoudiger correct te houden, en werkt
 // ongeacht vanuit welke flow (les, freeze, duel, vriendschap) je aanroept.
+// "Een hoofdstuk afgerond" is een volledig gemaakte oefenset van een stuk
+// inhoud, in welke route of taal ook; "perfect" is die set helemaal goed
+// (zie ContentProgress en docs/LEERVOORTGANG.md). Lezen alleen telt hier niet.
 const ACHIEVEMENTS: AchievementDef[] = [
   {
     slug: "streak-3",
@@ -28,31 +31,31 @@ const ACHIEVEMENTS: AchievementDef[] = [
   },
   {
     slug: "first-chapter",
-    check: async (tx, userId) => (await tx.chapterProgress.count({ where: { userId, completed: true } })) >= 1,
+    check: async (tx, userId) => (await tx.contentProgress.count({ where: { userId, exercisesCompletedAt: { not: null } } })) >= 1,
   },
   {
     slug: "chapters-5",
-    check: async (tx, userId) => (await tx.chapterProgress.count({ where: { userId, completed: true } })) >= 5,
+    check: async (tx, userId) => (await tx.contentProgress.count({ where: { userId, exercisesCompletedAt: { not: null } } })) >= 5,
   },
   {
     slug: "chapters-10",
-    check: async (tx, userId) => (await tx.chapterProgress.count({ where: { userId, completed: true } })) >= 10,
+    check: async (tx, userId) => (await tx.contentProgress.count({ where: { userId, exercisesCompletedAt: { not: null } } })) >= 10,
   },
   {
     slug: "chapters-25",
-    check: async (tx, userId) => (await tx.chapterProgress.count({ where: { userId, completed: true } })) >= 25,
+    check: async (tx, userId) => (await tx.contentProgress.count({ where: { userId, exercisesCompletedAt: { not: null } } })) >= 25,
   },
   {
     slug: "chapters-50",
-    check: async (tx, userId) => (await tx.chapterProgress.count({ where: { userId, completed: true } })) >= 50,
+    check: async (tx, userId) => (await tx.contentProgress.count({ where: { userId, exercisesCompletedAt: { not: null } } })) >= 50,
   },
   {
     slug: "perfect-chapter",
-    check: async (tx, userId) => (await tx.chapterProgress.count({ where: { userId, completed: true, bestScore: 100 } })) >= 1,
+    check: async (tx, userId) => (await tx.contentProgress.count({ where: { userId, rewardBonusAt: { not: null } } })) >= 1,
   },
   {
     slug: "perfect-10",
-    check: async (tx, userId) => (await tx.chapterProgress.count({ where: { userId, completed: true, bestScore: 100 } })) >= 10,
+    check: async (tx, userId) => (await tx.contentProgress.count({ where: { userId, rewardBonusAt: { not: null } } })) >= 10,
   },
   {
     slug: "xp-1000",

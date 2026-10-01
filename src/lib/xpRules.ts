@@ -8,12 +8,13 @@
  * hiervandaan, en /tools/xp-guide toont deze zelfde waarden aan gebruikers.
  */
 
-// Herhalingskorting: als je content (hoofdstuk/introles/kinderverhaal/
-// podcastles) al eerder met een PERFECTE score (100%) had afgerond, telt een
-// volgende poging nog maar voor dit deel — voorkomt dat een al-beheerste,
-// makkelijke les een oneindige XP-bron wordt, maar laat herhalen (bv. ter
-// opfrissing) nog wel iets opleveren i.p.v. niets. Geldt bewust niet voor
-// live-quizspellen (zie completeLesson se xpReason-check in streak.ts): dat
+// Herhalingskorting: wat een herhaling nog oplevert. Bij een hoofdstuk zodra
+// de basis-XP van die inhoud al verdiend is (src/lib/learning/rewards.ts,
+// in welke route of taal ook); bij een introles, kinderverhaal of podcastles
+// na een eerdere PERFECTE score (100%). Voorkomt dat al-beheerste content een
+// oneindige XP-bron wordt, maar laat herhalen (bv. ter opfrissing) nog wel
+// iets opleveren i.p.v. niets. Geldt bewust niet voor
+// live-quizspellen (zie completeLiveQuiz in streak.ts): dat
 // is een sociale, met-een-live-tegenstander-gebonden activiteit, geen
 // solo-herhaling van al-beheerste content. Geldt ook niet voor Scrabble,
 // Uitdagingen, het woordspel, "snelle ronde" of "raad het hoofdstuk" — die

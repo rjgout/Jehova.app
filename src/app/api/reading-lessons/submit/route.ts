@@ -1,13 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { prisma } from "@/lib/db";
 import { getCurrentUser } from "@/lib/session";
-import { isExerciseCorrect } from "@/lib/exerciseGen";
-import { completeReadingLesson } from "@/lib/readingLessons";
-import { apiError, apiErrorText } from "@/lib/apiError";
+import { completeReadingLesson, completeReadingOnlyStep } from "@/lib/readingLessons";
+import { notifyNewAchievements } from "@/lib/notify";
+import { apiError } from "@/lib/apiError";
+import { exerciseSessionErrorResponse } from "@/lib/learning/apiResponses";
 
 const schema = z.object({
   lessonId: z.string(),
+  // Null voor een stap zonder vragen: dan is het alleen lezen.
+  sessionId: z.string().min(1).nullable(),
   answers: z.array(
     z.object({
       exerciseId: z.string(),
@@ -21,72 +23,19 @@ export async function POST(req: NextRequest) {
   if (!user) return await apiError("apiErrors.notLoggedIn", 401);
 
   const parsed = schema.safeParse(await req.json().catch(() => null));
-  if (!parsed.success) {
-    return await apiError("apiErrors.invalidInput", 400);
-  }
+  if (!parsed.success) return await apiError("apiErrors.invalidInput", 400);
 
-  const lesson = await prisma.courseLesson.findUnique({
-    where: { id: parsed.data.lessonId },
-    include: {
-      course: true,
-      exercises: { include: { exercise: true } },
-    },
-  });
-  if (!lesson || lesson.course.type !== "READING_LESSONS") {
-    return await apiError("apiErrors.stepNotFound", 404);
-  }
-
-  // De les toont bewust een willekeurige subset van de vragen. Alleen de
-  // daadwerkelijk beantwoorde vragen tellen daarom mee voor deze ronde.
-  // Een dubbel ingestuurde vraag telt maar één keer.
-  const submittedById = new Map<string, string[]>();
-  for (const submitted of parsed.data.answers) {
-    if (!submittedById.has(submitted.exerciseId)) submittedById.set(submitted.exerciseId, submitted.given);
-  }
-
-  let correctCount = 0;
-  const results: { exerciseId: string; correct: boolean; correctAnswer: string[] }[] = [];
-  const exerciseById = new Map(lesson.exercises.map(({ exercise }) => [exercise.id, exercise]));
-
-  for (const [exerciseId, given] of submittedById) {
-    const exercise = exerciseById.get(exerciseId);
-    if (!exercise) continue;
-
-    const accepted = JSON.parse(exercise.answers) as string[];
-    const correct = isExerciseCorrect(exercise.type, given, accepted);
-    if (correct) correctCount++;
-
-    results.push({
-      exerciseId: exercise.id,
-      correct,
-      correctAnswer: accepted,
-    });
-
-    await prisma.exerciseAttempt.create({
-      data: {
-        userId: user.id,
-        exerciseId: exercise.id,
-        givenText: given.join(" "),
-        correct,
-      },
-    });
-  }
-
-  const total = results.length;
-  const scorePercent = total === 0 ? 0 : Math.round((correctCount / total) * 100);
-
-  let result;
   try {
-    result = await completeReadingLesson(user.id, lesson.id, scorePercent, correctCount);
-  } catch (e) {
-    const message = e instanceof Error ? e.message : "Kon de stap niet afronden.";
-    return await apiErrorText(message, 409);
+    if (parsed.data.sessionId === null) {
+      const { nextLessonId } = await completeReadingOnlyStep(user.id, parsed.data.lessonId);
+      return NextResponse.json({ readOnly: true, nextLessonId });
+    }
+    const result = await completeReadingLesson(user.id, parsed.data.lessonId, parsed.data.sessionId, parsed.data.answers);
+    notifyNewAchievements(user.id, result.newAchievements).catch(() => {});
+    return NextResponse.json(result);
+  } catch (error) {
+    const response = await exerciseSessionErrorResponse(error);
+    if (response) return response;
+    throw error;
   }
-
-  return NextResponse.json({
-    results,
-    correctCount,
-    total,
-    ...result,
-  });
 }

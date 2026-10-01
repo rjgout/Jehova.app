@@ -230,7 +230,7 @@ function broadcast(room: Room) {
 async function awardRound(total: number, startedAt: Date, answers: StudyAnswerRow[]) {
   const results = scoreRound(total, startedAt, answers);
   for (const r of results) {
-    const outcome = await completeStudyRound(r.userId, r.correct, total, r.rank === 1 && results.length > 1).catch(() => null);
+    const outcome = await completeStudyRound(r.userId, r.correct, r.answered, total, r.rank === 1 && results.length > 1).catch(() => null);
     if (outcome && outcome.newAchievements.length > 0) notifyNewAchievements(r.userId, outcome.newAchievements).catch(() => {});
   }
   return results;

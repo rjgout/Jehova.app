@@ -3,14 +3,20 @@
 import Link from "next/link";
 import { Lock, Play } from "lucide-react";
 import { useT } from "@/components/I18nProvider";
+import { ContentStatusInline, SharedProgressHint, type ReadState } from "@/components/learning/ContentStatus";
 
 interface ChapterView {
   id: string;
   number: number;
   bookName: string;
   lessonCount: number;
+  /** Stappen die af zijn; een hoofdstuk dat via een andere route gelezen én geoefend is, telt helemaal mee. */
   completedLessons: number;
   locked: boolean;
+  /** Gedeelde lees- en oefenvoortgang van deze inhoud, uit elke route. */
+  read: ReadState;
+  exercisesAnswered: number;
+  exercisesTotal: number;
 }
 
 interface Props {
@@ -39,6 +45,7 @@ export default function ReadingCourseView({ courseId, courseName, today, chapter
     : -1;
   const progressPosition = currentChapterIndex >= 0 ? currentChapterIndex + 1 : chapters.length;
   const progressPercent = chapters.length > 0 ? Math.round((progressPosition / chapters.length) * 100) : 0;
+  const anyProgress = chapters.some((chapter) => chapter.read !== "UNREAD" || chapter.exercisesAnswered > 0);
 
   const books: { name: string; chapters: ChapterView[] }[] = [];
   for (const chapter of chapters) {
@@ -75,7 +82,9 @@ export default function ReadingCourseView({ courseId, courseName, today, chapter
           <div className={`truncate font-extrabold ${chapter.locked ? "text-slate-600 dark:text-slate-300" : "dark:text-slate-100"}`}>{chapter.bookName} {chapter.number}</div>
           <div className={`text-xs ${chapter.locked ? "text-slate-500 dark:text-slate-400" : "text-slate-400 dark:text-slate-500"}`}>
             {t("courseView.stepsDone", { done: chapter.completedLessons, total: chapter.lessonCount })}
+            {!completed && chapter.read === "READ" ? ` · ${t("progress.alreadyRead")}` : ""}
           </div>
+          {!chapter.locked && !completed && <ContentStatusInline read={chapter.read === "READ" ? "UNREAD" : chapter.read} exercisesAnswered={chapter.exercisesAnswered} exercisesTotal={chapter.exercisesTotal} />}
         </div>
       </>
     );
@@ -110,6 +119,8 @@ export default function ReadingCourseView({ courseId, courseName, today, chapter
             </div>
           </div>
         )}
+
+        <SharedProgressHint show={anyProgress} />
 
         {today && !allDone ? (
           <div className="card bg-gradient-to-br from-brand-500 to-brand-600 text-white flex flex-col gap-2.5">

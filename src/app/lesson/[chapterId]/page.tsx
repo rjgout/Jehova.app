@@ -6,13 +6,13 @@ import LessonFlow from "@/components/LessonFlow";
 import { chapterTerm, localizeTerm } from "@/lib/chapterTerm";
 import { getT } from "@/lib/i18n";
 import CourseBackTarget from "@/components/CourseBackTarget";
+import { getChapterState, issueExerciseSession } from "@/lib/learning/contentProgress";
+import { countWords, estimateReadingMinutes, isLongChapter } from "@/lib/learning/readingTime";
+import { isReadingRoute, ROUTE_PRESENTATION } from "@/lib/learning/routes";
 
-// Een hoofdstuk kan (met de automatisch gegenereerde invuloefeningen erbij)
-// tientallen oefeningen hebben — veel te veel voor één les. Net als bij de
-// "Snelle ronde" (zie practice/page.tsx) een willekeurige subset, zodat een
-// hoofdstuk overzichtelijk blijft en je bij een volgende poging (of als een
-// andere gebruiker hetzelfde hoofdstuk doet) een andere selectie kan krijgen.
-const MAX_LESSON_EXERCISES = 7;
+// De oefeningen komen uit de server-uitgedeelde oefenset van het hoofdstuk
+// (issueExerciseSession): even veel vragen als in elke andere route, de
+// selectie zelf willekeurig. Zie docs/LEERVOORTGANG.md.
 
 export default async function LessonPage({
   params,
@@ -31,11 +31,6 @@ export default async function LessonPage({
     include: {
       book: { include: { contentCollection: { select: { language: true } } } },
       verses: { orderBy: { number: "asc" } },
-      exercises: {
-        orderBy: { order: "asc" },
-        where: { status: "APPROVED" },
-        include: { options: { orderBy: { order: "asc" } } },
-      },
     },
   });
   if (!chapter) redirect("/dashboard");
@@ -60,17 +55,10 @@ export default async function LessonPage({
   const currentIndex = allChapters.findIndex((c) => c.id === chapter.id);
   const nextChapterId = currentIndex >= 0 ? allChapters[currentIndex + 1]?.id ?? null : null;
 
-  const selectedExercises = [...chapter.exercises].sort(() => Math.random() - 0.5).slice(0, MAX_LESSON_EXERCISES);
-  const exercises = selectedExercises.map((e) => ({
-    id: e.id,
-    type: e.type as "FILL_BLANK" | "WORD_BANK" | "TRUE_FALSE" | "MULTIPLE_CHOICE" | "SEQUENCE",
-    verseRef: e.verseRef,
-    prompt: e.prompt,
-    hint: e.hint ?? undefined,
-    blanks: (JSON.parse(e.answers) as string[]).length,
-    wordBank: e.wordBank ? (JSON.parse(e.wordBank) as string[]) : undefined,
-    options: e.options.length > 0 ? e.options.map((o) => o.label) : undefined,
-  }));
+  const [issued, content] = await Promise.all([
+    issueExerciseSession(user.id, chapter.id),
+    getChapterState(prisma, user.id, chapter.id),
+  ]);
 
   // De cursus waar de les bij hoort, voor "terug" en het volgende hoofdstuk:
   // de cursus waaruit de les geopend werd (?cursus=), anders de actieve
@@ -79,9 +67,21 @@ export default async function LessonPage({
   const course = courseCandidateId
     ? await prisma.course.findFirst({
         where: { id: courseCandidateId, chapters: { some: { chapterId: chapter.id } } },
-        select: { id: true, name: true },
+        select: { id: true, name: true, type: true },
       })
     : null;
+  const route = course && isReadingRoute(course.type) ? course.type : null;
+
+  // Een lang hoofdstuk: Stap voor stap aanraden (geen blokkade), alleen bij
+  // het eerste openen en alleen als die route er voor deze inhoud is.
+  const minutes = estimateReadingMinutes(chapter.verses.reduce((sum, v) => sum + countWords(v.text), 0));
+  const stepCourse =
+    isLongChapter(minutes) && content.read === "UNREAD" && ROUTE_PRESENTATION[route ?? "FREE_CHOICE"].suggestStepsForLongChapters
+      ? await prisma.course.findFirst({
+          where: { type: "READING_LESSONS", enabled: true, contentCollectionId: chapter.book.contentCollectionId, lessons: { some: { chapterId: chapter.id } } },
+          select: { id: true },
+        })
+      : null;
 
   return (
     <>
@@ -102,7 +102,12 @@ export default async function LessonPage({
       }))}
       audio={chapter.audioUrl ? { url: playableAudioUrl(chapter.audioUrl), end: null } : null}
       term={localizeTerm(chapterTerm(chapter.book.slug), getT(user.uiLanguage))}
-      exercises={exercises}
+      exercises={issued.exercises}
+      sessionId={issued.sessionId}
+      content={{ read: content.read, exercisesAnswered: content.exercisesAnswered, exercisesTotal: content.exercisesTotal, exercisesComplete: content.exercisesComplete }}
+      route={route}
+      readingMinutes={minutes}
+      stepsHref={stepCourse ? `/courses/${stepCourse.id}/chapter/${chapter.id}` : null}
       challengeId={challengeId}
       courseId={course?.id}
       focusVerse={vers ? Number(vers) || undefined : undefined}

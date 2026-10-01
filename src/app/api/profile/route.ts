@@ -11,8 +11,9 @@ export async function GET() {
 
   const [chaptersCompleted, versesTotal, duelsWon, duelsPlayed, allAchievements, earned, weeklyScore, seasonResults, activeSeasonScore] =
     await Promise.all([
-      prisma.chapterProgress.count({ where: { userId: user.id, completed: true } }),
-      prisma.chapterProgress.count({ where: { userId: user.id } }),
+      // Leesvoortgang: gelezen hoofdstukken, en hoeveel er in totaal begonnen zijn.
+      prisma.contentProgress.count({ where: { userId: user.id, readStatus: "READ" } }),
+      prisma.contentProgress.count({ where: { userId: user.id, readStatus: { not: null } } }),
       prisma.liveGamePlayer.findMany({
         where: { userId: user.id, game: { status: "FINISHED" } },
         include: { game: { include: { players: true } } },

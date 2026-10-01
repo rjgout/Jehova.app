@@ -11,8 +11,8 @@ import { CHALLENGE_WIN_XP } from "@/lib/xpRules";
 /**
  * Verwerkt een les-score als beurt in een uitdaging, indien de speler er
  * één opgaf bij het afronden van een hoofdstuk (zie LessonFlow/lesson-
- * pagina en /api/chapters/[chapterId]/submit). Bewust los van completeLesson
- * — een uitdaging is puur een score-vergelijking, geen eigen
+ * pagina en /api/chapters/[chapterId]/submit). Bewust los van de
+ * voortgang en beloning van de oefenset — een uitdaging is puur een score-vergelijking, geen eigen
  * voortgang/streak/XP-bron.
  */
 export async function recordChallengeAttempt(userId: string, challengeId: string, chapterId: string, scorePercent: number): Promise<void> {

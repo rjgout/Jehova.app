@@ -1,10 +1,11 @@
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/session";
 import { prisma } from "@/lib/db";
-import { advanceCourseProgress } from "@/lib/courses";
 import ReadingChapterView from "@/components/ReadingChapterView";
 import { chapterTerm, localizeTerm } from "@/lib/chapterTerm";
 import { getT } from "@/lib/i18n";
+import { getStepOverview } from "@/lib/readingLessons";
+import { getChapterState } from "@/lib/learning/contentProgress";
 
 export default async function ReadingChapterPage({
   params,
@@ -27,40 +28,16 @@ export default async function ReadingChapterPage({
   });
   if (!chapter) redirect(`/courses/${courseId}`);
 
-  const lessons = await prisma.courseLesson.findMany({
-    where: { courseId, chapterId },
-    orderBy: { order: "asc" },
-    include: { progress: { where: { userId: user.id } } },
-  });
-
-  let courseProgress = await prisma.userCourseProgress.findUnique({
-    where: { userId_courseId: { userId: user.id, courseId } },
-  });
-  if (!courseProgress) {
-    await advanceCourseProgress(prisma, user.id, courseId);
-    courseProgress = await prisma.userCourseProgress.findUnique({
-      where: { userId_courseId: { userId: user.id, courseId } },
-    });
-  }
-
-  if (courseProgress?.currentLessonId === null && lessons.length > 0) {
-    const completedCount = await prisma.userCourseLessonProgress.count({
-      where: { userId: user.id, lesson: { courseId }, completed: true },
-    });
-    if (completedCount === 0) {
-      await advanceCourseProgress(prisma, user.id, courseId);
-      courseProgress = await prisma.userCourseProgress.findUnique({
-        where: { userId_courseId: { userId: user.id, courseId } },
-      });
-    }
-  }
-
-  const globalCurrentLessonOrder = courseProgress?.currentLessonId
-    ? (await prisma.courseLesson.findUnique({
-        where: { id: courseProgress.currentLessonId },
-        select: { order: true },
-      }))?.order ?? null
-    : null;
+  const [lessons, overview, content] = await Promise.all([
+    prisma.courseLesson.findMany({
+      where: { courseId, chapterId },
+      orderBy: { order: "asc" },
+      include: { progress: { where: { userId: user.id } } },
+    }),
+    getStepOverview(prisma, user.id, courseId),
+    getChapterState(prisma, user.id, chapterId),
+  ]);
+  const stepById = new Map(overview.steps.map((step) => [step.id, step]));
   const firstLesson = lessons[0];
 
   return (
@@ -69,29 +46,20 @@ export default async function ReadingChapterPage({
       bookName={chapter.book.name}
       chapterNumber={chapter.number}
       thisOne={localizeTerm(chapterTerm(chapter.book.slug), getT(user.uiLanguage)).thisOne}
-      lessons={lessons.map((lesson) => ({
-        id: lesson.id,
-        number: firstLesson ? lesson.order - firstLesson.order + 1 : 1,
-        startVerse: lesson.startVerse,
-        endVerse: lesson.endVerse,
-        verseCount: lesson.endVerse - lesson.startVerse + 1,
-        completed: lesson.progress[0]?.completed ?? false,
-        bestScore: lesson.progress[0]?.bestScore ?? null,
-        locked: globalCurrentLessonOrder !== null ? lesson.order > globalCurrentLessonOrder : !lesson.progress[0]?.completed,
-      }))}
+      content={{ read: content.read, exercisesAnswered: content.exercisesAnswered, exercisesTotal: content.exercisesTotal }}
+      lessons={lessons.map((lesson) => {
+        const step = stepById.get(lesson.id);
+        return {
+          id: lesson.id,
+          number: firstLesson ? lesson.order - firstLesson.order + 1 : 1,
+          startVerse: lesson.startVerse,
+          endVerse: lesson.endVerse,
+          verseCount: lesson.endVerse - lesson.startVerse + 1,
+          completed: step?.done ?? false,
+          bestScore: lesson.progress[0]?.bestScore ?? null,
+          locked: !(step?.available ?? false),
+        };
+      })}
     />
   );
-}
-
-async function chapterLessonOffset(
-  db: typeof prisma,
-  courseId: string,
-  chapterId: string
-): Promise<number> {
-  const first = await db.courseLesson.findFirst({
-    where: { courseId, chapterId },
-    orderBy: { order: "asc" },
-    select: { order: true },
-  });
-  return first?.order ?? 0;
 }

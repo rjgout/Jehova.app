@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/session";
 import { prisma } from "@/lib/db";
 import { apiError } from "@/lib/apiError";
+import { resetReadingProgress } from "@/lib/learning/contentProgress";
 
 const READING_COURSE_TYPES = ["FRONT_TO_BACK", "FREE_CHOICE", "BY_BOOK", "READING_LESSONS"] as const;
 
@@ -12,19 +13,12 @@ export async function POST() {
   await prisma.$transaction(async (tx) => {
     const readingCourses = await tx.course.findMany({
       where: { type: { in: [...READING_COURSE_TYPES] } },
-      select: { id: true, type: true, contentCollectionId: true },
+      select: { id: true, type: true },
     });
     const readingCourseIds = readingCourses.map((course) => course.id);
-    // De Book-tabel bevat de losse boeken ("1 Nephi", "Alma", ...), niet één
-    // boek met de naam van de hele collectie. Selecteer daarom op de
-    // contentcollectie van de leescursussen.
-    const collectionIds = [...new Set(readingCourses.map((course) => course.contentCollectionId))];
-
-    if (collectionIds.length > 0) {
-      await tx.chapterProgress.deleteMany({
-        where: { userId: user.id, chapter: { book: { contentCollectionId: { in: collectionIds } } } },
-      });
-    }
+    // Lezen en de zichtbare oefenvoortgang op nul; wat al beloond is blijft
+    // staan, zodat de basis-XP niet opnieuw te verdienen is.
+    await resetReadingProgress(tx, user.id);
 
     const readingLessonsCourseIds = readingCourses
       .filter((course) => course.type === "READING_LESSONS")
@@ -51,7 +45,7 @@ export async function POST() {
         },
       });
     }
-  });
+  }, { timeout: 30000 });
 
   return NextResponse.json({ ok: true });
 }

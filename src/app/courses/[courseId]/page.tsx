@@ -16,6 +16,9 @@ import { supportsStudy } from "@/lib/study/units";
 import { chapterTerm, localizeTerm } from "@/lib/chapterTerm";
 import { localizedCourse } from "@/lib/courseText";
 import { getT } from "@/lib/i18n";
+import { getChapterStates } from "@/lib/learning/contentProgress";
+import { countWords, estimateReadingMinutes } from "@/lib/learning/readingTime";
+import { getStepOverview } from "@/lib/readingLessons";
 
 export default async function CourseDetailPage({ params }: { params: Promise<{ courseId: string }> }) {
   const user = await getCurrentUser();
@@ -37,8 +40,7 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ c
             include: {
               book: true,
               verses: { select: { text: true } },
-              _count: { select: { verses: true, exercises: true } },
-              progress: { where: { userId: user.id } },
+              _count: { select: { verses: true } },
             },
           },
         },
@@ -171,54 +173,32 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ c
   }
 
   if (course.type === "READING_LESSONS") {
-    let lessons = await prisma.courseLesson.findMany({
-      where: { courseId: course.id },
-      orderBy: { order: "asc" },
-      include: {
-        chapter: { include: { book: true } },
-        progress: { where: { userId: user.id } },
-      },
-    });
-
     // Bestaande installaties krijgen de nieuwe cursus al via de migratie.
     // De vaste lesindeling wordt één keer opgebouwd zodra de cursus voor het
     // eerst wordt geopend; daarna blijven de grenzen en voortgang bewaard.
-    if (lessons.length === 0 && (await prisma.chapter.count()) > 0) {
+    if ((await prisma.courseLesson.count({ where: { courseId: course.id } })) === 0 && (await prisma.chapter.count()) > 0) {
       await syncCourses(prisma);
-      lessons = await prisma.courseLesson.findMany({
+    }
+    const [lessons, overview] = await Promise.all([
+      prisma.courseLesson.findMany({
         where: { courseId: course.id },
         orderBy: { order: "asc" },
-        include: {
-          chapter: { include: { book: true } },
-          progress: { where: { userId: user.id } },
-        },
-      });
-    }
+        select: { id: true, chapterId: true, order: true, startVerse: true, endVerse: true, chapter: { select: { id: true, number: true, book: { select: { name: true, key: true } } } } },
+      }),
+      getStepOverview(prisma, user.id, course.id),
+    ]);
+    const stepById = new Map(overview.steps.map((step) => [step.id, step]));
+    const states = await getChapterStates(prisma, user.id, [...new Map(lessons.map((l) => [l.chapterId, l.chapter])).values()]);
 
-    let courseProgress = await prisma.userCourseProgress.findUnique({
+    // De cursor (voor Vandaag en "ga verder") volgt de gedeelde voortgang:
+    // wat via een andere route al gedaan is, slaat Stap voor stap over.
+    await prisma.userCourseProgress.upsert({
       where: { userId_courseId: { userId: user.id, courseId: course.id } },
+      create: { userId: user.id, courseId: course.id, currentLessonId: overview.next?.id ?? null, currentChapterId: overview.next?.chapterId ?? null },
+      update: { currentLessonId: overview.next?.id ?? null, currentChapterId: overview.next?.chapterId ?? null },
     });
-    if (!courseProgress) {
-      await advanceCourseProgress(prisma, user.id, course.id);
-      courseProgress = await prisma.userCourseProgress.findUnique({
-        where: { userId_courseId: { userId: user.id, courseId: course.id } },
-      });
-    } else if (courseProgress.currentLessonId === null && lessons.length > 0) {
-      const completedCount = await prisma.userCourseLessonProgress.count({
-        where: { userId: user.id, lesson: { courseId: course.id }, completed: true },
-      });
-      if (completedCount === 0) {
-        await advanceCourseProgress(prisma, user.id, course.id);
-        courseProgress = await prisma.userCourseProgress.findUnique({
-          where: { userId_courseId: { userId: user.id, courseId: course.id } },
-        });
-      }
-    }
 
-    const currentLesson = courseProgress?.currentLessonId
-      ? lessons.find((lesson) => lesson.id === courseProgress.currentLessonId) ?? null
-      : null;
-    const currentOrder = currentLesson?.order ?? null;
+    const currentLesson = overview.next ? lessons.find((lesson) => lesson.id === overview.next!.id) ?? null : null;
     const currentChapterFirstLessonOrder = currentLesson
       ? lessons.find((lesson) => lesson.chapterId === currentLesson.chapterId)?.order ?? currentLesson.order
       : 0;
@@ -229,23 +209,22 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ c
       bookName: string;
       lessonCount: number;
       completedLessons: number;
-      firstOrder: number;
+      locked: boolean;
     }>();
-
     for (const lesson of lessons) {
+      const step = stepById.get(lesson.id)!;
       const existing = chapterMap.get(lesson.chapterId);
-      const completed = lesson.progress[0]?.completed ?? false;
       if (existing) {
         existing.lessonCount++;
-        if (completed) existing.completedLessons++;
+        if (step.done) existing.completedLessons++;
       } else {
         chapterMap.set(lesson.chapterId, {
           id: lesson.chapterId,
           number: lesson.chapter.number,
           bookName: lesson.chapter.book.name,
           lessonCount: 1,
-          completedLessons: completed ? 1 : 0,
-          firstOrder: lesson.order,
+          completedLessons: step.done ? 1 : 0,
+          locked: !step.available,
         });
       }
     }
@@ -268,14 +247,15 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ c
               }
             : null
         }
-        chapters={Array.from(chapterMap.values()).map((chapter) => ({
-          id: chapter.id,
-          number: chapter.number,
-          bookName: chapter.bookName,
-          lessonCount: chapter.lessonCount,
-          completedLessons: chapter.completedLessons,
-          locked: currentOrder !== null ? chapter.firstOrder > currentOrder : false,
-        }))}
+        chapters={Array.from(chapterMap.values()).map((chapter) => {
+          const state = states.get(chapter.id)!;
+          return {
+            ...chapter,
+            read: state.read,
+            exercisesAnswered: state.exercisesAnswered,
+            exercisesTotal: state.exercisesTotal,
+          };
+        })}
       />
     );
   }
@@ -297,6 +277,7 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ c
   }
 
   const chapters = course.chapters.map((cc) => cc.chapter);
+  const states = await getChapterStates(prisma, user.id, chapters);
 
   return (
     <ChapterListCourseView
@@ -306,16 +287,22 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ c
       currentChapterId={courseProgress?.currentChapterId ?? null}
       sequential={course.type !== "FREE_CHOICE"}
       unitPlural={localizeTerm(chapterTerm(chapters[0]?.book.slug), t).plural}
-      chapters={chapters.map((chapter) => ({
-        id: chapter.id,
-        number: chapter.number,
-        bookName: chapter.book.name,
-        verseCount: chapter._count.verses,
-        exerciseCount: chapter._count.exercises,
-        wordCount: chapter.verses.reduce((sum, v) => sum + v.text.split(/\s+/).length, 0),
-        completed: chapter.progress[0]?.completed ?? false,
-        bestScore: chapter.progress[0]?.bestScore ?? null,
-      }))}
+      chapters={chapters.map((chapter) => {
+        const state = states.get(chapter.id)!;
+        return {
+          id: chapter.id,
+          number: chapter.number,
+          bookName: chapter.book.name,
+          verseCount: chapter._count.verses,
+          minutes: estimateReadingMinutes(chapter.verses.reduce((sum, v) => sum + countWords(v.text), 0)),
+          read: state.read,
+          exercisesAnswered: state.exercisesAnswered,
+          exercisesTotal: state.exercisesTotal,
+          exerciseScore: state.exerciseScore,
+          xpAvailable: state.xpAvailable,
+          completed: state.done,
+        };
+      })}
     />
   );
 }

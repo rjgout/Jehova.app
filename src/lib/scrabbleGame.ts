@@ -8,7 +8,7 @@ import { awardCompetitionXp } from "@/lib/competitionXp";
 import { SCRABBLE_WIN_XP, SCRABBLE_PARTICIPATION_XP } from "@/lib/xpRules";
 
 // Scrabble geeft (net als Uitdagingen) bewust geen algemene XP — zie
-// completeLesson/completeChapterGuess e.a. in streak.ts, die dat wel doen.
+// completeChapterGuess e.a. in streak.ts, die dat wel doen.
 // Dit is puur competitie-XP (zie src/lib/competitionXp.ts): een activiteit
 // die vroeger nul invloed had op de wekelijkse competitie, telt nu wel mee,
 // zonder de algemene XP-economie (winkel, achievements) aan te raken.

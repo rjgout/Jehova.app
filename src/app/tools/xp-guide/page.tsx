@@ -20,7 +20,7 @@ import type { TFunction } from "@/lib/i18n/core";
 function activities(t: TFunction): { icon: string; title: string; description: string }[] {
   const standard = t("xpGuide.standardText", { n: XP_PER_CORRECT_STANDARD, bonus: XP_PERFECT_BONUS_STANDARD });
   return [
-    { icon: "📖", title: t("xpGuide.chapter"), description: standard },
+    { icon: "📖", title: t("xpGuide.chapter"), description: t("xpGuide.chapterText", { n: XP_PER_CORRECT_STANDARD, bonus: XP_PERFECT_BONUS_STANDARD }) },
     { icon: "🧭", title: t("xpGuide.intro"), description: standard },
     { icon: "🧒", title: t("xpGuide.kids"), description: standard },
     { icon: "🎙️", title: t("xpGuide.podcast"), description: standard },

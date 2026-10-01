@@ -38,7 +38,12 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ sto
   let correctCount = 0;
   const results: { exerciseId: string; correct: boolean; correctAnswer: string[] }[] = [];
 
+  // Elke vraag telt één keer, ook als hij vaker wordt ingestuurd; alleen
+  // een les waarin alle vragen beantwoord zijn telt mee voor de reeks.
+  const seen = new Set<string>();
   for (const submitted of parsed.data.answers) {
+    if (seen.has(submitted.exerciseId)) continue;
+    seen.add(submitted.exerciseId);
     const exercise = exerciseById.get(submitted.exerciseId);
     if (!exercise || exercise.storyId !== storyId) continue;
 
@@ -62,7 +67,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ sto
   const scorePercent = total === 0 ? 0 : Math.round((correctCount / total) * 100);
   const xp = standardContentXp(correctCount, total);
 
-  const lessonResult = await completeKidsStory(user.id, storyId, scorePercent, xp);
+  const lessonResult = await completeKidsStory(user.id, storyId, scorePercent, xp, results.length, total);
   notifyNewAchievements(user.id, lessonResult.newAchievements).catch(() => {});
 
   return NextResponse.json({ results, correctCount, total, ...lessonResult });

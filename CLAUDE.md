@@ -142,9 +142,31 @@ Controleer bij twijfel: `grep -rn "next/headers" src/lib src/server server.ts`
   `window.scrollTo(0, 0)` per pagina, en geen `overflow` op `html` (dan
   scrolt het venster niet meer, zie `globals.css`). Zie
   `docs/VERSADO-DESIGN.md`.
+- `src/lib/learning/` — leervoortgang per inhoud (lezen, oefenplan, XP-
+  begrenzing, reeksregel, leestijd); zie `docs/LEERVOORTGANG.md` en de harde
+  regel hieronder. Getest met `npm run test:learning`
 - `prisma/schema.prisma` + `prisma/migrations/**` — datamodel en migraties
 - `prisma/seed.ts`, `import.ts`, `importKids.ts`, `importPodcast.ts` — content laden
 - `deploy/`, `docs/DEPLOY-SYNOLOGY.md` — self-host-referentiedeploy (Synology + Portainer)
+
+## ⚠️ Harde regel: leervoortgang, XP en reeks
+
+Zie `docs/LEERVOORTGANG.md`. De invariant:
+
+> Leesvoortgang hoort bij de inhoud, niet bij de cursus.
+> Lezen levert geen XP op en verlengt geen reeks.
+> XP en reeks worden verdiend door betekenisvolle afgeronde leeractiviteiten.
+> Voor dezelfde onderliggende inhoud zijn oefenbelasting en maximale
+> basis-XP route-onafhankelijk gelijkwaardig.
+> Routes bepalen hoe de inhoud wordt aangeboden, niet hoeveel de inhoud
+> waard is.
+
+In de praktijk:
+- Voortgang van inhoud alleen via `src/lib/learning/contentProgress.ts`.
+- Oefeningen alleen via een server-uitgedeelde set (`issueExerciseSession`/`submitExerciseSession`).
+- De reeks alleen via `recordLearningActivity` (`src/lib/streak.ts`), met de regel in `src/lib/learning/streakRules.ts`.
+- Geen eigen vraagaantal of XP-formule per route, geen voortgang aan een cursus-id als de inhoud gedeeld is.
+- `ChapterProgress` niet meer gebruiken.
 
 ## Database & migraties
 

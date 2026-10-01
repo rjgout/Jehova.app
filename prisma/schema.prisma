@@ -203,6 +203,9 @@ model User {
   scrabbleMoves          ScrabbleMove[]
 
   progress        ChapterProgress[]
+  contentProgress ContentProgress[]
+  exerciseCredits ContentExerciseCredit[]
+  exerciseSessions ExerciseSession[]
   readingSessions ReadingSession[]
   attempts        ExerciseAttempt[]
   freezeTx        FreezeTransaction[] @relation("FreezeOwner")
@@ -373,6 +376,7 @@ model Chapter {
   progress             ChapterProgress[]
   liveGames            LiveGame[]
   readingSessions      ReadingSession[]
+  exerciseSessions     ExerciseSession[]
   courseChapters       CourseChapter[]
   courseLessons        CourseLesson[]
   courseProgressCursor UserCourseProgress[]
@@ -526,6 +530,7 @@ model CourseLesson {
 
   exercises CourseLessonExercise[]
   progress  UserCourseLessonProgress[]
+  exerciseSessions ExerciseSession[]
   currentForCourseProgress UserCourseProgress[] @relation("CurrentCourseLesson")
 
   @@unique([courseId, order])
@@ -1140,6 +1145,7 @@ model Exercise {
   options       QuestionOption[]
 
   attempts ExerciseAttempt[]
+  credits  ContentExerciseCredit[]
   courseLessonLinks CourseLessonExercise[]
 
   @@index([chapterId])
@@ -1174,6 +1180,9 @@ model ExerciseAttempt {
   @@index([exerciseId])
 }
 
+// Vervangen door ContentProgress (zie hieronder): blijft alleen bestaan als
+// bron voor de eenmalige overzetting in migratie
+// 20261002150000_learning_progress. Niet meer lezen of schrijven.
 model ChapterProgress {
   id          String    @id @default(cuid())
   userId      String
@@ -1187,6 +1196,99 @@ model ChapterProgress {
 
   @@unique([userId, chapterId])
   @@index([chapterId])
+}
+
+// --- Leervoortgang per inhoud (zie docs/LEERVOORTGANG.md) -----------------
+//
+// Leesvoortgang hoort bij de inhoud, niet bij de cursus. contentKey is de
+// sleutel van src/lib/learning/contentIdentity.ts ("bofm/alma#32"): dezelfde
+// in elke leesroute en elke taaleditie, dus wat je via de ene route of taal
+// leest of oefent, telt overal.
+
+enum ContentReadStatus {
+  READING
+  READ
+}
+
+model ContentProgress {
+  id         String  @id @default(cuid())
+  userId     String
+  user       User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  contentKey String
+  // Het hoofdstuk (in een bepaalde taal) dat het laatst gebruikt is, om
+  // ernaar terug te linken. Geen relatie: de voortgang hoort bij de inhoud.
+  lastChapterId String?
+
+  // --- Lezen: geeft nooit XP en verlengt geen reeks ---
+  readStatus    ContentReadStatus?
+  // Tot welk vers gelezen is via leesgedeelten (Stap voor stap).
+  readVerse     Int       @default(0)
+  readStartedAt DateTime?
+  readAt        DateTime?
+
+  // --- Oefenen: de oefenset van N vragen (src/lib/learning/exercisePlan.ts) ---
+  // Verschillende vragen die al gemaakt zijn (max N): "Oefeningen 8/12".
+  exerciseAnswered     Int       @default(0)
+  exercisesCompletedAt DateTime?
+
+  // --- Beloning: alleen omhoog, ook niet terug bij het resetten van de
+  // leesvoortgang; anders is dezelfde basis-XP opnieuw te verdienen.
+  rewardCorrect Int       @default(0)
+  rewardBonusAt DateTime?
+  baseXpEarned  Int       @default(0)
+
+  // Uit de voortgang van vóór dit systeem (migratie): de XP die toen al
+  // voor deze inhoud is verdiend, of het hoofdstuk afgerond was en de beste
+  // score. Pas met het aantal vragen N om te rekenen naar beantwoorde en
+  // beloonde vragen; zie withLegacy in src/lib/learning/rewards.ts.
+  legacyXp        Int     @default(0)
+  legacyCompleted Boolean @default(false)
+  legacyScore     Int?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, contentKey])
+}
+
+// Per gebruiker per vraag: is deze vraag voor deze inhoud al gemaakt, en al
+// goed (en dus beloond)? Zo levert dezelfde vraag nooit twee keer XP op,
+// ook niet via een andere route of een tweede gelijktijdige inzending.
+model ContentExerciseCredit {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  exerciseId String
+  exercise   Exercise @relation(fields: [exerciseId], references: [id], onDelete: Cascade)
+  contentKey String
+  correct    Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([userId, exerciseId])
+  @@index([userId, contentKey])
+}
+
+// Een oefenset zoals de server hem heeft uitgedeeld. Alleen deze vragen
+// tellen bij het inleveren, alles moet beantwoord zijn, en een set telt
+// precies één keer (submittedAt): dubbelklikken of opnieuw insturen levert
+// niets extra op.
+model ExerciseSession {
+  id             String        @id @default(cuid())
+  userId         String
+  user           User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  chapterId      String
+  chapter        Chapter       @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+  contentKey     String
+  // JSON-array met de uitgedeelde Exercise-id's.
+  exerciseIds    String
+  // Gezet bij een stap van Stap voor stap; null bij de volledige oefenset.
+  courseLessonId String?
+  courseLesson   CourseLesson? @relation(fields: [courseLessonId], references: [id], onDelete: Cascade)
+  createdAt      DateTime      @default(now())
+  submittedAt    DateTime?
+
+  @@index([userId, createdAt])
 }
 
 // --- XP: elke mutatie is een transactie, auditbaar en met een reden -------

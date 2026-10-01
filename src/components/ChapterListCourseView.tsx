@@ -4,18 +4,23 @@ import Link from "next/link";
 import { Lock, Play } from "lucide-react";
 import { useT } from "@/components/I18nProvider";
 import SystemIcon from "@/components/versado/SystemIcon";
-
-const WORDS_PER_MINUTE = 130; // rustig lees-/nadenktempo
+import { ContentStatusInline, SharedProgressHint, type ReadState } from "@/components/learning/ContentStatus";
 
 interface ChapterView {
   id: string;
   number: number;
   bookName: string;
   verseCount: number;
-  exerciseCount: number;
-  wordCount: number;
+  /** Geschatte leestijd (src/lib/learning/readingTime.ts). */
+  minutes: number;
+  read: ReadState;
+  exercisesAnswered: number;
+  exercisesTotal: number;
+  exerciseScore: number | null;
+  /** Nog te verdienen basis-XP voor dit hoofdstuk. */
+  xpAvailable: number;
+  /** Gelezen én geoefend, via welke route ook. */
   completed: boolean;
-  bestScore: number | null;
 }
 
 interface Props {
@@ -34,8 +39,8 @@ interface Props {
 }
 
 // Gedeelde weergave voor elk cursustype dat simpelweg een lijst hoofdstukken
-// is (van-voor-naar-achter, vrije keuze, per boek) — een chapter-afronding
-// zelf blijft altijd gedeeld over cursussen heen (zie ChapterProgress), dit
+// is (van-voor-naar-achter, vrije keuze) — lees- en oefenvoortgang zijn
+// gedeeld over alle routes (zie ContentProgress), dit
 // component bepaalt alleen welke hoofdstukken in DEZE cursus getoond worden
 // en in welke volgorde/vergrendeling. Bij meerdere boeken (van-voor-naar-
 // achter, vrije keuze) wordt elk boek een inklapbare sectie — anders werd dit
@@ -43,12 +48,14 @@ interface Props {
 export default function ChapterListCourseView({ courseId, courseName, currentChapterId, chapters, sequential = true, unitPlural = "hoofdstukken", studyAction }: Props) {
   const t = useT();
   const allDone = chapters.length > 0 && chapters.every((c) => c.completed);
+  // Een hoofdstuk dat (via welke route ook) al af is, is nooit meer "vandaag".
   const todayChapter =
-    (currentChapterId && chapters.find((c) => c.id === currentChapterId)) ||
+    (currentChapterId && chapters.find((c) => c.id === currentChapterId && !c.completed)) ||
     chapters.find((c) => !c.completed) ||
     chapters[chapters.length - 1];
-  const estimatedMinutes = todayChapter ? Math.max(1, Math.round(todayChapter.wordCount / WORDS_PER_MINUTE)) : 0;
-  const xpAvailable = Math.min(todayChapter?.exerciseCount ?? 0, 7) * 10 + (todayChapter?.exerciseCount ? 20 : 0);
+  const estimatedMinutes = todayChapter?.minutes ?? 0;
+  const xpAvailable = todayChapter?.xpAvailable ?? 0;
+  const anyProgress = chapters.some((c) => c.read !== "UNREAD" || c.exercisesAnswered > 0);
   const currentIndex = todayChapter ? chapters.findIndex((chapter) => chapter.id === todayChapter.id) : -1;
   const progressPosition = currentIndex >= 0 ? currentIndex + 1 : chapters.length;
   const progressPercent = chapters.length > 0 ? Math.round((progressPosition / chapters.length) * 100) : 0;
@@ -103,8 +110,10 @@ export default function ChapterListCourseView({ courseId, courseName, currentCha
           </div>
           <div className={`text-xs ${locked ? "text-slate-500 dark:text-slate-400" : "text-slate-400 dark:text-slate-500"}`}>
             {t("courseView.verseCount", { n: chapter.verseCount })}
-            {chapter.bestScore !== null ? t("courseView.bestScore", { n: chapter.bestScore }) : ""}
+            {chapter.minutes > 0 ? ` · ${t("progress.minutes", { n: chapter.minutes })}` : ""}
+            {chapter.exerciseScore !== null ? t("courseView.bestScore", { n: chapter.exerciseScore }) : ""}
           </div>
+          {!locked && <ContentStatusInline read={chapter.read} exercisesAnswered={chapter.exercisesAnswered} exercisesTotal={chapter.exercisesTotal} />}
         </div>
       </>
     );
@@ -139,6 +148,8 @@ export default function ChapterListCourseView({ courseId, courseName, currentCha
             </div>
           </div>
         )}
+
+        <SharedProgressHint show={anyProgress} />
 
         {todayChapter && !allDone ? (
           <div className="card bg-gradient-to-br from-brand-500 to-brand-600 text-white flex flex-col gap-2.5">

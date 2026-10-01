@@ -6,10 +6,10 @@ import { checkAndAwardAchievements } from "@/lib/achievements";
 import { awardCompetitionXp } from "@/lib/competitionXp";
 import { XP_PER_CORRECT_LIGHT, applyRepeatDiscount } from "@/lib/xpRules";
 import { notifyFreezeReceived } from "@/lib/notify";
+import { qualifiesForStreak, type LearningActivity } from "@/lib/learning/streakRules";
 
-const PASS_THRESHOLD = 60; // percentage nodig om een hoofdstuk als voltooid te tellen
+const PASS_THRESHOLD = 60; // percentage nodig om een les (podcast, kinderen, introductie) als voltooid te tellen
 const STREAK_MILESTONE_FOR_FREEZE = 7; // elke 7-daagse streak levert een freeze op
-const LESSONS_MILESTONE_FOR_FREEZE = 10; // elke 10 voltooide hoofdstukken levert een freeze op
 
 export interface StudyResult {
   xpEarned: number;
@@ -43,15 +43,14 @@ interface DailyStreakResult {
 }
 
 /**
- * De kern van "vandaag geldt als gestudeerd" — gedeeld tussen een volledig
- * afgeronde les (completeLesson) en een korte, hoofdstukloze oefenronde
- * (completeQuickPractice), zodat beide op dezelfde manier de streak
- * bijhouden. Schrijft de AUTO_SPENT-freezetransactie en de StreakDay-rijen
- * (zie /streak) al weg indien van toepassing, maar laat het definitieve
- * user.update en de eventuele EARNED-freezetransactie aan de aanroeper (die
- * kan er zelf nog een hoofdstuk-mijlpaal freeze bovenop doen).
+ * De kern van "vandaag geldt als gestudeerd". Schrijft de AUTO_SPENT-
+ * freezetransactie en de StreakDay-rijen (zie /streak) al weg indien van
+ * toepassing, maar laat het definitieve user.update en de eventuele
+ * EARNED-freezetransactie aan recordLearningActivity. Niet rechtstreeks
+ * aanroepen: alleen via recordLearningActivity, die eerst de reeksregel
+ * controleert.
  */
-export async function applyDailyStreak(tx: Tx, userId: string): Promise<DailyStreakResult> {
+async function applyDailyStreak(tx: Tx, userId: string): Promise<DailyStreakResult> {
   const user = await tx.user.findUniqueOrThrow({ where: { id: userId } });
   const today = dayKey();
   const alreadyStudiedToday = user.lastStudyDate === today;
@@ -139,604 +138,359 @@ export async function applyDailyStreak(tx: Tx, userId: string): Promise<DailyStr
   };
 }
 
-/**
- * Verwerkt het resultaat van een les (of een live-spel, via `xpReason`): update
- * XP (met audittrail), hoofdstukvoortgang, streak, verdiende/verbruikte
- * streak freezes, divisie-XP en achievements.
- */
-export async function completeLesson(
-  userId: string,
-  chapterId: string,
-  scorePercent: number,
-  xpForThisAttempt: number,
-  xpReason: XPReason = "LESSON_COMPLETED"
-): Promise<StudyResult> {
-  return prisma.$transaction(async (tx) => {
-    // --- Hoofdstukvoortgang ---
-    const existing = await tx.chapterProgress.findUnique({
-      where: { userId_chapterId: { userId, chapterId } },
-    });
-    const wasAlreadyCompleted = existing?.completed ?? false;
-    const nowCompleted = wasAlreadyCompleted || scorePercent >= PASS_THRESHOLD;
-
-    // Herhalingskorting: had je dit hoofdstuk al eerder perfect (100%)
-    // afgerond, dan is dit geen nieuwe prestatie meer — telt nog maar voor
-    // een tiende, zodat een al-beheerst hoofdstuk geen oneindige XP-bron
-    // wordt. Bewust niet voor live-quizspellen (xpReason !== default): dat
-    // is een sociale activiteit met een live tegenstander, geen solo-
-    // herhaling van al-beheerste content.
-    const alreadyPerfect = xpReason === "LESSON_COMPLETED" && (existing?.bestScore ?? 0) === 100;
-    const xpToAward = alreadyPerfect ? applyRepeatDiscount(xpForThisAttempt) : xpForThisAttempt;
-
-    await tx.chapterProgress.upsert({
-      where: { userId_chapterId: { userId, chapterId } },
-      create: {
-        userId,
-        chapterId,
-        completed: nowCompleted,
-        bestScore: scorePercent,
-        xpEarned: xpToAward,
-        completedAt: nowCompleted ? new Date() : null,
-      },
-      update: {
-        completed: nowCompleted,
-        bestScore: Math.max(existing?.bestScore ?? 0, scorePercent),
-        xpEarned: { increment: xpToAward },
-        completedAt: !wasAlreadyCompleted && nowCompleted ? new Date() : undefined,
-      },
-    });
-
-    const daily = await applyDailyStreak(tx, userId);
-    let freezesEarned = daily.freezesEarned;
-    let freezeCount = daily.freezeCountBeforeMilestone;
-
-    // --- Freeze verdienen op hoofdstuk-mijlpaal (bovenop een eventuele streak-mijlpaal) ---
-    if (!wasAlreadyCompleted && nowCompleted) {
-      const completedCount = await tx.chapterProgress.count({ where: { userId, completed: true } });
-      if (completedCount % LESSONS_MILESTONE_FOR_FREEZE === 0) {
-        freezesEarned += 1;
-      }
-    }
-    if (freezesEarned > 0) {
-      freezeCount += freezesEarned;
-      await tx.freezeTransaction.create({
-        data: { userId, type: "EARNED", amount: freezesEarned, reason: "Mijlpaal bereikt" },
-      });
-    }
-
-    await tx.user.update({
-      where: { id: userId },
-      data: {
-        currentStreak: daily.currentStreak,
-        longestStreak: daily.longestStreak,
-        lastStudyDate: daily.today,
-        freezeCount,
-      },
-    });
-
-    await awardXp(tx, userId, xpToAward, xpReason, {
-      chapterId,
-      scorePercent,
-      perfect: scorePercent === 100,
-    });
-
-    await awardCompetitionXp(tx, userId, "LESSON", xpToAward, {
-      won: xpReason === "LIVE_GAME_WON",
-      metadata: { chapterId, scorePercent, xpReason },
-    });
-
-    const newAchievements = await checkAndAwardAchievements(tx, userId);
-
-    return {
-      xpEarned: xpToAward,
-      chapterCompleted: nowCompleted,
-      scorePercent,
-      currentStreak: daily.currentStreak,
-      longestStreak: daily.longestStreak,
-      streakBroken: daily.streakBroken,
-      freezeUsed: daily.freezeUsed,
-      freezesEarned,
-      freezeCount,
-      newAchievements,
-      alreadyStudiedToday: daily.alreadyStudiedToday,
-    };
-  });
+export interface StreakSnapshot {
+  currentStreak: number;
+  longestStreak: number;
+  streakBroken: boolean;
+  freezeUsed: boolean;
+  freezesEarned: number;
+  freezeCount: number;
+  alreadyStudiedToday: boolean;
+  /** Telde deze activiteit mee voor de reeks (zie qualifiesForStreak)? */
+  counted: boolean;
 }
 
 /**
- * Een korte, hoofdstukloze oefenronde ("Snelle ronde") — redt de dagstreak
- * net als een volledige les, maar hangt aan geen enkele cursus/hoofdstuk en
- * levert dus minder XP op en raakt geen ChapterProgress.
+ * De enige ingang om de dagelijkse reeks bij te werken. Elke afgeronde
+ * leeractiviteit meldt zich hier; of hij meetelt, beslist uitsluitend
+ * qualifiesForStreak (src/lib/learning/streakRules.ts). Lezen telt nooit,
+ * een lege of half afgemaakte inzending ook niet: dan blijft de reeks zoals
+ * hij was.
  */
-export async function completeQuickPractice(userId: string, correctCount: number, total: number): Promise<StudyResult> {
-  return prisma.$transaction(async (tx) => {
-    const daily = await applyDailyStreak(tx, userId);
-    const freezeCount = daily.freezeCountBeforeMilestone + daily.freezesEarned;
-
-    await tx.user.update({
-      where: { id: userId },
-      data: {
-        currentStreak: daily.currentStreak,
-        longestStreak: daily.longestStreak,
-        lastStudyDate: daily.today,
-        freezeCount,
-      },
-    });
-
-    if (daily.freezesEarned > 0) {
-      await tx.freezeTransaction.create({
-        data: { userId, type: "EARNED", amount: daily.freezesEarned, reason: "Mijlpaal bereikt" },
-      });
-    }
-
-    const xp = correctCount * XP_PER_CORRECT_LIGHT;
-    if (xp > 0) {
-      await awardXp(tx, userId, xp, "QUICK_PRACTICE", { correctCount, total });
-      await awardCompetitionXp(tx, userId, "QUICK_PRACTICE", xp, { metadata: { correctCount, total } });
-    }
-
-    const newAchievements = await checkAndAwardAchievements(tx, userId);
-
+export async function recordLearningActivity(tx: Tx, userId: string, activity: LearningActivity): Promise<StreakSnapshot> {
+  if (!qualifiesForStreak(activity)) {
+    const user = await tx.user.findUniqueOrThrow({ where: { id: userId } });
     return {
-      xpEarned: xp,
-      chapterCompleted: false,
-      scorePercent: total === 0 ? 0 : Math.round((correctCount / total) * 100),
+      currentStreak: user.currentStreak,
+      longestStreak: user.longestStreak,
+      streakBroken: false,
+      freezeUsed: false,
+      freezesEarned: 0,
+      freezeCount: user.freezeCount,
+      alreadyStudiedToday: user.lastStudyDate === dayKey(),
+      counted: false,
+    };
+  }
+
+  const daily = await applyDailyStreak(tx, userId);
+  const freezeCount = daily.freezeCountBeforeMilestone + daily.freezesEarned;
+  await tx.user.update({
+    where: { id: userId },
+    data: {
       currentStreak: daily.currentStreak,
       longestStreak: daily.longestStreak,
-      streakBroken: daily.streakBroken,
-      freezeUsed: daily.freezeUsed,
-      freezesEarned: daily.freezesEarned,
+      lastStudyDate: daily.today,
       freezeCount,
-      newAchievements,
-      alreadyStudiedToday: daily.alreadyStudiedToday,
-    };
+    },
   });
+  if (daily.freezesEarned > 0) {
+    await tx.freezeTransaction.create({
+      data: { userId, type: "EARNED", amount: daily.freezesEarned, reason: "Mijlpaal bereikt" },
+    });
+  }
+  return {
+    currentStreak: daily.currentStreak,
+    longestStreak: daily.longestStreak,
+    streakBroken: daily.streakBroken,
+    freezeUsed: daily.freezeUsed,
+    freezesEarned: daily.freezesEarned,
+    freezeCount,
+    alreadyStudiedToday: daily.alreadyStudiedToday,
+    counted: true,
+  };
+}
+
+/** Een extra freeze voor een mijlpaal bovenop de reeks (bv. afgeronde hoofdstukken). */
+export async function grantMilestoneFreeze(tx: Tx, userId: string, snapshot: StreakSnapshot): Promise<StreakSnapshot> {
+  await tx.user.update({ where: { id: userId }, data: { freezeCount: { increment: 1 } } });
+  await tx.freezeTransaction.create({ data: { userId, type: "EARNED", amount: 1, reason: "Mijlpaal bereikt" } });
+  return { ...snapshot, freezesEarned: snapshot.freezesEarned + 1, freezeCount: snapshot.freezeCount + 1 };
+}
+
+interface ActivityXp {
+  amount: number;
+  reason: XPReason;
+  metadata?: Record<string, unknown>;
+  competitionKey: string;
+  competition?: { won?: boolean; level?: string; metadata?: Record<string, unknown> };
+}
+
+/**
+ * Gedeeld slot van elke afrondfunctie hieronder: reeks (volgens de
+ * centrale regel), XP met audittrail, divisie-XP en prestaties.
+ */
+async function finishActivity(
+  tx: Tx,
+  userId: string,
+  activity: LearningActivity,
+  xp: ActivityXp | null,
+  result: { chapterCompleted: boolean; scorePercent: number }
+): Promise<StudyResult> {
+  const streak = await recordLearningActivity(tx, userId, activity);
+  const amount = xp?.amount ?? 0;
+  if (xp && amount > 0) {
+    await awardXp(tx, userId, amount, xp.reason, xp.metadata);
+    await awardCompetitionXp(tx, userId, xp.competitionKey, amount, xp.competition);
+  }
+  const newAchievements = await checkAndAwardAchievements(tx, userId);
+  return {
+    xpEarned: amount,
+    chapterCompleted: result.chapterCompleted,
+    scorePercent: result.scorePercent,
+    currentStreak: streak.currentStreak,
+    longestStreak: streak.longestStreak,
+    streakBroken: streak.streakBroken,
+    freezeUsed: streak.freezeUsed,
+    freezesEarned: streak.freezesEarned,
+    freezeCount: streak.freezeCount,
+    newAchievements,
+    alreadyStudiedToday: streak.alreadyStudiedToday,
+  };
+}
+
+function percent(correct: number, total: number): number {
+  return total === 0 ? 0 : Math.round((correct / total) * 100);
+}
+
+/**
+ * Een live quiz over een hoofdstuk afgerond (src/server/gameServer.ts). Een
+ * spel, geen oefenset: het raakt de leesvoortgang en de basisbeloning van
+ * het hoofdstuk niet (zie docs/LEERVOORTGANG.md), maar meespelen telt wel
+ * als leeractiviteit voor de reeks.
+ */
+export async function completeLiveQuiz(
+  userId: string,
+  chapterId: string,
+  scorePercent: number,
+  xp: number,
+  won: boolean
+): Promise<StudyResult> {
+  const reason: XPReason = won ? "LIVE_GAME_WON" : "LIVE_GAME_PLAYED";
+  return prisma.$transaction((tx) =>
+    finishActivity(
+      tx,
+      userId,
+      { kind: "GAME", answered: 1, required: 1 },
+      { amount: xp, reason, metadata: { chapterId, scorePercent }, competitionKey: "LESSON", competition: { won, metadata: { chapterId, scorePercent, xpReason: reason } } },
+      { chapterCompleted: false, scorePercent }
+    )
+  );
+}
+
+/**
+ * Een korte, hoofdstukloze oefenronde ("Snelle ronde"): telt voor de reeks,
+ * levert de lichte XP per goed antwoord op en raakt geen voortgang van
+ * inhoud.
+ */
+export async function completeQuickPractice(userId: string, correctCount: number, total: number): Promise<StudyResult> {
+  const xp = correctCount * XP_PER_CORRECT_LIGHT;
+  return prisma.$transaction((tx) =>
+    finishActivity(
+      tx,
+      userId,
+      { kind: "PRACTICE", answered: total, required: 1 },
+      { amount: xp, reason: "QUICK_PRACTICE", metadata: { correctCount, total }, competitionKey: "QUICK_PRACTICE", competition: { metadata: { correctCount, total } } },
+      { chapterCompleted: false, scorePercent: percent(correctCount, total) }
+    )
+  );
 }
 
 /**
  * Rondt een stap van Samen studeren af voor één deelnemer (zie
- * src/server/study.ts). Zelfde opzet als completeQuickPractice: telt voor de
- * dagstreak en geeft een lichte XP per goed antwoord, maar schuift de cursus
- * zelf niet door — de stap is door de host gekozen, niet noodzakelijk de
- * volgende stap van deze deelnemer. De competitie-XP heeft een eigen
- * dagelijkse limiet, zodat steeds dezelfde stap herhalen niets oplevert.
+ * src/server/study.ts). Telt voor de reeks en geeft een lichte XP per goed
+ * antwoord, maar schuift de cursus zelf niet door en raakt de
+ * basisbeloning van de inhoud niet: de stap is door de host gekozen. De
+ * competitie-XP heeft een eigen dagelijkse limiet.
  */
-export async function completeStudyRound(userId: string, correctCount: number, total: number, won: boolean): Promise<StudyResult> {
-  return prisma.$transaction(async (tx) => {
-    const daily = await applyDailyStreak(tx, userId);
-    const freezeCount = daily.freezeCountBeforeMilestone + daily.freezesEarned;
-
-    await tx.user.update({
-      where: { id: userId },
-      data: {
-        currentStreak: daily.currentStreak,
-        longestStreak: daily.longestStreak,
-        lastStudyDate: daily.today,
-        freezeCount,
-      },
-    });
-
-    if (daily.freezesEarned > 0) {
-      await tx.freezeTransaction.create({
-        data: { userId, type: "EARNED", amount: daily.freezesEarned, reason: "Mijlpaal bereikt" },
-      });
-    }
-
-    const xp = correctCount * XP_PER_CORRECT_LIGHT;
-    if (xp > 0) {
-      await awardXp(tx, userId, xp, "STUDY_TOGETHER", { correctCount, total, won });
-      await awardCompetitionXp(tx, userId, "STUDY_TOGETHER", xp, { won, metadata: { correctCount, total } });
-    }
-
-    const newAchievements = await checkAndAwardAchievements(tx, userId);
-
-    return {
-      xpEarned: xp,
-      chapterCompleted: false,
-      scorePercent: total === 0 ? 0 : Math.round((correctCount / total) * 100),
-      currentStreak: daily.currentStreak,
-      longestStreak: daily.longestStreak,
-      streakBroken: daily.streakBroken,
-      freezeUsed: daily.freezeUsed,
-      freezesEarned: daily.freezesEarned,
-      freezeCount,
-      newAchievements,
-      alreadyStudiedToday: daily.alreadyStudiedToday,
-    };
-  });
+export async function completeStudyRound(userId: string, correctCount: number, answered: number, total: number, won: boolean): Promise<StudyResult> {
+  const xp = correctCount * XP_PER_CORRECT_LIGHT;
+  return prisma.$transaction((tx) =>
+    finishActivity(
+      tx,
+      userId,
+      { kind: "GAME", answered, required: 1 },
+      { amount: xp, reason: "STUDY_TOGETHER", metadata: { correctCount, total, won }, competitionKey: "STUDY_TOGETHER", competition: { won, metadata: { correctCount, total } } },
+      { chapterCompleted: false, scorePercent: percent(correctCount, total) }
+    )
+  );
 }
 
-/**
- * Rondt een potje "Raad het hoofdstuk" af (alleen of live, zie
- * src/lib/chapterGuess.ts en src/server/gameServer.ts) — zelfde opzet als
- * completeQuickPractice: geen vaste cursus/hoofdstuk om aan te haken, dus
- * alleen de dagstreak en XP.
- */
+/** Een potje "Raad het hoofdstuk" (alleen of live, zie src/lib/chapterGuess.ts). */
 export async function completeChapterGuess(
   userId: string,
   correctCount: number,
   total: number,
   level?: ChapterGuessLevel
 ): Promise<StudyResult> {
-  return prisma.$transaction(async (tx) => {
-    const daily = await applyDailyStreak(tx, userId);
-    const freezeCount = daily.freezeCountBeforeMilestone + daily.freezesEarned;
-
-    await tx.user.update({
-      where: { id: userId },
-      data: {
-        currentStreak: daily.currentStreak,
-        longestStreak: daily.longestStreak,
-        lastStudyDate: daily.today,
-        freezeCount,
-      },
-    });
-
-    if (daily.freezesEarned > 0) {
-      await tx.freezeTransaction.create({
-        data: { userId, type: "EARNED", amount: daily.freezesEarned, reason: "Mijlpaal bereikt" },
-      });
-    }
-
-    const xp = correctCount * XP_PER_CORRECT_LIGHT;
-    if (xp > 0) {
-      await awardXp(tx, userId, xp, "CHAPTER_GUESS_COMPLETED", { correctCount, total });
-      await awardCompetitionXp(tx, userId, "CHAPTER_GUESS", xp, { level, metadata: { correctCount, total, level } });
-    }
-
-    const newAchievements = await checkAndAwardAchievements(tx, userId);
-
-    return {
-      xpEarned: xp,
-      chapterCompleted: false,
-      scorePercent: total === 0 ? 0 : Math.round((correctCount / total) * 100),
-      currentStreak: daily.currentStreak,
-      longestStreak: daily.longestStreak,
-      streakBroken: daily.streakBroken,
-      freezeUsed: daily.freezeUsed,
-      freezesEarned: daily.freezesEarned,
-      freezeCount,
-      newAchievements,
-      alreadyStudiedToday: daily.alreadyStudiedToday,
-    };
-  });
+  const xp = correctCount * XP_PER_CORRECT_LIGHT;
+  return prisma.$transaction((tx) =>
+    finishActivity(
+      tx,
+      userId,
+      { kind: "GAME", answered: total, required: 1 },
+      { amount: xp, reason: "CHAPTER_GUESS_COMPLETED", metadata: { correctCount, total }, competitionKey: "CHAPTER_GUESS", competition: { level, metadata: { correctCount, total, level } } },
+      { chapterCompleted: false, scorePercent: percent(correctCount, total) }
+    )
+  );
 }
 
 /**
- * Rondt een potje van het dagelijkse woordspel af (zie src/lib/wordGame.ts)
- * — zowel bij winst als verlies telt meespelen als "vandaag gestudeerd"
- * (net als completeQuickPractice/completeChapterGuess), maar XP is hier al
- * vooraf berekend (xpForWin, afhankelijk van het aantal pogingen) i.p.v.
- * een vast bedrag per correct antwoord — bij verlies dus 0.
+ * Een potje van het dagelijkse woordspel (src/lib/wordGame.ts): winst of
+ * verlies telt mee voor de reeks; de XP is vooraf berekend (bij verlies 0).
  */
 export async function completeWordGame(userId: string, xpEarned: number): Promise<StudyResult> {
-  return prisma.$transaction(async (tx) => {
-    const daily = await applyDailyStreak(tx, userId);
-    const freezeCount = daily.freezeCountBeforeMilestone + daily.freezesEarned;
-
-    await tx.user.update({
-      where: { id: userId },
-      data: {
-        currentStreak: daily.currentStreak,
-        longestStreak: daily.longestStreak,
-        lastStudyDate: daily.today,
-        freezeCount,
-      },
-    });
-
-    if (daily.freezesEarned > 0) {
-      await tx.freezeTransaction.create({
-        data: { userId, type: "EARNED", amount: daily.freezesEarned, reason: "Mijlpaal bereikt" },
-      });
-    }
-
-    if (xpEarned > 0) {
-      await awardXp(tx, userId, xpEarned, "WORD_GAME_WON", { xpEarned });
-      await awardCompetitionXp(tx, userId, "WORD_GAME", xpEarned);
-    }
-
-    const newAchievements = await checkAndAwardAchievements(tx, userId);
-
-    return {
-      xpEarned,
-      chapterCompleted: false,
-      scorePercent: xpEarned > 0 ? 100 : 0,
-      currentStreak: daily.currentStreak,
-      longestStreak: daily.longestStreak,
-      streakBroken: daily.streakBroken,
-      freezeUsed: daily.freezeUsed,
-      freezesEarned: daily.freezesEarned,
-      freezeCount,
-      newAchievements,
-      alreadyStudiedToday: daily.alreadyStudiedToday,
-    };
-  });
+  return prisma.$transaction((tx) =>
+    finishActivity(
+      tx,
+      userId,
+      { kind: "GAME", answered: 1, required: 1 },
+      { amount: xpEarned, reason: "WORD_GAME_WON", metadata: { xpEarned }, competitionKey: "WORD_GAME" },
+      { chapterCompleted: false, scorePercent: xpEarned > 0 ? 100 : 0 }
+    )
+  );
 }
 
 /**
- * De Slimste Heilige alleen gespeeld (van de dag of vrij oefenen): telt als
- * gestudeerd voor de reeks, net als het woordspel. De XP is al berekend uit
- * de eindstand (soloXp in src/lib/alleskenner/solo.ts).
+ * De Slimste Heilige alleen gespeeld (src/lib/alleskenner/solo.ts): telt
+ * voor de reeks; de XP is al berekend uit de eindstand.
  */
 export async function completeAlleskennerSolo(
   userId: string,
   xpEarned: number,
   metadata: Record<string, unknown>
 ): Promise<StudyResult> {
-  return prisma.$transaction(async (tx) => {
-    const daily = await applyDailyStreak(tx, userId);
-    const freezeCount = daily.freezeCountBeforeMilestone + daily.freezesEarned;
+  return prisma.$transaction((tx) =>
+    finishActivity(
+      tx,
+      userId,
+      { kind: "GAME", answered: 1, required: 1 },
+      { amount: xpEarned, reason: "ALLESKENNER_SOLO", metadata, competitionKey: "ALLESKENNER_SOLO" },
+      { chapterCompleted: false, scorePercent: 100 }
+    )
+  );
+}
 
-    await tx.user.update({
-      where: { id: userId },
-      data: {
-        currentStreak: daily.currentStreak,
-        longestStreak: daily.longestStreak,
-        lastStudyDate: daily.today,
-        freezeCount,
-      },
-    });
-
-    if (daily.freezesEarned > 0) {
-      await tx.freezeTransaction.create({
-        data: { userId, type: "EARNED", amount: daily.freezesEarned, reason: "Mijlpaal bereikt" },
-      });
-    }
-
-    if (xpEarned > 0) {
-      await awardXp(tx, userId, xpEarned, "ALLESKENNER_SOLO", metadata);
-      await awardCompetitionXp(tx, userId, "ALLESKENNER_SOLO", xpEarned);
-    }
-
-    const newAchievements = await checkAndAwardAchievements(tx, userId);
-
-    return {
-      xpEarned,
-      chapterCompleted: false,
-      scorePercent: 100,
-      currentStreak: daily.currentStreak,
-      longestStreak: daily.longestStreak,
-      streakBroken: daily.streakBroken,
-      freezeUsed: daily.freezeUsed,
-      freezesEarned: daily.freezesEarned,
-      freezeCount,
-      newAchievements,
-      alreadyStudiedToday: daily.alreadyStudiedToday,
-    };
-  });
+interface LessonProgressRow {
+  completed: boolean;
+  bestScore: number;
 }
 
 /**
- * Rondt één van de twee modi (CONTENT/BOM_CONNECTION) van een
- * podcastaflevering af — zelfde soort boekhouding als completeLesson, maar
- * tegen PodcastEpisodeProgress i.p.v. ChapterProgress. Raakt bewust geen
- * UserCourseProgress: bij één aflevering is er nog geen "volgende" om naar
- * door te schuiven.
+ * Gedeelde boekhouding voor cursussen met eigen lessen en vragen (podcast,
+ * kinderen, introductie): één route per les, dus de herhalingskorting na een
+ * perfecte score is hier genoeg om dubbele basis-XP te voorkomen. De les
+ * telt pas mee voor de reeks als alle vragen beantwoord zijn.
  */
+async function completeCourseLesson(
+  tx: Tx,
+  userId: string,
+  existing: LessonProgressRow | null,
+  save: (data: { nowCompleted: boolean; wasAlreadyCompleted: boolean; xpToAward: number }) => Promise<void>,
+  attempt: { scorePercent: number; xp: number; answered: number; total: number },
+  xp: Omit<ActivityXp, "amount">
+): Promise<StudyResult> {
+  const wasAlreadyCompleted = existing?.completed ?? false;
+  const nowCompleted = wasAlreadyCompleted || attempt.scorePercent >= PASS_THRESHOLD;
+  const alreadyPerfect = (existing?.bestScore ?? 0) === 100;
+  const xpToAward = alreadyPerfect ? applyRepeatDiscount(attempt.xp) : attempt.xp;
+  await save({ nowCompleted, wasAlreadyCompleted, xpToAward });
+  return finishActivity(
+    tx,
+    userId,
+    { kind: "COURSE_LESSON", answered: attempt.answered, required: attempt.total },
+    { ...xp, amount: xpToAward },
+    { chapterCompleted: nowCompleted, scorePercent: attempt.scorePercent }
+  );
+}
+
+function progressData(userId: string, scorePercent: number, existing: LessonProgressRow | null, d: { nowCompleted: boolean; wasAlreadyCompleted: boolean; xpToAward: number }) {
+  return {
+    create: { userId, completed: d.nowCompleted, bestScore: scorePercent, xpEarned: d.xpToAward, completedAt: d.nowCompleted ? new Date() : null },
+    update: {
+      completed: d.nowCompleted,
+      bestScore: Math.max(existing?.bestScore ?? 0, scorePercent),
+      xpEarned: { increment: d.xpToAward },
+      completedAt: !d.wasAlreadyCompleted && d.nowCompleted ? new Date() : undefined,
+    },
+  };
+}
+
+/** Eén van de twee modi (inhoud/verband) van een podcastaflevering afgerond. */
 export async function completePodcastLesson(
   userId: string,
   episodeId: string,
   mode: "CONTENT" | "BOM_CONNECTION",
   scorePercent: number,
-  xpForThisAttempt: number
+  xpForThisAttempt: number,
+  answered: number,
+  total: number
 ): Promise<StudyResult> {
   return prisma.$transaction(async (tx) => {
-    const existing = await tx.podcastEpisodeProgress.findUnique({
-      where: { userId_episodeId_mode: { userId, episodeId, mode } },
-    });
-    const wasAlreadyCompleted = existing?.completed ?? false;
-    const nowCompleted = wasAlreadyCompleted || scorePercent >= PASS_THRESHOLD;
-
-    // Herhalingskorting, zie completeLesson hierboven.
-    const alreadyPerfect = (existing?.bestScore ?? 0) === 100;
-    const xpToAward = alreadyPerfect ? applyRepeatDiscount(xpForThisAttempt) : xpForThisAttempt;
-
-    await tx.podcastEpisodeProgress.upsert({
-      where: { userId_episodeId_mode: { userId, episodeId, mode } },
-      create: {
-        userId,
-        episodeId,
-        mode,
-        completed: nowCompleted,
-        bestScore: scorePercent,
-        xpEarned: xpToAward,
-        completedAt: nowCompleted ? new Date() : null,
+    const where = { userId_episodeId_mode: { userId, episodeId, mode } };
+    const existing = await tx.podcastEpisodeProgress.findUnique({ where });
+    return completeCourseLesson(
+      tx,
+      userId,
+      existing,
+      async (d) => {
+        const data = progressData(userId, scorePercent, existing, d);
+        await tx.podcastEpisodeProgress.upsert({ where, create: { ...data.create, episodeId, mode }, update: data.update });
       },
-      update: {
-        completed: nowCompleted,
-        bestScore: Math.max(existing?.bestScore ?? 0, scorePercent),
-        xpEarned: { increment: xpToAward },
-        completedAt: !wasAlreadyCompleted && nowCompleted ? new Date() : undefined,
-      },
-    });
-
-    const daily = await applyDailyStreak(tx, userId);
-    const freezeCount = daily.freezeCountBeforeMilestone + daily.freezesEarned;
-
-    await tx.user.update({
-      where: { id: userId },
-      data: {
-        currentStreak: daily.currentStreak,
-        longestStreak: daily.longestStreak,
-        lastStudyDate: daily.today,
-        freezeCount,
-      },
-    });
-
-    if (daily.freezesEarned > 0) {
-      await tx.freezeTransaction.create({
-        data: { userId, type: "EARNED", amount: daily.freezesEarned, reason: "Mijlpaal bereikt" },
-      });
-    }
-
-    await awardXp(tx, userId, xpToAward, "PODCAST_LESSON_COMPLETED", { episodeId, mode, scorePercent });
-    await awardCompetitionXp(tx, userId, "PODCAST_LESSON", xpToAward, { metadata: { episodeId, mode, scorePercent } });
-
-    const newAchievements = await checkAndAwardAchievements(tx, userId);
-
-    return {
-      xpEarned: xpToAward,
-      chapterCompleted: nowCompleted,
-      scorePercent,
-      currentStreak: daily.currentStreak,
-      longestStreak: daily.longestStreak,
-      streakBroken: daily.streakBroken,
-      freezeUsed: daily.freezeUsed,
-      freezesEarned: daily.freezesEarned,
-      freezeCount,
-      newAchievements,
-      alreadyStudiedToday: daily.alreadyStudiedToday,
-    };
+      { scorePercent, xp: xpForThisAttempt, answered, total },
+      { reason: "PODCAST_LESSON_COMPLETED", metadata: { episodeId, mode, scorePercent }, competitionKey: "PODCAST_LESSON", competition: { metadata: { episodeId, mode, scorePercent } } }
+    );
   });
 }
 
+/** Een verhaal uit de kindercursus afgerond. */
 export async function completeKidsStory(
   userId: string,
   storyId: string,
   scorePercent: number,
-  xpForThisAttempt: number
+  xpForThisAttempt: number,
+  answered: number,
+  total: number
 ): Promise<StudyResult> {
   return prisma.$transaction(async (tx) => {
-    const existing = await tx.kidsStoryProgress.findUnique({
-      where: { userId_storyId: { userId, storyId } },
-    });
-    const wasAlreadyCompleted = existing?.completed ?? false;
-    const nowCompleted = wasAlreadyCompleted || scorePercent >= PASS_THRESHOLD;
-
-    // Herhalingskorting, zie completeLesson hierboven.
-    const alreadyPerfect = (existing?.bestScore ?? 0) === 100;
-    const xpToAward = alreadyPerfect ? applyRepeatDiscount(xpForThisAttempt) : xpForThisAttempt;
-
-    await tx.kidsStoryProgress.upsert({
-      where: { userId_storyId: { userId, storyId } },
-      create: {
-        userId,
-        storyId,
-        completed: nowCompleted,
-        bestScore: scorePercent,
-        xpEarned: xpToAward,
-        completedAt: nowCompleted ? new Date() : null,
+    const where = { userId_storyId: { userId, storyId } };
+    const existing = await tx.kidsStoryProgress.findUnique({ where });
+    return completeCourseLesson(
+      tx,
+      userId,
+      existing,
+      async (d) => {
+        const data = progressData(userId, scorePercent, existing, d);
+        await tx.kidsStoryProgress.upsert({ where, create: { ...data.create, storyId }, update: data.update });
       },
-      update: {
-        completed: nowCompleted,
-        bestScore: Math.max(existing?.bestScore ?? 0, scorePercent),
-        xpEarned: { increment: xpToAward },
-        completedAt: !wasAlreadyCompleted && nowCompleted ? new Date() : undefined,
-      },
-    });
-
-    const daily = await applyDailyStreak(tx, userId);
-    const freezeCount = daily.freezeCountBeforeMilestone + daily.freezesEarned;
-
-    await tx.user.update({
-      where: { id: userId },
-      data: {
-        currentStreak: daily.currentStreak,
-        longestStreak: daily.longestStreak,
-        lastStudyDate: daily.today,
-        freezeCount,
-      },
-    });
-
-    if (daily.freezesEarned > 0) {
-      await tx.freezeTransaction.create({
-        data: { userId, type: "EARNED", amount: daily.freezesEarned, reason: "Mijlpaal bereikt" },
-      });
-    }
-
-    await awardXp(tx, userId, xpToAward, "KIDS_STORY_COMPLETED", { storyId, scorePercent });
-    await awardCompetitionXp(tx, userId, "KIDS_STORY", xpToAward, { metadata: { storyId, scorePercent } });
-
-    const newAchievements = await checkAndAwardAchievements(tx, userId);
-
-    return {
-      xpEarned: xpToAward,
-      chapterCompleted: nowCompleted,
-      scorePercent,
-      currentStreak: daily.currentStreak,
-      longestStreak: daily.longestStreak,
-      streakBroken: daily.streakBroken,
-      freezeUsed: daily.freezeUsed,
-      freezesEarned: daily.freezesEarned,
-      freezeCount,
-      newAchievements,
-      alreadyStudiedToday: daily.alreadyStudiedToday,
-    };
+      { scorePercent, xp: xpForThisAttempt, answered, total },
+      { reason: "KIDS_STORY_COMPLETED", metadata: { storyId, scorePercent }, competitionKey: "KIDS_STORY", competition: { metadata: { storyId, scorePercent } } }
+    );
   });
 }
 
+/** Een les uit de introductiecursus afgerond. */
 export async function completeIntroLesson(
   userId: string,
   lessonId: string,
   scorePercent: number,
-  xpForThisAttempt: number
+  xpForThisAttempt: number,
+  answered: number,
+  total: number
 ): Promise<StudyResult> {
   return prisma.$transaction(async (tx) => {
-    const existing = await tx.introLessonProgress.findUnique({
-      where: { userId_lessonId: { userId, lessonId } },
-    });
-    const wasAlreadyCompleted = existing?.completed ?? false;
-    const nowCompleted = wasAlreadyCompleted || scorePercent >= PASS_THRESHOLD;
-
-    // Herhalingskorting, zie completeLesson hierboven.
-    const alreadyPerfect = (existing?.bestScore ?? 0) === 100;
-    const xpToAward = alreadyPerfect ? applyRepeatDiscount(xpForThisAttempt) : xpForThisAttempt;
-
-    await tx.introLessonProgress.upsert({
-      where: { userId_lessonId: { userId, lessonId } },
-      create: {
-        userId,
-        lessonId,
-        completed: nowCompleted,
-        bestScore: scorePercent,
-        xpEarned: xpToAward,
-        completedAt: nowCompleted ? new Date() : null,
+    const where = { userId_lessonId: { userId, lessonId } };
+    const existing = await tx.introLessonProgress.findUnique({ where });
+    return completeCourseLesson(
+      tx,
+      userId,
+      existing,
+      async (d) => {
+        const data = progressData(userId, scorePercent, existing, d);
+        await tx.introLessonProgress.upsert({ where, create: { ...data.create, lessonId }, update: data.update });
       },
-      update: {
-        completed: nowCompleted,
-        bestScore: Math.max(existing?.bestScore ?? 0, scorePercent),
-        xpEarned: { increment: xpToAward },
-        completedAt: !wasAlreadyCompleted && nowCompleted ? new Date() : undefined,
-      },
-    });
-
-    const daily = await applyDailyStreak(tx, userId);
-    const freezeCount = daily.freezeCountBeforeMilestone + daily.freezesEarned;
-
-    await tx.user.update({
-      where: { id: userId },
-      data: {
-        currentStreak: daily.currentStreak,
-        longestStreak: daily.longestStreak,
-        lastStudyDate: daily.today,
-        freezeCount,
-      },
-    });
-
-    if (daily.freezesEarned > 0) {
-      await tx.freezeTransaction.create({
-        data: { userId, type: "EARNED", amount: daily.freezesEarned, reason: "Mijlpaal bereikt" },
-      });
-    }
-
-    await awardXp(tx, userId, xpToAward, "INTRO_LESSON_COMPLETED", { lessonId, scorePercent });
-    await awardCompetitionXp(tx, userId, "INTRO_LESSON", xpToAward, { metadata: { lessonId, scorePercent } });
-
-    const newAchievements = await checkAndAwardAchievements(tx, userId);
-
-    return {
-      xpEarned: xpToAward,
-      chapterCompleted: nowCompleted,
-      scorePercent,
-      currentStreak: daily.currentStreak,
-      longestStreak: daily.longestStreak,
-      streakBroken: daily.streakBroken,
-      freezeUsed: daily.freezeUsed,
-      freezesEarned: daily.freezesEarned,
-      freezeCount,
-      newAchievements,
-      alreadyStudiedToday: daily.alreadyStudiedToday,
-    };
+      { scorePercent, xp: xpForThisAttempt, answered, total },
+      { reason: "INTRO_LESSON_COMPLETED", metadata: { lessonId, scorePercent }, competitionKey: "INTRO_LESSON", competition: { metadata: { lessonId, scorePercent } } }
+    );
   });
 }
 
