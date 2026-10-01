@@ -7,6 +7,7 @@ import { useT } from "@/components/I18nProvider";
 import type { TFunction } from "@/lib/i18n/core";
 import UserAvatar from "@/components/UserAvatar";
 import DivisionScroller from "@/components/DivisionScroller";
+import SystemIcon from "@/components/versado/SystemIcon";
 
 type Zone = "PROMOTION" | "SAFE" | "RELEGATION" | null;
 
@@ -246,8 +247,8 @@ function NationalRow({ e }: { e: NationalEntry }) {
         )}
       </div>
       <div className="flex shrink-0 items-center gap-1.5 text-xs whitespace-nowrap sm:gap-2 sm:text-sm">
-        <span className="text-orange-500 font-bold">🔥 {e.currentStreak}</span>
-        <span className="text-gold-600 dark:text-gold-400 font-extrabold">⭐ {e.xpTotal}</span>
+        <span className="inline-flex items-center gap-0.5 text-orange-500 font-bold"><SystemIcon kind="streak" className="h-4 w-4" fill="currentColor" aria-hidden />{e.currentStreak}</span>
+        <span className="inline-flex items-center gap-0.5 text-gold-600 dark:text-gold-400 font-extrabold"><SystemIcon kind="xp" className="h-4 w-4" fill="currentColor" aria-hidden />{e.xpTotal}</span>
       </div>
     </div>
   );

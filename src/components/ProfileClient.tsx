@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type SyntheticEvent } from "react";
+import { useEffect, useState, type ReactNode, type SyntheticEvent } from "react";
 import Link from "next/link";
 import CollapsibleCard from "@/components/CollapsibleCard";
 import LanguageSettings from "@/components/LanguageSettings";
@@ -18,6 +18,7 @@ import { useConfirm } from "@/components/ConfirmProvider";
 import { getLanguage } from "@/lib/languages";
 import { translateOr } from "@/lib/i18n/core";
 import AppSelect from "@/components/AppSelect";
+import SystemIcon from "@/components/versado/SystemIcon";
 
 interface AchievementView {
   slug: string;
@@ -551,8 +552,8 @@ export default function ProfileClient() {
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-          <HeroStat value={`🔥 ${data.currentStreak}`} label={t("profile.streak")} href="/streak" />
-          <HeroStat value={`⭐ ${data.xpTotal}`} label="XP" href="/xp" />
+          <HeroStat value={<><SystemIcon kind="streak" className="inline h-4 w-4" fill="currentColor" aria-hidden /> {data.currentStreak}</>} label={t("profile.streak")} href="/streak" />
+          <HeroStat value={<><SystemIcon kind="xp" className="inline h-4 w-4" fill="currentColor" aria-hidden /> {data.xpTotal}</>} label="XP" href="/xp" />
           <HeroStat value={`🧊 ${data.freezeCount}`} label={t("lesson.freezes")} />
           <HeroStat value={`📖 ${data.chaptersCompleted}`} label={t("profile.chapters")} />
         </div>
@@ -1121,7 +1122,7 @@ function Stat({
 // Pil-vormige variant voor de statsrij in de gradient-hero — zelfde
 // waarde/label-inhoud als Stat, maar met een eigen donkere achtergrond zodat
 // de tegels zichtbaar blijven op de blauwe hero i.p.v. enkel platte tekst.
-function HeroStat({ value, label, href }: { value: string; label: string; href?: string }) {
+function HeroStat({ value, label, href }: { value: ReactNode; label: string; href?: string }) {
   const content = (
     <div className="rounded-2xl bg-black/15 py-2.5 flex flex-col items-center gap-0.5 hover:bg-black/25 transition-colors">
       <div className="font-extrabold text-white">{value}</div>

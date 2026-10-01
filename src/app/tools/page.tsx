@@ -5,12 +5,14 @@ import { BOM_COLLECTION_ID, DC_COLLECTION_ID, getContentContext, type ContentCol
 import { DICTIONARY_COLLECTION_IDS } from "@/lib/dictionary";
 import { getT } from "@/lib/i18n";
 import type { MessageKey } from "@/lib/i18n/core";
+import SystemIcon from "@/components/versado/SystemIcon";
 
 interface Tool {
   href: string;
   titleKey: MessageKey;
   textKey: MessageKey;
   icon: string;
+  iconKind?: "streak" | "xp";
   /** Alleen bij deze uitgaven tonen (inhoud die per taal apart bestaat). */
   collectionIds?: string[];
   /** Alleen bij deze werken tonen, in elke taal (zie ContentCollection.work). */
@@ -47,7 +49,8 @@ const TOOLS: Tool[] = [
     href: "/tools/xp-guide",
     titleKey: "pages.xpGuide",
     textKey: "tools.xpGuideText",
-    icon: "⭐",
+    icon: "",
+    iconKind: "xp",
   },
   {
     href: "/tools/persons",
@@ -87,7 +90,7 @@ export default async function ToolsPage() {
               <p className="text-sm text-slate-500 dark:text-slate-400">{t(tool.textKey)}</p>
             </div>
             <span className="text-2xl" aria-hidden>
-              {tool.icon}
+              {tool.iconKind ? <SystemIcon kind={tool.iconKind} className="h-7 w-7" fill="currentColor" aria-hidden /> : tool.icon}
             </span>
           </Link>
         ))}

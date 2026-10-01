@@ -1,5 +1,7 @@
 "use client";
 
+import SystemIcon from "@/components/versado/SystemIcon";
+
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { ACHIEVEMENT_DISPLAY } from "@/lib/achievementDisplay";
@@ -190,8 +192,8 @@ export default function ReadingLessonFlow({
           )}
           {effectiveNextLessonId && (
             <div className="rounded-2xl bg-gold-50 dark:bg-slate-700 px-4 py-3 w-full">
-              <p className="font-extrabold text-gold-700 dark:text-gold-300">
-                {t("readingLesson.keepGoing")}
+              <p className="flex items-center gap-1 font-extrabold text-gold-700 dark:text-gold-300">
+                <SystemIcon kind="streak" className="h-4 w-4" fill="currentColor" aria-hidden />{t("readingLesson.keepGoing")}
               </p>
               <p className="text-sm text-gold-600 dark:text-gold-400">
                 {t("readingLesson.nextXpBefore")}<strong>+{result.nextXpEarned} XP</strong>
@@ -203,7 +205,7 @@ export default function ReadingLessonFlow({
 
         {!result.alreadyStudiedToday && (
           <div className="mt-2">
-            <div className="text-xl font-extrabold text-orange-500">🔥 {result.currentStreak}</div>
+            <div className="flex items-center gap-1 text-xl font-extrabold text-orange-500"><SystemIcon kind="streak" className="h-5 w-5" fill="currentColor" aria-hidden />{result.currentStreak}</div>
             <div className="text-xs text-slate-400 dark:text-slate-500 font-bold uppercase">{t("lesson.streak")}</div>
           </div>
         )}
@@ -233,7 +235,7 @@ export default function ReadingLessonFlow({
           </Link>
           {effectiveNextLessonId && (
             <Link href={`/reading-lesson/${effectiveNextLessonId}`} className="btn-primary">
-              {t("readingLesson.nextStep")}
+              <span className="inline-flex items-center gap-1"><SystemIcon kind="streak" className="h-4 w-4" fill="currentColor" aria-hidden />{t("readingLesson.nextStep")}</span>
             </Link>
           )}
         </div>

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { Lock, Play } from "lucide-react";
 import { useT } from "@/components/I18nProvider";
+import SystemIcon from "@/components/versado/SystemIcon";
 
 const WORDS_PER_MINUTE = 130; // rustig lees-/nadenktempo
 
@@ -145,7 +146,7 @@ export default function ChapterListCourseView({ courseId, courseName, currentCha
             <h2 className="text-2xl font-extrabold">
               📖 {todayChapter.bookName} {todayChapter.number}
             </h2>
-            <p className="text-brand-100">{t("courseView.estimate", { minutes: estimatedMinutes, xp: xpAvailable })}</p>
+            <p className="flex items-center gap-1 text-brand-100"><SystemIcon kind="xp" className="h-4 w-4 shrink-0" fill="currentColor" aria-hidden />{t("courseView.estimate", { minutes: estimatedMinutes, xp: xpAvailable })}</p>
             <Link
               href={`/lesson/${todayChapter.id}?cursus=${courseId}`}
               className="btn-primary self-start !bg-white !text-brand-700 !shadow-[0_4px_0_0_theme(colors.brand.800)] hover:!bg-brand-50"

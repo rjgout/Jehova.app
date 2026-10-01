@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Flame, Shield, Zap } from "lucide-react";
+import { Shield } from "lucide-react";
+import SystemIcon from "@/components/versado/SystemIcon";
 import { onXpChanged } from "@/lib/xpBroadcast";
 import { useT, useUiLanguage } from "@/components/I18nProvider";
 import { getLanguage } from "@/lib/languages";
@@ -53,11 +54,11 @@ export default function NavUserBadges({
         aria-label={t("header.streakAria", { n: values.streak })}
         className={`${chip} ${values.studiedToday ? "text-vs-streak hover:bg-vs-streak-soft" : "text-vs-fg-3 hover:bg-vs-subtle"}`}
       >
-        <Flame className="h-[18px] w-[18px]" strokeWidth={2.4} fill={values.studiedToday ? "currentColor" : "none"} aria-hidden />
+        <SystemIcon kind="streak" className="h-[18px] w-[18px]" fill={values.studiedToday ? "currentColor" : "none"} aria-hidden />
         {number(values.streak)}
       </Link>
       <Link href="/xp" title={t("header.xp")} aria-label={t("header.xpAria", { n: values.xp })} className={`${chip} text-vs-xp hover:bg-vs-xp-soft`}>
-        <Zap className="h-[18px] w-[18px]" strokeWidth={2.4} fill="currentColor" aria-hidden />
+        <SystemIcon kind="xp" className="h-[18px] w-[18px]" fill="currentColor" aria-hidden />
         {number(values.xp)}
       </Link>
       {tier && (

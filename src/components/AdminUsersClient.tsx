@@ -6,6 +6,7 @@ import UserTag from "@/components/UserTag";
 import { useT } from "@/components/I18nProvider";
 import { useConfirm } from "@/components/ConfirmProvider";
 import { rich } from "@/lib/i18n/rich";
+import SystemIcon from "@/components/versado/SystemIcon";
 
 interface AdminUser {
   id: string;
@@ -135,7 +136,7 @@ export default function AdminUsersClient({
                   )}
                 </td>
                 <td className="py-2 pr-3 dark:text-slate-200">{u.xpTotal}</td>
-                <td className="py-2 pr-3 dark:text-slate-200">🔥 {u.currentStreak}</td>
+                <td className="py-2 pr-3 dark:text-slate-200"><span className="inline-flex items-center gap-1"><SystemIcon kind="streak" className="h-4 w-4 text-orange-500" fill="currentColor" aria-hidden />{u.currentStreak}</span></td>
                 <td className="py-2 pr-3 dark:text-slate-200">🧊 {u.freezeCount}</td>
                 <td className="py-2 pr-3">
                   {u.isAdmin ? (

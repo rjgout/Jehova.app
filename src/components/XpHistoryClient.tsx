@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useT, useUiLanguage } from "@/components/I18nProvider";
 import { getLanguage } from "@/lib/languages";
+import SystemIcon from "@/components/versado/SystemIcon";
 
 type XPReason =
   | "LESSON_COMPLETED"
@@ -160,13 +161,12 @@ export default function XpHistoryClient() {
       <h1 className="text-2xl font-extrabold text-brand-800 dark:text-brand-300">{t("xpHistory.title")}</h1>
 
       <div className="card bg-gradient-to-br from-brand-500 to-brand-700 dark:from-brand-600 dark:to-brand-900 text-white !border-brand-300/30 dark:!border-brand-400/20 !shadow-md dark:!shadow-none flex flex-col items-center gap-1 !py-8">
-        <span className="text-4xl" aria-hidden>
-          ⭐
-        </span>
+        <SystemIcon kind="xp" className="h-10 w-10 text-gold-400" fill="currentColor" aria-hidden />
         <div className="text-5xl font-extrabold leading-none">{xpTotal}</div>
         <div className="text-brand-100 font-bold text-sm mt-1">{t("xpHistory.collected")}</div>
         {xpThisWeek > 0 && (
           <span className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-black/15 px-3.5 py-1.5 text-xs font-bold text-gold-400">
+            <SystemIcon kind="xp" className="h-4 w-4" fill="currentColor" aria-hidden />
             {t("xpHistory.thisWeek", { xp: xpThisWeek })}
           </span>
         )}

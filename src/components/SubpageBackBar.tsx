@@ -5,20 +5,23 @@ import { usePathname } from "next/navigation";
 import { useBackTargetOverride } from "@/lib/backTarget";
 import { useT } from "@/components/I18nProvider";
 import type { MessageKey } from "@/lib/i18n/core";
+import SystemIcon from "@/components/versado/SystemIcon";
+
+type BackIcon = string | { kind: "streak" | "xp" };
 
 interface BackTarget {
   href: string; // waar "terug" naartoe gaat
   parent: MessageKey; // naam van die pagina
   title: MessageKey; // de huidige pagina
-  icon: string;
+  icon: BackIcon;
 }
 
 // De onderliggende pagina's van Hulpmiddelen. Bladwijzers staat bewust op
 // /bookmarks (ouder dan de hulpmiddelenpagina), maar hoort daar wel bij.
-const TOOL_SUBPAGES: Record<string, { title: MessageKey; icon: string }> = {
+const TOOL_SUBPAGES: Record<string, { title: MessageKey; icon: BackIcon }> = {
   "/tools/dictionary": { title: "pages.dictionary", icon: "📚" },
   "/bookmarks": { title: "pages.bookmarks", icon: "🔖" },
-  "/tools/xp-guide": { title: "pages.xpGuide", icon: "⭐" },
+  "/tools/xp-guide": { title: "pages.xpGuide", icon: { kind: "xp" } },
   "/tools/persons": { title: "pages.persons", icon: "👤" },
 };
 
@@ -114,7 +117,7 @@ export default function SubpageBackBar() {
 
         {!isCourseDetail && (
           <span className="ml-auto flex min-w-0 items-center gap-1.5 rounded-full bg-white/15 px-2.5 py-1 text-sm font-bold">
-            <span aria-hidden>{page.icon}</span>
+            {typeof page.icon === "string" ? <span aria-hidden>{page.icon}</span> : <SystemIcon kind={page.icon.kind} className="h-4 w-4" fill="currentColor" aria-hidden />}
             <span className="truncate">{page.title}</span>
           </span>
         )}

@@ -5,6 +5,7 @@ import { useT, useUiLanguage } from "@/components/I18nProvider";
 import { getLanguage } from "@/lib/languages";
 import { rich } from "@/lib/i18n/rich";
 import Link from "next/link";
+import SystemIcon from "@/components/versado/SystemIcon";
 
 type StreakDayState = "STUDIED" | "FROZEN" | "NONE" | "FUTURE";
 
@@ -124,9 +125,7 @@ export default function StreakClient() {
       <h1 className="text-2xl font-extrabold text-brand-800 dark:text-brand-300">{t("streakPage.title")}</h1>
 
       <div className="card bg-gradient-to-br from-orange-400 to-red-500 text-white !border-orange-300/40 dark:!border-orange-200/20 !shadow-md dark:!shadow-none flex flex-col items-center gap-1 !py-8">
-        <span className="text-4xl" aria-hidden>
-          🔥
-        </span>
+        <SystemIcon kind="streak" className="h-10 w-10 text-orange-100" fill="currentColor" aria-hidden />
         <div className="text-5xl font-extrabold leading-none">{overview.currentStreak}</div>
         <div className="text-orange-50 font-bold text-sm mt-1">{t("streakPage.daysInARow")}</div>
         {overview.longestStreak > 0 && (
@@ -147,7 +146,7 @@ export default function StreakClient() {
 
       <div className="grid grid-cols-2 gap-3">
         <div className="card !py-3 flex flex-col items-center gap-0.5">
-          <div className="text-xl font-extrabold text-orange-500">🔥 {month.daysStudied}</div>
+          <div className="flex items-center gap-1 text-xl font-extrabold text-orange-500"><SystemIcon kind="streak" className="h-5 w-5" fill="currentColor" aria-hidden />{month.daysStudied}</div>
           <div className="text-xs font-bold uppercase text-slate-400 dark:text-slate-500">{t("streakPage.daysThisMonth")}</div>
         </div>
         <div className="card !py-3 flex flex-col items-center gap-0.5">

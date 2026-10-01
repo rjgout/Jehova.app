@@ -1,5 +1,7 @@
 "use client";
 
+import SystemIcon from "@/components/versado/SystemIcon";
+
 import { useState } from "react";
 import Link from "next/link";
 import { ExerciseCard, type Exercise } from "@/components/LessonFlow";
@@ -68,7 +70,7 @@ export default function QuickPracticeFlow({ exercises }: { exercises: Exercise[]
         </h2>
         <p className="text-gold-600 dark:text-gold-400 font-extrabold text-lg">+{summary.xpEarned} XP</p>
         {!summary.alreadyStudiedToday && (
-          <p className="text-orange-500 font-extrabold text-lg">🔥 {summary.currentStreak}</p>
+          <p className="flex items-center gap-1 text-orange-500 font-extrabold text-lg"><SystemIcon kind="streak" className="h-5 w-5" fill="currentColor" aria-hidden />{summary.currentStreak}</p>
         )}
 
         {summary.freezeUsed && (

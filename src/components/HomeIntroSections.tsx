@@ -2,6 +2,7 @@
 
 import { useT } from "@/components/I18nProvider";
 import { APP_NAME } from "@/lib/brand";
+import SystemIcon from "@/components/versado/SystemIcon";
 
 // Het kennismakingsdeel van de homepage, onder de aanmeldknoppen. Ook
 // gebruikt op de uitnodigingspagina (/uitnodiging/<code>), zodat wie via een
@@ -15,11 +16,11 @@ const FEATURES = [
   { icon: "📚", key: "lessons" },
   { icon: "✍️", key: "exercises" },
   { icon: "🎙️", key: "podcast" },
-  { icon: "🔥", key: "streaks" },
+  { icon: "", iconKind: "streak", key: "streaks" },
   { icon: "🤝", key: "friends" },
   { icon: "💎", key: "divisions" },
   { icon: "⚡", key: "liveQuiz" },
-] as const;
+] satisfies { icon: string; key: "lessons" | "exercises" | "podcast" | "streaks" | "friends" | "divisions" | "liveQuiz"; iconKind?: "streak" | "xp" }[];
 
 export default function HomeIntroSections({ displayName }: { displayName: string }) {
   const t = useT();
@@ -42,7 +43,7 @@ export default function HomeIntroSections({ displayName }: { displayName: string
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 w-full max-w-5xl">
         {FEATURES.map((f) => (
           <div key={f.key} className="card text-left">
-            <div className="text-3xl mb-2">{f.icon}</div>
+            <div className="text-3xl mb-2">{f.iconKind ? <SystemIcon kind={f.iconKind} className="h-8 w-8" fill="currentColor" aria-hidden /> : f.icon}</div>
             <h3 className="font-extrabold mb-1 dark:text-slate-100">{t(`home.features.${f.key}.title`)}</h3>
             <p className="text-sm text-slate-500 dark:text-slate-400">{t(`home.features.${f.key}.description`)}</p>
           </div>

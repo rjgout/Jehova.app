@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { announceXpChanged } from "@/lib/xpBroadcast";
 import { useT } from "@/components/I18nProvider";
 import AppSelect from "@/components/AppSelect";
+import SystemIcon from "@/components/versado/SystemIcon";
 
 interface ShopData {
   xpTotal: number;
@@ -81,9 +82,7 @@ export default function ShopClient() {
   return (
     <div className="max-w-xl mx-auto flex flex-col gap-6">
       <div className="card bg-gradient-to-br from-brand-500 to-brand-700 dark:from-brand-600 dark:to-brand-900 text-white flex flex-col items-center gap-1 !py-8">
-        <span className="text-4xl" aria-hidden>
-          ⭐
-        </span>
+        <SystemIcon kind="xp" className="h-10 w-10 text-gold-400" fill="currentColor" aria-hidden />
         <div className="text-4xl font-extrabold leading-none">{data.xpTotal}</div>
         <div className="text-brand-100 font-bold text-sm mt-1">{t("shop.xpAvailable")}</div>
       </div>

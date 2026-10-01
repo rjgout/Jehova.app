@@ -1,5 +1,7 @@
 "use client";
 
+import SystemIcon from "@/components/versado/SystemIcon";
+
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { announceXpChanged } from "@/lib/xpBroadcast";
@@ -214,7 +216,7 @@ export default function ChapterGuessSoloClient({ gameId }: { gameId: string }) {
         </h2>
         {!!finalSummary.xpEarned && <p className="text-gold-600 dark:text-gold-400 font-extrabold text-lg">+{finalSummary.xpEarned} XP</p>}
         {!!finalSummary.currentStreak && !finalSummary.alreadyStudiedToday && (
-          <p className="text-orange-500 font-extrabold text-lg">🔥 {finalSummary.currentStreak}</p>
+          <p className="flex items-center gap-1 text-orange-500 font-extrabold text-lg"><SystemIcon kind="streak" className="h-5 w-5" fill="currentColor" aria-hidden />{finalSummary.currentStreak}</p>
         )}
         <div className="flex gap-3 mt-2">
           <Link href="/chapter-guess" className="btn-primary">

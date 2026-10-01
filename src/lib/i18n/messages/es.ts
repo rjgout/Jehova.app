@@ -240,7 +240,7 @@ export const es: PartialMessages = {
     "progress": "Progreso",
     "progressCount": "{pos} / {total} {unit} · {pct}%",
     "today": "Hoy",
-    "estimate": "️ sobre {minutes} minutos · ⭐ {xp} XP para ganar",
+    "estimate": "️ sobre {minutes} minutos · {xp} XP para ganar",
     "readMore": "Continuar leyendo →",
     "allDone": "🎉 ¡Has completado todo este curso!",
     "verseCount": "{n} versos",
@@ -452,11 +452,11 @@ export const es: PartialMessages = {
     "stepDone": "Paso {n} completado",
     "score": "{correct} / {total} correcto",
     "lowScore": "Tu puntuación está guardada, pero simplemente puedes continuar con el siguiente paso.",
-    "keepGoing": "¿🔥Seguir?",
+    "keepGoing": "¿Seguir?",
     "nextXpBefore": "El siguiente paso genera hasta",
     "nextXpAfter": "(×{multiplier}).",
     "stop": "Detener",
-    "nextStep": "Siguiente paso → 🔥"
+    "nextStep": "Siguiente paso →"
   },
   "lessonFlows": {
     "lessonNumber": "Lección {n}",
@@ -1371,9 +1371,9 @@ export const es: PartialMessages = {
   },
   "xpHistory": {
     "loadFailed": "No se pudo cargar el XP. historial.",
-    "title": "⭐ Puntos de experiencia",
+    "title": "Puntos de experiencia",
     "collected": "XP recolectada",
-    "thisWeek": "🔥 Esta semana: {xp} XP",
+    "thisWeek": "Esta semana: {xp} XP",
     "whatEarns": "¿Qué gana esto?",
     "overview": "Vea la descripción general de cada actividad →",
     "history": "Historia",
@@ -1406,7 +1406,7 @@ export const es: PartialMessages = {
   },
   "streakPage": {
     "loadFailed": "No se pudo cargar la racha.",
-    "title": "🔥 ¡Racha",
+    "title": "¡Racha",
     "daysInARow": "días de práctica seguidos!",
     "longest": "🏆 Racha más larga: {n} días",
     "explain": "¡Mantén tu {streak} practicando todos los días! Si te saltas un día, se utiliza automáticamente una congelación disponible; si no te quedan congelaciones, tu racha se rompe.",
@@ -2078,7 +2078,7 @@ export const es: PartialMessages = {
     "moreElsewhere": "Encontrarás más herramientas con {names}. Cambie de contenido en la parte superior."
   },
   "xpGuide": {
-    "title": "⭐ ¿Qué genera XP?",
+    "title": "¿Qué genera XP?",
     "subtitle": "Una descripción general de cada actividad en la aplicación.",
     "chapter": "Lectura de un capítulo",
     "intro": "Curso de introducción",

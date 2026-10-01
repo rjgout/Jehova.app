@@ -8,6 +8,7 @@ import { isStandalone } from "@/lib/pwaInstall";
 import InstallAppCard from "@/components/InstallAppCard";
 import UserTag from "@/components/UserTag";
 import { useT } from "@/components/I18nProvider";
+import SystemIcon from "@/components/versado/SystemIcon";
 
 interface OnboardingClientProps {
   email: string;
@@ -171,7 +172,7 @@ function UitlegStep({ onNext }: { onNext: () => void }) {
       <h1 className="text-xl font-extrabold text-brand-800 dark:text-brand-300 text-center">{t("onboarding.howItWorks")}</h1>
       <div className="card text-left flex flex-col gap-4">
         <div className="flex gap-3 items-start">
-          <span className="text-2xl">🔥</span>
+          <SystemIcon kind="streak" className="h-7 w-7 text-orange-500" fill="currentColor" aria-hidden />
           <div>
             <h3 className="font-extrabold dark:text-slate-100">{t("profile.streak")}</h3>
             <p className="text-sm text-slate-500 dark:text-slate-400">
@@ -180,7 +181,7 @@ function UitlegStep({ onNext }: { onNext: () => void }) {
           </div>
         </div>
         <div className="flex gap-3 items-start">
-          <span className="text-2xl">⭐</span>
+          <SystemIcon kind="xp" className="h-7 w-7 text-gold-500" fill="currentColor" aria-hidden />
           <div>
             <h3 className="font-extrabold dark:text-slate-100">XP</h3>
             <p className="text-sm text-slate-500 dark:text-slate-400">

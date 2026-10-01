@@ -1,5 +1,7 @@
 "use client";
 
+import SystemIcon from "@/components/versado/SystemIcon";
+
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { ACHIEVEMENT_DISPLAY } from "@/lib/achievementDisplay";
@@ -941,7 +943,7 @@ function SummaryScreen({
       <div className="flex gap-6 mt-2">
         {!summary.alreadyStudiedToday && (
           <div>
-            <div className="text-xl font-extrabold text-orange-500">🔥 {summary.currentStreak}</div>
+            <div className="flex items-center gap-1 text-xl font-extrabold text-orange-500"><SystemIcon kind="streak" className="h-5 w-5" fill="currentColor" aria-hidden />{summary.currentStreak}</div>
             <div className="text-xs text-slate-400 dark:text-slate-500 font-bold uppercase">{t("lesson.streak")}</div>
           </div>
         )}
