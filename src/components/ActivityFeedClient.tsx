@@ -72,8 +72,8 @@ export default function ActivityFeedClient() {
   return (
     <div className="max-w-2xl mx-auto flex flex-col gap-4 sm:gap-5">
       <div>
-        <h1 className="text-2xl font-extrabold text-brand-800 dark:text-brand-300 flex items-center gap-2">
-          <span aria-hidden>✨</span> {t("pages.activity")}
+        <h1 className="text-2xl font-extrabold text-brand-800 dark:text-brand-300 flex items-center gap-1.5">
+          <span className="text-base leading-none" aria-hidden>✨</span> {t("pages.activity")}
         </h1>
         <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">{t("activityFeed.intro")}</p>
       </div>
@@ -85,7 +85,7 @@ export default function ActivityFeedClient() {
           {items.map((item) => {
             const reactionEntries = Object.entries(item.reactionCounts).filter(([, count]) => count > 0);
             return (
-              <article key={item.id} className="card flex flex-col gap-2 !p-3 sm:!p-4 sm:gap-2.5">
+              <article key={item.id} className="card !bg-vs-subtle dark:!bg-vs-surface flex flex-col gap-2 !p-3 sm:!p-4 sm:gap-2.5">
                 <div className="flex items-start gap-3">
                   <UserAvatar id={item.actor.id} handle={item.actor.handle} avatarEmoji={item.actor.avatarEmoji} size="sm" />
                   <div className="min-w-0 flex-1">
@@ -122,7 +122,7 @@ export default function ActivityFeedClient() {
                     <div className="relative ml-auto">
                       <button
                         type="button"
-                        className="btn-secondary !min-h-9 !px-3 !py-1 text-sm"
+                        className="btn-secondary !min-h-9 !border !border-vs-line !bg-transparent !px-2.5 !py-1 text-xs !shadow-none text-vs-accent hover:!bg-vs-accent-soft dark:!border-vs-line dark:!bg-transparent dark:text-vs-accent dark:hover:!bg-vs-accent-soft"
                         onClick={() => setOpenReactions(openReactions === item.id ? null : item.id)}
                         aria-expanded={openReactions === item.id}
                       >

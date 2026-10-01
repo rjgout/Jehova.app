@@ -107,7 +107,7 @@ export default function LeaderboardClient() {
   return (
     <div className="max-w-2xl mx-auto flex flex-col gap-4 sm:gap-5">
       {scope === "league" ? (
-        <div className="card bg-gradient-to-br from-brand-500 to-brand-700 dark:from-brand-600 dark:to-brand-900 text-white !border-0 !px-0 !py-3 h-32 sm:h-36 flex flex-col items-center justify-center gap-1 overflow-hidden">
+        <div className="card bg-gradient-to-br from-brand-500 to-brand-700 dark:from-brand-600 dark:to-brand-900 text-white !border-0 !px-0 !py-4 min-h-48 sm:min-h-52 flex flex-col items-center justify-center gap-1 overflow-hidden">
           <h1 className="sr-only">
             {t("nav.competition")} — {tiers ? t(`tiers.${tiers.current}`) : t("leaderboard.divisionLower")}
           </h1>
@@ -115,36 +115,36 @@ export default function LeaderboardClient() {
         </div>
       ) : (
         <header className="flex flex-col gap-0.5 px-1">
-          <h1 className="text-xl font-extrabold text-brand-800 dark:text-brand-300">
+          <h1 className="text-2xl font-extrabold text-brand-800 dark:text-brand-300">
             {scope === "friends" ? t("nav.friends") : t("leaderboard.national")}
           </h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400">
+          <p className="text-xs text-slate-500 dark:text-slate-400 sm:text-sm">
             {scope === "friends" ? t("leaderboard.friendsSub") : t("leaderboard.nationalSub")}
           </p>
         </header>
       )}
 
-      <div className="flex w-full rounded-full border border-slate-200 bg-white p-1 dark:border-slate-700 dark:bg-slate-800">
+      <div className="mx-auto flex w-full max-w-md gap-1 border-b border-vs-line px-1">
         <button
           onClick={() => setScope("league")}
-          className={`min-w-0 flex-1 rounded-full px-2 py-1.5 text-xs font-bold transition sm:px-3 sm:text-sm ${
-            scope === "league" ? "bg-brand-500 text-white" : "text-slate-500 dark:text-slate-300"
+          className={`min-w-0 flex-1 rounded-t-lg border-b-2 px-1 py-1.5 text-xs font-bold transition sm:px-2 sm:text-sm ${
+            scope === "league" ? "border-vs-accent text-vs-accent" : "border-transparent text-vs-fg-3 hover:bg-vs-subtle"
           }`}
         >
           {t("leaderboard.division")}
         </button>
         <button
           onClick={() => setScope("friends")}
-          className={`min-w-0 flex-1 rounded-full px-2 py-1.5 text-xs font-bold transition sm:px-3 sm:text-sm ${
-            scope === "friends" ? "bg-brand-500 text-white" : "text-slate-500 dark:text-slate-300"
+          className={`min-w-0 flex-1 rounded-t-lg border-b-2 px-1 py-1.5 text-xs font-bold transition sm:px-2 sm:text-sm ${
+            scope === "friends" ? "border-vs-accent text-vs-accent" : "border-transparent text-vs-fg-3 hover:bg-vs-subtle"
           }`}
         >
           {t("nav.friends")}
         </button>
         <button
           onClick={() => setScope("national")}
-          className={`min-w-0 flex-1 rounded-full px-2 py-1.5 text-xs font-bold transition sm:px-3 sm:text-sm ${
-            scope === "national" ? "bg-brand-500 text-white" : "text-slate-500 dark:text-slate-300"
+          className={`min-w-0 flex-1 rounded-t-lg border-b-2 px-1 py-1.5 text-xs font-bold transition sm:px-2 sm:text-sm ${
+            scope === "national" ? "border-vs-accent text-vs-accent" : "border-transparent text-vs-fg-3 hover:bg-vs-subtle"
           }`}
         >
           {t("leaderboard.national")}
