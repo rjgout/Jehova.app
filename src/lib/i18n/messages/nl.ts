@@ -671,7 +671,9 @@ export const nl = {
     comeBack: "Kom morgen om 18:00 uur terug voor een nieuw woord!",
     whereItAppears: "📖 Waar “{word}” voorkomt ({count})",
     fastestTitle: "🏆 Snelste spelers van vandaag",
-    fastestIntro: "De eerste tien die het woord goed hebben geraden, op volgorde van aankomst.",
+    fastestIntro: "De eerste tien die het woord goed hebben geraden, op volgorde van hoe snel na hun eigen 18:00.",
+    solvedAfterMinutes: "{m} min na 18:00",
+    solvedAfterHours: "{h} u {m} min na 18:00",
     nobodyYet: "Nog niemand heeft het woord van vandaag gehaald.",
   },
   lobby: {

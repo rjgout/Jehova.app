@@ -36,10 +36,34 @@ tijdzones; gebruik deze functies.
 | Reeks (`streak.ts`, `streakRules.ts`), reeksherstel 's nachts, reekskalender | lokale dag gebruiker | persoonlijk "vandaag" |
 | "Vandaag al gestudeerd" (header, Vandaag), begroeting en datum op Vandaag | lokale dag/tijd gebruiker | persoonlijk |
 | Studeerherinnering en tekst-van-de-dag-melding (`dailyReminderTime`, `dailyTextTime`) | kloktijd in eigen tijdzone | "om 20:00" is jouw 20:00 |
+| Woord van de dag (wisselt om 18:00), plus de melding "nieuw woord" | 18:00 in eigen tijdzone | zie hieronder |
 | Countdown Algemene Conferentie | sessies in UTC, weergave en "morgen/vandaag" lokaal | wereldwijd moment |
-| Woord van de dag (wisselt 18:00 NL), tekst van de dag | vaste Nederlandse grens | één gedeeld woord/vers voor iedereen |
+| Tekst van de dag | vaste Nederlandse grens | één gedeeld vers voor iedereen |
 | Dagelijkse Alleskenner, competitie-XP-daglimieten, woordzoeker-XP-limiet | UTC-dag | gedeelde inhoud en antimisbruik: één vaste grens die niet met de tijdzone van een toestel te verschuiven is |
 | Weekcompetitie, seizoenen, weekuitslag | UTC-week / vast NL-moment | gedeelde competitie, voor iedereen tegelijk |
+
+## Woord van de dag: 18:00 in je eigen tijdzone
+
+Het woord van de dag heeft een eigen dagwissel: niet om 00:00 maar om 18:00
+lokale tijd (`wordGamePeriod` in `src/lib/wordGame.ts`, met
+`zonedTimeToUtc`). De woorddag (`dayKey`) begint om 18:00 op die
+kalenderdag; vóór 18:00 hoort een moment nog bij de woorddag ervoor.
+
+- **Zelfde woordvolgorde voor iedereen.** Het woord volgt alleen uit de
+  woorddag (`getWordForDay`, vastgelegd in `DailyWord`); de tijdzone bepaalt
+  alleen wanneer het volgende woord vrijkomt.
+- **Servertijd.** De server bepaalt de woorddag met zijn eigen klok en
+  `User.timeZone`; een verzette toestelklok ontsluit niets. De client krijgt
+  `nextReleaseAt` (absoluut) mee en ververst daarop: Vandaag met
+  `router.refresh()`, de spelpagina door het potje opnieuw te laden.
+- **Reizen** kan je tijdelijk in een andere woorddag brengen; dat is
+  aanvaard en wordt niet gecorrigeerd.
+- **Klassement.** Gerangschikt op de tijd na de eigen 18:00
+  (`WordGame.releasedAt`), niet op het absolute tijdstip; anders stonden
+  spelers in Azië altijd bovenaan. Oude potjes zonder `releasedAt` tellen
+  vanaf 18:00 Nederlandse tijd, zoals vroeger.
+- Alleen het woord van de dag wisselt om 18:00; reeks, Vandaag en XP houden
+  de gewone kalenderdag (00:00).
 
 ## Reeks: reizen en tijdzonewissels
 

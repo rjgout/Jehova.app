@@ -178,9 +178,10 @@ Zie `docs/TIJD.md`. UTC is de waarheid voor tijdstippen; de IANA-tijdzone
 van de gebruiker (`User.timeZone`, standaard `Europe/Amsterdam`) bepaalt
 zijn kalenderdag. Persoonlijke dag-logica (reeks, herinneringen, Vandaag)
 gebruikt `src/lib/timeZone.ts` en, voor de reeks, `streakDayGap` in
-`src/lib/learning/streakRules.ts`; gedeelde dingen (woord van de dag,
-weekcompetitie, dagelijkse Alleskenner, XP-daglimieten) houden hun vaste
-grens. Nooit de toestelklok vertrouwen voor XP of reeks, nooit losse
+`src/lib/learning/streakRules.ts`. Het woord van de dag wisselt om 18:00 in
+de eigen tijdzone (`wordGamePeriod`), met dezelfde woordvolgorde voor
+iedereen. Gedeelde dingen (tekst van de dag, weekcompetitie, dagelijkse
+Alleskenner, XP-daglimieten) houden hun vaste grens. Nooit de toestelklok vertrouwen voor XP of reeks, nooit losse
 UTC-offsets, en geen eigen tijdzonerekensom in componenten.
 
 ## Database & migraties

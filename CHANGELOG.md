@@ -11,6 +11,9 @@ Alle belangrijke gebruikersgerichte wijzigingen en releases worden hieronder bij
 - Versado volgt automatisch de tijdzone van je toestel: je reeks, je
   herinneringen en "vandaag" gaan over jouw kalenderdag, ook op reis.
   Reizen kost nooit een reeksdag en levert er ook geen extra op.
+- Het woord van de dag wisselt om 18:00 in je eigen tijdzone; iedereen
+  krijgt dezelfde woorden in dezelfde volgorde. Het klassement telt hoe snel
+  je het woord na je eigen 18:00 raadt.
 - De mascottes van Versado zijn er: Novi begroet je op Vandaag, en op de
   welkomstpagina stellen Varo, Vera en Novi zich samen voor.
 - Legpuzzels onder Spelen met de bestaande kinderillustraties, vier niveaus

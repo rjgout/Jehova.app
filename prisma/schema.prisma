@@ -1845,6 +1845,10 @@ model WordGame {
   leaderboardRank   Int?
   createdAt  DateTime       @default(now())
   finishedAt DateTime?
+  // Wanneer dit woord voor deze speler vrijkwam: 18:00 in zijn tijdzone op
+  // dayKey (zie wordGamePeriod). Het klassement telt de tijd daarna. Null =
+  // potje van vóór de tijdzones, toen was dat 18:00 Nederlandse tijd.
+  releasedAt DateTime?
 
   @@unique([userId, dayKey])
   @@index([dayKey, status, finishedAt])

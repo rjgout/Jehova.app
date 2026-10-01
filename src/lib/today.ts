@@ -4,7 +4,7 @@ import { dayKey } from "@/lib/dates";
 import { userTimeZone, zonedParts } from "@/lib/timeZone";
 import { hasStudiedToday } from "@/lib/learning/streakRules";
 import { getTextOfTheDay, type DailyText } from "@/lib/dailyText";
-import { wordGameDayKey } from "@/lib/wordGame";
+import { wordGamePeriod } from "@/lib/wordGame";
 import { getActiveGameStatus, type ActivityItem } from "@/lib/activeGames";
 import { getSubscribedCourseSummaries } from "@/lib/courseSummaries";
 import { BOFM_WORK, getContentContext } from "@/lib/contentCollections";
@@ -58,8 +58,10 @@ export interface DailyGameState {
   href: string;
   status: "todo" | "in-progress" | "done";
   won?: boolean;
-  /** Alleen voor het dagelijkse woord: hiermee kan een open dashboard na 18:00 verversen. */
+  /** Alleen voor het dagelijkse woord: hiermee kan een open dashboard om 18:00 (lokaal) verversen. */
   dayKey?: string;
+  /** Alleen voor het dagelijkse woord: absoluut moment waarop het volgende woord vrijkomt. */
+  nextReleaseAt?: string;
 }
 
 export interface FriendSummary {
@@ -161,7 +163,10 @@ export async function getTodayData(user: User): Promise<TodayData> {
   // de tijdzone van de gebruiker.
   const today = dayKey();
   const timeZone = userTimeZone(user);
-  const wordGameDay = wordGameDayKey();
+  // Het woord van de dag wisselt om 18:00 in de tijdzone van de gebruiker
+  // (met servertijd), los van de gewone kalenderdag hieronder.
+  const wordPeriod = wordGamePeriod(new Date(), timeZone);
+  const wordGameDay = wordPeriod.dayKey;
   const contentContext = await getContentContext(user.id);
 
   const [
@@ -341,7 +346,7 @@ export async function getTodayData(user: User): Promise<TodayData> {
     continueItems,
     dailyText,
     wordGame: wordGameEntry
-      ? { href: wordGameEntry.href, dayKey: wordGameDay, status: !wordGame ? "todo" : wordGame.status === "IN_PROGRESS" ? "in-progress" : "done", won: wordGame?.status === "WON" }
+      ? { href: wordGameEntry.href, dayKey: wordGameDay, nextReleaseAt: wordPeriod.nextReleaseAt.toISOString(), status: !wordGame ? "todo" : wordGame.status === "IN_PROGRESS" ? "in-progress" : "done", won: wordGame?.status === "WON" }
       : null,
     dailyQuiz: quizEntry
       ? { href: "/alleskenner/alleen", status: !dailyQuiz ? "todo" : dailyQuiz.status === "IN_PROGRESS" ? "in-progress" : "done" }

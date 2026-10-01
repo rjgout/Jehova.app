@@ -667,7 +667,9 @@ export const en: PartialMessages = {
     comeBack: "Come back tomorrow at 6:00 p.m. (Dutch time) for a new word!",
     whereItAppears: "📖 Where “{word}” appears ({count})",
     fastestTitle: "🏆 Fastest players today",
-    fastestIntro: "The first ten who guessed the word, in order of arrival.",
+    fastestIntro: "The first ten who guessed the word, ranked by how soon after their own 6 p.m.",
+    solvedAfterMinutes: "{m} min after 6 p.m.",
+    solvedAfterHours: "{h} h {m} min after 6 p.m.",
     nobodyYet: "Nobody has guessed today's word yet.",
   },
   lobby: {

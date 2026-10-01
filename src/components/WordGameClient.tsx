@@ -5,8 +5,7 @@ import Link from "next/link";
 import { announceXpChanged } from "@/lib/xpBroadcast";
 import UserTag from "@/components/UserTag";
 import UserAvatar from "@/components/UserAvatar";
-import { useT, useUiLanguage } from "@/components/I18nProvider";
-import { getLanguage } from "@/lib/languages";
+import { useT } from "@/components/I18nProvider";
 import { rich } from "@/lib/i18n/rich";
 
 type LetterState = "correct" | "present" | "absent";
@@ -29,10 +28,13 @@ interface LeaderboardEntry {
   discriminator: string;
   userId: string;
   finishedAt: string;
+  minutesAfterRelease: number;
 }
 
 interface GameView {
   dayKey: string;
+  nextReleaseAt: string;
+  serverNow: number;
   wordLength: number;
   maxGuesses: number;
   guesses: GuessView[];
@@ -57,7 +59,6 @@ const TILE_STYLES: Record<LetterState, string> = {
 
 export default function WordGameClient() {
   const t = useT();
-  const intlLocale = getLanguage(useUiLanguage()).intlLocale;
   const [game, setGame] = useState<GameView | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [guess, setGuess] = useState("");
@@ -65,7 +66,7 @@ export default function WordGameClient() {
   const [formError, setFormError] = useState<string | null>(null);
   const [shake, setShake] = useState(false);
 
-  useEffect(() => {
+  function load() {
     fetch("/api/word-game")
       .then(async (r) => {
         const data = await r.json();
@@ -73,7 +74,39 @@ export default function WordGameClient() {
         setGame(data);
       })
       .catch((e) => setLoadError(e instanceof Error ? e.message : t("wordOfTheDay.somethingWrong")));
-  }, []);
+  }
+
+  useEffect(load, []);
+
+  // Pagina open om 18:00 (lokaal): het volgende woord laden zonder herladen.
+  // Wanneer dat is, zegt de server (nextReleaseAt); de client telt alleen de
+  // verstreken tijd sinds serverNow, dus een verzette toestelklok vervroegt
+  // niets.
+  const nextReleaseAt = game?.nextReleaseAt;
+  const serverNow = game?.serverNow;
+  useEffect(() => {
+    if (!nextReleaseAt || serverNow === undefined) return;
+    const offset = serverNow - Date.now();
+    const due = Date.parse(nextReleaseAt);
+    let done = false;
+    const check = () => {
+      if (!done && Date.now() + offset >= due) {
+        done = true;
+        setGuess("");
+        setFormError(null);
+        load();
+      }
+    };
+    const timer = window.setInterval(check, 30_000);
+    const onVisible = () => {
+      if (document.visibilityState === "visible") check();
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      window.clearInterval(timer);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
+  }, [nextReleaseAt, serverNow]);
 
   async function submitGuess() {
     if (!game || submitting) return;
@@ -122,12 +155,13 @@ export default function WordGameClient() {
   const rows: GuessView[] = [...game.guesses];
   const emptyRows = game.maxGuesses - rows.length - (finished ? 0 : 1);
 
-  function formatFinishedAt(value: string): string {
-    return new Intl.DateTimeFormat(intlLocale, {
-      timeZone: "Europe/Amsterdam",
-      hour: "2-digit",
-      minute: "2-digit",
-    }).format(new Date(value));
+  // Iedereen krijgt het woord om 18:00 in de eigen tijdzone; het klassement
+  // toont (en rangschikt op) hoe lang na dat moment het woord geraden is.
+  function formatSolveTime(minutes: number): string {
+    const hours = Math.floor(minutes / 60);
+    return hours > 0
+      ? t("wordOfTheDay.solvedAfterHours", { h: hours, m: minutes % 60 })
+      : t("wordOfTheDay.solvedAfterMinutes", { m: minutes });
   }
 
   return (
@@ -277,9 +311,9 @@ export default function WordGameClient() {
                     <UserTag handle={entry.handle} discriminator={entry.discriminator} />
                   </p>
                 </div>
-                <time className="text-sm font-bold text-slate-500 dark:text-slate-400 shrink-0">
-                  {formatFinishedAt(entry.finishedAt)}
-                </time>
+                <span className="text-sm font-bold text-slate-500 dark:text-slate-400 shrink-0">
+                  {formatSolveTime(entry.minutesAfterRelease)}
+                </span>
               </div>
             ))}
           </div>

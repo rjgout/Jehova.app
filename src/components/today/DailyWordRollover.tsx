@@ -1,38 +1,40 @@
 "use client";
 
 import { useEffect, useState } from "react";
-
-function currentWordDayKey(now: number): string {
-  const parts = new Intl.DateTimeFormat("en", {
-    timeZone: "Europe/Amsterdam",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    hourCycle: "h23",
-  }).formatToParts(new Date(now));
-  const values = Object.fromEntries(parts.map((part) => [part.type, part.value]));
-  const date = new Date(Date.UTC(Number(values.year), Number(values.month) - 1, Number(values.day)));
-  if (Number(values.hour) < 18) date.setUTCDate(date.getUTCDate() - 1);
-  return date.toISOString().slice(0, 10);
-}
+import { useRouter } from "next/navigation";
 
 /**
- * Vernieuwt een open dashboard precies wanneer het dagelijkse woord wisselt.
- * Rekent met de servertijd (serverNow + verstreken tijd), niet met de klok
- * van het toestel: met een verkeerd ingestelde klok zou de pagina anders
- * eindeloos blijven herladen.
+ * Ververst een open dashboard zodra het volgende woord van de dag vrijkomt
+ * (18:00 in de tijdzone van de gebruiker). Wanneer dat is, bepaalt de server
+ * (nextReleaseAt); de client rekent alleen met de verstreken tijd sinds
+ * serverNow, niet met de toestelklok, zodat een verzette klok niets
+ * vervroegt of een herlaadlus veroorzaakt. router.refresh() haalt de
+ * servergegevens opnieuw op zonder de pagina te herladen.
  */
-export default function DailyWordRollover({ dayKey, serverNow }: { dayKey: string; serverNow: number }) {
+export default function DailyWordRollover({ nextReleaseAt, serverNow }: { nextReleaseAt: string; serverNow: number }) {
+  const router = useRouter();
   const [offset] = useState(() => serverNow - Date.now());
   useEffect(() => {
+    const due = Date.parse(nextReleaseAt);
+    let done = false;
     const check = () => {
-      if (currentWordDayKey(Date.now() + offset) !== dayKey) window.location.reload();
+      if (!done && Date.now() + offset >= due) {
+        done = true;
+        router.refresh();
+      }
     };
     check();
+    // Halve minuut is ruim nauwkeurig genoeg; bij terugkeer in de app direct.
     const timer = window.setInterval(check, 30_000);
-    return () => window.clearInterval(timer);
-  }, [dayKey, offset]);
+    const onVisible = () => {
+      if (document.visibilityState === "visible") check();
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      window.clearInterval(timer);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
+  }, [nextReleaseAt, offset, router]);
 
   return null;
 }

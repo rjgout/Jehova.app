@@ -15,7 +15,7 @@ export async function POST(req: NextRequest) {
   const parsed = schema.safeParse(body);
   if (!parsed.success) return await apiError("apiErrors.invalidInput", 400);
 
-  const result = await submitGuess(user.id, parsed.data.guess);
+  const result = await submitGuess(user.id, parsed.data.guess, user.timeZone);
   if ("error" in result) return NextResponse.json(result, { status: 400 });
 
   notifyNewAchievements(user.id, result.newAchievements).catch(() => {});

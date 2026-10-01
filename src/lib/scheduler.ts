@@ -16,7 +16,7 @@ const TICK_MS = 60_000;
 // systeemmoment vlak na het einde van de vorige week.
 const WEEKLY_RESULT_TIME = "00:05";
 
-// Vaste systeemmomenten (weekuitslag, woord van de dag) toetsen tegen de
+// Vaste systeemmomenten (de weekuitslag) toetsen tegen de
 // Nederlandse wandklok, niet tegen de tijdzone van de servermachine (die in
 // productie gewoon UTC kan zijn).
 function amsterdamHHMM(amsterdam: AmsterdamTime): string {
@@ -259,31 +259,31 @@ export async function runSeasonRolloverTick(): Promise<void> {
 }
 
 /**
- * Stuurt, precies om 18:00 Nederlandse tijd (het moment waarop het woord van
- * de dag wisselt, zie wordGameDayKey in src/lib/wordGame.ts), een melding
- * naar iedereen die dat aan heeft staan. lastWordGameNotifiedDate voorkomt
- * dubbel versturen, net als bij de dagelijkse herinnering hierboven — met
- * dagKey ipv HH:MM-vergelijking, want de wisseling zelf gebeurt al op een
- * vast tijdstip.
+ * Stuurt om 18:00 in de eigen tijdzone van de gebruiker (het moment waarop
+ * zijn woord van de dag wisselt, zie wordGamePeriod in src/lib/wordGame.ts)
+ * een melding naar iedereen die dat aan heeft staan. Per tijdzone die in
+ * gebruik is; timeZone null = Nederlandse tijd. lastWordGameNotifiedDate
+ * (de woorddag) voorkomt dubbel versturen.
  */
 async function runWordGameNotificationTick(): Promise<void> {
   const now = new Date();
-  const amsterdam = amsterdamNow(now);
-  if (amsterdam.hour !== 18 || amsterdam.minute !== 0) return;
+  for (const group of await zoneGroups(now)) {
+    if (group.time !== "18:00") continue;
+    const today = wordGameDayKey(now, resolveTimeZone(group.timeZone));
+    const candidates = await prisma.user.findMany({
+      where: {
+        timeZone: group.timeZone,
+        OR: [{ emailNotificationsEnabled: true }, { pushNotificationsEnabled: true }],
+        notifyWordGame: true,
+        AND: [{ OR: [{ lastWordGameNotifiedDate: null }, { lastWordGameNotifiedDate: { not: today } }] }],
+      },
+      select: { id: true },
+    });
 
-  const today = wordGameDayKey(now);
-  const candidates = await prisma.user.findMany({
-    where: {
-      OR: [{ emailNotificationsEnabled: true }, { pushNotificationsEnabled: true }],
-      notifyWordGame: true,
-      AND: [{ OR: [{ lastWordGameNotifiedDate: null }, { lastWordGameNotifiedDate: { not: today } }] }],
-    },
-    select: { id: true },
-  });
-
-  for (const user of candidates) {
-    await notifyWordGame(user.id).catch(() => {});
-    await prisma.user.update({ where: { id: user.id }, data: { lastWordGameNotifiedDate: today } }).catch(() => {});
+    for (const user of candidates) {
+      await notifyWordGame(user.id).catch(() => {});
+      await prisma.user.update({ where: { id: user.id }, data: { lastWordGameNotifiedDate: today } }).catch(() => {});
+    }
   }
 }
 

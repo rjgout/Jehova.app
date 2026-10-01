@@ -110,16 +110,22 @@ export function zoneOffsetMinutes(date: Date, timeZone: string): number {
 }
 
 /**
- * Het absolute moment waarop een lokale kalenderdag begint. Op een dag met
- * een zomertijdwissel klopt dit ook, omdat de offset van dát moment wordt
- * gebruikt (twee rondes: de offset kan rond de wissel verschillen).
+ * Het absolute moment van een lokale kloktijd op een lokale kalenderdag
+ * (bv. 18:00 op 2026-10-25 in Amsterdam). Rond een zomertijdwissel klopt dit
+ * ook, omdat de offset van dát moment wordt gebruikt (twee rondes: de offset
+ * kan rond de wissel verschillen).
  */
-export function startOfLocalDay(dayKey: string, timeZone: string): Date {
+export function zonedTimeToUtc(dayKey: string, hour: number, minute: number, timeZone: string): Date {
   const [y, m, d] = dayKey.split("-").map(Number);
-  const midnightAsUtc = Date.UTC(y, m - 1, d);
-  let guess = midnightAsUtc - zoneOffsetMinutes(new Date(midnightAsUtc), timeZone) * 60_000;
-  guess = midnightAsUtc - zoneOffsetMinutes(new Date(guess), timeZone) * 60_000;
+  const wallAsUtc = Date.UTC(y, m - 1, d, hour, minute);
+  let guess = wallAsUtc - zoneOffsetMinutes(new Date(wallAsUtc), timeZone) * 60_000;
+  guess = wallAsUtc - zoneOffsetMinutes(new Date(guess), timeZone) * 60_000;
   return new Date(guess);
+}
+
+/** Het absolute moment waarop een lokale kalenderdag begint. */
+export function startOfLocalDay(dayKey: string, timeZone: string): Date {
+  return zonedTimeToUtc(dayKey, 0, 0, timeZone);
 }
 
 /** Begin (inclusief) en einde (exclusief) van een lokale kalenderdag, als absolute momenten. */

@@ -1,5 +1,6 @@
 import bomWords from "../../prisma/bomWords.json";
-import { amsterdamNow } from "@/lib/dates";
+import { addDays } from "@/lib/dates";
+import { DEFAULT_TIME_ZONE, dayKeyInZone, resolveTimeZone, zonedParts, zonedTimeToUtc } from "@/lib/timeZone";
 import { prisma } from "@/lib/db";
 import { completeWordGame } from "@/lib/streak";
 import { findVersesContainingWord, type VerseMatch } from "@/lib/dictionary";
@@ -16,16 +17,37 @@ export function isValidGuess(word: string): boolean {
   return WORDS.includes(word.toLowerCase());
 }
 
-// Het woord wisselt om 18:00 Nederlandse tijd, niet om middernacht UTC —
-// vóór 18:00 hoort een moment dus nog bij de dag ervoor.
-const RELEASE_HOUR = 18;
+// Het woord wisselt om 18:00 in de tijdzone van de speler (zie
+// docs/TIJD.md), niet om middernacht: vóór 18:00 hoort een moment nog bij de
+// woorddag ervoor. De woorddag (dayKey) kiest het woord, dus iedereen loopt
+// dezelfde reeks woorden door; de tijdzone bepaalt alleen wanneer het
+// volgende woord beschikbaar komt. Altijd met de servertijd: een verzette
+// toestelklok ontsluit geen woorden.
+export const RELEASE_HOUR = 18;
 
-export function wordGameDayKey(date: Date = new Date()): string {
-  const { year, month, day, hour } = amsterdamNow(date);
-  const noonUtc = Date.UTC(year, month - 1, day, 12);
-  const shifted = hour < RELEASE_HOUR ? noonUtc - 24 * 60 * 60 * 1000 : noonUtc;
-  const d = new Date(shifted);
-  return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}-${String(d.getUTCDate()).padStart(2, "0")}`;
+export interface WordGamePeriod {
+  /** De woorddag; begint om 18:00 lokaal op die kalenderdag. */
+  dayKey: string;
+  /** Absoluut moment waarop dit woord voor de speler beschikbaar kwam. */
+  releasedAt: Date;
+  /** Absoluut moment waarop het volgende woord beschikbaar komt. */
+  nextReleaseAt: Date;
+}
+
+export function wordGamePeriod(date: Date, timeZone: string): WordGamePeriod {
+  const zone = resolveTimeZone(timeZone);
+  const localDay = dayKeyInZone(date, zone);
+  const dayKey = zonedParts(date, zone).hour < RELEASE_HOUR ? addDays(localDay, -1) : localDay;
+  return {
+    dayKey,
+    releasedAt: zonedTimeToUtc(dayKey, RELEASE_HOUR, 0, zone),
+    nextReleaseAt: zonedTimeToUtc(addDays(dayKey, 1), RELEASE_HOUR, 0, zone),
+  };
+}
+
+/** Standaard Nederlandse tijd: het gedrag van vóór de tijdzones (accounts zonder bekende tijdzone). */
+export function wordGameDayKey(date: Date = new Date(), timeZone: string = DEFAULT_TIME_ZONE): string {
+  return wordGamePeriod(date, timeZone).dayKey;
 }
 
 const EPOCH_MS = Date.UTC(2024, 0, 1, 12); // willekeurig, vast referentiepunt
@@ -126,10 +148,42 @@ export interface WordGameLeaderboardEntry {
   handle: string;
   discriminator: string;
   finishedAt: string;
+  /** Hoeveel minuten na de eigen 18:00 het woord geraden werd (de rangorde). */
+  minutesAfterRelease: number;
+}
+
+// Het klassement rangschikt op tijd ná de eigen 18:00, niet op het absolute
+// tijdstip: anders zouden spelers in Azië elke dag bovenaan staan, omdat hun
+// woord uren eerder beschikbaar komt. Potjes van vóór de tijdzones hebben
+// geen releasedAt; die kwamen allemaal om 18:00 Nederlandse tijd vrij, dus
+// hun volgorde blijft gelijk aan vroeger.
+function releaseOf(game: { dayKey: string; releasedAt: Date | null }): Date {
+  return game.releasedAt ?? zonedTimeToUtc(game.dayKey, RELEASE_HOUR, 0, DEFAULT_TIME_ZONE);
+}
+
+function solveMs(game: { dayKey: string; releasedAt: Date | null; finishedAt: Date | null }): number {
+  return game.finishedAt!.getTime() - releaseOf(game).getTime();
+}
+
+async function rankedWinners(dayKey: string) {
+  const games = await prisma.wordGame.findMany({
+    where: { dayKey, status: "WON", finishedAt: { not: null } },
+    select: {
+      id: true,
+      dayKey: true,
+      releasedAt: true,
+      finishedAt: true,
+      user: { select: { id: true, handle: true, discriminator: true } },
+    },
+  });
+  return games.sort((a, b) => solveMs(a) - solveMs(b) || a.finishedAt!.getTime() - b.finishedAt!.getTime());
 }
 
 export interface WordGameView {
   dayKey: string;
+  /** Wanneer het volgende woord beschikbaar komt (absoluut), en de servertijd: de client ververst daarop zonder eigen tijdzonerekensom. */
+  nextReleaseAt: string;
+  serverNow: number;
   wordLength: number;
   maxGuesses: number;
   guesses: { word: string; result: LetterState[] }[];
@@ -144,36 +198,18 @@ export interface WordGameView {
 }
 
 async function getTodayLeaderboard(dayKey: string): Promise<WordGameLeaderboardEntry[]> {
-  const games = await prisma.wordGame.findMany({
-    where: {
-      dayKey,
-      status: "WON",
-      finishedAt: { not: null },
-    },
-    orderBy: { finishedAt: "asc" },
-    take: 10,
-    select: {
-      finishedAt: true,
-      user: {
-        select: {
-          id: true,
-          handle: true,
-          discriminator: true,
-        },
-      },
-    },
-  });
-
+  const games = (await rankedWinners(dayKey)).slice(0, 10);
   return games.map((game, index) => ({
     rank: index + 1,
     userId: game.user.id,
     handle: game.user.handle,
     discriminator: game.user.discriminator,
     finishedAt: game.finishedAt!.toISOString(),
+    minutesAfterRelease: Math.max(0, Math.floor(solveMs(game) / 60_000)),
   }));
 }
 
-async function buildView(game: {
+async function buildView(period: WordGamePeriod, now: Date, game: {
   dayKey: string;
   word: string;
   guesses: string;
@@ -190,6 +226,8 @@ async function buildView(game: {
   const leaderboard = await getTodayLeaderboard(game.dayKey);
   return {
     dayKey: game.dayKey,
+    nextReleaseAt: period.nextReleaseAt.toISOString(),
+    serverNow: now.getTime(),
     wordLength: WORD_LENGTH,
     maxGuesses: MAX_GUESSES,
     guesses,
@@ -216,30 +254,40 @@ async function getOrLockWordForDay(dayKey: string): Promise<string> {
   return daily.word;
 }
 
-/** Haalt het potje van vandaag op, en maakt het aan als het nog niet bestaat — dit dwingt meteen "één keer per dag" af via @@unique([userId, dayKey]). */
-export async function getOrCreateTodayGame(userId: string): Promise<WordGameView> {
-  const dayKey = wordGameDayKey();
+/**
+ * Haalt het potje van vandaag op, en maakt het aan als het nog niet bestaat
+ * — dit dwingt meteen "één keer per dag" af via @@unique([userId, dayKey]).
+ * timeZone is die van het account (User.timeZone, null = Nederlandse tijd);
+ * now is altijd de servertijd, alleen tests geven een ander moment mee.
+ */
+export async function getOrCreateTodayGame(userId: string, timeZone: string | null, now: Date = new Date()): Promise<WordGameView> {
+  const period = wordGamePeriod(now, resolveTimeZone(timeZone));
+  const { dayKey } = period;
   const existing = await prisma.wordGame.findUnique({ where: { userId_dayKey: { userId, dayKey } } });
-  if (existing) return await buildView(existing);
+  if (existing) return await buildView(period, now, existing);
 
   const word = await getOrLockWordForDay(dayKey);
   const created = await prisma.wordGame.upsert({
     where: { userId_dayKey: { userId, dayKey } },
     update: {},
-    create: { userId, dayKey, word },
+    // releasedAt: wanneer dit woord voor deze speler vrijkwam (voor het klassement).
+    create: { userId, dayKey, word, releasedAt: period.releasedAt },
   });
-  return await buildView(created);
+  return await buildView(period, now, created);
 }
 
 export async function submitGuess(
   userId: string,
-  rawGuess: string
+  rawGuess: string,
+  timeZone: string | null,
+  now: Date = new Date()
 ): Promise<(WordGameView & { newAchievements: string[] }) | { error: string }> {
   const guess = rawGuess.trim().toLowerCase();
   if (guess.length !== WORD_LENGTH) return { error: `Het woord moet ${WORD_LENGTH} letters hebben.` };
   if (!isValidGuess(guess)) return { error: "Dat woord ken ik niet uit het Boek van Mormon." };
 
-  const dayKey = wordGameDayKey();
+  const period = wordGamePeriod(now, resolveTimeZone(timeZone));
+  const { dayKey } = period;
   const game = await prisma.wordGame.findUnique({ where: { userId_dayKey: { userId, dayKey } } });
   if (!game) return { error: "Er is nog geen potje voor vandaag — begin eerst een nieuw spel." };
   if (game.status !== "IN_PROGRESS") return { error: "Je hebt het woord van vandaag al gespeeld." };
@@ -253,19 +301,14 @@ export async function submitGuess(
   const finished = won || outOfGuesses;
   const xpEarned = won ? xpForWin(guesses.length) : 0;
 
-  const finishedAt = finished ? new Date() : undefined;
+  const finishedAt = finished ? now : undefined;
   let leaderboardRank: number | null = null;
   let leaderboardXpBonus = 0;
   let totalXpEarned = xpEarned;
 
   if (finished && won) {
-    const fasterWinners = await prisma.wordGame.count({
-      where: {
-        dayKey,
-        status: "WON",
-        finishedAt: { not: null, lt: finishedAt },
-      },
-    });
+    const mine = solveMs({ dayKey, releasedAt: game.releasedAt, finishedAt: finishedAt! });
+    const fasterWinners = (await rankedWinners(dayKey)).filter((other) => solveMs(other) < mine).length;
     leaderboardRank = fasterWinners + 1;
     leaderboardXpBonus = leaderboardXpBonusForRank(leaderboardRank);
     totalXpEarned += leaderboardXpBonus;
@@ -289,5 +332,5 @@ export async function submitGuess(
 
   const newAchievements = finished ? (await completeWordGame(userId, totalXpEarned)).newAchievements : [];
 
-  return { ...(await buildView(updated)), newAchievements };
+  return { ...(await buildView(period, now, updated)), newAchievements };
 }
