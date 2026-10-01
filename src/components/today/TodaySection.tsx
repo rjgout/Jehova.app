@@ -8,6 +8,7 @@ import { interactiveCard, secondaryButton, surfaceCard } from "@/components/vers
 import type { DailyGameState, TodayData } from "@/lib/today";
 import { gameArtworkKeys } from "@/lib/artwork";
 import type { MessageKey } from "@/lib/i18n/core";
+import DailyWordRollover from "@/components/today/DailyWordRollover";
 
 // Dagelijkse content: de tekst van de dag, het woord van de dag en De
 // Slimste Heilige van de dag. Rustig bij de tekst, iets meer energie bij de
@@ -113,7 +114,10 @@ export default function TodaySection({ data, language }: { data: TodayData; lang
           </article>
         )}
         {wordGame && wordStatus && (
-          <DailyGameCard state={wordGame} kind="game" artwork={gameArtworkKeys("word-game")} title={t("pages.wordOfTheDay")} statusKey={wordStatus} language={language} />
+          <>
+            {wordGame.dayKey && <DailyWordRollover dayKey={wordGame.dayKey} />}
+            <DailyGameCard state={wordGame} kind="game" artwork={gameArtworkKeys("word-game")} title={t("pages.wordOfTheDay")} statusKey={wordStatus} language={language} />
+          </>
         )}
         {dailyQuiz && quizStatus && (
           <DailyGameCard state={dailyQuiz} kind="quiz" artwork={gameArtworkKeys("alleskenner")} title={t("today.dailyQuiz.title", { name: t("pages.alleskenner") })} statusKey={quizStatus} language={language} />

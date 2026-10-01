@@ -56,6 +56,8 @@ export interface DailyGameState {
   href: string;
   status: "todo" | "in-progress" | "done";
   won?: boolean;
+  /** Alleen voor het dagelijkse woord: hiermee kan een open dashboard na 18:00 verversen. */
+  dayKey?: string;
 }
 
 export interface FriendSummary {
@@ -151,6 +153,7 @@ function openActions(status: Awaited<ReturnType<typeof getActiveGameStatus>>, fr
 export async function getTodayData(user: User): Promise<TodayData> {
   const t = getT(user.uiLanguage);
   const today = dayKey();
+  const wordGameDay = wordGameDayKey();
   const contentContext = await getContentContext(user.id);
 
   const [
@@ -193,9 +196,12 @@ export async function getTodayData(user: User): Promise<TodayData> {
         episode: { select: { id: true, number: true, title: true, podcastId: true, podcast: { select: { name: true, courses: { select: { id: true }, take: 1 } } } } },
       },
     }),
-    getTextOfTheDay(new Date(), user.contentLanguage),
+    // Gebruik de werkelijk actieve uitgave. Die is de bron van waarheid nadat
+    // de contentselector een werk of taal heeft gewisseld; zo blijft de tekst
+    // van de dag op Vandaag gelijk aan de gekozen contenttaal.
+    getTextOfTheDay(new Date(), contentContext.active.language),
     getGameSettings(),
-    prisma.wordGame.findFirst({ where: { userId: user.id, dayKey: wordGameDayKey() }, select: { status: true } }),
+    prisma.wordGame.findFirst({ where: { userId: user.id, dayKey: wordGameDay }, select: { status: true } }),
     prisma.alleskennerSoloRun.findFirst({ where: { userId: user.id, mode: "DAILY", dayKey: today }, select: { status: true } }),
     prisma.friendship.findMany({
       where: { status: "ACCEPTED", OR: [{ senderId: user.id }, { receiverId: user.id }] },
@@ -322,7 +328,7 @@ export async function getTodayData(user: User): Promise<TodayData> {
     continueItems,
     dailyText,
     wordGame: wordGameEntry
-      ? { href: wordGameEntry.href, status: !wordGame ? "todo" : wordGame.status === "IN_PROGRESS" ? "in-progress" : "done", won: wordGame?.status === "WON" }
+      ? { href: wordGameEntry.href, dayKey: wordGameDay, status: !wordGame ? "todo" : wordGame.status === "IN_PROGRESS" ? "in-progress" : "done", won: wordGame?.status === "WON" }
       : null,
     dailyQuiz: quizEntry
       ? { href: "/alleskenner/alleen", status: !dailyQuiz ? "todo" : dailyQuiz.status === "IN_PROGRESS" ? "in-progress" : "done" }
