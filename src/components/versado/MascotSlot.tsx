@@ -1,17 +1,29 @@
-// Plek voor een Versado-mascotte (VARO, VERA, NOVI) of de hele familie.
-// De mascottes worden later aangeleverd (zie docs/VERSADO-DESIGN.md); tot
-// die tijd is het register leeg en rendert dit niets. Een pagina zet de
-// slot al op de juiste plek, met rol en stemming, zodat de mascotte er later
-// verschijnt zonder dat de pagina verandert.
+// Centrale weergavelaag voor Versado-mascottes.
 //
-// Afspraken: de familie ("family") alleen bij betekenisvolle momenten;
-// mascottes communiceren vooral visueel; tekst (labelKey) altijd via i18n;
-// bij prefers-reduced-motion een stilstaande pose (vs-motion).
+// Pagina's vragen om een semantische character + state-combinatie en kennen
+// nooit het onderliggende WebP- of toekomstige Rive-bestand. Daardoor kunnen
+// statische assets later achter deze component door Rive worden vervangen
+// zonder pagina's opnieuw op te bouwen.
+//
+// De asset- en characterregels staan in public/mascots/README.md en
+// docs/VERSADO-DESIGN.md. We starten bewust alleen met NOVI. Voeg Varo, Vera
+// en de familie pas toe wanneer hun eigen implementatiefase start.
 
 import type { MessageKey } from "@/lib/i18n/core";
 
-export type MascotCharacter = "varo" | "vera" | "novi" | "family";
-export type MascotMood = "neutral" | "happy" | "cheer" | "thinking" | "calm" | "curious";
+export type MascotCharacter = "novi";
+
+export type MascotState =
+  | "idle"
+  | "greeting"
+  | "thinking"
+  | "discovery"
+  | "reading"
+  | "playing"
+  | "success"
+  | "encourage"
+  | "celebrate"
+  | "sleep";
 
 interface MascotAsset {
   src: string;
@@ -19,27 +31,44 @@ interface MascotAsset {
   height: number;
 }
 
-// Sleutel "<character>:<mood>". Leeg tot de assets er zijn.
-const MASCOTS: Partial<Record<`${MascotCharacter}:${MascotMood}`, MascotAsset>> = {};
+// Sleutel "<character>:<state>".
+//
+// Voeg hier pas een entry toe nadat het definitieve WebP-bestand daadwerkelijk
+// in public/mascots/static/novi/ staat. Geen tijdelijke assets of fallbacks.
+// width/height zijn de intrinsieke pixelafmetingen van de export.
+const MASCOTS: Partial<Record<`${MascotCharacter}:${MascotState}`, MascotAsset>> = {};
 
 export default function MascotSlot({
   character,
-  mood = "neutral",
+  state = "idle",
   size = 72,
   className = "",
+  labelKey,
 }: {
   character: MascotCharacter;
-  mood?: MascotMood;
-  /** Breedte in px; de hoogte volgt uit de asset. */
+  state?: MascotState;
+  /** Breedte in px; de hoogte volgt uit de intrinsieke verhouding. */
   size?: number;
   className?: string;
-  /** Tekstuele betekenis als de mascotte iets uitdrukt; weglaten = decoratief. */
+  /**
+   * Tekstuele betekenis als de mascotte informatie uitdrukt.
+   * De daadwerkelijke vertaalde tekst hoort buiten de asset/component te
+   * worden weergegeven. Zonder labelKey is de afbeelding decoratief.
+   */
   labelKey?: MessageKey;
 }) {
-  const asset = MASCOTS[`${character}:${mood}`];
+  const asset = MASCOTS[`${character}:${state}`];
   if (!asset) return null;
+
   return (
     // eslint-disable-next-line @next/next/no-img-element
-    <img src={asset.src} width={size} height={Math.round((asset.height / asset.width) * size)} alt="" aria-hidden className={`vs-motion ${className}`} />
+    <img
+      src={asset.src}
+      width={size}
+      height={Math.round((asset.height / asset.width) * size)}
+      alt=""
+      aria-hidden={labelKey ? undefined : true}
+      className={`vs-motion ${className}`}
+    />
   );
 }
