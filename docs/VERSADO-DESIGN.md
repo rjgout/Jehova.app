@@ -180,8 +180,8 @@ Afspraken:
 - Communicatie vooral via houding, animatie en gezichtsuitdrukking.
   Tekstballonnen zijn uitzondering; tekst altijd via het i18n-systeem
   (`src/lib/i18n/messages/*`), nooit vast in een asset of component.
-- Er bestaan nog **geen** mascotte-assets. Maak geen vervangers (ook geen
-  emoji-mascottes of gegenereerde afbeeldingen).
+- De mascotte-assets worden gefaseerd ingevoerd. **NOVI is de eerste implementatiefase**; Varo en Vera volgen later. Gebruik alleen definitief goedgekeurde assets, nooit tijdelijke emoji-, stock- of andere mascottevervangers.
+- De statische productie-assets en naamgevingsregels staan in `public/mascots/README.md`. Pagina's gebruiken altijd `MascotSlot` met semantische `character + state`, nooit directe assetpaden. Dit contract blijft later de grens naar Rive.
 
 ## Kinderen
 
@@ -223,10 +223,11 @@ CLAUDE.md ("Talen").
 
 ## Upcoming design assets
 
-De definitieve visuele assets worden **later aangeleverd** en zitten nu niet
-in de repository:
+De definitieve visuele assets worden gefaseerd aangeleverd. De infrastructuur voor statische mascotte-assets is gestart met **NOVI**; zie `public/mascots/README.md`. Varo en Vera worden pas in latere fases toegevoegd.
 
-- de drie Versado-mascottes (VARO, VERA, NOVI), in verschillende poses en emoties;
+Gepland:
+
+- NOVI eerst als statische WebP-assets met semantische states; daarna VARO en VERA volgens hetzelfde contract;
 - illustraties;
 - afbeeldingen voor cursussen en content;
 - afbeeldingen voor spellen;
