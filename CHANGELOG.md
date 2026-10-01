@@ -4,6 +4,8 @@ Alle belangrijke gebruikersgerichte wijzigingen en releases worden hieronder bij
 
 ## Nog niet uitgebracht
 
+- Een nieuwe, eigen reeksvlam. Zolang je vandaag nog niet hebt gestudeerd
+  is hij blauw-wit; daarna brandt hij.
 - Op Vandaag verschijnt vanaf 60 dagen vooraf een kleine countdown naar de
   eerstvolgende Algemene Conferentie, boven "Wacht op jou". Tijdens het
   conferentieweekend toont hij "Nu bezig" of wanneer de volgende sessie

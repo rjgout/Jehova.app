@@ -1,4 +1,5 @@
-import { Check, Flame } from "lucide-react";
+import { Check } from "lucide-react";
+import SystemIcon from "@/components/versado/SystemIcon";
 import { getT } from "@/lib/i18n";
 import { getLanguage } from "@/lib/languages";
 import MascotSlot from "@/components/versado/MascotSlot";
@@ -27,7 +28,7 @@ export default function Greeting({ data, language }: { data: TodayData; language
           {t(`today.greeting.${data.partOfDay}`, { name: data.firstName })}
         </h1>
         <p className={`mt-2 inline-flex items-center gap-2 text-sm font-semibold ${studiedToday ? "text-vs-success" : current > 0 ? "text-vs-streak" : "text-vs-fg-2"}`}>
-          {studiedToday ? <Check className="h-4 w-4" strokeWidth={3} aria-hidden /> : <Flame className="h-4 w-4" strokeWidth={2.4} aria-hidden />}
+          {studiedToday ? <Check className="h-4 w-4" strokeWidth={3} aria-hidden /> : <SystemIcon kind="streak" className="h-4 w-4" fill="none" aria-hidden />}
           {status}
         </p>
       </div>

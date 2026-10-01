@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Clock3, Flame, MoreHorizontal, Snowflake } from "lucide-react";
+import { Clock3, MoreHorizontal, Snowflake } from "lucide-react";
 import { formatTag } from "@/lib/handle";
 import { getSocket } from "@/lib/socketClient";
 import UserTag from "@/components/UserTag";
@@ -401,7 +401,7 @@ export default function FriendsClient({ appName }: { appName: string }) {
                     ) : null}
                     <div className="mt-1.5 flex min-w-0 flex-wrap items-center gap-1.5">
                       <span className="no-select inline-flex items-center gap-1 rounded-full bg-gold-50 px-2 py-0.5 text-xs font-bold text-gold-700 dark:bg-slate-700 dark:text-gold-400">
-                        <Flame className="h-3.5 w-3.5" aria-hidden /> {f.currentStreak}
+                        <SystemIcon kind="streak" className="h-3.5 w-3.5" aria-hidden /> {f.currentStreak}
                       </span>
                       <span className="no-select inline-flex items-center gap-1 rounded-full bg-brand-50 px-2 py-0.5 text-xs font-bold text-brand-700 dark:bg-slate-700 dark:text-brand-300">
                         <SystemIcon kind="xp" className="h-3.5 w-3.5" fill="currentColor" aria-hidden /> {f.xpTotal} XP

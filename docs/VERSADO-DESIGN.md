@@ -39,7 +39,10 @@ lijst hierboven nog volledig.
   `prefers-reduced-motion` staan transities en animaties daarbinnen dan stil.
   `vs-rise` is een rustige binnenkomst, `vs-scroller` verbergt de scrollbalk
   van een veegrij.
-- **Iconen**: `lucide-react`. Geen emoji als structureel icoon.
+- **Iconen**: `lucide-react`. Geen emoji als structureel icoon. Uitzondering:
+  de reeksvlam is een eigen illustratie (`public/icons/streak-flame.webp`,
+  en `streak-flame-empty.webp` voor "vandaag nog niet gestudeerd"), altijd via
+  `SystemIcon kind="streak"` (`fill="none"` = de lege vlam), nooit los.
 - **Shell**: vier hoofdbestemmingen in `src/lib/navigation.ts`
   (`PRIMARY_NAV`, met per bestemming de routes die erbij horen);
   `BottomNav.tsx` op telefoon en tablet, `shell/PrimaryNav.tsx` op desktop,
