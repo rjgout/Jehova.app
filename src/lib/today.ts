@@ -199,7 +199,11 @@ export async function getTodayData(user: User): Promise<TodayData> {
     // Gebruik de werkelijk actieve uitgave. Die is de bron van waarheid nadat
     // de contentselector een werk of taal heeft gewisseld; zo blijft de tekst
     // van de dag op Vandaag gelijk aan de gekozen contenttaal.
-    getTextOfTheDay(new Date(), contentContext.active.language),
+    getTextOfTheDay(
+      new Date(),
+      contentContext.active.language,
+      contentContext.active.work === BOFM_WORK ? contentContext.active.id : undefined,
+    ),
     getGameSettings(),
     prisma.wordGame.findFirst({ where: { userId: user.id, dayKey: wordGameDay }, select: { status: true } }),
     prisma.alleskennerSoloRun.findFirst({ where: { userId: user.id, mode: "DAILY", dayKey: today }, select: { status: true } }),

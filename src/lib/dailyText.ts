@@ -20,7 +20,7 @@ export interface DailyText {
  * "Boek van Mormon". Daarom selecteren we alle boeken en niet op een
  * specifieke naam.
  */
-export async function getTextOfTheDay(date = new Date(), language?: string | null): Promise<DailyText | null> {
+export async function getTextOfTheDay(date = new Date(), language?: string | null, activeEditionId?: string | null): Promise<DailyText | null> {
   // Tellen en daarna met skip precies één vers ophalen, in plaats van elke
   // aanroep (dashboard én elke schedulertick) de volledige schrifttekst in
   // het geheugen te laden.
@@ -55,7 +55,7 @@ export async function getTextOfTheDay(date = new Date(), language?: string | nul
   // vaste aantal verzen waarop de keuze van de dag rust), zodat iedereen,
   // in welke taal ook, dezelfde tekst van de dag heeft. Daarna tonen we dat
   // vers in de uitgave van de contenttaal, als die er is.
-  const editionId = await resolveEditionId(BOFM_WORK, language);
+  const editionId = activeEditionId ?? await resolveEditionId(BOFM_WORK, language);
   if (editionId && editionId !== BOM_COLLECTION_ID && verse.chapter.book.key) {
     const translated = await verseInEdition(
       { bookKey: verse.chapter.book.key, chapter: verse.chapter.number, verse: verse.number },
