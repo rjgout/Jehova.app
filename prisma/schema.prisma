@@ -2106,18 +2106,14 @@ model ChangelogEntry {
 // tekst+emoji in de header (zie layout.tsx); faviconDataUrl vervangt op
 // dezelfde manier het standaard favicon.ico (zie /api/branding/favicon).
 // appName overschrijft op dezelfde manier de vaste APP_NAME uit
-// src/lib/brand.ts (zie resolveAppName()) — bv. de kicker-tekst op het
-// welkomscherm, zonder dat daarvoor de broncode aangepast hoeft te worden.
-// heroLogoDataUrl is bewust een apart veld van logoDataUrl: de header-logo
-// (klein, naast de app-naam) en een eventueel logo op het welkomscherm
-// (groot, alleenstaand) zijn qua vorm vaak totaal verschillende afbeeldingen
-// — niet automatisch dezelfde afbeelding op beide plekken hergebruiken.
+// src/lib/brand.ts (zie resolveAppName()), zonder dat daarvoor de broncode
+// aangepast hoeft te worden. Een apart logo voor het welkomscherm bestaat
+// niet meer: daar staat nu de mascottefamilie (family/welcome).
 model BrandingSettings {
   id              String  @id @default("singleton")
-  logoDataUrl     String?
-  heroLogoDataUrl String?
-  faviconDataUrl  String?
-  appName         String?
+  logoDataUrl    String?
+  faviconDataUrl String?
+  appName        String?
 }
 
 // Eén schakelaar per spelletje op de Spelen-pagina (/live) — door een admin

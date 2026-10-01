@@ -2332,8 +2332,6 @@ export const nl = {
     appNameText: "Tekst die getoond wordt zolang er geen logo is ingesteld op de bijbehorende plek (header, welkomscherm), en altijd voor de browsertab/paginatitel (kan geen afbeelding zijn). Leeg laten = standaardnaam “Versado”.",
     logoHeader: "Logo (header)",
     logoHeaderText: "Vervangt 📖 + de app-naam in de header. Werkt het best met een transparante achtergrond.",
-    logoHero: "Logo (welkomscherm)",
-    logoHeroText: "Los van het header-logo hierboven — vervangt de app-naam boven de titel op het welkomscherm. Optioneel: laat leeg om daar de tekstnaam te tonen.",
     favicon: "Favicon",
     faviconText: "Het icoontje in het browsertabblad — verschijnt ook als voorvertoning bij het delen van een link (WhatsApp, Telegram e.d.). Minimaal 200×200px.",
   },

@@ -1615,7 +1615,7 @@ export const fr: PartialMessages = {
     mascots: {
       varo: "Curieux · Énergique · Joueur",
       vera: "Chaleureuse · Intelligente · Calme",
-      novi: "Enthousiaste · Avide de découvertes · Espiègle",
+      novi: "Enthousiaste · Intrépide · Espiègle",
     },
     features: {
       lessons: {
@@ -2328,8 +2328,6 @@ export const fr: PartialMessages = {
     appNameText: "Texte affiché tant qu’aucun logo n’est défini à cet endroit (en-tête, écran d’accueil), et toujours pour l’onglet/le titre de page (ne peut pas être une image). Laisser vide = nom par défaut « Versado ».",
     logoHeader: "Logo (en-tête)",
     logoHeaderText: "Remplace 📖 + le nom de l’appli dans l’en-tête. Fonctionne mieux avec un fond transparent.",
-    logoHero: "Logo (écran d’accueil)",
-    logoHeroText: "Indépendant du logo d’en-tête ci-dessus — remplace le nom de l’appli au-dessus du titre sur l’écran d’accueil. Facultatif : laisser vide pour afficher le nom en texte.",
     favicon: "Favicon",
     faviconText: "L’icône de l’onglet du navigateur — apparaît aussi en aperçu lors du partage d’un lien (WhatsApp, Telegram, etc.). Minimum 200×200px.",
   },

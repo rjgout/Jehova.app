@@ -12,7 +12,6 @@ const dataUrlField = z
 
 const schema = z.object({
   logoDataUrl: dataUrlField,
-  heroLogoDataUrl: dataUrlField,
   faviconDataUrl: dataUrlField,
   appName: z
     .string()

@@ -25,6 +25,10 @@ Rol: begrijpen, lezen, verdieping en reflectie.
 Accessoires zijn optioneel. Ze komen alleen in beeld als ze iets toevoegen
 aan de activiteit of het verhaal van de pose.
 
+De namen Varo, Vera en Novi worden nooit vertaald. Eigenschappen en
+omschrijvingen wel, met korte, natuurlijke woorden per taal die dezelfde
+persoonlijkheid overbrengen (geen letterlijke vertaling).
+
 ## Stand
 
 - **Novi** wordt als eerste uitgerold, met statische afbeeldingen.

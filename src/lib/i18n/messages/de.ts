@@ -1613,7 +1613,7 @@ export const de: PartialMessages = {
     why3: "So wirst du lernend und spielend in den Schriften bewandert.",
     mascotsIntro: "Lerne Varo, Vera und Novi kennen: drei Begleiter, die gemeinsam mit dir entdecken, lernen und spielen.",
     mascots: {
-      varo: "Neugierig · Voller Energie · Verspielt",
+      varo: "Neugierig · Lebhaft · Verspielt",
       vera: "Herzlich · Klug · Ruhig",
       novi: "Fröhlich · Abenteuerlustig · Verschmitzt",
     },
@@ -2328,8 +2328,6 @@ export const de: PartialMessages = {
     appNameText: "Text, der angezeigt wird, solange an der Stelle (Header, Willkommensbildschirm) kein Logo eingestellt ist, und immer für Browsertab/Seitentitel (kann kein Bild sein). Leer lassen = Standardname „Versado“.",
     logoHeader: "Logo (Header)",
     logoHeaderText: "Ersetzt 📖 + den App-Namen im Header. Funktioniert am besten mit transparentem Hintergrund.",
-    logoHero: "Logo (Willkommensbildschirm)",
-    logoHeroText: "Unabhängig vom Header-Logo oben — ersetzt den App-Namen über dem Titel auf dem Willkommensbildschirm. Optional: leer lassen, um dort den Textnamen zu zeigen.",
     favicon: "Favicon",
     faviconText: "Das Symbol im Browsertab — erscheint auch als Vorschau beim Teilen eines Links (WhatsApp, Telegram usw.). Mindestens 200×200px.",
   },

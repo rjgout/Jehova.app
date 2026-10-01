@@ -1624,8 +1624,8 @@ export const es: PartialMessages = {
     "mascotsIntro": "Conoce a Varo, Vera y Novi: tres compañeros que descubren, aprenden y juegan contigo.",
     "mascots": {
       "varo": "Curioso · Enérgico · Juguetón",
-      "vera": "Cálida · Inteligente · Tranquila",
-      "novi": "Alegre · Con alma exploradora · Bromista"
+      "vera": "Cálida · Inteligente · Serena",
+      "novi": "Alegre · Audaz · Bromista"
     },
     "features": {
       "lessons": {
@@ -2338,8 +2338,6 @@ export const es: PartialMessages = {
     "appNameText": "Texto mostrado siempre que no se establezca ningún logotipo para ese lugar (encabezado, pantalla de bienvenida) y siempre para la pestaña del navegador/título de la página (no puede ser una imagen). Dejar vacío = nombre predeterminado “Versado”.",
     "logoHeader": "Logotipo (encabezado)",
     "logoHeaderText": "Reemplaza 📖 el nombre de la aplicación en el encabezado. Funciona mejor con un fondo transparente.",
-    "logoHero": "Logotipo (pantalla de bienvenida)",
-    "logoHeroText": "Separado del logotipo del encabezado de arriba: reemplaza el nombre de la aplicación encima del título en la pantalla de bienvenida. Opcional: déjelo vacío para mostrar el nombre del texto allí.",
     "favicon": "Favicon",
     "faviconText": "El icono en la pestaña del navegador también aparece como vista previa al compartir un enlace (WhatsApp, Telegram, etc.). Al menos 200 × 200 píxeles."
   },

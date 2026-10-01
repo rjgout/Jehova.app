@@ -6,7 +6,6 @@ import type { TFunction } from "@/lib/i18n/core";
 
 interface BrandingView {
   logoDataUrl: string | null;
-  heroLogoDataUrl: string | null;
   faviconDataUrl: string | null;
   appName: string | null;
 }
@@ -206,15 +205,6 @@ export default function AdminBrandingClient() {
         maxDimension={512}
         previewClassName="h-12 w-32 px-2"
         onChange={(logoDataUrl) => save({ logoDataUrl })}
-      />
-
-      <ImageSlot
-        label={t("adminBranding.logoHero")}
-        description={t("adminBranding.logoHeroText")}
-        value={branding.heroLogoDataUrl}
-        maxDimension={800}
-        previewClassName="h-16 w-48 px-2"
-        onChange={(heroLogoDataUrl) => save({ heroLogoDataUrl })}
       />
 
       <ImageSlot

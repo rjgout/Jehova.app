@@ -283,6 +283,12 @@ Een state is een functionele toestand in Versado, niet zomaar een emotie.
     belangrijk gezamenlijk spelmoment.
   - Dat `family-welcome` bestaat, betekent niet dat de familie overal als
     decoratie mag verschijnen.
+- **Namen en vertalingen.** De namen VARO, VERA en NOVI (in de app: Varo,
+  Vera, Novi) worden nooit vertaald. Eigenschappen en omschrijvingen wel, en
+  niet letterlijk: kies per taal korte, natuurlijke woorden die dezelfde
+  persoonlijkheid en rol overbrengen en in de interface passen. Grammaticaal
+  geslacht mag per taal worden toegepast (Varo mannelijk, Vera vrouwelijk);
+  voor NOVI ligt geen geslacht vast, dus daar woorden zonder geslachtsvorm.
 - Communicatie vooral via houding, animatie en gezichtsuitdrukking.
   Tekstballonnen zijn uitzondering; tekst altijd via het i18n-systeem
   (`src/lib/i18n/messages/*`), nooit vast in een asset of component.

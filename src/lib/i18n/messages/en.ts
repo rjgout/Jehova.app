@@ -2328,8 +2328,6 @@ export const en: PartialMessages = {
     appNameText: "Text shown as long as no logo is set for that spot (header, welcome screen), and always for the browser tab/page title (can't be an image). Leave empty = default name “Versado”.",
     logoHeader: "Logo (header)",
     logoHeaderText: "Replaces 📖 + the app name in the header. Works best with a transparent background.",
-    logoHero: "Logo (welcome screen)",
-    logoHeroText: "Separate from the header logo above — replaces the app name above the title on the welcome screen. Optional: leave empty to show the text name there.",
     favicon: "Favicon",
     faviconText: "The icon in the browser tab — also appears as a preview when sharing a link (WhatsApp, Telegram etc.). At least 200×200px.",
   },
