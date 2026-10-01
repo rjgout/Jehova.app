@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { ChevronDown, LibraryBig } from "lucide-react";
+import { BookMarked, BookOpen, ChevronDown, Gem, LibraryBig, Mic2, ScrollText, type LucideIcon } from "lucide-react";
 import { getLanguage } from "@/lib/languages";
 import { useT } from "@/components/I18nProvider";
 
@@ -14,6 +14,28 @@ interface Collection {
   visibleToUsers: boolean;
   work: string | null;
   language: string;
+}
+
+function contentIcon(collection: Pick<Collection, "work" | "id">): LucideIcon {
+  switch (collection.work ?? collection.id) {
+    case "bofm":
+      return BookOpen;
+    case "fsy":
+      return BookMarked;
+    case "podcasts":
+      return Mic2;
+    case "dc-testament":
+      return ScrollText;
+    case "pgp":
+      return Gem;
+    default:
+      return LibraryBig;
+  }
+}
+
+function ContentIcon({ collection, className }: { collection: Pick<Collection, "work" | "id">; className: string }) {
+  const Icon = contentIcon(collection);
+  return <Icon className={className} aria-hidden />;
 }
 
 // Eén regel per werk (Boek van Mormon, Leer en Verbonden, ...), niet per
@@ -86,13 +108,11 @@ export default function ContentSwitcher({
     ...works.filter((option) => option.work === activeWork),
     ...works.filter((option) => option.work !== activeWork),
   ];
-  const badge = getLanguage(active.language).badge;
-
   return (
     // Het menu blijft links staan op ieder scherm. De contentnaam krijgt een
-    // begrensde breedte, zodat de taalbadge en de navigatie rechts zichtbaar
-    // blijven wanneer een werk een lange naam heeft.
-    <div ref={ref} className="relative -ml-2 self-stretch flex min-w-0 max-w-full lg:shrink-0">
+    // flexibele breedte, zodat de lange naam afkapt zonder de navigatie rechts
+    // weg te drukken.
+    <div ref={ref} className="relative -ml-2 self-stretch flex min-w-0 max-w-full flex-1 lg:flex-none">
       <button
         type="button"
         onClick={() => setOpen((value) => !value)}
@@ -102,16 +122,12 @@ export default function ContentSwitcher({
         aria-label={t("contentSwitcher.activeAria", {
           name: active.name + (showLanguage ? ` (${getLanguage(active.language).nativeName})` : ""),
         })}
-        className="h-full min-w-0 inline-flex items-center justify-start gap-1.5 px-2 text-sm font-bold text-slate-600 dark:text-slate-300 hover:text-brand-600 dark:hover:text-brand-300"
+        className="h-full w-full min-w-0 inline-flex items-center justify-start gap-1.5 px-2 text-sm font-bold text-slate-600 dark:text-slate-300 hover:text-brand-600 dark:hover:text-brand-300 lg:w-auto"
       >
-        <LibraryBig className="h-5 w-5 shrink-0" aria-hidden />
-        {/* De naam alleen waar er ruimte is: op een telefoon vechten reeks,
-            XP en meldingen om dezelfde regel, op desktop de hoofdnavigatie.
-            De volledige naam staat in het label en de tooltip. */}
-        <span className="hidden min-w-0 max-w-[15rem] truncate sm:block lg:hidden">{active.name}</span>
-        {showLanguage && (
-          <span className="text-[10px] font-extrabold leading-none rounded-full bg-slate-100 dark:bg-slate-700 px-1.5 py-1">{badge}</span>
-        )}
+        <ContentIcon collection={active} className="h-5 w-5 shrink-0" />
+        {/* Op mobiel gebruikt de naam alleen de resterende ruimte; de volledige
+            naam blijft beschikbaar via het label en de tooltip. */}
+        <span className="block min-w-0 flex-1 truncate lg:hidden">{active.name}</span>
         <ChevronDown className={`h-4 w-4 shrink-0 transition-transform ${open ? "rotate-180" : ""}`} aria-hidden />
       </button>
 
@@ -137,7 +153,7 @@ export default function ContentSwitcher({
                   ].join(" ")}
                 >
                   <span className="w-7 shrink-0 text-center" aria-hidden>{selected ? "✓" : ""}</span>
-                  <span className="text-xl shrink-0" aria-hidden>{collection.icon}</span>
+                  <ContentIcon collection={collection} className="h-5 w-5 shrink-0" />
                   <span className="min-w-0 truncate">{collection.name}</span>
                   {showLanguage && (
                     <span className="shrink-0 text-[10px] font-extrabold text-slate-400 dark:text-slate-500">
