@@ -84,6 +84,7 @@ export const fr: PartialMessages = {
   common: {
     loading: "Chargement...",
     close: "Fermer",
+    back: "Retour",
     confirm: "Confirmer",
     cancel: "Annuler",
   },
@@ -1159,6 +1160,10 @@ export const fr: PartialMessages = {
     LEGEND: "Éternité",
   },
   profile: {
+    progressSection: "Ta progression",
+    preferencesSection: "Préférences",
+    socialPrivacySection: "Social et confidentialité",
+    aboutSection: "À propos de Versado",
     pushToggleFailed: "Impossible d’activer ou de désactiver les notifications push.",
     testPushFailed: "Impossible d’envoyer une notification de test.",
     testPushSent: "Notification de test envoyée. Pas de notification ni de pastille ? Vérifie que l’application est sur ton écran d’accueil, que les pastilles sont activées dans les réglages de notification de ton téléphone et que tu n’es pas en mode concentration.",

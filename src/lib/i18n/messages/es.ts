@@ -84,6 +84,7 @@ export const es: PartialMessages = {
   "common": {
     "loading": "Cargando...",
     "close": "Cerrar",
+    "back": "Atrás",
     "confirm": "Confirmar",
     "cancel": "Cancelar"
   },
@@ -1169,6 +1170,10 @@ export const es: PartialMessages = {
     "LEGEND": "Eternidad"
   },
   "profile": {
+    "progressSection": "Tu progreso",
+    "preferencesSection": "Preferencias",
+    "socialPrivacySection": "Social y privacidad",
+    "aboutSection": "Acerca de Versado",
     "pushToggleFailed": "No se pudieron activar las notificaciones push o desactivado.",
     "testPushFailed": "No se pudo enviar una notificación de prueba.",
     "testPushSent": "Notificación de prueba enviada. ¿Sin notificación ni insignia? Comprueba que la aplicación esté en tu pantalla de inicio, que las insignias estén habilitadas en la configuración de notificaciones de tu teléfono y que no estés en modo de concentración.",

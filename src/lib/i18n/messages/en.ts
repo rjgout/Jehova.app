@@ -84,6 +84,7 @@ export const en: PartialMessages = {
   common: {
     loading: "Loading...",
     close: "Close",
+    back: "Back",
     confirm: "Confirm",
     cancel: "Cancel",
   },
@@ -1159,6 +1160,10 @@ export const en: PartialMessages = {
     LEGEND: "Eternity",
   },
   profile: {
+    progressSection: "Your progress",
+    preferencesSection: "Preferences",
+    socialPrivacySection: "Social & privacy",
+    aboutSection: "About Versado",
     pushToggleFailed: "Couldn't turn push notifications on or off.",
     testPushFailed: "Couldn't send a test notification.",
     testPushSent: "Test notification sent. No notification or badge? Check that the app is on your home screen, badges are enabled in your phone's notification settings, and you're not in a focus mode.",

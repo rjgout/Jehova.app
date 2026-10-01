@@ -84,6 +84,7 @@ export const de: PartialMessages = {
   common: {
     loading: "Wird geladen...",
     close: "Schließen",
+    back: "Zurück",
     confirm: "Bestätigen",
     cancel: "Abbrechen",
   },
@@ -1159,6 +1160,10 @@ export const de: PartialMessages = {
     LEGEND: "Ewigkeit",
   },
   profile: {
+    progressSection: "Dein Fortschritt",
+    preferencesSection: "Einstellungen",
+    socialPrivacySection: "Soziales & Datenschutz",
+    aboutSection: "Über Versado",
     pushToggleFailed: "Push-Benachrichtigungen konnten nicht ein- oder ausgeschaltet werden.",
     testPushFailed: "Es konnte keine Testbenachrichtigung gesendet werden.",
     testPushSent: "Testbenachrichtigung gesendet. Keine Benachrichtigung oder kein Badge? Prüfe, ob die App auf deinem Startbildschirm ist, Badges in den Benachrichtigungseinstellungen deines Handys aktiviert sind und du nicht in einem Fokusmodus bist.",

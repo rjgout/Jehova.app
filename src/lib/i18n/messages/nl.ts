@@ -29,6 +29,7 @@ export const nl = {
   common: {
     loading: "Laden...",
     close: "Sluiten",
+    back: "Terug",
     confirm: "Bevestigen",
     cancel: "Annuleren",
   },
@@ -1163,6 +1164,10 @@ export const nl = {
     LEGEND: "Eeuwigheid",
   },
   profile: {
+    progressSection: "Jouw voortgang",
+    preferencesSection: "Voorkeuren",
+    socialPrivacySection: "Sociaal & privacy",
+    aboutSection: "Over Versado",
     pushToggleFailed: "Kon pushnotificaties niet in-/uitschakelen.",
     testPushFailed: "Kon geen testmelding versturen.",
     testPushSent: "Testmelding verstuurd. Geen melding of badge? Controleer of de app op je beginscherm staat, badges aanstaan in de meldingsinstellingen van je telefoon, en je niet in een focusmodus zit.",

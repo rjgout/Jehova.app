@@ -2,7 +2,6 @@
 
 import { useEffect, useState, type ReactNode, type SyntheticEvent } from "react";
 import Link from "next/link";
-import CollapsibleCard from "@/components/CollapsibleCard";
 import LanguageSettings from "@/components/LanguageSettings";
 import { useRouter } from "next/navigation";
 import type { LeagueTier } from "@prisma/client";
@@ -19,7 +18,27 @@ import { getLanguage } from "@/lib/languages";
 import { translateOr } from "@/lib/i18n/core";
 import AppSelect from "@/components/AppSelect";
 import SystemIcon from "@/components/versado/SystemIcon";
-import { Snowflake } from "lucide-react";
+import {
+  ArrowLeft,
+  Bell,
+  BookOpen,
+  ChevronRight,
+  Globe2,
+  KeyRound,
+  LockKeyhole,
+  LogOut,
+  MessageSquare,
+  MoreHorizontal,
+  Pencil,
+  ShieldCheck,
+  ShoppingBag,
+  Sparkles,
+  Trash2,
+  Trophy,
+  Users,
+  Volume2,
+  Snowflake,
+} from "lucide-react";
 
 interface AchievementView {
   slug: string;
@@ -52,6 +71,7 @@ interface ProfileData {
   notifyFriendOnline: boolean;
   changelogEnabled: boolean;
   uiLanguage: string;
+  totpEnabled: boolean;
   xpTotal: number;
   currentStreak: number;
   longestStreak: number;
@@ -71,6 +91,19 @@ interface ProfileData {
   seasons: { seasonIndex: number; highestTier: LeagueTier; finalTier: LeagueTier; finalGroupPosition: number | null }[];
   achievements: AchievementView[];
 }
+
+type ProfileView =
+  | "overview"
+  | "competition"
+  | "achievements"
+  | "reading"
+  | "language"
+  | "readAloud"
+  | "notifications"
+  | "privacy"
+  | "presence"
+  | "about"
+  | "twoFactor";
 
 // Kleine, willekeurige greep uit veelgebruikte emoji — puur een handig
 // startpunt, geen uitputtende lijst; het invoerveld ernaast accepteert
@@ -109,6 +142,7 @@ export default function ProfileClient() {
   const [selectedReadAloudVoice, setSelectedReadAloudVoice] = useState("");
   const [testingReadAloudVoice, setTestingReadAloudVoice] = useState(false);
   const [readAloudSpeed, setReadAloudSpeed] = useState(1);
+  const [view, setView] = useState<ProfileView>("overview");
   const router = useRouter();
 
   useEffect(() => {
@@ -398,627 +432,199 @@ export default function ProfileClient() {
   const earnedCount = data.achievements.filter((a) => a.earnedAt).length;
   const initial = firstGrapheme(data.displayName).toUpperCase() || "?";
 
-  return (
-    <div className="max-w-5xl mx-auto flex flex-col gap-8">
-      {data?.isAdmin && (
-        <Link href="/adminbackend" className="btn btn-primary w-full justify-center">
-          {t("profile.toAdmin")}
-        </Link>
-      )}
-      <div className="flex items-center justify-between gap-4 pr-4">
-        <Link href="/feedback" className="btn-secondary">
-          {t("profile.giveFeedback")}
-        </Link>
-        <div className="flex items-center gap-2">
-          <Link href="/shop" className="btn-secondary">
-            🛒 {t("nav.shop")}
-          </Link>
-          <ThemeToggle />
-        </div>
-      </div>
-
-      <div className="card bg-gradient-to-br from-brand-500 to-brand-700 dark:from-brand-600 dark:to-brand-900 text-white flex flex-col gap-5">
-        <div className="flex items-center justify-between gap-3 flex-wrap">
-          <div className="flex items-center gap-3">
-            <div className="relative shrink-0">
-              <button
-                type="button"
-                onClick={() => {
-                  setAvatarError(null);
-                  setAvatarInput("");
-                  setAvatarPickerOpen(true);
-                }}
-                className="h-14 w-14 rounded-full bg-black/15 flex items-center justify-center text-2xl font-extrabold text-gold-400 hover:opacity-80"
-                title={t("profile.changeAvatar")}
-              >
-                {data.avatarEmoji || initial}
-              </button>
-              {/* Wijzig-icoontje overlay, puur decoratief — de hele knop erachter is al klikbaar. */}
-              <span
-                className="absolute -bottom-1 -right-1 h-5 w-5 rounded-full bg-white dark:bg-slate-700 text-[10px] flex items-center justify-center shadow"
-                aria-hidden
-              >
-                ✏️
-              </span>
-            </div>
-            <div>
-              {!editingHandle ? (
-                <>
-                  <h1 className="text-xl font-extrabold flex items-center gap-1.5">
-                    {data.displayName}
-                    <button
-                      type="button"
-                      onClick={startEditingHandle}
-                      className="text-sm opacity-80 hover:opacity-100"
-                      title={t("profile.changeHandle")}
-                      aria-label={t("profile.changeHandle")}
-                    >
-                      ✏️
-                    </button>
-                  </h1>
-                  <p className="text-brand-100 text-sm">{formatTag(data.handle, data.discriminator)}</p>
-                </>
-              ) : (
-                <div className="flex flex-col gap-2">
-                  <label className="flex items-center gap-2 flex-wrap">
-                    <input
-                      className="input !w-auto !py-1 !text-sm"
-                      value={handleInput}
-                      onChange={(e) => setHandleInput(e.target.value)}
-                      maxLength={24}
-                      autoFocus
-                    />
-                    <span className="text-brand-100 text-sm">#{data.discriminator}</span>
-                  </label>
-                  {handleError && <p className="text-xs text-red-100">{handleError}</p>}
-                  <div className="flex gap-2">
-                    <button className="btn-primary !px-3 !py-1 !text-xs" disabled={savingHandle} onClick={saveHandle}>
-                      {savingHandle ? t("courses.busy") : t("profile.save")}
-                    </button>
-                    <button className="btn-secondary !px-3 !py-1 !text-xs" onClick={() => setEditingHandle(false)}>
-                      {t("activeGames.cancel")}
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {avatarPickerOpen && (
-            <div
-              className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40"
-              onClick={() => setAvatarPickerOpen(false)}
-            >
-              <div
-                className="card !p-4 w-full max-w-xs flex flex-col gap-3 text-slate-800 dark:text-slate-100 shadow-xl"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <p className="text-sm font-bold">{t("profile.chooseAvatar")}</p>
-                <div className="grid grid-cols-6 gap-1.5">
-                  {AVATAR_EMOJI_OPTIONS.map((emoji) => (
-                    <button
-                      key={emoji}
-                      type="button"
-                      className="h-9 w-9 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 text-xl flex items-center justify-center"
-                      disabled={savingAvatarEmoji}
-                      onClick={() => saveAvatarEmoji(emoji)}
-                    >
-                      {emoji}
-                    </button>
-                  ))}
-                </div>
-                <div className="flex items-center gap-2">
-                  {/* Vaste, kleine breedte i.p.v. flex-1: er past toch maar één
-                      emoji in, en een brede invoer duwde de knop tot vlak
-                      tegen de afgeronde hoek van deze kaart (rounded-3xl) aan,
-                      waardoor die er optisch doorheen leek te steken. */}
-                  <input
-                    className="input !w-16 !py-1.5 text-center text-xl"
-                    placeholder="🙂"
-                    value={avatarInput}
-                    onChange={(e) => setAvatarInput(e.target.value)}
-                    maxLength={8}
-                  />
-                  <button
-                    className="btn-primary !px-3 !py-1.5 !text-xs shrink-0"
-                    disabled={savingAvatarEmoji || !avatarInput}
-                    onClick={saveCustomAvatarEmoji}
-                  >
-                    {t("profile.save")}
-                  </button>
-                </div>
-                {avatarError && <p className="text-xs text-red-600 dark:text-red-400">{avatarError}</p>}
-                <div className="flex items-center gap-3 border-t border-slate-100 dark:border-slate-700 pt-2">
-                  {data.avatarEmoji && (
-                    <button
-                      className="text-xs text-red-500 hover:underline"
-                      disabled={savingAvatarEmoji}
-                      onClick={() => saveAvatarEmoji(null)}
-                    >
-                      {t("season.remove")}
-                    </button>
-                  )}
-                  <button className="text-xs text-slate-400 hover:underline ml-auto" onClick={() => setAvatarPickerOpen(false)}>
-                    {t("common.close")}
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-          {data.tier && (
-            <span className="text-sm font-bold bg-black/15 rounded-full px-3.5 py-1.5 text-gold-400 shrink-0">
-              {TIER_ICONS[data.tier]} {tier(data.tier)}
-            </span>
-          )}
-        </div>
-
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-          <HeroStat value={<><SystemIcon kind="streak" className="inline h-4 w-4" fill="currentColor" aria-hidden /> {data.currentStreak}</>} label={t("profile.streak")} href="/streak" />
-          <HeroStat value={<><SystemIcon kind="xp" className="inline h-4 w-4" fill="currentColor" aria-hidden /> {data.xpTotal}</>} label="XP" href="/xp" />
-          <HeroStat value={<><Snowflake className="inline h-4 w-4" aria-hidden /> {data.freezeCount}</>} label={t("lesson.freezes")} />
-          <HeroStat value={`📖 ${data.chaptersCompleted}`} label={t("profile.chapters")} />
-        </div>
-
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 text-center text-sm text-brand-100 border-t border-white/15 pt-4">
-          <Stat value={data.longestStreak.toString()} label={t("profile.longestStreak")} small light />
-          <Stat value={`${data.duelsWon}/${data.duelsPlayed}`} label={t("profile.duelsWon")} small light />
-          <Stat value={earnedCount.toString()} label={t("profile.achievements")} small light />
-        </div>
-      </div>
-
-      <CollapsibleCard title={t("nav.competition")} defaultOpen className="!bg-gold-50 dark:!bg-slate-800 !border-gold-400/30 dark:!border-slate-700">
-        <div className="grid grid-cols-2 gap-3">
-          <div className="rounded-2xl bg-white/70 dark:bg-slate-700/70 !py-3 flex flex-col items-center gap-0.5">
-            <Link href="/competition" className="block text-center hover:opacity-75">
-              <div className="text-lg font-extrabold text-gold-600 dark:text-gold-400">
-                {data.tier ? `${TIER_ICONS[data.tier]} ${data.groupPosition ? `#${data.groupPosition}` : "—"}` : "—"}
-              </div>
-              <div className="text-xs text-slate-400 dark:text-slate-500 font-bold uppercase">{t("profile.thisWeek")}</div>
-            </Link>
-          </div>
-          <div className="rounded-2xl bg-white/70 dark:bg-slate-700/70 !py-3 flex flex-col items-center gap-0.5">
-            <div className="text-lg font-extrabold text-gold-600 dark:text-gold-400">
-              {data.bestTierEver ? `${TIER_ICONS[data.bestTierEver]} ${tier(data.bestTierEver)}` : "—"}
-            </div>
-            <div className="text-xs text-slate-400 dark:text-slate-500 font-bold uppercase">{t("profile.bestTier")}</div>
-          </div>
-        </div>
-        <div className="grid grid-cols-4 gap-2 text-center text-sm text-slate-500 dark:text-slate-400">
-          <Stat value={data.lifetimePromotions.toString()} label={t("profile.promotions")} small />
-          <Stat value={data.lifetimeDemotions.toString()} label={t("profile.demotions")} small />
-          <Stat value={data.competitionsWon.toString()} label={t("profile.competitions")} small />
-          <Stat value={data.bestNationalRank ? `#${data.bestNationalRank}` : "—"} label={t("profile.nationalRank")} small />
-        </div>
-      </CollapsibleCard>
-
-      {data.seasons.length > 0 && (
-        <CollapsibleCard title={t("pages.seasons")}>
-          <div className="flex flex-col divide-y divide-slate-100 dark:divide-slate-700">
-            {data.seasons.map((s) => (
-              <div key={s.seasonIndex} className="flex items-center justify-between py-2.5">
-                <span className="font-bold dark:text-slate-100">{t("profile.seasonN", { n: s.seasonIndex })}</span>
-                <span className="text-slate-500 dark:text-slate-400">
-                  {TIER_ICONS[s.finalTier]} {tier(s.finalTier)}
-                  {s.finalGroupPosition ? ` — #${s.finalGroupPosition}` : ""}
-                </span>
-              </div>
-            ))}
-          </div>
-        </CollapsibleCard>
-      )}
-
-      <CollapsibleCard
-        title={t("profile.achievements")}
-        extra={
-          <span className="text-sm font-bold text-slate-400 dark:text-slate-500">
-            {earnedCount}/{data.achievements.length}
-          </span>
-        }
-      >
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          {data.achievements.map((a) => (
-            <div
-              key={a.slug}
-              title={translateOr(t, `achievements.${a.slug}.description`, a.description)}
-              className={`rounded-2xl border p-4 flex flex-col items-center text-center gap-1 ${
-                a.earnedAt
-                  ? "bg-gold-50 dark:bg-slate-700 border-gold-400/30 dark:border-slate-600"
-                  : "border-slate-100 dark:border-slate-700 opacity-40 grayscale"
-              }`}
-            >
-              <span className="text-3xl">{a.icon}</span>
-              <span className="text-xs font-bold dark:text-slate-200">{translateOr(t, `achievements.${a.slug}.name`, a.name)}</span>
-            </div>
+  const avatarPicker = avatarPickerOpen ? (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={() => setAvatarPickerOpen(false)}>
+      <div className="card flex w-full max-w-xs flex-col gap-3 !p-4 text-slate-800 shadow-xl dark:text-slate-100" onClick={(event) => event.stopPropagation()}>
+        <p className="text-sm font-bold">{t("profile.chooseAvatar")}</p>
+        <div className="grid grid-cols-6 gap-1.5">
+          {AVATAR_EMOJI_OPTIONS.map((emoji) => (
+            <button key={emoji} type="button" className="flex h-9 w-9 items-center justify-center rounded-lg text-xl hover:bg-slate-100 dark:hover:bg-slate-700" disabled={savingAvatarEmoji} onClick={() => saveAvatarEmoji(emoji)}>{emoji}</button>
           ))}
         </div>
-      </CollapsibleCard>
-
-      <CollapsibleCard title={t("profile.readingProgress")}>
-        <p className="text-sm text-slate-500 dark:text-slate-400">
-          {t("profile.readingResetText")}
-        </p>
-        {!resetReadingMessage ? (
-          <button
-            className="btn-secondary self-start !border-red-300 !text-red-600 dark:!border-red-700 dark:!text-red-400"
-            disabled={resettingReadingProgress}
-            onClick={async () => {
-              if (
-                !(await confirm(
-                  t("profile.readingResetConfirm")
-                ))
-              ) {
-                return;
-              }
-              setResettingReadingProgress(true);
-              const res = await fetch("/api/progress/reset-reading", { method: "POST" });
-              setResettingReadingProgress(false);
-              if (res.ok) {
-                setResetReadingMessage(t("profile.readingResetDone"));
-                router.refresh();
-              }
-            }}
-          >
-            {resettingReadingProgress ? t("courses.busy") : t("profile.readingReset")}
-          </button>
-        ) : (
-          <p className="text-sm font-bold text-brand-600 dark:text-brand-300">{resetReadingMessage}</p>
-        )}
-      </CollapsibleCard>
-
-      <CollapsibleCard title={t("profile.tour")}>
-
-        <div className="flex gap-2 flex-wrap">
-          <Link href="/onboarding" className="btn-secondary self-start">
-            {t("profile.tourAgain")}
-          </Link>
+        <div className="flex items-center gap-2">
+          <input className="input !w-16 text-center text-xl" placeholder="🙂" value={avatarInput} onChange={(event) => setAvatarInput(event.target.value)} maxLength={8} />
+          <button className="btn-primary shrink-0 !px-3 !py-1.5 !text-xs" disabled={savingAvatarEmoji || !avatarInput} onClick={saveCustomAvatarEmoji}>{t("profile.save")}</button>
         </div>
-      </CollapsibleCard>
-
-      <LanguageSettings uiLanguage={data.uiLanguage} isAdmin={data.isAdmin} />
-
-      <CollapsibleCard title={t("profile.readAloud")}>
-        <p className="text-sm text-slate-500 dark:text-slate-400">
-          {t("profile.readAloudText")}
-        </p>
-
-        {readAloudVoices.length > 0 ? (
-          <>
-            <label className="flex flex-col gap-1.5">
-              <span className="text-sm font-semibold dark:text-slate-200">{t("profile.dutchVoice")}</span>
-              <AppSelect
-                className="input"
-                value={selectedReadAloudVoice}
-                onChange={changeReadAloudVoice}
-                ariaLabel={t("profile.dutchVoice")}
-                options={[{ value: "", label: t("profile.automatic") }, ...readAloudVoices.map((voice) => ({ value: voice.voiceURI, label: voice.name }))]}
-              />
-            </label>
-
-            <div className="flex flex-col gap-2">
-              <label className="flex items-center gap-3">
-                <span className="text-sm font-semibold dark:text-slate-200">{t("profile.readAloudSpeed")}</span>
-                <AppSelect
-                  className="input !w-auto"
-                  value={String(readAloudSpeed)}
-                  onChange={(value) => changeReadAloudSpeed(Number(value))}
-                  ariaLabel={t("profile.readAloudSpeed")}
-                  options={[0.75, 1, 1.25, 1.5, 2].map((value) => ({ value: String(value), label: `${value}×` }))}
-                />
-              </label>
-              <div className="flex items-center gap-3">
-              <button
-                className="btn-secondary !px-3 !py-1.5"
-                disabled={testingReadAloudVoice}
-                onClick={testReadAloudVoice}
-              >
-                {testingReadAloudVoice ? t("profile.samplePlaying") : t("profile.listenVoice")}
-              </button>
-              <span className="text-xs text-slate-400 dark:text-slate-500">
-                {t("profile.savedOnDevice")}
-              </span>
-              </div>
-            </div>
-          </>
-        ) : (
-          <p className="text-sm text-slate-400 dark:text-slate-500">
-            {t("profile.noVoices")}
-          </p>
-        )}
-      </CollapsibleCard>
-
-      <CollapsibleCard title={t("profile.notifications")}>
-        <p className="text-sm text-slate-500 dark:text-slate-400">
-          {t("profile.notificationsText")}
-        </p>
-
-        <label className="flex items-start gap-3 cursor-pointer">
-          <input
-            type="checkbox"
-            className="mt-1 h-5 w-5 accent-brand-500"
-            checked={data.emailNotificationsEnabled}
-            onChange={toggleEmailNotifications}
-            disabled={savingNotifications}
-          />
-          <span className="text-sm dark:text-slate-200">{t("profile.emailNotifications", { email: data.email })}</span>
-        </label>
-
-        <label className="flex items-start gap-3 cursor-pointer">
-          <input
-            type="checkbox"
-            className="mt-1 h-5 w-5 accent-brand-500"
-            checked={data.pushNotificationsEnabled}
-            onChange={togglePushNotifications}
-            disabled={savingNotifications || !isPushSupported()}
-          />
-          <span className="text-sm dark:text-slate-200">
-            {t("profile.pushNotifications")}
-            {!isPushSupported() && (
-              <>
-                <br />
-                <span className="text-slate-400 dark:text-slate-500">{t("profile.pushUnsupported")}</span>
-              </>
-            )}
-          </span>
-        </label>
-        {pushError && <p className="text-sm text-red-600 dark:text-red-400">{pushError}</p>}
-
-        {data.pushNotificationsEnabled && (
-          <div className="flex flex-col gap-1 items-start">
-            <button className="btn-secondary !px-3 !py-1.5" disabled={testingPush} onClick={sendTestPush}>
-              {pushCountdown !== null
-                ? t("profile.pushIn", { n: pushCountdown })
-                : testingPush
-                  ? t("courses.busy")
-                  : t("profile.sendTestPush")}
-            </button>
-            {pushCountdown !== null && (
-              <p className="text-xs font-semibold text-brand-600 dark:text-brand-300">
-                {t("profile.closeAppForBadge")}
-              </p>
-            )}
-            {pushTestMessage && <p className="text-xs text-slate-500 dark:text-slate-400">{pushTestMessage}</p>}
-          </div>
-        )}
-
-        <div className="border-t border-slate-100 dark:border-slate-700 pt-3 mt-1 flex flex-col gap-3">
-          <p className="text-sm font-semibold dark:text-slate-200">{t("profile.dailyText")}</p>
-          <label className="flex items-start gap-3 cursor-pointer">
-            <input
-              type="checkbox"
-              className="mt-1 h-5 w-5 accent-brand-500"
-              checked={data.notifyDailyText}
-              onChange={() => toggleCategory("notifyDailyText")}
-              disabled={savingNotifications}
-            />
-            <span className="text-sm dark:text-slate-200">{t("profile.sendDailyText")}</span>
-          </label>
-          <label className="flex items-center gap-3">
-            <span className="text-sm dark:text-slate-200">{t("profile.sendAround")}</span>
-            <input
-              type="time"
-              className="input !w-auto"
-              value={data.dailyTextTime}
-              onChange={(e) => saveAccountPatch({ dailyTextTime: e.target.value }).then(() => setData((current) => current ? { ...current, dailyTextTime: e.target.value } : current))}
-            />
-          </label>
-          <p className="text-xs text-slate-400 dark:text-slate-500">{t("profile.dailyTextHint")}</p>
+        {avatarError && <p className="text-xs text-red-600 dark:text-red-400">{avatarError}</p>}
+        <div className="flex items-center gap-3 border-t border-slate-100 pt-2 dark:border-slate-700">
+          {data.avatarEmoji && <button className="text-xs text-red-500 hover:underline" disabled={savingAvatarEmoji} onClick={() => saveAvatarEmoji(null)}>{t("season.remove")}</button>}
+          <button className="ml-auto text-xs text-slate-400 hover:underline" onClick={() => setAvatarPickerOpen(false)}>{t("common.close")}</button>
         </div>
+      </div>
+    </div>
+  ) : null;
 
-        <label className="flex items-center gap-3">
-          <span className="text-sm dark:text-slate-200">{t("profile.reminderAround")}</span>
-          <input
-            type="time"
-            className="input !w-auto"
-            value={data.dailyReminderTime}
-            onChange={(e) => changeReminderTime(e.target.value)}
-          />
-        </label>
-
-        <div className="border-t border-slate-100 dark:border-slate-700 pt-3 mt-1 flex flex-col gap-2">
-          <p className="text-sm font-semibold dark:text-slate-200">{t("profile.whichNotifications")}</p>
-
-          <label className="flex items-start gap-3 cursor-pointer">
-            <input
-              type="checkbox"
-              className="mt-1 h-5 w-5 accent-brand-500"
-              checked={data.notifyDailyReminder}
-              onChange={() => toggleCategory("notifyDailyReminder")}
-              disabled={savingNotifications}
-            />
-            <span className="text-sm dark:text-slate-200">{t("profile.notifyReminder")}</span>
-          </label>
-
-          <label className="flex items-start gap-3 cursor-pointer">
-            <input
-              type="checkbox"
-              className="mt-1 h-5 w-5 accent-brand-500"
-              checked={data.notifySocial}
-              onChange={() => toggleCategory("notifySocial")}
-              disabled={savingNotifications}
-            />
-            <span className="text-sm dark:text-slate-200">
-              {t("profile.notifySocial")}
-            </span>
-          </label>
-
-          <label className="flex items-start gap-3 cursor-pointer">
-            <input
-              type="checkbox"
-              className="mt-1 h-5 w-5 accent-brand-500"
-              checked={data.notifyAchievements}
-              onChange={() => toggleCategory("notifyAchievements")}
-              disabled={savingNotifications}
-            />
-            <span className="text-sm dark:text-slate-200">{t("profile.notifyAchievements")}</span>
-          </label>
-
-          <label className="flex items-start gap-3 cursor-pointer">
-            <input
-              type="checkbox"
-              className="mt-1 h-5 w-5 accent-brand-500"
-              checked={data.notifyWordGame}
-              onChange={() => toggleCategory("notifyWordGame")}
-              disabled={savingNotifications}
-            />
-            <span className="text-sm dark:text-slate-200">{t("profile.notifyWordGame")}</span>
-          </label>
-
-          <label className="flex items-start gap-3 cursor-pointer">
-            <input
-              type="checkbox"
-              className="mt-1 h-5 w-5 accent-brand-500"
-              checked={data.notifyFriendOnline}
-              onChange={() => toggleCategory("notifyFriendOnline")}
-              disabled={savingNotifications}
-            />
-            <span className="text-sm dark:text-slate-200">
-              {t("profile.notifyFriendOnline")}
-            </span>
-          </label>
-        </div>
-      </CollapsibleCard>
-
-      <ChangelogSection
-        enabled={data.changelogEnabled}
-        saving={savingNotifications}
-        onToggle={() => toggleCategory("changelogEnabled")}
-      />
-
-      <CollapsibleCard title={t("profile.privacy")}>
-        <label className="flex items-start gap-3 cursor-pointer">
-          <input
-            type="checkbox"
-            className="mt-1 h-5 w-5 accent-brand-500"
-            checked={data.searchableByEmail}
-            onChange={toggleSearchableByEmail}
-            disabled={savingPrivacy}
-          />
-          <span className="text-sm dark:text-slate-200">
-            {t("profile.searchableByEmail", { email: data.email })}
-            <br />
-            <span className="text-slate-400 dark:text-slate-500">
-              {t("profile.searchableHint", { tag: formatTag(data.handle, data.discriminator) })}
-            </span>
-          </span>
-        </label>
-      </CollapsibleCard>
-
-      <CollapsibleCard title={t("profile.onlineActivity")}>
-        <label className="flex items-start gap-3 cursor-pointer">
-          <input
-            type="checkbox"
-            className="mt-1 h-5 w-5 accent-brand-500"
-            checked={data.shareOnlineStatus}
-            onChange={toggleShareOnlineStatus}
-            disabled={savingPresence}
-          />
-          <span className="text-sm dark:text-slate-200">
-            {t("profile.shareOnline")}
-            <br />
-            <span className="text-slate-400 dark:text-slate-500">
-              {t("profile.shareOnlineHint")}
-            </span>
-          </span>
-        </label>
-
-        {data.shareOnlineStatus && (
-          <label className="flex items-start gap-3 cursor-pointer pl-8">
-            <input
-              type="checkbox"
-              className="mt-1 h-5 w-5 accent-brand-500"
-              checked={data.shareCurrentActivity}
-              onChange={toggleShareCurrentActivity}
-              disabled={savingPresence}
-            />
-            <span className="text-sm dark:text-slate-200">
-              {t("profile.shareActivity")}
-            </span>
-          </label>
-        )}
-
-        <div className="pt-2 border-t border-slate-100 dark:border-slate-700 flex flex-col gap-2">
-          <p className="text-sm dark:text-slate-200">{t("profile.incognito")}</p>
-          <p className="text-xs text-slate-400 dark:text-slate-500">
-            {t("profile.incognitoHint")}
-          </p>
-          {data.incognitoActive ? (
-            <button className="btn-secondary self-start !px-4 !py-2" onClick={deactivateIncognito} disabled={savingPresence}>
-              {t("profile.incognitoOff")}
-            </button>
-          ) : (
-            <div className="flex gap-2 flex-wrap">
-              {([1, 4, 12, 24] as const).map((hours) => (
-                <button
-                  key={hours}
-                  className="btn-secondary !px-3 !py-1.5 !text-xs"
-                  onClick={() => activateIncognito(hours)}
-                  disabled={savingPresence}
-                >
-                  {t("profile.hoursN", { n: hours })}
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-      </CollapsibleCard>
-
-      <CollapsibleCard title={t("profile.deleteAccount")}>
-        {!confirmingDelete ? (
-          <button className="btn-secondary self-start !text-red-500 !border-red-200" onClick={() => setConfirmingDelete(true)}>
-            {t("profile.deleteAccount")}
-          </button>
-        ) : (
-          <div className="flex flex-col gap-3">
-            <p className="text-sm text-red-600 dark:text-red-400">
-              {t("profile.deleteWarning")}
-            </p>
-            <div className="flex gap-2">
-              <button className="btn-primary !bg-red-500 !shadow-[0_4px_0_0_theme(colors.red.700)]" disabled={deleting} onClick={deleteAccount}>
-                {deleting ? t("courses.busy") : t("profile.deleteConfirm")}
-              </button>
-              <button className="btn-secondary" onClick={() => setConfirmingDelete(false)}>
-                {t("activeGames.cancel")}
-              </button>
-            </div>
-          </div>
-        )}
-      </CollapsibleCard>
-
-      <CollapsibleCard title={t("profile.account")} defaultOpen>
-
-        <div>
-          <h3 className="font-extrabold text-base dark:text-slate-100 mb-2">{t("profile.twoFactor")}</h3>
-          <TwoFactorSettings isAdmin={data.isAdmin} />
-        </div>
-
-        <div className="border-t border-slate-100 dark:border-slate-700 pt-4 mt-1">
-          <Link href="/change-password" className="btn-secondary self-start">
-            {t("profile.changePassword")}
-          </Link>
-        </div>
-
-        <div className="border-t border-slate-100 dark:border-slate-700 pt-4 mt-1">
-          {!confirmingLogout ? (
-            <button className="btn-secondary self-start" onClick={() => setConfirmingLogout(true)}>
-              {t("profile.logout")}
-            </button>
-          ) : (
-            <div className="flex flex-col gap-3">
-              <p className="text-sm dark:text-slate-200">{t("profile.logoutConfirm")}</p>
-              <div className="flex gap-2 flex-wrap">
-                <button className="btn-primary self-start" onClick={logout}>
-                  {t("profile.logoutYes")}
-                </button>
-                <button className="btn-secondary self-start" onClick={() => setConfirmingLogout(false)}>
-                  {t("activeGames.cancel")}
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
-      </CollapsibleCard>
+  const profileHeading = (title: string, subtitle?: string) => (
+    <div className="flex items-start gap-3">
+      <button type="button" onClick={() => setView("overview")} className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-vs-fg-2 transition hover:bg-vs-subtle focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-vs-accent" aria-label={t("common.back")}>
+        <ArrowLeft className="h-5 w-5" aria-hidden />
+      </button>
+      <div>
+        <h1 className="text-2xl font-extrabold text-vs-fg">{title}</h1>
+        {subtitle && <p className="mt-1 text-sm text-vs-fg-2">{subtitle}</p>}
+      </div>
     </div>
   );
+
+  if (view !== "overview") {
+    return (
+      <div className="mx-auto flex max-w-5xl flex-col gap-5">
+        {view === "competition" && <>{profileHeading(t("nav.competition"), t("profile.thisWeek"))}<CompetitionDetail data={data} tier={tier} t={t} /></>}
+        {view === "achievements" && <>{profileHeading(t("profile.achievements"))}<AchievementDetail data={data} earnedCount={earnedCount} t={t} /></>}
+        {view === "reading" && <>{profileHeading(t("profile.readingProgress"))}<ReadingDetail t={t} resetting={resettingReadingProgress} message={resetReadingMessage} onReset={async () => {
+          if (!(await confirm(t("profile.readingResetConfirm")))) return;
+          setResettingReadingProgress(true);
+          const response = await fetch("/api/progress/reset-reading", { method: "POST" });
+          setResettingReadingProgress(false);
+          if (response.ok) { setResetReadingMessage(t("profile.readingResetDone")); router.refresh(); }
+        }} /></>}
+        {view === "language" && <>{profileHeading(t("languageSettings.title"))}<LanguageSettings uiLanguage={data.uiLanguage} isAdmin={data.isAdmin} /></>}
+        {view === "readAloud" && <>{profileHeading(t("profile.readAloud"))}<ReadAloudDetail t={t} voices={readAloudVoices} selectedVoice={selectedReadAloudVoice} speed={readAloudSpeed} testing={testingReadAloudVoice} onVoice={changeReadAloudVoice} onSpeed={changeReadAloudSpeed} onTest={testReadAloudVoice} /></>}
+        {view === "notifications" && <>{profileHeading(t("profile.notifications"))}<NotificationDetail data={data} t={t} saving={savingNotifications} pushError={pushError} testingPush={testingPush} pushCountdown={pushCountdown} pushTestMessage={pushTestMessage} onEmail={toggleEmailNotifications} onPush={togglePushNotifications} onTest={sendTestPush} onCategory={toggleCategory} onReminder={changeReminderTime} onDailyText={(time) => saveAccountPatch({ dailyTextTime: time }).then(() => setData((current) => current ? { ...current, dailyTextTime: time } : current))} /></>}
+        {view === "privacy" && <>{profileHeading(t("profile.privacy"))}<PrivacyDetail data={data} t={t} saving={savingPrivacy} onToggle={toggleSearchableByEmail} /></>}
+        {view === "presence" && <>{profileHeading(t("profile.onlineActivity"))}<PresenceDetail data={data} t={t} saving={savingPresence} onOnline={toggleShareOnlineStatus} onActivity={toggleShareCurrentActivity} onIncognito={activateIncognito} onIncognitoOff={deactivateIncognito} /></>}
+        {view === "about" && <>{profileHeading(t("profile.aboutSection"))}<AboutDetail data={data} t={t} saving={savingNotifications} onToggle={() => toggleCategory("changelogEnabled")} /></>}
+        {view === "twoFactor" && <>{profileHeading(t("profile.twoFactor"))}<section className="vs-surface rounded-2xl border border-vs-line p-4 sm:p-6"><TwoFactorSettings isAdmin={data.isAdmin} /></section></>}
+      </div>
+    );
+  }
+
+  return (
+    <div className="mx-auto flex max-w-5xl flex-col gap-5">
+      {data.isAdmin && <Link href="/adminbackend" className="flex items-center gap-2 rounded-xl border border-vs-line bg-vs-surface px-4 py-3 text-sm font-bold text-vs-accent transition hover:bg-vs-subtle"><ShieldCheck className="h-5 w-5" aria-hidden />{t("profile.toAdmin")}</Link>}
+
+      <section className="vs-surface overflow-hidden rounded-3xl border border-vs-line bg-gradient-to-br from-brand-500 to-brand-700 p-4 text-white shadow-sm dark:from-brand-600 dark:to-brand-900 sm:p-6">
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex min-w-0 items-center gap-3">
+            <button type="button" onClick={() => { setAvatarError(null); setAvatarInput(""); setAvatarPickerOpen(true); }} className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-black/15 text-2xl font-extrabold text-gold-400 hover:opacity-80" title={t("profile.changeAvatar")}>{data.avatarEmoji || initial}</button>
+            <div className="min-w-0">
+              {!editingHandle ? <>
+                <h1 className="flex min-w-0 items-center gap-1.5 text-xl font-extrabold"><span className="truncate">{data.displayName}</span><button type="button" onClick={startEditingHandle} className="shrink-0 opacity-80 hover:opacity-100" title={t("profile.changeHandle")} aria-label={t("profile.changeHandle")}><Pencil className="h-4 w-4" aria-hidden /></button></h1>
+                <p className="truncate text-sm text-brand-100">{formatTag(data.handle, data.discriminator)}</p>
+              </> : <div className="flex flex-col gap-2">
+                <label className="flex items-center gap-2"><input className="input !w-auto !py-1 !text-sm" value={handleInput} onChange={(event) => setHandleInput(event.target.value)} maxLength={24} autoFocus /><span className="text-sm text-brand-100">#{data.discriminator}</span></label>
+                {handleError && <p className="text-xs text-red-100">{handleError}</p>}
+                <div className="flex gap-2"><button className="btn-primary !px-3 !py-1 !text-xs" disabled={savingHandle} onClick={saveHandle}>{savingHandle ? t("courses.busy") : t("profile.save")}</button><button className="btn-secondary !px-3 !py-1 !text-xs" onClick={() => setEditingHandle(false)}>{t("activeGames.cancel")}</button></div>
+              </div>}
+            </div>
+          </div>
+          {data.tier && <span className="shrink-0 rounded-full bg-black/15 px-3 py-1.5 text-sm font-bold text-gold-400">{TIER_ICONS[data.tier]} {tier(data.tier)}</span>}
+        </div>
+        <div className="mt-5 grid grid-cols-4 divide-x divide-white/15 rounded-2xl bg-black/10 py-2">
+          <CompactHeroStat value={<><SystemIcon kind="streak" className="h-4 w-4" fill="currentColor" aria-hidden /> {data.currentStreak}</>} label={t("profile.streak")} href="/streak" />
+          <CompactHeroStat value={<><SystemIcon kind="xp" className="h-4 w-4" fill="currentColor" aria-hidden /> {data.xpTotal}</>} label="XP" href="/xp" />
+          <CompactHeroStat value={<><Snowflake className="h-4 w-4" aria-hidden /> {data.freezeCount}</>} label={t("lesson.freezes")} />
+          <CompactHeroStat value={<><BookOpen className="h-4 w-4" aria-hidden /> {data.chaptersCompleted}</>} label={t("profile.chapters")} />
+        </div>
+      </section>
+      {avatarPicker}
+
+      <div className="flex flex-wrap items-center justify-end gap-2">
+        <Link href="/feedback" className="inline-flex min-h-10 items-center gap-2 rounded-xl px-3 text-sm font-bold text-vs-fg-2 hover:bg-vs-subtle"><MessageSquare className="h-4 w-4" aria-hidden />{t("profile.giveFeedback")}</Link>
+        <Link href="/shop" className="inline-flex min-h-10 items-center gap-2 rounded-xl px-3 text-sm font-bold text-vs-fg-2 hover:bg-vs-subtle"><ShoppingBag className="h-4 w-4" aria-hidden />{t("nav.shop")}</Link>
+        <ThemeToggle />
+      </div>
+
+      <section className="vs-surface rounded-2xl border border-vs-line p-4 sm:p-5">
+        <SectionHeading icon={<Trophy className="h-5 w-5 text-vs-xp" aria-hidden />} title={t("nav.competition")} />
+        <button type="button" onClick={() => setView("competition")} className="mt-3 flex min-h-12 w-full items-center justify-between gap-3 rounded-xl px-2 py-2 text-left hover:bg-vs-subtle">
+          <span className="min-w-0"><span className="block font-bold text-vs-fg">{data.tier ? `${TIER_ICONS[data.tier]} ${tier(data.tier)}` : "—"}</span><span className="block text-sm text-vs-fg-2">{data.groupPosition ? `#${data.groupPosition} · ` : ""}{t("profile.thisWeek")}</span></span>
+          <span className="flex shrink-0 items-center gap-2 text-sm font-bold text-vs-fg-2">{data.bestTierEver ? `${t("profile.bestTier")}: ${tier(data.bestTierEver)}` : "—"}<ChevronRight className="h-5 w-5" aria-hidden /></span>
+        </button>
+      </section>
+
+      <ProfileSection title={t("profile.progressSection")}>
+        <ProfileRow icon={<Trophy className="h-5 w-5 text-vs-xp" aria-hidden />} label={t("profile.achievements")} value={`${earnedCount}/${data.achievements.length}`} onClick={() => setView("achievements")} />
+        <ProfileRow icon={<BookOpen className="h-5 w-5 text-vs-accent" aria-hidden />} label={t("profile.readingProgress")} value={`${data.chaptersCompleted} ${t("profile.chapters").toLowerCase()}`} onClick={() => setView("reading")} />
+      </ProfileSection>
+
+      <ProfileSection title={t("profile.preferencesSection")}>
+        <ProfileRow icon={<Globe2 className="h-5 w-5 text-vs-accent" aria-hidden />} label={t("languageSettings.title")} value={getLanguage(data.uiLanguage).nativeName} onClick={() => setView("language")} />
+        <ProfileRow icon={<Volume2 className="h-5 w-5 text-vs-accent" aria-hidden />} label={t("profile.readAloud")} onClick={() => setView("readAloud")} />
+        <ProfileRow icon={<Bell className="h-5 w-5 text-vs-accent" aria-hidden />} label={t("profile.notifications")} onClick={() => setView("notifications")} />
+      </ProfileSection>
+
+      <ProfileSection title={t("profile.socialPrivacySection")}>
+        <ProfileRow icon={<LockKeyhole className="h-5 w-5 text-vs-accent" aria-hidden />} label={t("profile.privacy")} onClick={() => setView("privacy")} />
+        <ProfileRow icon={<Users className="h-5 w-5 text-vs-accent" aria-hidden />} label={t("profile.onlineActivity")} value={data.shareOnlineStatus ? t("twoFactor.on") : t("twoFactor.off")} onClick={() => setView("presence")} />
+      </ProfileSection>
+
+      <ProfileSection title={t("profile.aboutSection")}>
+        <ProfileRow icon={<Sparkles className="h-5 w-5 text-vs-xp" aria-hidden />} label={t("profile.whatsNew")} onClick={() => setView("about")} />
+        <ProfileRow icon={<MoreHorizontal className="h-5 w-5 text-vs-fg-2" aria-hidden />} label={t("profile.tour")} onClick={() => router.push("/onboarding")} />
+        <ProfileRow icon={<MessageSquare className="h-5 w-5 text-vs-fg-2" aria-hidden />} label={t("profile.giveFeedback")} href="/feedback" />
+        <ProfileRow icon={<ShoppingBag className="h-5 w-5 text-vs-fg-2" aria-hidden />} label={t("nav.shop")} href="/shop" />
+      </ProfileSection>
+
+      <ProfileSection title={t("profile.account")}>
+        <ProfileRow icon={<ShieldCheck className="h-5 w-5 text-vs-accent" aria-hidden />} label={t("profile.twoFactor")} value={data.totpEnabled ? t("twoFactor.on") : t("twoFactor.off")} onClick={() => setView("twoFactor")} />
+        <ProfileRow icon={<KeyRound className="h-5 w-5 text-vs-fg-2" aria-hidden />} label={t("profile.changePassword")} href="/change-password" />
+        {!confirmingLogout ? <ProfileRow icon={<LogOut className="h-5 w-5 text-vs-fg-2" aria-hidden />} label={t("profile.logout")} onClick={() => setConfirmingLogout(true)} /> : <div className="rounded-xl bg-vs-subtle p-3"><p className="text-sm text-vs-fg">{t("profile.logoutConfirm")}</p><div className="mt-2 flex gap-2"><button className="btn-primary !py-2 !text-sm" onClick={logout}>{t("profile.logoutYes")}</button><button className="btn-secondary !py-2 !text-sm" onClick={() => setConfirmingLogout(false)}>{t("activeGames.cancel")}</button></div></div>}
+        {!confirmingDelete ? <ProfileRow icon={<Trash2 className="h-5 w-5 text-red-500" aria-hidden />} label={t("profile.deleteAccount")} destructive onClick={() => setConfirmingDelete(true)} /> : <div className="rounded-xl border border-red-300/50 bg-red-50 p-3 dark:bg-red-950/30"><p className="text-sm text-red-700 dark:text-red-300">{t("profile.deleteWarning")}</p><div className="mt-2 flex gap-2"><button className="btn-primary !bg-red-500 !shadow-[0_4px_0_0_theme(colors.red.700)] !py-2 !text-sm" disabled={deleting} onClick={deleteAccount}>{deleting ? t("courses.busy") : t("profile.deleteConfirm")}</button><button className="btn-secondary !py-2 !text-sm" onClick={() => setConfirmingDelete(false)}>{t("activeGames.cancel")}</button></div></div>}
+      </ProfileSection>
+    </div>
+  );
+}
+
+
+type Translate = ReturnType<typeof useT>;
+
+function SectionHeading({ icon, title }: { icon: ReactNode; title: string }) {
+  return <h2 className="flex items-center gap-2 text-xs font-extrabold uppercase tracking-wider text-vs-fg-2">{icon}{title}</h2>;
+}
+
+function ProfileSection({ title, children }: { title: string; children: ReactNode }) {
+  return <section className="vs-surface rounded-2xl border border-vs-line p-4 sm:p-5"><h2 className="mb-2 text-xs font-extrabold uppercase tracking-wider text-vs-fg-2">{title}</h2><div className="divide-y divide-vs-line">{children}</div></section>;
+}
+
+function ProfileRow({ icon, label, value, href, onClick, destructive = false }: { icon: ReactNode; label: string; value?: string; href?: string; onClick?: () => void; destructive?: boolean }) {
+  const className = `flex min-h-14 w-full items-center gap-3 rounded-xl px-2 py-2 text-left transition hover:bg-vs-subtle focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-vs-accent ${destructive ? "text-red-600 dark:text-red-400" : "text-vs-fg"}`;
+  const content = <><span className="shrink-0">{icon}</span><span className="min-w-0 flex-1 truncate font-bold">{label}</span>{value && <span className="max-w-[45%] truncate text-sm text-vs-fg-2">{value}</span>}<ChevronRight className="h-5 w-5 shrink-0 text-vs-fg-3" aria-hidden /></>;
+  if (href) return <Link href={href} className={className}>{content}</Link>;
+  return <button type="button" onClick={onClick} className={className}>{content}</button>;
+}
+
+function CompactHeroStat({ value, label, href }: { value: ReactNode; label: string; href?: string }) {
+  const content = <div className="flex flex-col items-center gap-0.5 px-1 text-center"><div className="flex items-center gap-1 text-sm font-extrabold text-white">{value}</div><div className="text-[10px] font-bold uppercase text-brand-100">{label}</div></div>;
+  return href ? <Link href={href}>{content}</Link> : content;
+}
+
+function CompetitionDetail({ data, tier, t }: { data: ProfileData; tier: (value: LeagueTier) => string; t: Translate }) {
+  return <div className="flex flex-col gap-4">
+    <section className="rounded-2xl border border-gold-400/30 bg-gold-50 p-4 dark:bg-slate-800"><div className="grid grid-cols-2 gap-3"><div><p className="text-2xl font-extrabold text-gold-700 dark:text-gold-300">{data.tier ? `${TIER_ICONS[data.tier]} ${tier(data.tier)}` : "—"}</p><p className="text-xs font-bold uppercase text-vs-fg-2">{data.groupPosition ? `#${data.groupPosition} · ` : ""}{t("profile.thisWeek")}</p></div><div className="text-right"><p className="text-lg font-extrabold text-gold-700 dark:text-gold-300">{data.bestTierEver ? `${TIER_ICONS[data.bestTierEver]} ${tier(data.bestTierEver)}` : "—"}</p><p className="text-xs font-bold uppercase text-vs-fg-2">{t("profile.bestTier")}</p></div></div></section>
+    <section className="vs-surface rounded-2xl border border-vs-line p-4"><div className="grid grid-cols-4 gap-2 text-center"><Stat value={data.lifetimePromotions.toString()} label={t("profile.promotions")} small /><Stat value={data.lifetimeDemotions.toString()} label={t("profile.demotions")} small /><Stat value={data.competitionsWon.toString()} label={t("profile.competitions")} small /><Stat value={data.bestNationalRank ? `#${data.bestNationalRank}` : "—"} label={t("profile.nationalRank")} small /></div></section>
+    {data.seasons.length > 0 && <section className="vs-surface rounded-2xl border border-vs-line p-4"><h2 className="mb-2 font-extrabold text-vs-fg">{t("pages.seasons")}</h2><div className="divide-y divide-vs-line">{data.seasons.map((season) => <div key={season.seasonIndex} className="flex items-center justify-between gap-3 py-2.5 text-sm"><span className="font-bold text-vs-fg">{t("profile.seasonN", { n: season.seasonIndex })}</span><span className="text-right text-vs-fg-2">{TIER_ICONS[season.finalTier]} {tier(season.finalTier)}{season.finalGroupPosition ? ` — #${season.finalGroupPosition}` : ""}</span></div>)}</div></section>}
+  </div>;
+}
+
+function AchievementDetail({ data, earnedCount, t }: { data: ProfileData; earnedCount: number; t: Translate }) {
+  return <section className="vs-surface rounded-2xl border border-vs-line p-4 sm:p-6"><p className="mb-4 text-sm text-vs-fg-2">{earnedCount}/{data.achievements.length}</p><div className="grid grid-cols-2 gap-3 sm:grid-cols-4">{data.achievements.map((achievement) => <div key={achievement.slug} title={translateOr(t, `achievements.${achievement.slug}.description`, achievement.description)} className={`flex flex-col items-center gap-1 rounded-2xl border p-4 text-center ${achievement.earnedAt ? "border-gold-400/30 bg-gold-50 dark:bg-slate-700" : "border-vs-line opacity-40 grayscale"}`}><span className="text-3xl">{achievement.icon}</span><span className="text-xs font-bold text-vs-fg">{translateOr(t, `achievements.${achievement.slug}.name`, achievement.name)}</span></div>)}</div></section>;
+}
+
+function ReadingDetail({ t, resetting, message, onReset }: { t: Translate; resetting: boolean; message: string | null; onReset: () => Promise<void> }) {
+  return <section className="vs-surface rounded-2xl border border-vs-line p-4 sm:p-6"><p className="text-sm text-vs-fg-2">{t("profile.readingResetText")}</p>{!message ? <button className="btn-secondary mt-4 self-start !border-red-300 !text-red-600 dark:!border-red-700 dark:!text-red-400" disabled={resetting} onClick={onReset}>{resetting ? t("courses.busy") : t("profile.readingReset")}</button> : <p className="mt-4 text-sm font-bold text-vs-accent">{message}</p>}</section>;
+}
+
+function ReadAloudDetail({ t, voices, selectedVoice, speed, testing, onVoice, onSpeed, onTest }: { t: Translate; voices: SpeechSynthesisVoice[]; selectedVoice: string; speed: number; testing: boolean; onVoice: (value: string) => void; onSpeed: (value: number) => void; onTest: () => void }) {
+  return <section className="vs-surface flex flex-col gap-5 rounded-2xl border border-vs-line p-4 sm:p-6"><p className="text-sm text-vs-fg-2">{t("profile.readAloudText")}</p>{voices.length > 0 ? <><label className="flex flex-col gap-1.5"><span className="text-sm font-semibold text-vs-fg">{t("profile.dutchVoice")}</span><AppSelect className="input" value={selectedVoice} onChange={onVoice} ariaLabel={t("profile.dutchVoice")} options={[{ value: "", label: t("profile.automatic") }, ...voices.map((voice) => ({ value: voice.voiceURI, label: voice.name }))]} /></label><div className="flex flex-col gap-3"><label className="flex items-center gap-3"><span className="text-sm font-semibold text-vs-fg">{t("profile.readAloudSpeed")}</span><AppSelect className="input !w-auto" value={String(speed)} onChange={(value) => onSpeed(Number(value))} ariaLabel={t("profile.readAloudSpeed")} options={[0.75, 1, 1.25, 1.5, 2].map((value) => ({ value: String(value), label: `${value}×` }))} /></label><div className="flex flex-wrap items-center gap-3"><button className="btn-secondary !px-3 !py-1.5" disabled={testing} onClick={onTest}>{testing ? t("profile.samplePlaying") : t("profile.listenVoice")}</button><span className="text-xs text-vs-fg-3">{t("profile.savedOnDevice")}</span></div></div></> : <p className="text-sm text-vs-fg-3">{t("profile.noVoices")}</p>}</section>;
+}
+
+type NotificationCategory = "notifyDailyReminder" | "notifyDailyText" | "notifySocial" | "notifyAchievements" | "notifyWordGame" | "notifyFriendOnline" | "changelogEnabled";
+function NotificationDetail({ data, t, saving, pushError, testingPush, pushCountdown, pushTestMessage, onEmail, onPush, onTest, onCategory, onReminder, onDailyText }: { data: ProfileData; t: Translate; saving: boolean; pushError: string | null; testingPush: boolean; pushCountdown: number | null; pushTestMessage: string | null; onEmail: () => void; onPush: () => void; onTest: () => void; onCategory: (field: NotificationCategory) => void; onReminder: (value: string) => void; onDailyText: (value: string) => void }) {
+  const check = (field: NotificationCategory, label: string, checked: boolean) => <label className="flex items-start gap-3"><input type="checkbox" className="mt-1 h-5 w-5 accent-brand-500" checked={checked} onChange={() => onCategory(field)} disabled={saving} /><span className="text-sm text-vs-fg">{label}</span></label>;
+  return <section className="vs-surface flex flex-col gap-4 rounded-2xl border border-vs-line p-4 sm:p-6"><p className="text-sm text-vs-fg-2">{t("profile.notificationsText")}</p><label className="flex items-start gap-3"><input type="checkbox" className="mt-1 h-5 w-5 accent-brand-500" checked={data.emailNotificationsEnabled} onChange={onEmail} disabled={saving} /><span className="text-sm text-vs-fg">{t("profile.emailNotifications", { email: data.email })}</span></label><label className="flex items-start gap-3"><input type="checkbox" className="mt-1 h-5 w-5 accent-brand-500" checked={data.pushNotificationsEnabled} onChange={onPush} disabled={saving || !isPushSupported()} /><span className="text-sm text-vs-fg">{t("profile.pushNotifications")}{!isPushSupported() && <><br /><span className="text-vs-fg-3">{t("profile.pushUnsupported")}</span></>}</span></label>{pushError && <p className="text-sm text-red-600 dark:text-red-400">{pushError}</p>}{data.pushNotificationsEnabled && <div className="flex flex-col items-start gap-1"><button className="btn-secondary !px-3 !py-1.5" disabled={testingPush} onClick={onTest}>{pushCountdown !== null ? t("profile.pushIn", { n: pushCountdown }) : testingPush ? t("courses.busy") : t("profile.sendTestPush")}</button>{pushTestMessage && <p className="text-xs text-vs-fg-2">{pushTestMessage}</p>}</div>}<div className="mt-1 flex flex-col gap-3 border-t border-vs-line pt-4"><p className="font-semibold text-vs-fg">{t("profile.dailyText")}</p>{check("notifyDailyText", t("profile.sendDailyText"), data.notifyDailyText)}<label className="flex items-center gap-3 text-sm text-vs-fg">{t("profile.sendAround")}<input type="time" className="input !w-auto" value={data.dailyTextTime} onChange={(event) => onDailyText(event.target.value)} /></label><p className="text-xs text-vs-fg-3">{t("profile.dailyTextHint")}</p></div><label className="flex items-center gap-3 text-sm text-vs-fg">{t("profile.reminderAround")}<input type="time" className="input !w-auto" value={data.dailyReminderTime} onChange={(event) => onReminder(event.target.value)} /></label><div className="mt-1 flex flex-col gap-3 border-t border-vs-line pt-4"><p className="font-semibold text-vs-fg">{t("profile.whichNotifications")}</p>{check("notifyDailyReminder", t("profile.notifyReminder"), data.notifyDailyReminder)}{check("notifySocial", t("profile.notifySocial"), data.notifySocial)}{check("notifyAchievements", t("profile.notifyAchievements"), data.notifyAchievements)}{check("notifyWordGame", t("profile.notifyWordGame"), data.notifyWordGame)}{check("notifyFriendOnline", t("profile.notifyFriendOnline"), data.notifyFriendOnline)}</div></section>;
+}
+
+function PrivacyDetail({ data, t, saving, onToggle }: { data: ProfileData; t: Translate; saving: boolean; onToggle: () => void }) {
+  return <section className="vs-surface rounded-2xl border border-vs-line p-4 sm:p-6"><label className="flex items-start gap-3"><input type="checkbox" className="mt-1 h-5 w-5 accent-brand-500" checked={data.searchableByEmail} onChange={onToggle} disabled={saving} /><span className="text-sm text-vs-fg">{t("profile.searchableByEmail", { email: data.email })}<br /><span className="text-vs-fg-2">{t("profile.searchableHint", { tag: formatTag(data.handle, data.discriminator) })}</span></span></label></section>;
+}
+
+function PresenceDetail({ data, t, saving, onOnline, onActivity, onIncognito, onIncognitoOff }: { data: ProfileData; t: Translate; saving: boolean; onOnline: () => void; onActivity: () => void; onIncognito: (hours: 1 | 4 | 12 | 24) => void; onIncognitoOff: () => void }) {
+  return <section className="vs-surface flex flex-col gap-4 rounded-2xl border border-vs-line p-4 sm:p-6"><label className="flex items-start gap-3"><input type="checkbox" className="mt-1 h-5 w-5 accent-brand-500" checked={data.shareOnlineStatus} onChange={onOnline} disabled={saving} /><span className="text-sm text-vs-fg">{t("profile.shareOnline")}<br /><span className="text-vs-fg-2">{t("profile.shareOnlineHint")}</span></span></label>{data.shareOnlineStatus && <label className="flex items-start gap-3 pl-8"><input type="checkbox" className="mt-1 h-5 w-5 accent-brand-500" checked={data.shareCurrentActivity} onChange={onActivity} disabled={saving} /><span className="text-sm text-vs-fg">{t("profile.shareActivity")}</span></label>}<div className="flex flex-col gap-2 border-t border-vs-line pt-4"><p className="text-sm text-vs-fg">{t("profile.incognito")}</p><p className="text-xs text-vs-fg-2">{t("profile.incognitoHint")}</p>{data.incognitoActive ? <button className="btn-secondary self-start !px-4 !py-2" onClick={onIncognitoOff} disabled={saving}>{t("profile.incognitoOff")}</button> : <div className="flex flex-wrap gap-2">{([1, 4, 12, 24] as const).map((hours) => <button key={hours} className="btn-secondary !px-3 !py-1.5 !text-xs" onClick={() => onIncognito(hours)} disabled={saving}>{t("profile.hoursN", { n: hours })}</button>)}</div>}</div></section>;
+}
+
+function AboutDetail({ data, t, saving, onToggle }: { data: ProfileData; t: Translate; saving: boolean; onToggle: () => void }) {
+  return <div className="flex flex-col gap-4"><section className="vs-surface rounded-2xl border border-vs-line p-4"><ProfileRow icon={<Sparkles className="h-5 w-5 text-vs-xp" aria-hidden />} label={t("profile.whatsNew")} value={data.changelogEnabled ? t("twoFactor.on") : t("twoFactor.off")} onClick={onToggle} /></section><section className="vs-surface rounded-2xl border border-vs-line p-4"><ChangelogSection enabled={data.changelogEnabled} saving={saving} onToggle={onToggle} /></section><section className="vs-surface rounded-2xl border border-vs-line p-4"><ProfileRow icon={<MoreHorizontal className="h-5 w-5 text-vs-fg-2" aria-hidden />} label={t("profile.tour")} href="/onboarding" /><ProfileRow icon={<MessageSquare className="h-5 w-5 text-vs-fg-2" aria-hidden />} label={t("profile.giveFeedback")} href="/feedback" /><ProfileRow icon={<ShoppingBag className="h-5 w-5 text-vs-fg-2" aria-hidden />} label={t("nav.shop")} href="/shop" /></section></div>;
 }
 
 interface ChangelogEntryView {
@@ -1092,20 +698,18 @@ function Stat({
   label,
   small,
   href,
-  light,
 }: {
   value: string;
   label: string;
   small?: boolean;
   href?: string;
-  light?: boolean;
 }) {
   const content = (
     <>
-      <div className={`${small ? "font-extrabold" : "text-xl font-extrabold"} ${light ? "text-white" : "dark:text-slate-100"}`}>
+      <div className={`${small ? "font-extrabold" : "text-xl font-extrabold"} text-vs-fg`}>
         {value}
       </div>
-      <div className={`text-xs font-bold uppercase ${light ? "text-brand-100" : "text-slate-400 dark:text-slate-500"}`}>
+      <div className="text-xs font-bold uppercase text-vs-fg-3">
         {label}
       </div>
     </>
@@ -1118,20 +722,4 @@ function Stat({
     );
   }
   return <div>{content}</div>;
-}
-
-// Pil-vormige variant voor de statsrij in de gradient-hero — zelfde
-// waarde/label-inhoud als Stat, maar met een eigen donkere achtergrond zodat
-// de tegels zichtbaar blijven op de blauwe hero i.p.v. enkel platte tekst.
-function HeroStat({ value, label, href }: { value: ReactNode; label: string; href?: string }) {
-  const content = (
-    <div className="rounded-2xl bg-black/15 py-2.5 flex flex-col items-center gap-0.5 hover:bg-black/25 transition-colors">
-      <div className="font-extrabold text-white">{value}</div>
-      <div className="text-[10px] text-brand-100 font-bold uppercase">{label}</div>
-    </div>
-  );
-  if (href) {
-    return <Link href={href}>{content}</Link>;
-  }
-  return content;
 }
