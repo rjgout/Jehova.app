@@ -1,9 +1,11 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { BookMarked, BookOpen, ChevronDown, Gem, LibraryBig, Mic2, ScrollText, type LucideIcon } from "lucide-react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { ChevronDown } from "lucide-react";
 import { getLanguage } from "@/lib/languages";
 import { useT } from "@/components/I18nProvider";
+import ContentIcon from "@/components/versado/ContentIcon";
+import { contentAbbreviation } from "@/lib/contentMetadata";
 
 interface Collection {
   id: string;
@@ -16,27 +18,7 @@ interface Collection {
   language: string;
 }
 
-function contentIcon(collection: Pick<Collection, "work" | "id">): LucideIcon {
-  switch (collection.work ?? collection.id) {
-    case "bofm":
-      return BookOpen;
-    case "fsy":
-      return BookMarked;
-    case "podcasts":
-      return Mic2;
-    case "dc-testament":
-      return ScrollText;
-    case "pgp":
-      return Gem;
-    default:
-      return LibraryBig;
-  }
-}
-
-function ContentIcon({ collection, className }: { collection: Pick<Collection, "work" | "id">; className: string }) {
-  const Icon = contentIcon(collection);
-  return <Icon className={className} aria-hidden />;
-}
+type LabelMode = "full" | "short" | "icon";
 
 // Eén regel per werk (Boek van Mormon, Leer en Verbonden, ...), niet per
 // uitgave: anders staat elk werk er in elke taal apart in. De taal kies je
@@ -59,6 +41,12 @@ export default function ContentSwitcher({
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const iconRef = useRef<HTMLSpanElement>(null);
+  const chevronRef = useRef<SVGSVGElement>(null);
+  const fullLabelRef = useRef<HTMLSpanElement>(null);
+  const shortLabelRef = useRef<HTMLSpanElement>(null);
+  const [labelMode, setLabelMode] = useState<LabelMode>("full");
 
   useEffect(() => {
     if (!open) return;
@@ -68,6 +56,31 @@ export default function ContentSwitcher({
     document.addEventListener("pointerdown", onPointerDown);
     return () => document.removeEventListener("pointerdown", onPointerDown);
   }, [open]);
+
+  const shortName = contentAbbreviation(active, active.language);
+
+  useLayoutEffect(() => {
+    const root = ref.current;
+    const button = buttonRef.current;
+    if (!root || !button) return;
+
+    const updateLabelMode = () => {
+      const iconWidth = iconRef.current?.getBoundingClientRect().width ?? 20;
+      const chevronWidth = chevronRef.current?.getBoundingClientRect().width ?? 16;
+      // De button gebruikt px-2 en gap-1.5: trek de vaste ruimte af en laat
+      // daarna de gemeten tekstbreedtes beslissen welke representatie past.
+      const available = button.clientWidth - iconWidth - chevronWidth - 28;
+      const fullWidth = fullLabelRef.current?.scrollWidth ?? 0;
+      const shortWidth = shortLabelRef.current?.scrollWidth ?? 0;
+      const next: LabelMode = fullWidth <= available ? "full" : shortName && shortWidth <= available ? "short" : "icon";
+      setLabelMode((current) => current === next ? current : next);
+    };
+
+    updateLabelMode();
+    const observer = new ResizeObserver(updateLabelMode);
+    observer.observe(root);
+    return () => observer.disconnect();
+  }, [active.id, active.name, active.language, shortName]);
 
   if (!enabled) return null;
 
@@ -112,8 +125,9 @@ export default function ContentSwitcher({
     // Het menu blijft links staan op ieder scherm. De contentnaam krijgt een
     // flexibele breedte, zodat de lange naam afkapt zonder de navigatie rechts
     // weg te drukken.
-    <div ref={ref} className="relative -ml-2 self-stretch flex min-w-0 max-w-full flex-1 lg:flex-none">
+    <div ref={ref} className="relative -ml-2 self-stretch flex min-w-0 max-w-full flex-1 lg:flex-none lg:max-w-[18rem]">
       <button
+        ref={buttonRef}
         type="button"
         onClick={() => setOpen((value) => !value)}
         aria-expanded={open}
@@ -124,11 +138,13 @@ export default function ContentSwitcher({
         })}
         className="h-full w-full min-w-0 inline-flex items-center justify-start gap-1.5 px-2 text-sm font-bold text-slate-600 dark:text-slate-300 hover:text-brand-600 dark:hover:text-brand-300 lg:w-auto"
       >
-        <ContentIcon collection={active} className="h-5 w-5 shrink-0" />
-        {/* Op mobiel gebruikt de naam alleen de resterende ruimte; de volledige
-            naam blijft beschikbaar via het label en de tooltip. */}
-        <span className="block min-w-0 flex-1 truncate lg:hidden">{active.name}</span>
-        <ChevronDown className={`h-4 w-4 shrink-0 transition-transform ${open ? "rotate-180" : ""}`} aria-hidden />
+        <span ref={iconRef} className="shrink-0"><ContentIcon collection={active} className="h-5 w-5" /></span>
+        <span className="pointer-events-none absolute -left-[9999px] whitespace-nowrap" aria-hidden>
+          <span ref={fullLabelRef}>{active.name}</span>
+          {shortName && <span ref={shortLabelRef}>{shortName}</span>}
+        </span>
+        {labelMode !== "icon" && <span className="block min-w-0 flex-1 truncate">{labelMode === "short" && shortName ? shortName : active.name}</span>}
+        <ChevronDown ref={chevronRef} className={`h-4 w-4 shrink-0 transition-transform ${open ? "rotate-180" : ""}`} aria-hidden />
       </button>
 
       {open && (
