@@ -1,8 +1,12 @@
 import bomWords from "../../prisma/bomWords.json";
 import { addDays } from "@/lib/dates";
 import { DEFAULT_TIME_ZONE, dayKeyInZone, resolveTimeZone, zonedParts, zonedTimeToUtc } from "@/lib/timeZone";
+import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { completeWordGame } from "@/lib/streak";
+import { awardXp } from "@/lib/xp";
+import { awardCompetitionXp } from "@/lib/competitionXp";
+import { checkAndAwardAchievements } from "@/lib/achievements";
 import { findVersesContainingWord, type VerseMatch } from "@/lib/dictionary";
 
 export const WORD_LENGTH = 5;
@@ -165,14 +169,15 @@ function solveMs(game: { dayKey: string; releasedAt: Date | null; finishedAt: Da
   return game.finishedAt!.getTime() - releaseOf(game).getTime();
 }
 
-async function rankedWinners(dayKey: string) {
-  const games = await prisma.wordGame.findMany({
+async function rankedWinners(dayKey: string, db: Prisma.TransactionClient = prisma) {
+  const games = await db.wordGame.findMany({
     where: { dayKey, status: "WON", finishedAt: { not: null } },
     select: {
       id: true,
       dayKey: true,
       releasedAt: true,
       finishedAt: true,
+      userId: true,
       user: { select: { id: true, handle: true, discriminator: true } },
     },
   });
@@ -195,11 +200,19 @@ export interface WordGameView {
   // de verzen met het woord van vandaag kan naslaan.
   verses: VerseMatch[];
   leaderboard: WordGameLeaderboardEntry[];
+  /** Is de rangbonus van deze woorddag al uitgedeeld? Tot dan is de stand voorlopig. */
+  settled: boolean;
+  /** Eigen plek in de (voorlopige) stand, als je het woord geraden hebt. */
+  provisionalRank: number | null;
+  /** Definitieve rang en bonus van deze woorddag (pas na afloop gezet). */
+  leaderboardRank: number | null;
+  leaderboardXpBonus: number;
+  /** Uitslag van de vorige woorddag, als je daar in de top 10 eindigde. */
+  previousResult: { dayKey: string; rank: number; xp: number } | null;
 }
 
-async function getTodayLeaderboard(dayKey: string): Promise<WordGameLeaderboardEntry[]> {
-  const games = (await rankedWinners(dayKey)).slice(0, 10);
-  return games.map((game, index) => ({
+function toLeaderboard(games: Awaited<ReturnType<typeof rankedWinners>>): WordGameLeaderboardEntry[] {
+  return games.slice(0, 10).map((game, index) => ({
     rank: index + 1,
     userId: game.user.id,
     handle: game.user.handle,
@@ -209,7 +222,66 @@ async function getTodayLeaderboard(dayKey: string): Promise<WordGameLeaderboardE
   }));
 }
 
+// --- Rangbonus: pas na afloop van de woorddag ------------------------------
+//
+// Een woorddag begint om 18:00 lokaal en duurt tot 18:00 de volgende dag. De
+// laatste tijdzone ter wereld is UTC-12: daar eindigt woorddag D pas om
+// 18:00 op D+1 lokaal, oftewel D+2 06:00 UTC. Daarna kan niemand meer voor D
+// raden, dus is de rangorde definitief en wordt de bonus uitgedeeld.
+const LAST_TIME_ZONE = "Etc/GMT+12";
+
+/** Vanaf wanneer woorddag D overal voorbij is en de rangbonus vastligt. */
+export function wordDayClosesAt(dayKey: string): Date {
+  return zonedTimeToUtc(addDays(dayKey, 1), RELEASE_HOUR, 0, LAST_TIME_ZONE);
+}
+
+export interface SettledBonus {
+  userId: string;
+  dayKey: string;
+  rank: number;
+  xp: number;
+}
+
+/**
+ * Deelt de rangbonus uit voor elke woorddag die overal voorbij is en nog
+ * niet is afgehandeld (DailyWord.bonusSettledAt). Precies één keer per
+ * woorddag: de claim (updateMany op bonusSettledAt = null) en de uitbetaling
+ * zitten in één transactie. Wordt elke minuut door de scheduler aangeroepen;
+ * geeft de uitbetalingen terug zodat de aanroeper meldingen kan sturen.
+ */
+export async function settleWordGameBonuses(now: Date = new Date()): Promise<SettledBonus[]> {
+  const open = await prisma.dailyWord.findMany({ where: { bonusSettledAt: null }, select: { dayKey: true } });
+  const due = open.map((d) => d.dayKey).filter((dayKey) => wordDayClosesAt(dayKey).getTime() <= now.getTime()).sort();
+  const settled: SettledBonus[] = [];
+  for (const dayKey of due) {
+    const paid = await prisma.$transaction(async (tx) => {
+      const claim = await tx.dailyWord.updateMany({ where: { dayKey, bonusSettledAt: null }, data: { bonusSettledAt: now } });
+      if (claim.count === 0) return [];
+      const winners = (await rankedWinners(dayKey, tx)).slice(0, 10);
+      const out: SettledBonus[] = [];
+      for (const [index, game] of winners.entries()) {
+        const rank = index + 1;
+        const xp = leaderboardXpBonusForRank(rank);
+        await tx.wordGame.update({
+          where: { id: game.id },
+          data: { leaderboardRank: rank, leaderboardXpBonus: xp, xpEarned: { increment: xp } },
+        });
+        if (xp > 0) {
+          await awardXp(tx, game.userId, xp, "WORD_GAME_WON", { leaderboardBonus: xp, rank, dayKey });
+          await awardCompetitionXp(tx, game.userId, "WORD_GAME", xp, { metadata: { leaderboardBonus: xp, rank, dayKey } });
+          await checkAndAwardAchievements(tx, game.userId);
+        }
+        out.push({ userId: game.userId, dayKey, rank, xp });
+      }
+      return out;
+    });
+    settled.push(...paid);
+  }
+  return settled;
+}
+
 async function buildView(period: WordGamePeriod, now: Date, game: {
+  userId: string;
   dayKey: string;
   word: string;
   guesses: string;
@@ -223,7 +295,16 @@ async function buildView(period: WordGamePeriod, now: Date, game: {
     result: evaluateGuess(word, game.word),
   }));
   const finished = game.status !== "IN_PROGRESS";
-  const leaderboard = await getTodayLeaderboard(game.dayKey);
+  const previousDay = addDays(game.dayKey, -1);
+  const [ranked, daily, previous] = await Promise.all([
+    rankedWinners(game.dayKey),
+    prisma.dailyWord.findUnique({ where: { dayKey: game.dayKey }, select: { bonusSettledAt: true } }),
+    prisma.wordGame.findUnique({
+      where: { userId_dayKey: { userId: game.userId, dayKey: previousDay } },
+      select: { leaderboardRank: true, leaderboardXpBonus: true },
+    }),
+  ]);
+  const ownIndex = ranked.findIndex((g) => g.userId === game.userId);
   return {
     dayKey: game.dayKey,
     nextReleaseAt: period.nextReleaseAt.toISOString(),
@@ -235,7 +316,15 @@ async function buildView(period: WordGamePeriod, now: Date, game: {
     xpEarned: game.xpEarned,
     word: finished ? game.word : null,
     verses: finished ? await findVersesContainingWord(game.word) : [],
-    leaderboard,
+    leaderboard: toLeaderboard(ranked),
+    settled: !!daily?.bonusSettledAt,
+    provisionalRank: ownIndex === -1 ? null : ownIndex + 1,
+    leaderboardRank: game.leaderboardRank,
+    leaderboardXpBonus: game.leaderboardXpBonus,
+    previousResult:
+      previous?.leaderboardRank && previous.leaderboardXpBonus > 0
+        ? { dayKey: previousDay, rank: previous.leaderboardRank, xp: previous.leaderboardXpBonus }
+        : null,
   };
 }
 
@@ -302,35 +391,25 @@ export async function submitGuess(
   const xpEarned = won ? xpForWin(guesses.length) : 0;
 
   const finishedAt = finished ? now : undefined;
-  let leaderboardRank: number | null = null;
-  let leaderboardXpBonus = 0;
-  let totalXpEarned = xpEarned;
 
-  if (finished && won) {
-    const mine = solveMs({ dayKey, releasedAt: game.releasedAt, finishedAt: finishedAt! });
-    const fasterWinners = (await rankedWinners(dayKey)).filter((other) => solveMs(other) < mine).length;
-    leaderboardRank = fasterWinners + 1;
-    leaderboardXpBonus = leaderboardXpBonusForRank(leaderboardRank);
-    totalXpEarned += leaderboardXpBonus;
-  }
-
+  // Alleen de XP voor het raden zelf. De rangbonus volgt pas als de woorddag
+  // overal voorbij is (settleWordGameBonuses): een speler in een latere
+  // tijdzone kan nog sneller zijn na zijn eigen 18:00.
   // Voorwaardelijk bijwerken: twee gelijktijdige gokken op hetzelfde spel
-  // (dubbelklik, twee tabbladen) mogen niet allebei XP en een bonus opleveren.
+  // (dubbelklik, twee tabbladen) mogen niet allebei XP opleveren.
   const saved = await prisma.wordGame.updateMany({
     where: { id: game.id, status: "IN_PROGRESS", guesses: game.guesses },
     data: {
       guesses: JSON.stringify(guesses),
       status: finished ? (won ? "WON" : "LOST") : "IN_PROGRESS",
-      xpEarned: totalXpEarned,
-      leaderboardRank,
-      leaderboardXpBonus,
+      xpEarned,
       finishedAt,
     },
   });
   if (saved.count === 0) return { error: "Je gok is al verwerkt. Ververs de pagina." };
   const updated = await prisma.wordGame.findUniqueOrThrow({ where: { id: game.id } });
 
-  const newAchievements = finished ? (await completeWordGame(userId, totalXpEarned)).newAchievements : [];
+  const newAchievements = finished ? (await completeWordGame(userId, xpEarned)).newAchievements : [];
 
   return { ...(await buildView(period, now, updated)), newAchievements };
 }

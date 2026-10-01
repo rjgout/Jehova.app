@@ -62,6 +62,13 @@ kalenderdag; vóór 18:00 hoort een moment nog bij de woorddag ervoor.
   (`WordGame.releasedAt`), niet op het absolute tijdstip; anders stonden
   spelers in Azië altijd bovenaan. Oude potjes zonder `releasedAt` tellen
   vanaf 18:00 Nederlandse tijd, zoals vroeger.
+- **Rangbonus pas na afloop.** Bij het raden krijg je alleen de gewone XP en
+  zie je je voorlopige plek. De bonus voor de top 10 deelt de scheduler uit
+  (`settleWordGameBonuses`) zodra de woorddag overal voorbij is: in UTC-12
+  eindigt woorddag D om 18:00 op D+1, dus om D+2 06:00 UTC
+  (`wordDayClosesAt`). Precies één keer per woorddag
+  (`DailyWord.bonusSettledAt`), met een melding; de spelpagina toont daarna
+  "Vorig woord: #2 · +40 XP bonus".
 - Alleen het woord van de dag wisselt om 18:00; reeks, Vandaag en XP houden
   de gewone kalenderdag (00:00).
 

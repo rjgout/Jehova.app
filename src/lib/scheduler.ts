@@ -1,9 +1,9 @@
 import { prisma } from "@/lib/db";
 import { addDays, weekStartKey, amsterdamNow, type AmsterdamTime } from "@/lib/dates";
 import { tierForWeek, getLeagueSettings, TIER_ORDER } from "@/lib/leagues";
-import { notifyDailyReminder, notifyDailyText, notifyWeeklyResult, notifySeasonResult, notifyWordGame } from "@/lib/notify";
+import { notifyDailyReminder, notifyDailyText, notifyWeeklyResult, notifySeasonResult, notifyWordGame, notifyWordGameRank } from "@/lib/notify";
 import { getTextOfTheDay } from "@/lib/dailyText";
-import { wordGameDayKey } from "@/lib/wordGame";
+import { settleWordGameBonuses, wordGameDayKey } from "@/lib/wordGame";
 import { broadcastPresenceUpdate } from "@/lib/presence";
 import { getIO } from "@/server/gameServer";
 import { runFsyWeeklyCheckIfDue } from "@/lib/fsyContent";
@@ -288,6 +288,17 @@ async function runWordGameNotificationTick(): Promise<void> {
 }
 
 /**
+ * Deelt de rangbonus van het woord van de dag uit zodra een woorddag overal
+ * ter wereld voorbij is (zie settleWordGameBonuses), en meldt het de top 10.
+ * Goedkoop: meestal is er niets af te handelen.
+ */
+async function runWordGameBonusTick(): Promise<void> {
+  for (const bonus of await settleWordGameBonuses()) {
+    if (bonus.xp > 0) await notifyWordGameRank(bonus.userId, bonus.rank, bonus.xp).catch(() => {});
+  }
+}
+
+/**
  * Zet tijdelijke "onzichtbaar voor vrienden" (User.invisibleUntil) automatisch
  * weer uit zodra de gekozen periode voorbij is, en meldt dat direct aan
  * vrienden (anders zou iemand pas na een eigen actie weer online lijken).
@@ -397,6 +408,7 @@ export function startNotificationSchedulers(): void {
     runWeeklyResultTick().catch((e) => console.error("Wekelijkse uitslag mislukt:", e));
     runSeasonRolloverTick().catch((e) => console.error("Seizoensafsluiting mislukt:", e));
     runWordGameNotificationTick().catch((e) => console.error("Woord-van-de-dag-melding mislukt:", e));
+    runWordGameBonusTick().catch((e) => console.error("Woord-van-de-dag-bonus mislukt:", e));
     runStreakRolloverTick().catch((e) => console.error("Streak rollover mislukt:", e));
     runIncognitoExpiryTick().catch((e) => console.error("Incognito-vervaltijd mislukt:", e));
     runFsyWeeklyCheckIfDue(prisma).catch((e) => console.error("FSY-weekcontrole mislukt:", e));

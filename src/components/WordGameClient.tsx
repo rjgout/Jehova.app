@@ -45,6 +45,9 @@ interface GameView {
   word: string | null;
   verses: VerseMatch[];
   leaderboard: LeaderboardEntry[];
+  settled: boolean;
+  provisionalRank: number | null;
+  previousResult: { dayKey: string; rank: number; xp: number } | null;
 }
 
 const TILE_STYLES: Record<LetterState, string> = {
@@ -175,6 +178,12 @@ export default function WordGameClient() {
         </div>
       </div>
 
+      {game.previousResult && (
+        <p className="rounded-xl bg-gold-50 px-3 py-2 text-sm font-bold text-gold-700 dark:bg-slate-800 dark:text-gold-400">
+          {t("wordOfTheDay.yesterdayBonus", { rank: game.previousResult.rank, xp: game.previousResult.xp })}
+        </p>
+      )}
+
       
 
       <div className="flex flex-col gap-2">
@@ -255,11 +264,15 @@ export default function WordGameClient() {
           {game.xpEarned > 0 && (
             <div className="flex flex-col items-center gap-1">
               <p className="text-gold-600 dark:text-gold-400 font-extrabold text-lg">+{game.xpEarned} XP</p>
-              {game.leaderboardRank && game.leaderboardXpBonus > 0 && (
+              {/* De rangbonus komt pas als de woorddag overal voorbij is: tot
+                  dan alleen de voorlopige plek. */}
+              {game.settled && game.leaderboardRank && game.leaderboardXpBonus > 0 ? (
                 <p className="text-sm text-slate-500 dark:text-slate-400">
                   {t("wordOfTheDay.rankBonus", { rank: game.leaderboardRank, xp: game.leaderboardXpBonus })}
                 </p>
-              )}
+              ) : !game.settled && game.provisionalRank && game.provisionalRank <= 10 ? (
+                <p className="text-sm text-slate-500 dark:text-slate-400">{t("wordOfTheDay.provisionalRank", { rank: game.provisionalRank })}</p>
+              ) : null}
             </div>
           )}
           <p className="text-sm text-slate-400 dark:text-slate-500">{t("wordOfTheDay.comeBack")}</p>
@@ -296,6 +309,9 @@ export default function WordGameClient() {
           <p className="text-sm text-slate-400 dark:text-slate-500">
             {t("wordOfTheDay.fastestIntro")}
           </p>
+          {!game.settled && game.leaderboard.length > 0 && (
+            <p className="mt-1 text-sm text-slate-400 dark:text-slate-500">{t("wordOfTheDay.provisionalNote")}</p>
+          )}
         </div>
 
         {game.leaderboard.length > 0 ? (

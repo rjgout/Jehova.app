@@ -13,7 +13,9 @@ Alle belangrijke gebruikersgerichte wijzigingen en releases worden hieronder bij
   Reizen kost nooit een reeksdag en levert er ook geen extra op.
 - Het woord van de dag wisselt om 18:00 in je eigen tijdzone; iedereen
   krijgt dezelfde woorden in dezelfde volgorde. Het klassement telt hoe snel
-  je het woord na je eigen 18:00 raadt.
+  je het woord na je eigen 18:00 raadt. De bonus-XP voor de top 10 volgt
+  zodra iedereen ter wereld heeft kunnen raden; tot dan zie je je
+  voorlopige plek, daarna krijg je een melding.
 - De mascottes van Versado zijn er: Novi begroet je op Vandaag, en op de
   welkomstpagina stellen Varo, Vera en Novi zich samen voor.
 - Legpuzzels onder Spelen met de bestaande kinderillustraties, vier niveaus

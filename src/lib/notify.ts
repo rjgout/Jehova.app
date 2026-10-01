@@ -429,6 +429,20 @@ export async function notifyChallengeFinished(userId: string, opponentDisplayNam
   });
 }
 
+/** De rangbonus van een afgesloten woorddag (zie settleWordGameBonuses in src/lib/wordGame.ts). */
+export async function notifyWordGameRank(userId: string, rank: number, xp: number): Promise<void> {
+  await notifyUser({
+    userId,
+    category: "achievements",
+    kind: "wordgame",
+    url: "/word-game",
+    content: (t) => {
+      const text = t("notify.wordGameRankText", { rank, xp });
+      return { ...simple(t("notify.wordGameRankSubject"), t("notify.wordGameRankTitle", { rank }), text, t("notify.ctaGuessWord")), emailText: `${text} ${t("notify.ctaGuessWord")}:` };
+    },
+  });
+}
+
 export async function notifyWordGame(userId: string): Promise<void> {
   await notifyUser({
     userId,

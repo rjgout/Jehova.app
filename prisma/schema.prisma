@@ -1865,10 +1865,15 @@ model WordGame {
 // opvraagt (atomische upsert, zie getOrCreateTodayGame) — elke speler
 // daarna krijgt gegarandeerd exact datzelfde, opgeslagen woord terug, ook
 // als de code/woordenlijst ondertussen verandert.
+//
+// bonusSettledAt: wanneer de rangbonus (top 10, op tijd na de eigen 18:00)
+// voor deze woorddag is uitgedeeld. Dat gebeurt pas als de woorddag overal
+// ter wereld voorbij is (zie settleWordGameBonuses); null = nog niet.
 model DailyWord {
-  dayKey    String   @id
-  word      String
-  createdAt DateTime @default(now())
+  dayKey         String    @id
+  word           String
+  createdAt      DateTime  @default(now())
+  bonusSettledAt DateTime?
 }
 
 enum WordGameStatus {

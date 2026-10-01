@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { amsterdamNow } from "../src/lib/dates";
 import { dayKeyInZone } from "../src/lib/timeZone";
 import { streakDayGap } from "../src/lib/learning/streakRules";
-import { getWordForDay, wordGameDayKey, wordGamePeriod } from "../src/lib/wordGame";
+import { getWordForDay, wordDayClosesAt, wordGameDayKey, wordGamePeriod } from "../src/lib/wordGame";
 
 const AMS = "Europe/Amsterdam";
 const NY = "America/New_York";
@@ -112,4 +112,14 @@ test("de 18:00-regel raakt de gewone kalenderdag (reeks, Vandaag) niet", () => {
   assert.equal(streakDayGap(state, at("2026-10-02T16:01:00Z")).gap, 0);
   assert.equal(streakDayGap(state, at("2026-10-02T21:59:00Z")).gap, 0);
   assert.equal(streakDayGap(state, at("2026-10-02T22:00:00Z")).gap, 1);
+});
+
+test("de rangbonus wacht tot de woorddag in elke tijdzone voorbij is", () => {
+  const closes = wordDayClosesAt("2026-10-02");
+  assert.equal(closes.toISOString(), "2026-10-04T06:00:00.000Z");
+  const zones = ["Etc/GMT+12", "Pacific/Pago_Pago", "Pacific/Honolulu", LA, NY, AMS, TOKYO, SYDNEY, "Pacific/Kiritimati"];
+  // Eén minuut ervoor kan iemand in UTC-12 nog voor 2 okt. raden ...
+  assert.equal(wordGameDayKey(new Date(closes.getTime() - 60_000), "Etc/GMT+12"), "2026-10-02");
+  // ... daarna niemand meer, waar ook ter wereld.
+  for (const zone of zones) assert.ok(wordGameDayKey(closes, zone) > "2026-10-02", zone);
 });

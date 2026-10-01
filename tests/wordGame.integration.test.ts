@@ -63,7 +63,7 @@ test("refresh, opnieuw inloggen en meerdere apparaten: hetzelfde potje", { skip 
   assert.equal(await L.db.wordGame.count({ where: { userId: users.nl, dayKey: DAY } }), 1);
 });
 
-test("klassement: tijd na de eigen 18:00, niet het absolute tijdstip", { skip }, async () => {
+test("klassement en rangbonus: tijd na de eigen 18:00, pas uitbetaald na afloop", { skip }, async () => {
   const word = (await L.db.dailyWord.findUniqueOrThrow({ where: { dayKey: DAY } })).word;
   // Tokio raadt om 19:30 lokaal (10:30Z, absoluut veel eerder) = 90 min na zijn 18:00.
   const tokyo = await L.game.submitGuess(users.tokio, word, "Asia/Tokyo", new Date("2031-03-04T10:30:00Z"));
@@ -71,15 +71,37 @@ test("klassement: tijd na de eigen 18:00, niet het absolute tijdstip", { skip },
   // Nederland raadt om 18:05 lokaal (17:05Z) = 5 min na zijn 18:00.
   const nl = await L.game.submitGuess(users.nl, word, "Europe/Amsterdam", new Date("2031-03-04T17:05:00Z"));
   assert.ok(!("error" in nl));
-  if ("error" in nl) return;
-  // Rang en bonus staan in de database (de view geeft ze niet mee).
-  const ranks = await L.db.wordGame.findMany({ where: { dayKey: DAY, status: "WON" }, select: { userId: true, leaderboardRank: true } });
-  assert.equal(ranks.find((r) => r.userId === users.tokio)!.leaderboardRank, 1); // bij zijn eigen afronding de enige
-  assert.equal(ranks.find((r) => r.userId === users.nl)!.leaderboardRank, 1); // sneller na zijn 18:00, dus ook #1
-  assert.deepEqual(
-    nl.leaderboard.map((e) => [e.userId, e.minutesAfterRelease]),
-    [[users.nl, 5], [users.tokio, 90]]
-  );
+  if ("error" in nl || "error" in tokyo) return;
+  // Bij het raden: alleen de gewone XP, geen rang of bonus; wel de voorlopige plek.
+  assert.equal(tokyo.provisionalRank, 1); // toen de enige
+  assert.equal(nl.provisionalRank, 1);
+  assert.equal(nl.settled, false);
+  assert.equal(nl.leaderboardRank, null);
+  assert.equal(nl.xpEarned, L.game.xpForWin(1));
+  assert.deepEqual(nl.leaderboard.map((e) => [e.userId, e.minutesAfterRelease]), [[users.nl, 5], [users.tokio, 90]]);
+
+  // Vóór het sluiten van de woorddag (D+2 06:00 UTC): nog niets uitbetaald.
+  assert.equal(L.game.wordDayClosesAt(DAY).toISOString(), "2031-03-06T06:00:00.000Z");
+  const early = await L.game.settleWordGameBonuses(new Date("2031-03-06T05:59:00Z"));
+  assert.equal(early.filter((b) => b.dayKey === DAY).length, 0);
+
+  // Daarna: precies één #1, en de bonus-XP in de XP-geschiedenis.
+  const paid = (await L.game.settleWordGameBonuses(new Date("2031-03-06T06:00:00Z"))).filter((b) => b.dayKey === DAY);
+  assert.deepEqual(paid.map((b) => [b.userId, b.rank, b.xp]), [[users.nl, 1, 50], [users.tokio, 2, 40]]);
+  const games = await L.db.wordGame.findMany({ where: { dayKey: DAY, status: "WON" }, select: { userId: true, leaderboardRank: true, leaderboardXpBonus: true, xpEarned: true } });
+  assert.deepEqual(games.find((g) => g.userId === users.nl), { userId: users.nl, leaderboardRank: 1, leaderboardXpBonus: 50, xpEarned: L.game.xpForWin(1) + 50 });
+  const bonusTx = await L.db.xPTransaction.findMany({ where: { userId: { in: [users.nl, users.tokio] }, reason: "WORD_GAME_WON" }, select: { amount: true } });
+  assert.deepEqual(bonusTx.map((x) => x.amount).sort((a, b) => a - b), [40, 50, L.game.xpForWin(1), L.game.xpForWin(1)].sort((a, b) => a - b));
+
+  // Nog een keer afhandelen doet niets.
+  const again = (await L.game.settleWordGameBonuses(new Date("2031-03-06T07:00:00Z"))).filter((b) => b.dayKey === DAY);
+  assert.equal(again.length, 0);
+  assert.equal(await L.db.xPTransaction.count({ where: { userId: users.nl, reason: "WORD_GAME_WON" } }), 2);
+
+  // De volgende woorddag toont de uitslag van deze.
+  const next = await L.game.getOrCreateTodayGame(users.nl, "Europe/Amsterdam", new Date("2031-03-06T08:00:00Z")); // NL 09:00 = woorddag 5 maart
+  assert.equal(next.dayKey, NEXT);
+  assert.deepEqual(next.previousResult, { dayKey: DAY, rank: 1, xp: 50 });
 });
 
 test("toestelklok doet niets: de server bepaalt de woorddag", { skip }, async () => {
