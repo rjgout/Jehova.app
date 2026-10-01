@@ -31,9 +31,14 @@ test("elk geregistreerd mascottebestand bestaat echt", () => {
   }
 });
 
+// Composities van de drie samen hebben eigen states en (nog) geen plek in het
+// register; zie public/mascots/README.md. "celebrate" is daar bewust iets
+// anders dan "welcome": alleen voor betekenisvolle mijlpalen.
+const FAMILY_STATES = ["welcome", "celebrate"];
+
 test("elk bestand in public/mascots/static volgt de naamconventie", () => {
-  const states = new Set<string>(MASCOT_STATES);
   for (const character of readdirSync(STATIC_DIR)) {
+    const states = new Set<string>(character === "family" ? FAMILY_STATES : MASCOT_STATES);
     for (const file of readdirSync(path.join(STATIC_DIR, character))) {
       if (file === ".gitkeep") continue;
       const match = new RegExp(`^${character}-([a-z]+)\\.webp$`).exec(file);
