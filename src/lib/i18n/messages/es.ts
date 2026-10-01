@@ -317,7 +317,15 @@ export const es: PartialMessages = {
       "title": "Conferencia General",
       "inDays": "en {n} días",
       "tomorrow": "mañana",
-      "today": "hoy"
+      "today": "hoy",
+      "live": "En vivo",
+      "nextSession": "Próxima sesión",
+      "inDuration": "en {duration}",
+      "todayAt": "hoy a las {time}",
+      "tomorrowAt": "mañana a las {time}",
+      "durationHM": "{h} h {m} min",
+      "durationH": "{h} h",
+      "durationM": "{m} min"
     },
     "allGames": "Todos los juegos",
     "action": {
@@ -1253,6 +1261,8 @@ export const es: PartialMessages = {
     "whatsNew": "¿Qué hay de nuevo?",
     "conferenceCountdown": "Cuenta regresiva de la Conferencia General",
     "conferenceCountdownHint": "Muestra una cuenta regresiva cuando se acerca la próxima Conferencia General.",
+    "timeZone": "Zona horaria",
+    "timeZoneAuto": "Automática · {zone}",
     "changelogToggle": "Mostrar una notificación al iniciar sesión tan pronto como haya algo nuevo.",
     "changelogHint": "Incluso cuando está desactivado, siempre puedes encontrar el registro de cambios a continuación.",
     "noChangelog": "Aún no hay elementos del registro de cambios."

@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/db";
-import { addDays, dayKey, daysBetween, weekStartKey, amsterdamNow, type AmsterdamTime } from "@/lib/dates";
+import { addDays, weekStartKey, amsterdamNow, type AmsterdamTime } from "@/lib/dates";
 import { tierForWeek, getLeagueSettings, TIER_ORDER } from "@/lib/leagues";
 import { notifyDailyReminder, notifyDailyText, notifyWeeklyResult, notifySeasonResult, notifyWordGame } from "@/lib/notify";
 import { getTextOfTheDay } from "@/lib/dailyText";
@@ -7,6 +7,8 @@ import { wordGameDayKey } from "@/lib/wordGame";
 import { broadcastPresenceUpdate } from "@/lib/presence";
 import { getIO } from "@/server/gameServer";
 import { runFsyWeeklyCheckIfDue } from "@/lib/fsyContent";
+import { dayKeyInZone, hhmmInZone, resolveTimeZone } from "@/lib/timeZone";
+import { streakDayGap } from "@/lib/learning/streakRules";
 
 const TICK_MS = 60_000;
 // Vast (niet instelbaar) moment voor de wekelijkse uitslag — dit is geen
@@ -14,11 +16,9 @@ const TICK_MS = 60_000;
 // systeemmoment vlak na het einde van de vorige week.
 const WEEKLY_RESULT_TIME = "00:05";
 
-// Beide ticks hieronder vergelijken tegen een door de gebruiker gekozen of
-// vast Nederlands tijdstip (bv. "20:00"), dus moeten tegen de Nederlandse
-// wandklok getoetst worden — niet tegen de tijdzone van de servermachine
-// (die in productie gewoon UTC kan zijn), net als de woordspel-tick
-// hieronder al deed.
+// Vaste systeemmomenten (weekuitslag, woord van de dag) toetsen tegen de
+// Nederlandse wandklok, niet tegen de tijdzone van de servermachine (die in
+// productie gewoon UTC kan zijn).
 function amsterdamHHMM(amsterdam: AmsterdamTime): string {
   return `${String(amsterdam.hour).padStart(2, "0")}:${String(amsterdam.minute).padStart(2, "0")}`;
 }
@@ -41,56 +41,72 @@ function previousWeekStart(weekStart: string): string {
  * heeft aangezet. lastDailyReminderSentDate voorkomt dubbel versturen als de
  * tick door trage queries iets uitloopt.
  */
+/**
+ * De herinneringstijden (User.dailyReminderTime/dailyTextTime) zijn
+ * kloktijden in de eigen tijdzone van de gebruiker. Per tijdzone die in
+ * gebruik is: het huidige "HH:MM" en de kalenderdag daar. timeZone null =
+ * nog onbekend, dan Nederlandse tijd (het oude gedrag).
+ */
+async function zoneGroups(now: Date): Promise<{ timeZone: string | null; time: string; today: string }[]> {
+  const zones = await prisma.user.groupBy({ by: ["timeZone"] });
+  return zones.map(({ timeZone }) => {
+    const zone = resolveTimeZone(timeZone);
+    return { timeZone, time: hhmmInZone(now, zone), today: dayKeyInZone(now, zone) };
+  });
+}
+
 async function runDailyTextTick(): Promise<void> {
   const now = new Date();
-  const time = amsterdamHHMM(amsterdamNow(now));
-  const today = dayKey(now);
+  for (const group of await zoneGroups(now)) {
+    const candidates = await prisma.user.findMany({
+      where: {
+        timeZone: group.timeZone,
+        dailyTextTime: group.time,
+        notifyDailyText: true,
+        OR: [{ emailNotificationsEnabled: true }, { pushNotificationsEnabled: true }],
+        AND: [{ OR: [{ lastDailyTextSentDate: null }, { lastDailyTextSentDate: { not: group.today } }] }],
+      },
+      select: { id: true, contentLanguage: true },
+    });
+    if (candidates.length === 0) continue;
 
-  const candidates = await prisma.user.findMany({
-    where: {
-      dailyTextTime: time,
-      notifyDailyText: true,
-      OR: [{ emailNotificationsEnabled: true }, { pushNotificationsEnabled: true }],
-      AND: [{ OR: [{ lastDailyTextSentDate: null }, { lastDailyTextSentDate: { not: today } }] }],
-    },
-    select: { id: true, contentLanguage: true },
-  });
-  if (candidates.length === 0) return;
-
-  // Hetzelfde vers voor iedereen, maar in de contenttaal van elke ontvanger;
-  // per taal maar één keer opzoeken.
-  const textByLanguage = new Map<string, Awaited<ReturnType<typeof getTextOfTheDay>>>();
-  for (const user of candidates) {
-    if (!textByLanguage.has(user.contentLanguage)) {
-      textByLanguage.set(user.contentLanguage, await getTextOfTheDay(now, user.contentLanguage));
+    // Hetzelfde vers voor iedereen, maar in de contenttaal van elke ontvanger;
+    // per taal maar één keer opzoeken.
+    const textByLanguage = new Map<string, Awaited<ReturnType<typeof getTextOfTheDay>>>();
+    for (const user of candidates) {
+      if (!textByLanguage.has(user.contentLanguage)) {
+        textByLanguage.set(user.contentLanguage, await getTextOfTheDay(now, user.contentLanguage));
+      }
+      const text = textByLanguage.get(user.contentLanguage);
+      if (!text) continue;
+      await notifyDailyText(user.id, { ...text, content: text.text }).catch(() => {});
+      await prisma.user.update({ where: { id: user.id }, data: { lastDailyTextSentDate: group.today } }).catch(() => {});
     }
-    const text = textByLanguage.get(user.contentLanguage);
-    if (!text) continue;
-    await notifyDailyText(user.id, { ...text, content: text.text }).catch(() => {});
-    await prisma.user.update({ where: { id: user.id }, data: { lastDailyTextSentDate: today } }).catch(() => {});
   }
 }
 
 async function runDailyReminderTick(): Promise<void> {
   const now = new Date();
-  const time = amsterdamHHMM(amsterdamNow(now));
-  const today = dayKey(now);
+  for (const group of await zoneGroups(now)) {
+    const candidates = await prisma.user.findMany({
+      where: {
+        timeZone: group.timeZone,
+        dailyReminderTime: group.time,
+        OR: [{ emailNotificationsEnabled: true }, { pushNotificationsEnabled: true }],
+        AND: [
+          { OR: [{ lastDailyReminderSentDate: null }, { lastDailyReminderSentDate: { not: group.today } }] },
+        ],
+      },
+      select: { id: true, lastStudyDate: true, lastStudyTimeZone: true, timeZone: true },
+    });
 
-  const candidates = await prisma.user.findMany({
-    where: {
-      dailyReminderTime: time,
-      OR: [{ emailNotificationsEnabled: true }, { pushNotificationsEnabled: true }],
-      AND: [
-        { OR: [{ lastStudyDate: null }, { lastStudyDate: { not: today } }] },
-        { OR: [{ lastDailyReminderSentDate: null }, { lastDailyReminderSentDate: { not: today } }] },
-      ],
-    },
-    select: { id: true },
-  });
-
-  for (const user of candidates) {
-    await notifyDailyReminder(user.id).catch(() => {});
-    await prisma.user.update({ where: { id: user.id }, data: { lastDailyReminderSentDate: today } }).catch(() => {});
+    for (const user of candidates) {
+      // Vandaag al gestudeerd (volgens dezelfde regel als de reeks)? Dan geen herinnering.
+      const { gap } = streakDayGap(user, now);
+      if (gap !== null && gap <= 0) continue;
+      await notifyDailyReminder(user.id).catch(() => {});
+      await prisma.user.update({ where: { id: user.id }, data: { lastDailyReminderSentDate: group.today } }).catch(() => {});
+    }
   }
 }
 
@@ -286,33 +302,40 @@ async function runWordGameNotificationTick(): Promise<void> {
  * meteen op nul gezet.
  */
 async function runStreakRolloverTick(): Promise<void> {
-  const today = dayKey();
+  const now = new Date();
+  // Voorselectie in de database: wie overal ter wereld al minstens een dag
+  // gemist kan hebben (Kiritimati loopt het verst voor, UTC+14). Of dat voor
+  // deze gebruiker echt zo is, beslist streakDayGap hieronder met zijn eigen
+  // tijdzone(s); zo komt niet elke minuut iedereen langs voor een
+  // transactie die niets doet.
+  const latestToday = dayKeyInZone(now, "Pacific/Kiritimati");
   const candidates = await prisma.user.findMany({
     where: {
       currentStreak: { gt: 0 },
-      // Alleen wie vóór gisteren voor het laatst studeerde heeft een dag
-      // gemist. Met "vóór vandaag" kwam iedereen die vandaag nog niet
-      // studeerde elke minuut opnieuw langs voor een transactie die niets
-      // deed (missedDays = 0).
-      lastStudyDate: { not: null, lt: addDays(today, -1) },
+      lastStudyDate: { not: null, lt: addDays(latestToday, -1) },
     },
-    select: { id: true },
+    select: { id: true, lastStudyDate: true, lastStudyTimeZone: true, timeZone: true },
   });
 
   for (const user of candidates) {
+    const { gap } = streakDayGap(user, now);
+    if (gap === null || gap <= 1) continue;
     await prisma.$transaction(async (tx) => {
       const fresh = await tx.user.findUnique({
         where: { id: user.id },
-        select: { currentStreak: true, lastStudyDate: true, freezeCount: true },
+        select: { currentStreak: true, lastStudyDate: true, lastStudyTimeZone: true, timeZone: true, freezeCount: true },
       });
-      if (!fresh?.lastStudyDate || fresh.currentStreak <= 0 || fresh.lastStudyDate >= today) return;
-
-      const missedDays = daysBetween(fresh.lastStudyDate, today) - 1;
+      if (!fresh?.lastStudyDate || fresh.currentStreak <= 0) return;
+      // Pas gemist als de dag in de huidige én in de vorige tijdzone voorbij
+      // is (zie streakRules.ts): reizen kost zo nooit een reeksdag.
+      const { gap: freshGap } = streakDayGap(fresh, now);
+      const missedDays = (freshGap ?? 0) - 1;
       if (missedDays <= 0) return;
+      const lastStudyDate = fresh.lastStudyDate;
 
       if (fresh.freezeCount >= missedDays) {
         for (let i = 1; i <= missedDays; i++) {
-          const frozenDayKey = addDays(fresh.lastStudyDate, i);
+          const frozenDayKey = addDays(lastStudyDate, i);
           await tx.streakDay.upsert({
             where: { userId_dayKey: { userId: user.id, dayKey: frozenDayKey } },
             create: { userId: user.id, dayKey: frozenDayKey, status: "FROZEN" },
@@ -324,17 +347,18 @@ async function runStreakRolloverTick(): Promise<void> {
             userId: user.id,
             type: "AUTO_SPENT",
             amount: -missedDays,
-            reason: `Streak beschermd op ${today} (${missedDays} dag${missedDays > 1 ? "en" : ""} gemist)`,
+            reason: `Streak beschermd op ${addDays(lastStudyDate, missedDays + 1)} (${missedDays} dag${missedDays > 1 ? "en" : ""} gemist)`,
           },
         });
         await tx.user.update({
           where: { id: user.id },
           data: {
             freezeCount: { decrement: missedDays },
-            // Laat de meest recente beschermde dag gelden als ankerpunt.
-            // Daardoor kan een studieactiviteit vandaag morgen de reeks
-            // normaal met één verhogen, zonder de freeze opnieuw te tellen.
-            lastStudyDate: addDays(today, -1),
+            // Laat de meest recente beschermde dag gelden als ankerpunt (in
+            // dezelfde tijdzone als de laatste reeksdag). Daardoor kan een
+            // studieactiviteit vandaag de reeks normaal met één verhogen,
+            // zonder de freeze opnieuw te tellen.
+            lastStudyDate: addDays(lastStudyDate, missedDays),
           },
         });
       } else {

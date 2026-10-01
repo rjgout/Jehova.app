@@ -9,8 +9,8 @@ import TodaySection from "@/components/today/TodaySection";
 import SocialPreview from "@/components/today/SocialPreview";
 import DiscoverySection from "@/components/today/DiscoverySection";
 import GeneralConferenceCountdown from "@/components/today/GeneralConferenceCountdown";
-import { amsterdamDayKey } from "@/lib/dates";
 import { shouldShowGeneralConferenceCountdown } from "@/lib/generalConference";
+import { userTimeZone } from "@/lib/timeZone";
 
 // Vandaag: de persoonlijke startpagina (zie docs/VERSADO-DESIGN.md). Eerst
 // wat op je wacht, dan waar je gebleven was, de dagelijkse content, je
@@ -28,11 +28,12 @@ export default async function DashboardPage() {
 
   const data = await getTodayData(user);
   const language = user.uiLanguage;
-  // De countdown beslist in de browser met de eigen kalenderdag of hij
-  // zichtbaar is; voor het tellen van de rijen hieronder volstaat de
-  // Nederlandse dag (hooguit op de grensdag een dag verschil).
-  const serverToday = amsterdamDayKey();
-  const countdownVisible = user.conferenceCountdownEnabled && shouldShowGeneralConferenceCountdown(serverToday);
+  // De countdown rekent met de servertijd en de tijdzone van het account; in
+  // de browser volgt hij daarna de tijdzone van het toestel (op een grensdag
+  // kan dat een dag schelen, voor het tellen van de rijen maakt dat niet uit).
+  const serverNow = Date.now();
+  const timeZone = userTimeZone(user);
+  const countdownVisible = user.conferenceCountdownEnabled && shouldShowGeneralConferenceCountdown(new Date(serverNow), timeZone);
   // Aantal blokken in de hoofdkolom: de sociale kolom overspant op desktop
   // precies zoveel rijen (lege extra rijen zouden anders ruimte kosten).
   const mainBlocks = 1 + (countdownVisible ? 1 : 0) + (data.actions.length > 0 ? 1 : 0) + (data.continueItems.length > 0 ? 1 : 0) + (data.discover.length > 0 ? 1 : 0);
@@ -43,7 +44,7 @@ export default async function DashboardPage() {
       <div className="grid grid-cols-1 gap-8 sm:gap-10 lg:grid-cols-[minmax(0,1fr)_20rem] lg:gap-x-8 lg:gap-y-10">
         {/* Vaste plek: direct boven "Wacht op jou". Rendert zelf niets (dus
             ook geen lege rij of marge) als hij niet zichtbaar is. */}
-        {user.conferenceCountdownEnabled && <GeneralConferenceCountdown serverToday={serverToday} className="min-w-0 lg:col-start-1" />}
+        {user.conferenceCountdownEnabled && <GeneralConferenceCountdown serverNow={serverNow} timeZone={timeZone} className="min-w-0 lg:col-start-1" />}
         {data.actions.length > 0 && (
           <div className="min-w-0 lg:col-start-1">
             <OpenActions actions={data.actions} language={language} />

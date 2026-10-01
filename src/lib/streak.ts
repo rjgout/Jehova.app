@@ -1,12 +1,13 @@
 import type { ChapterGuessLevel, XPReason, Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db";
-import { addDays, dayKey, daysBetween } from "@/lib/dates";
+import { addDays } from "@/lib/dates";
+import { userTimeZone } from "@/lib/timeZone";
 import { awardXp } from "@/lib/xp";
 import { checkAndAwardAchievements } from "@/lib/achievements";
 import { awardCompetitionXp } from "@/lib/competitionXp";
 import { XP_PER_CORRECT_LIGHT, applyRepeatDiscount } from "@/lib/xpRules";
 import { notifyFreezeReceived } from "@/lib/notify";
-import { qualifiesForStreak, type LearningActivity } from "@/lib/learning/streakRules";
+import { hasStudiedToday, qualifiesForStreak, streakDayGap, type LearningActivity } from "@/lib/learning/streakRules";
 
 const PASS_THRESHOLD = 60; // percentage nodig om een les (podcast, kinderen, introductie) als voltooid te tellen
 const STREAK_MILESTONE_FOR_FREEZE = 7; // elke 7-daagse streak levert een freeze op
@@ -33,6 +34,8 @@ type Tx = Prisma.TransactionClient;
 
 interface DailyStreakResult {
   today: string;
+  /** Tijdzone waarin "today" is bepaald (wordt User.lastStudyTimeZone). */
+  timeZone: string;
   alreadyStudiedToday: boolean;
   currentStreak: number;
   longestStreak: number;
@@ -50,10 +53,14 @@ interface DailyStreakResult {
  * aanroepen: alleen via recordLearningActivity, die eerst de reeksregel
  * controleert.
  */
-async function applyDailyStreak(tx: Tx, userId: string): Promise<DailyStreakResult> {
+async function applyDailyStreak(tx: Tx, userId: string, now: Date): Promise<DailyStreakResult> {
   const user = await tx.user.findUniqueOrThrow({ where: { id: userId } });
-  const today = dayKey();
-  const alreadyStudiedToday = user.lastStudyDate === today;
+  // "Vandaag" en het aantal dagen sinds de laatste reeksdag volgens de
+  // tijdzoneregel in streakRules.ts: de servertijd (niet de klok van het
+  // toestel) in de tijdzone van de gebruiker, voorzichtig gerekend als die
+  // sinds de laatste reeksdag is veranderd.
+  const { today, gap } = streakDayGap(user, now);
+  const alreadyStudiedToday = gap !== null && gap <= 0;
 
   let currentStreak = user.currentStreak;
   let freezeUsed = false;
@@ -66,8 +73,7 @@ async function applyDailyStreak(tx: Tx, userId: string): Promise<DailyStreakResu
   } else if (!user.lastStudyDate) {
     currentStreak = 1;
   } else {
-    const gap = daysBetween(user.lastStudyDate, today);
-    const missedDays = gap - 1;
+    const missedDays = gap! - 1;
     if (missedDays <= 0) {
       // gap === 1: aansluitende dag, niets gemist
       currentStreak += 1;
@@ -128,6 +134,7 @@ async function applyDailyStreak(tx: Tx, userId: string): Promise<DailyStreakResu
 
   return {
     today,
+    timeZone: userTimeZone(user),
     alreadyStudiedToday,
     currentStreak,
     longestStreak,
@@ -157,7 +164,13 @@ export interface StreakSnapshot {
  * een lege of half afgemaakte inzending ook niet: dan blijft de reeks zoals
  * hij was.
  */
-export async function recordLearningActivity(tx: Tx, userId: string, activity: LearningActivity): Promise<StreakSnapshot> {
+export async function recordLearningActivity(
+  tx: Tx,
+  userId: string,
+  activity: LearningActivity,
+  /** Altijd de servertijd; alleen tests geven een ander moment mee. */
+  now: Date = new Date()
+): Promise<StreakSnapshot> {
   if (!qualifiesForStreak(activity)) {
     const user = await tx.user.findUniqueOrThrow({ where: { id: userId } });
     return {
@@ -167,19 +180,22 @@ export async function recordLearningActivity(tx: Tx, userId: string, activity: L
       freezeUsed: false,
       freezesEarned: 0,
       freezeCount: user.freezeCount,
-      alreadyStudiedToday: user.lastStudyDate === dayKey(),
+      alreadyStudiedToday: hasStudiedToday(user, now),
       counted: false,
     };
   }
 
-  const daily = await applyDailyStreak(tx, userId);
+  const daily = await applyDailyStreak(tx, userId, now);
   const freezeCount = daily.freezeCountBeforeMilestone + daily.freezesEarned;
   await tx.user.update({
     where: { id: userId },
     data: {
       currentStreak: daily.currentStreak,
       longestStreak: daily.longestStreak,
-      lastStudyDate: daily.today,
+      // Telde vandaag al (ook na een reis naar het westen, waar de datum
+      // terugspringt), dan blijft de laatste reeksdag zoals hij was: nooit
+      // terug in de tijd.
+      ...(daily.alreadyStudiedToday ? {} : { lastStudyDate: daily.today, lastStudyTimeZone: daily.timeZone }),
       freezeCount,
     },
   });

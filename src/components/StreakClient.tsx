@@ -18,6 +18,8 @@ interface StreakDayView {
 }
 
 interface StreakMonthView {
+  /** Vandaag in de tijdzone van de gebruiker (bepaald door de server). */
+  today: string;
   year: number;
   month: number;
   days: StreakDayView[];
@@ -32,10 +34,6 @@ interface StreakOverview {
   month: StreakMonthView;
 }
 
-
-function todayKey(): string {
-  return new Date().toISOString().slice(0, 10);
-}
 
 function monthLabel(year: number, month: number, locale: string): string {
   return new Intl.DateTimeFormat(locale, { month: "long", year: "numeric", timeZone: "UTC" }).format(
@@ -119,7 +117,7 @@ export default function StreakClient() {
     weeks.push(week);
   }
 
-  const today = todayKey();
+  const today = month.today;
 
   return (
     <div className="max-w-3xl mx-auto flex flex-col gap-4 sm:gap-5">

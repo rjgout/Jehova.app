@@ -10,6 +10,7 @@ import { formatTag, firstGrapheme, isSingleEmoji } from "@/lib/handle";
 import { enableBrowserPush, disableBrowserPush, isPushSupported } from "@/lib/pushClient";
 import { getSocket } from "@/lib/socketClient";
 import ThemePreference from "@/components/ThemePreference";
+import { DEFAULT_TIME_ZONE, isValidTimeZone } from "@/lib/timeZone";
 import TwoFactorSettings from "@/components/TwoFactorSettings";
 import { getDutchVoices, saveSelectedDutchVoice } from "@/lib/readAloud";
 import { useT, useUiLanguage } from "@/components/I18nProvider";
@@ -23,6 +24,7 @@ import {
   Bell,
   BookOpen,
   CalendarDays,
+  Clock,
   ChevronRight,
   Globe2,
   KeyRound,
@@ -73,6 +75,7 @@ interface ProfileData {
   notifyFriendOnline: boolean;
   changelogEnabled: boolean;
   conferenceCountdownEnabled: boolean;
+  timeZone: string | null;
   uiLanguage: string;
   totpEnabled: boolean;
   xpTotal: number;
@@ -544,6 +547,7 @@ export default function ProfileClient() {
         <ProfileRow icon={<Bell className="h-5 w-5 text-vs-accent" aria-hidden />} label={t("profile.notifications")} onClick={() => openView("notifications")} />
         <ProfileRow icon={<Users className="h-5 w-5 text-vs-accent" aria-hidden />} label={t("profile.onlineActivity")} value={data.shareOnlineStatus ? t("twoFactor.on") : t("twoFactor.off")} onClick={() => openView("presence")} />
         <ProfileRow icon={<LockKeyhole className="h-5 w-5 text-vs-accent" aria-hidden />} label={t("profile.privacy")} onClick={() => openView("privacy")} />
+        <TimeZoneRow known={data.timeZone} label={t("profile.timeZone")} format={(zone) => t("profile.timeZoneAuto", { zone })} locale={getLanguage(data.uiLanguage).intlLocale} />
         <ProfileToggle icon={<CalendarDays className="h-5 w-5 text-vs-accent" aria-hidden />} label={t("profile.conferenceCountdown")} hint={t("profile.conferenceCountdownHint")} checked={data.conferenceCountdownEnabled} disabled={savingNotifications} onChange={() => toggleCategory("conferenceCountdownEnabled")} />
       </ProfileSection>
 
@@ -585,6 +589,28 @@ function ProfileRow({ icon, label, value, href, onClick, destructive = false }: 
   const content = <><span className="shrink-0">{icon}</span><span className="min-w-0 flex-1 truncate font-bold">{label}</span>{value && <span className="max-w-[45%] truncate text-sm text-vs-fg-2">{value}</span>}<ChevronRight className="h-5 w-5 shrink-0 text-vs-fg-3" aria-hidden /></>;
   if (href) return <Link href={href} className={className}>{content}</Link>;
   return <button type="button" onClick={onClick} className={className}>{content}</button>;
+}
+
+// Ter informatie, geen instelling: de tijdzone volgt automatisch het toestel
+// (TimeZoneSync.tsx). Intern altijd de IANA-naam; zichtbaar de gangbare
+// naam in de taal van de app, met de IANA-naam eronder.
+function TimeZoneRow({ known, label, format, locale }: { known: string | null; label: string; format: (zone: string) => string; locale: string }) {
+  const [zone, setZone] = useState(known ?? DEFAULT_TIME_ZONE);
+  useEffect(() => {
+    try {
+      const detected = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      if (isValidTimeZone(detected)) setZone(detected);
+    } catch {
+      // geen Intl-tijdzone: de opgeslagen blijft staan
+    }
+  }, []);
+  let name = zone;
+  try {
+    name = new Intl.DateTimeFormat(locale, { timeZone: zone, timeZoneName: "longGeneric" }).formatToParts(new Date()).find((p) => p.type === "timeZoneName")?.value ?? zone;
+  } catch {
+    // oudere browser zonder longGeneric: de IANA-naam
+  }
+  return <div className="flex min-h-14 w-full items-center gap-3 rounded-xl px-2 py-2"><span className="shrink-0"><Clock className="h-5 w-5 text-vs-accent" aria-hidden /></span><span className="min-w-0 flex-1"><span className="block font-bold text-vs-fg">{label}</span><span className="block text-sm text-vs-fg-2">{format(name)}</span><span className="block text-xs text-vs-fg-3">{zone.replace(/_/g, " ")}</span></span></div>;
 }
 
 // Een aan/uit-instelling direct in de lijst, zonder eigen detailscherm.

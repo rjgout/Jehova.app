@@ -1,6 +1,8 @@
 import type { User } from "@prisma/client";
 import { prisma } from "@/lib/db";
-import { amsterdamNow, dayKey } from "@/lib/dates";
+import { dayKey } from "@/lib/dates";
+import { userTimeZone, zonedParts } from "@/lib/timeZone";
+import { hasStudiedToday } from "@/lib/learning/streakRules";
 import { getTextOfTheDay, type DailyText } from "@/lib/dailyText";
 import { wordGameDayKey } from "@/lib/wordGame";
 import { getActiveGameStatus, type ActivityItem } from "@/lib/activeGames";
@@ -80,6 +82,8 @@ export interface DiscoverItem {
 
 export interface TodayData {
   firstName: string;
+  /** IANA-tijdzone van de gebruiker, voor datum en begroeting. */
+  timeZone: string;
   partOfDay: "morning" | "afternoon" | "evening" | "night";
   streak: { current: number; studiedToday: boolean };
   actions: OpenAction[];
@@ -96,8 +100,8 @@ const MAX_ACTIONS = 6;
 const MAX_CONTINUE = 8;
 const MAX_DISCOVER = 6;
 
-function partOfDay(): TodayData["partOfDay"] {
-  const hour = amsterdamNow().hour;
+function partOfDay(timeZone: string): TodayData["partOfDay"] {
+  const hour = zonedParts(new Date(), timeZone).hour;
   if (hour < 6) return "night";
   if (hour < 12) return "morning";
   if (hour < 18) return "afternoon";
@@ -152,7 +156,11 @@ function openActions(status: Awaited<ReturnType<typeof getActiveGameStatus>>, fr
 
 export async function getTodayData(user: User): Promise<TodayData> {
   const t = getT(user.uiLanguage);
+  // De dagelijkse Alleskenner is voor iedereen dezelfde, met één vaste
+  // daggrens (UTC); de persoonlijke dag (reeks, begroeting) volgt hieronder
+  // de tijdzone van de gebruiker.
   const today = dayKey();
+  const timeZone = userTimeZone(user);
   const wordGameDay = wordGameDayKey();
   const contentContext = await getContentContext(user.id);
 
@@ -326,8 +334,9 @@ export async function getTodayData(user: User): Promise<TodayData> {
 
   return {
     firstName: user.handle,
-    partOfDay: partOfDay(),
-    streak: { current: user.currentStreak, studiedToday: user.lastStudyDate === today },
+    timeZone,
+    partOfDay: partOfDay(timeZone),
+    streak: { current: user.currentStreak, studiedToday: hasStudiedToday(user) },
     actions: openActions(gameStatus, friendRequests),
     continueItems,
     dailyText,

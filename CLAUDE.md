@@ -172,6 +172,17 @@ In de praktijk:
 - Geen eigen vraagaantal of XP-formule per route, geen voortgang aan een cursus-id als de inhoud gedeeld is.
 - `ChapterProgress` niet meer gebruiken.
 
+## ⚠️ Harde regel: tijd en tijdzones
+
+Zie `docs/TIJD.md`. UTC is de waarheid voor tijdstippen; de IANA-tijdzone
+van de gebruiker (`User.timeZone`, standaard `Europe/Amsterdam`) bepaalt
+zijn kalenderdag. Persoonlijke dag-logica (reeks, herinneringen, Vandaag)
+gebruikt `src/lib/timeZone.ts` en, voor de reeks, `streakDayGap` in
+`src/lib/learning/streakRules.ts`; gedeelde dingen (woord van de dag,
+weekcompetitie, dagelijkse Alleskenner, XP-daglimieten) houden hun vaste
+grens. Nooit de toestelklok vertrouwen voor XP of reeks, nooit losse
+UTC-offsets, en geen eigen tijdzonerekensom in componenten.
+
 ## Database & migraties
 
 - Eén `PrismaClient`-singleton in `src/lib/db.ts` (standaard Next-hot-reload-guard).

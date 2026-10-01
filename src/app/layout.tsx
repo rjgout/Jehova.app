@@ -14,7 +14,7 @@ import HeaderAvatar from "@/components/shell/HeaderAvatar";
 import SocialTabs from "@/components/shell/SocialTabs";
 import { prisma } from "@/lib/db";
 import { displayTierFor } from "@/lib/leagues";
-import { dayKey } from "@/lib/dates";
+import { hasStudiedToday } from "@/lib/learning/streakRules";
 import InviteListener from "@/components/InviteListener";
 import ChangelogPopup from "@/components/ChangelogPopup";
 import ThemeScript from "@/components/ThemeScript";
@@ -34,6 +34,7 @@ import { PodcastPlayerProvider } from "@/lib/podcastPlayerContext";
 import { ReadAloudPlayerProvider } from "@/lib/readAloudPlayerContext";
 import ReadAloudMiniPlayer from "@/components/ReadAloudMiniPlayer";
 import ActivityTracker from "@/components/ActivityTracker";
+import TimeZoneSync from "@/components/TimeZoneSync";
 import { I18nProvider } from "@/components/I18nProvider";
 import { messagesFor } from "@/lib/i18n";
 import { requestLanguage } from "@/lib/requestLanguage";
@@ -204,7 +205,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                   <NavUserBadges
                     streak={user.currentStreak}
                     xp={user.xpTotal}
-                    studiedToday={user.lastStudyDate === dayKey()}
+                    studiedToday={hasStudiedToday(user)}
                     tier={tier}
                   />
                   <NotificationCenter />
@@ -220,6 +221,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         {user && <PodcastMiniPlayer />}
         {user && <ReadAloudMiniPlayer />}
         {user && <ActivityTracker />}
+        {user && <TimeZoneSync known={user.timeZone} />}
         </StickyHeader>
         <Suspense fallback={null}><NavigationScroll /></Suspense>
         <main className="mx-auto max-w-5xl px-4 pb-[calc(6rem+env(safe-area-inset-bottom))] pt-[calc(var(--header-height,4.5rem)+2rem)] lg:pb-16">

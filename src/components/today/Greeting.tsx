@@ -9,7 +9,7 @@ import type { TodayData } from "@/lib/today";
 export default function Greeting({ data, language }: { data: TodayData; language: string }) {
   const t = getT(language);
   const locale = getLanguage(language).intlLocale;
-  const date = new Intl.DateTimeFormat(locale, { weekday: "long", day: "numeric", month: "long", timeZone: "Europe/Amsterdam" }).format(new Date());
+  const date = new Intl.DateTimeFormat(locale, { weekday: "long", day: "numeric", month: "long", timeZone: data.timeZone }).format(new Date());
   const { current, studiedToday } = data.streak;
   const status = studiedToday
     ? t("today.streakDone")

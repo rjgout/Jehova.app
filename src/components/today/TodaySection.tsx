@@ -115,7 +115,7 @@ export default function TodaySection({ data, language }: { data: TodayData; lang
         )}
         {wordGame && wordStatus && (
           <>
-            {wordGame.dayKey && <DailyWordRollover dayKey={wordGame.dayKey} />}
+            {wordGame.dayKey && <DailyWordRollover dayKey={wordGame.dayKey} serverNow={Date.now()} />}
             <DailyGameCard state={wordGame} kind="game" artwork={gameArtworkKeys("word-game")} title={t("pages.wordOfTheDay")} statusKey={wordStatus} language={language} />
           </>
         )}

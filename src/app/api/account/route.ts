@@ -8,6 +8,7 @@ import { generateDiscriminator, HANDLE_REGEX, HANDLE_MIN_LENGTH, HANDLE_MAX_LENG
 import { setIncognito, INCOGNITO_DURATIONS_HOURS } from "@/lib/presence";
 import { LANGUAGES, getLanguage } from "@/lib/languages";
 import { apiError, apiErrorText } from "@/lib/apiError";
+import { isValidTimeZone } from "@/lib/timeZone";
 
 const patchSchema = z.object({
   handle: z
@@ -45,6 +46,9 @@ const patchSchema = z.object({
   notifyFriendOnline: z.boolean().optional(),
   changelogEnabled: z.boolean().optional(),
   conferenceCountdownEnabled: z.boolean().optional(),
+  // Door de browser gedetecteerde IANA-tijdzone (TimeZoneSync.tsx). Alleen
+  // namen die Intl kent; een offset als "+01:00" wordt geweigerd.
+  timeZone: z.string().refine(isValidTimeZone, "Onbekende tijdzone.").optional(),
   // Taal van de app (menu's, meldingen, e-mails); de taal van de content
   // loopt via /api/content-context, omdat die ook de actieve uitgave wisselt.
   uiLanguage: z.enum(LANGUAGES.map((language) => language.code) as [string, ...string[]]).optional(),

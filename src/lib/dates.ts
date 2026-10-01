@@ -77,9 +77,3 @@ export function amsterdamNow(d: Date = new Date()): AmsterdamTime {
     minute: Number(parts.minute),
   };
 }
-
-/** De kalenderdag in Nederland als yyyy-mm-dd (zie amsterdamNow). */
-export function amsterdamDayKey(d: Date = new Date()): string {
-  const { year, month, day } = amsterdamNow(d);
-  return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-}

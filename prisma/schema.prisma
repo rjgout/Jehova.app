@@ -146,8 +146,16 @@ model User {
   xpTotal       Int     @default(0)
   currentStreak Int     @default(0)
   longestStreak Int     @default(0)
-  lastStudyDate String? // yyyy-mm-dd, in de dag-bucket van de gebruiker
+  lastStudyDate String? // yyyy-mm-dd, kalenderdag in lastStudyTimeZone
   freezeCount   Int     @default(0)
+  // Tijdzones (zie src/lib/timeZone.ts en docs/TIJD.md). timeZone is de
+  // IANA-tijdzone die de browser het laatst doorgaf; null = nog onbekend,
+  // dan geldt Europe/Amsterdam. lastStudyTimeZone is de tijdzone waarin
+  // lastStudyDate is behaald; null = van vóór de tijdzones, toen elke
+  // reeksdag een UTC-dag was. Bewust zonder backfill: zo blijven bestaande
+  // reeksen precies zoals ze waren.
+  timeZone          String?
+  lastStudyTimeZone String?
   // Het enige hint-tegoed dat er is (zie src/lib/shop.ts) — gekocht in de
   // winkel of verdiend bij het Woordspel/Raad het hoofdstuk komt allebei
   // hier terecht, zodat overal waar hints gebruikt kunnen worden precies

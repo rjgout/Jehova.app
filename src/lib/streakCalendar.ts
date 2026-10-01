@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/db";
-import { dayKey } from "@/lib/dates";
+import { userDayKey } from "@/lib/timeZone";
 
 export type StreakDayState = "STUDIED" | "FROZEN" | "NONE" | "FUTURE";
 
@@ -11,6 +11,8 @@ export interface StreakDayView {
 }
 
 export interface StreakMonthView {
+  /** De kalenderdag van vandaag in de tijdzone van de gebruiker. */
+  today: string;
   year: number;
   month: number; // 1-12
   days: StreakDayView[];
@@ -28,7 +30,7 @@ function mondayFirstWeekday(year: number, month: number, day: number): number {
   return jsDay === 0 ? 6 : jsDay - 1;
 }
 
-export async function getStreakMonth(userId: string, year: number, month: number): Promise<StreakMonthView> {
+export async function getStreakMonth(userId: string, year: number, month: number, todayKey: string): Promise<StreakMonthView> {
   const daysInMonth = new Date(Date.UTC(year, month, 0)).getUTCDate();
   const startKey = `${year}-${pad(month)}-01`;
   const endKey = `${year}-${pad(month)}-${pad(daysInMonth)}`;
@@ -38,7 +40,6 @@ export async function getStreakMonth(userId: string, year: number, month: number
     select: { dayKey: true, status: true },
   });
   const byDay = new Map(rows.map((r) => [r.dayKey, r.status]));
-  const todayKey = dayKey();
 
   const days: StreakDayView[] = [];
   let daysStudied = 0;
@@ -61,7 +62,7 @@ export async function getStreakMonth(userId: string, year: number, month: number
     days.push({ dayKey: dk, day: d, weekday: mondayFirstWeekday(year, month, d), state });
   }
 
-  return { year, month, days, daysStudied, freezesUsed };
+  return { today: todayKey, year, month, days, daysStudied, freezesUsed };
 }
 
 export interface StreakOverview {
@@ -74,17 +75,18 @@ export interface StreakOverview {
 export async function getStreakOverview(userId: string, year?: number, month?: number): Promise<StreakOverview> {
   const user = await prisma.user.findUniqueOrThrow({
     where: { id: userId },
-    select: { currentStreak: true, longestStreak: true, freezeCount: true },
+    select: { currentStreak: true, longestStreak: true, freezeCount: true, timeZone: true },
   });
 
-  const now = new Date();
-  const y = year ?? now.getUTCFullYear();
-  const m = month ?? now.getUTCMonth() + 1;
+  // Standaard de maand van vandaag, in de tijdzone van de gebruiker.
+  const today = userDayKey(user);
+  const y = year ?? Number(today.slice(0, 4));
+  const m = month ?? Number(today.slice(5, 7));
 
   return {
     currentStreak: user.currentStreak,
     longestStreak: user.longestStreak,
     freezeCount: user.freezeCount,
-    month: await getStreakMonth(userId, y, m),
+    month: await getStreakMonth(userId, y, m, today),
   };
 }
