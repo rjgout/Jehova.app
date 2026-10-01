@@ -156,10 +156,10 @@ export default function XpHistoryClient() {
   const groups = groupTransactions(transactions);
 
   return (
-    <div className="max-w-5xl mx-auto flex flex-col gap-5">
+    <div className="max-w-3xl mx-auto flex flex-col gap-4 sm:gap-5">
       <h1 className="text-2xl font-extrabold text-brand-800 dark:text-brand-300">{t("xpHistory.title")}</h1>
 
-      <div className="card bg-gradient-to-br from-brand-500 to-brand-700 dark:from-brand-600 dark:to-brand-900 text-white flex flex-col items-center gap-1 !py-8">
+      <div className="card bg-gradient-to-br from-brand-500 to-brand-700 dark:from-brand-600 dark:to-brand-900 text-white !border-brand-300/30 dark:!border-brand-400/20 !shadow-md dark:!shadow-none flex flex-col items-center gap-1 !py-8">
         <span className="text-4xl" aria-hidden>
           ⭐
         </span>
@@ -172,35 +172,22 @@ export default function XpHistoryClient() {
         )}
       </div>
 
-      <Link
-        href="/tools/xp-guide"
-        className="card !py-4 !bg-gold-50 dark:!bg-slate-800 !border-gold-400/30 dark:!border-slate-700 flex items-center gap-3 hover:ring-2 hover:ring-gold-300"
-      >
-        <span className="text-2xl shrink-0" aria-hidden>
-          💡
-        </span>
-        <div className="min-w-0">
-          <p className="font-extrabold text-sm dark:text-slate-100">{t("xpHistory.whatEarns")}</p>
-          <p className="text-xs text-gold-700 dark:text-gold-400 font-semibold">{t("xpHistory.overview")}</p>
-        </div>
-      </Link>
-
-      <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-3">
         <h2 className="font-extrabold text-lg dark:text-slate-100">{t("xpHistory.history")}</h2>
         {groups.length === 0 ? (
           <p className="text-sm text-slate-400 dark:text-slate-500">{t("xpHistory.none")}</p>
         ) : (
           groups.map((group) => (
-            <div key={group.label} className="flex flex-col gap-2">
+            <section key={group.label} className="flex flex-col gap-1.5">
               <p className="text-xs font-bold uppercase tracking-wide text-slate-400 dark:text-slate-500 px-1">
                 {t(`xpHistory.buckets.${group.label}`)}
               </p>
-              <div className="flex flex-col gap-2">
+              <div className="card !p-0 overflow-hidden divide-y divide-slate-100 dark:divide-slate-700">
                 {group.items.map((tx) => (
-                  <div key={tx.id} className="card !py-3 flex items-center justify-between gap-3">
+                  <div key={tx.id} className="flex min-w-0 items-center justify-between gap-3 px-3 py-2.5">
                     <div className="flex items-center gap-3 min-w-0">
                       <span
-                        className="text-lg shrink-0 w-10 h-10 rounded-full bg-brand-50 dark:bg-slate-700 flex items-center justify-center"
+                        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-50 text-lg dark:bg-slate-700"
                         aria-hidden
                       >
                         {REASON_ICONS[tx.reason]}
@@ -219,7 +206,7 @@ export default function XpHistoryClient() {
                   </div>
                 ))}
               </div>
-            </div>
+            </section>
           ))
         )}
 
@@ -229,6 +216,19 @@ export default function XpHistoryClient() {
           </button>
         )}
       </div>
+
+      <Link
+        href="/tools/xp-guide"
+        className="card !bg-vs-subtle dark:!bg-vs-surface !border-vs-line flex items-center gap-3 !py-3 hover:ring-2 hover:ring-vs-accent-soft"
+      >
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-vs-accent-soft text-xl" aria-hidden>
+          💡
+        </span>
+        <div className="min-w-0">
+          <p className="font-extrabold text-sm text-vs-fg">{t("xpHistory.whatEarns")}</p>
+          <p className="text-xs font-semibold text-vs-accent">{t("xpHistory.overview")}</p>
+        </div>
+      </Link>
     </div>
   );
 }

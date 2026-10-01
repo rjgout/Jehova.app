@@ -120,10 +120,10 @@ export default function StreakClient() {
   const today = todayKey();
 
   return (
-    <div className="max-w-5xl mx-auto flex flex-col gap-5">
+    <div className="max-w-3xl mx-auto flex flex-col gap-4 sm:gap-5">
       <h1 className="text-2xl font-extrabold text-brand-800 dark:text-brand-300">{t("streakPage.title")}</h1>
 
-      <div className="card bg-gradient-to-br from-orange-400 to-red-500 text-white flex flex-col items-center gap-1 !py-8">
+      <div className="card bg-gradient-to-br from-orange-400 to-red-500 text-white !border-orange-300/40 dark:!border-orange-200/20 !shadow-md dark:!shadow-none flex flex-col items-center gap-1 !py-8">
         <span className="text-4xl" aria-hidden>
           🔥
         </span>
@@ -136,7 +136,7 @@ export default function StreakClient() {
         )}
       </div>
 
-      <div className="card !py-4 !bg-ice-50 dark:!bg-slate-800 !border-ice-400/30 dark:!border-slate-700 flex items-center gap-3">
+      <div className="card !py-3 !bg-ice-50 dark:!bg-slate-800 !border-ice-400/30 dark:!border-slate-700 flex items-center gap-3">
         <span className="text-2xl shrink-0" aria-hidden>
           🧊
         </span>
@@ -146,19 +146,19 @@ export default function StreakClient() {
       </div>
 
       <div className="grid grid-cols-2 gap-3">
-        <div className="card !py-4 flex flex-col items-center gap-0.5">
+        <div className="card !py-3 flex flex-col items-center gap-0.5">
           <div className="text-xl font-extrabold text-orange-500">🔥 {month.daysStudied}</div>
           <div className="text-xs font-bold uppercase text-slate-400 dark:text-slate-500">{t("streakPage.daysThisMonth")}</div>
         </div>
-        <div className="card !py-4 flex flex-col items-center gap-0.5">
+        <div className="card !py-3 flex flex-col items-center gap-0.5">
           <div className="text-xl font-extrabold text-ice-600 dark:text-ice-400">🧊 {overview.freezeCount}</div>
           <div className="text-xs font-bold uppercase text-slate-400 dark:text-slate-500">{t("lesson.freezes")}</div>
         </div>
       </div>
 
-      <div className="card flex flex-col gap-4">
+      <div className="card flex flex-col gap-3 !p-4 sm:!p-5">
         <div className="flex items-center justify-between">
-          <button className="btn-secondary !px-3 !py-1.5" onClick={() => goToMonth(-1)} aria-label={t("streakPage.prevMonth")}>
+          <button className="btn-secondary !min-h-9 !px-3 !py-1" onClick={() => goToMonth(-1)} aria-label={t("streakPage.prevMonth")}>
             ‹
           </button>
           <div className="text-center">
@@ -168,7 +168,7 @@ export default function StreakClient() {
             )}
           </div>
           <button
-            className="btn-secondary !px-3 !py-1.5 disabled:opacity-30"
+            className="btn-secondary !min-h-9 !px-3 !py-1 disabled:opacity-30"
             onClick={() => goToMonth(1)}
             disabled={isCurrentMonth}
             aria-label={t("streakPage.nextMonth")}
@@ -217,8 +217,8 @@ export default function StreakClient() {
                           isToday
                             ? "border-2 border-orange-400 text-orange-500"
                             : d.state === "FUTURE"
-                              ? "text-slate-300 dark:text-slate-600"
-                              : "text-slate-400 dark:text-slate-500"
+                              ? "text-slate-300 dark:text-slate-500"
+                              : "text-slate-500 dark:text-slate-400"
                         }`}
                       >
                         {d.day}
