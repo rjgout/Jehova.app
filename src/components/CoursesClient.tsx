@@ -7,6 +7,7 @@ import type { MessageKey } from "@/lib/i18n/core";
 import { SortableList, DragHandle, type DragHandleProps } from "@/components/SortableList";
 import { applyPersonalOrder, fetchListOrder, saveListOrder } from "@/lib/listOrder";
 import { useConfirm } from "@/components/ConfirmProvider";
+import MediaArtwork from "@/components/versado/MediaArtwork";
 
 interface CourseView {
   id: string;
@@ -20,6 +21,7 @@ interface CourseView {
   xpAvailable: number;
   isActive: boolean;
   currentChapter: { id: string; bookName: string; number: number } | null;
+  artwork: string[];
 }
 
 interface CatalogCourseView {
@@ -42,39 +44,16 @@ const TYPE_LABELS: Record<CourseView["type"], MessageKey> = {
   FSY: "courses.types.fsy",
 };
 
-const COURSE_ICONS: Record<CourseView["type"], string> = {
-  INTRO: "✨",
-  READING_LESSONS: "📖",
-  FRONT_TO_BACK: "🧭",
-  FREE_CHOICE: "🗺️",
-  BY_BOOK: "📚",
-  PODCAST: "🎧",
-  KIDS: "🌈",
-  FSY: "🌱",
-};
-
+// Beeld per cursus komt uit het register (src/lib/artwork.ts); de server
+// geeft de sleutels mee, zodat het beeld het boek volgt waar je nu bent.
 function CourseArtwork({ course, large = false }: { course: CourseView; large?: boolean }) {
-  if (course.type === "KIDS") {
-    // De kindercursus is de enige cursus waarvoor in de repository passende
-    // vaste artwork staat; andere afbeeldingen zouden een verkeerde inhoud
-    // bij de cursus suggereren.
-    return (
-      // eslint-disable-next-line @next/next/no-img-element
-      <img
-        src="/kids/images/story-1-0.jpg"
-        alt=""
-        className={`w-full object-cover ${large ? "aspect-[3/1] sm:aspect-[16/9] lg:aspect-auto lg:h-full" : "aspect-[3/1] sm:aspect-[16/9]"}`}
-      />
-    );
-  }
-
   return (
-    <div
-      className={`flex w-full items-center justify-center bg-gradient-to-br from-brand-100 via-sky-100 to-gold-100 text-brand-700 dark:from-slate-800 dark:via-slate-800 dark:to-slate-700 dark:text-brand-300 ${large ? "aspect-[3/1] sm:aspect-[16/9] lg:aspect-auto lg:min-h-64" : "aspect-[3/1] sm:aspect-[16/9]"}`}
-      aria-hidden
-    >
-      <span className={`${large ? "text-7xl" : "text-5xl"} drop-shadow-sm`}>{COURSE_ICONS[course.type]}</span>
-    </div>
+    <MediaArtwork
+      kind="course"
+      artworkKey={course.artwork}
+      sizes={large ? "(min-width: 1024px) 420px, 100vw" : "(min-width: 1024px) 320px, (min-width: 768px) 50vw, 100vw"}
+      className={`w-full !aspect-[3/1] sm:!aspect-[16/9] ${large ? "lg:!aspect-auto lg:h-full lg:min-h-64" : ""}`}
+    />
   );
 }
 

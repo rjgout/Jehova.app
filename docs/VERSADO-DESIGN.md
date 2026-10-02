@@ -77,11 +77,19 @@ lijst hierboven nog volledig.
   schermbreedte, vaste verhouding, gemiddelde kleur tijdens laden, neutrale
   placeholder met icoon als er geen beeld is of het niet laadt). Beeld
   hoort inhoudelijk bij de content: een cursus toont het boek waar je bent
-  (of het beginboek als die cursus het boek van voor naar achter volgt),
-  en anders de placeholder; er is geen algemeen beeld per werk. Eerste
-  set: 1 Nephi, Alma, Het leven van Christus (voor een cursus met slug
-  `life-of-christ`, die er nog niet is), podcast (algemeen), De Slimste
-  Heilige en de tekst van de dag. Spelcovers staan per spel-id in
+  (of het beginboek als die cursus het boek van voor naar achter volgt:
+  1 Nephi, Leer en Verbonden of Mozes), dan beeld voor dat soort cursus
+  in dat werk (`course-work:<werk>:<CourseType>`, op werk en niet op slug,
+  nu alleen Vrije keuze), en anders de placeholder; er is geen algemeen
+  beeld per werk dat elke cursus krijgt. Elk boek van de drie Schriften
+  heeft een eigen beeld, net als Ontdek het Boek van Mormon, de
+  kindercursus, Voor de kracht van de jeugd, Vrije keuze per werk, Het
+  leven van Christus (voor een cursus met slug `life-of-christ`, die er
+  nog niet is), podcast (algemeen) en de tekst van de dag;
+  `tests/artwork.test.ts` (`npm run test:artwork`) bewaakt dat elk boek
+  een bestaand beeld heeft. De cursuspagina (`CoursesClient`) krijgt de
+  sleutels van `/api/courses` en toont ze met `MediaArtwork`, net als
+  Vandaag. Spelcovers staan per spel-id in
   `GAME_COVERS` en worden overal gebruikt waar een spel als kaart staat
   (Vandaag, Voor jou en de spelkaarten op Spelen in `LiveLobbyForm`).
   `versado/Carousel.tsx` is de veegrij met puntjes en pijlen.
@@ -395,8 +403,6 @@ in de repository:
   (NOVI eerst, in `public/mascots/static/novi/`, en de familie in
   `public/mascots/static/family/`; zie "Mascottes");
 - illustraties;
-- afbeeldingen voor cursussen en content;
-- afbeeldingen voor spellen;
 - mogelijk geanimeerde assets;
 - waarschijnlijk Rive-assets met state machines.
 

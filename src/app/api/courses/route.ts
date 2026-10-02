@@ -7,6 +7,7 @@ import { chapterTerm, localizeTerm } from "@/lib/chapterTerm";
 import { localizedCourse } from "@/lib/courseText";
 import { getT } from "@/lib/i18n";
 import { apiError } from "@/lib/apiError";
+import { courseArtworkKeys } from "@/lib/artwork";
 
 export async function GET() {
   const user = await getCurrentUser();
@@ -64,6 +65,13 @@ export async function GET() {
         completedCount,
         xpAvailable,
         isActive: user.activeCourseId === course.id,
+        // Het beeld volgt het boek waar je nu bent, net als op Vandaag.
+        artwork: courseArtworkKeys({
+          slug: course.slug,
+          type: course.type,
+          work: course.contentCollection.work,
+          bookKey: progress?.currentLesson?.chapter.book.key ?? progress?.currentChapter?.book.key,
+        }),
         currentChapter: progress?.currentChapter
           ? {
               id: progress.currentChapter.id,

@@ -4,6 +4,11 @@ Alle belangrijke gebruikersgerichte wijzigingen en releases worden hieronder bij
 
 ## Nog niet uitgebracht
 
+- Elk boek van het Boek van Mormon, de Leer en Verbonden en de Parel van
+  Grote Waarde heeft een eigen afbeelding; je cursus toont het boek waar je
+  nu bent. Ook Ontdek het Boek van Mormon, de kindercursus, Voor de kracht
+  van de jeugd en Vrije keuze hebben een eigen beeld, en op de
+  cursuspagina staan nu deze afbeeldingen in plaats van iconen.
 - Nieuwe afbeeldingen van Novi, Varo en Vera samen: op de homepagina en bij
   het welkom in de app.
 - Elke divisie heeft nu een eigen embleem, van Zaad tot Eeuwigheid: in de
