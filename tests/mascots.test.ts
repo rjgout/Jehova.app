@@ -3,11 +3,26 @@ import assert from "node:assert/strict";
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { MASCOT_CHARACTERS, MASCOT_STATES, mascotStates, mascotVariantCount, registeredStaticMascots, staticMascotAsset, staticMascotPath } from "../src/lib/mascots";
+import {
+  DEFAULT_PERSONAL_MASCOT,
+  MASCOT_CHARACTERS,
+  MASCOT_STATES,
+  PERSONAL_MASCOTS,
+  isPersonalMascot,
+  mascotStates,
+  mascotVariantCount,
+  registeredStaticMascots,
+  staticMascotAsset,
+  staticMascotPath,
+} from "../src/lib/mascots";
+
+// Een combinatie die niet bestaat, is al een typefout (tsc controleert deze map ook).
+// @ts-expect-error family heeft geen greeting
+staticMascotPath("family", "greeting");
 
 const PUBLIC = path.join(path.dirname(fileURLToPath(import.meta.url)), "..", "public");
 const STATIC_DIR = path.join(PUBLIC, "mascots", "static");
-const FIGMA_NOVI_DIR = path.join(PUBLIC, "mascots", "figma", "novi");
+const FIGMA_DIR = path.join(PUBLIC, "mascots", "figma");
 
 // Breedte en hoogte uit de WebP-header (VP8X, VP8L of VP8), zodat de
 // geregistreerde afmetingen altijd met het echte bestand overeenkomen.
@@ -50,14 +65,32 @@ test("elk bestand in public/mascots/static volgt de naamconventie", () => {
   }
 });
 
-test("zonder bestand is er geen asset (en dus geen vervanger)", () => {
-  // Varo en Vera hebben in deze fase bewust nog niets.
-  for (const state of MASCOT_STATES) {
-    assert.equal(staticMascotAsset("vera", state), null);
-    assert.equal(staticMascotAsset("varo", state), null);
+test("Novi, Varo en Vera: alle tien states geregistreerd als echte WebP met alfa", () => {
+  for (const character of PERSONAL_MASCOTS) {
+    assert.deepEqual([...mascotStates(character)].sort(), [...MASCOT_STATES].sort());
+    for (const state of MASCOT_STATES) {
+      const asset = staticMascotAsset(character, state);
+      assert.ok(asset, `${character}-${state}: niet geregistreerd`);
+      const file = path.join(PUBLIC, asset.src);
+      const b = readFileSync(file);
+      assert.equal(b.toString("ascii", 12, 16), "VP8X", `${character}-${state}: geen uitgebreide WebP`);
+      assert.ok((b[20] & 0x10) !== 0, `${character}-${state}: WebP zonder alfakanaal`);
+      assert.deepEqual(webpSize(file), { width: 512, height: 512 }, `${character}-${state}: verwacht 512x512`);
+    }
   }
+});
+
+test("persoonlijke gids: alleen Novi, Varo en Vera; family blijft apart", () => {
+  assert.deepEqual([...PERSONAL_MASCOTS], ["novi", "varo", "vera"]);
+  assert.equal(DEFAULT_PERSONAL_MASCOT, "novi");
+  for (const ok of ["novi", "varo", "vera"]) assert.equal(isPersonalMascot(ok), true);
+  for (const wrong of ["family", "NOVI", "", null, undefined, 3, "lisa"]) assert.equal(isPersonalMascot(wrong), false);
+  // family kent geen persoonlijke states, en geen andere dan welcome/celebrate.
+  assert.deepEqual([...mascotStates("family")], ["welcome", "celebrate"]);
+  assert.ok(!(mascotStates("family") as readonly string[]).includes("greeting"));
+  assert.ok(staticMascotAsset("family", "welcome"), "family-welcome blijft geldig");
   assert.equal(staticMascotAsset("family", "celebrate"), null, "family-celebrate is gereserveerd en heeft nog geen asset");
-  assert.equal(staticMascotPath("novi", "greeting"), "/mascots/static/novi/novi-greeting.webp");
+  assert.equal(staticMascotPath("varo", "greeting"), "/mascots/static/varo/varo-greeting.webp");
   assert.equal(staticMascotPath("family", "welcome", 2), "/mascots/static/family/family-welcome-2.webp");
 });
 
@@ -71,23 +104,23 @@ test("varianten: elke variant een eigen bestand, en een teller loopt rond", () =
   assert.equal(staticMascotAsset("novi", "greeting", 2)?.src, "/mascots/static/novi/novi-greeting.webp", "zonder varianten telt het nummer niet");
 });
 
-test("Figma-kopieën van alle Novi-states volgen bron, formaat en verhouding", () => {
-  const expectedFiles = MASCOT_STATES.map((state) => `novi-${state}.webp`).sort();
-  assert.deepEqual(readdirSync(path.join(FIGMA_NOVI_DIR, "512")).sort(), expectedFiles);
-  assert.deepEqual(readdirSync(path.join(FIGMA_NOVI_DIR, "256")).sort(), expectedFiles);
+test("Figma-kopieën van alle states van Novi, Varo en Vera volgen bron, formaat en verhouding", () => {
+  for (const character of PERSONAL_MASCOTS) {
+    const dir = path.join(FIGMA_DIR, character);
+    const expectedFiles = MASCOT_STATES.map((state) => `${character}-${state}.webp`).sort();
+    assert.deepEqual(readdirSync(path.join(dir, "512")).sort(), expectedFiles);
+    assert.deepEqual(readdirSync(path.join(dir, "256")).sort(), expectedFiles);
 
-  for (const state of MASCOT_STATES) {
-    const source = path.join(STATIC_DIR, "novi", `novi-${state}.webp`);
-    const copy512 = path.join(FIGMA_NOVI_DIR, "512", `novi-${state}.webp`);
-    const copy256 = path.join(FIGMA_NOVI_DIR, "256", `novi-${state}.webp`);
-    const sourceSize = webpSize(source);
-    const size512 = webpSize(copy512);
-    const size256 = webpSize(copy256);
+    for (const state of MASCOT_STATES) {
+      const source = path.join(STATIC_DIR, character, `${character}-${state}.webp`);
+      const copy512 = path.join(dir, "512", `${character}-${state}.webp`);
+      const copy256 = path.join(dir, "256", `${character}-${state}.webp`);
+      const sourceSize = webpSize(source);
+      const size256 = webpSize(copy256);
 
-    assert.deepEqual(size512, sourceSize, `${state}: 512-kopie veranderde de canvasmaat`);
-    assert.deepEqual(readFileSync(copy512), readFileSync(source), `${state}: 512-kopie is niet byte-identiek aan productie`);
-    assert.equal(Math.max(size256.width, size256.height), 256, `${state}: 256-export heeft niet de bedoelde langste zijde`);
-    assert.equal(size256.width * sourceSize.height, size256.height * sourceSize.width, `${state}: 256-export veranderde de verhouding`);
-    assert.ok(size256.width <= sourceSize.width && size256.height <= sourceSize.height, `${state}: Figma-export is opgeschaald`);
+      assert.deepEqual(readFileSync(copy512), readFileSync(source), `${character}-${state}: 512-kopie is niet byte-identiek aan productie`);
+      assert.equal(Math.max(size256.width, size256.height), 256, `${character}-${state}: 256-export heeft niet de bedoelde langste zijde`);
+      assert.equal(size256.width * sourceSize.height, size256.height * sourceSize.width, `${character}-${state}: 256-export veranderde de verhouding`);
+    }
   }
 });

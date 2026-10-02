@@ -45,6 +45,22 @@ interface MascotStatesByCharacter {
 /** De Versado-mascottes, plus "family" voor composities van de drie samen. */
 export type MascotCharacter = keyof MascotStatesByCharacter;
 
+/**
+ * De drie personages die een gebruiker als persoonlijke gids kan kiezen
+ * (User.companion). Elk heeft dezelfde tien states. "family" hoort hier
+ * bewust niet bij: de familie verschijnt alleen op gedeelde momenten.
+ */
+export const PERSONAL_MASCOTS = ["novi", "varo", "vera"] as const;
+
+export type PersonalMascotCharacter = (typeof PERSONAL_MASCOTS)[number];
+
+/** Gids voor wie (nog) niets koos: Novi was al de metgezel op de persoonlijke momenten. */
+export const DEFAULT_PERSONAL_MASCOT: PersonalMascotCharacter = "novi";
+
+export function isPersonalMascot(value: unknown): value is PersonalMascotCharacter {
+  return typeof value === "string" && (PERSONAL_MASCOTS as readonly string[]).includes(value);
+}
+
 export type MascotStateOf<C extends MascotCharacter> = MascotStatesByCharacter[C];
 
 /** Elke geldige combinatie van personage en state, als één union. */
@@ -96,24 +112,27 @@ interface RegisteredSize {
 //   greeting: { width: 512, height: 512 },
 // tests/mascots.test.ts controleert dat elk geregistreerd bestand bestaat,
 // dat de afmetingen kloppen en dat elk bestand in de map een geldige naam heeft.
+const SQUARE: RegisteredSize = { width: 512, height: 512 };
+const SQUARE_SET: Record<MascotState, RegisteredSize> = {
+  idle: SQUARE,
+  greeting: SQUARE,
+  thinking: SQUARE,
+  discovery: SQUARE,
+  reading: SQUARE,
+  playing: SQUARE,
+  success: SQUARE,
+  encourage: SQUARE,
+  celebrate: SQUARE,
+  sleep: SQUARE,
+};
+
 const STATIC_ASSETS: { [C in MascotCharacter]: Partial<Record<MascotStateOf<C>, RegisteredSize>> } = {
-  // Alle Novi-poses komen van hetzelfde canvas (1312x1199, verkleind naar
-  // 512 px breed), zodat Novi in elke state even groot is.
-  novi: {
-    idle: { width: 512, height: 468 },
-    greeting: { width: 512, height: 468 },
-    thinking: { width: 512, height: 468 },
-    discovery: { width: 512, height: 468 },
-    reading: { width: 512, height: 468 },
-    playing: { width: 512, height: 468 },
-    success: { width: 512, height: 468 },
-    encourage: { width: 512, height: 468 },
-    celebrate: { width: 512, height: 468 },
-    sleep: { width: 512, height: 468 },
-  },
-  // Losse VARO- en VERA-afbeeldingen komen in een latere fase.
-  vera: {},
-  varo: {},
+  // Novi, Varo en Vera: elk tien poses van hetzelfde vierkante canvas
+  // (bron 1254x1254, proportioneel naar 512x512), zodat een personage in
+  // elke state even groot is en een wissel van state of gids niet verspringt.
+  novi: SQUARE_SET,
+  varo: SQUARE_SET,
+  vera: SQUARE_SET,
   // Drie welkomstcomposities (bron 1536x1024 in references/family/,
   // verkleind naar 1200x800); de homepagina wisselt ze af.
   family: {
