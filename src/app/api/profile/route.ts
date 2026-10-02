@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getCurrentUser } from "@/lib/session";
 import { weekStartKey } from "@/lib/dates";
-import { TIER_ORDER } from "@/lib/leagues";
+import { medalCountsFor, TIER_ORDER } from "@/lib/leagues";
 import { companionToMascot } from "@/lib/companion";
 import { apiError } from "@/lib/apiError";
 
@@ -102,6 +102,7 @@ export async function GET() {
     duelsWon: wins,
     tier: weeklyScore?.tier ?? null,
     groupPosition,
+    medals: await medalCountsFor(prisma, user.id, weekStartKey()),
     bestTierEver,
     lifetimePromotions,
     lifetimeDemotions,

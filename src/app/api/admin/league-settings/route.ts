@@ -9,6 +9,7 @@ const schema = z
   .object({
     groupSize: z.number().int().min(2).max(500),
     promoteCount: z.number().int().min(0),
+    promotePercent: z.number().int().min(1).max(100),
     demoteCount: z.number().int().min(0),
     // Niet meer gebruikt (kleinere groepen gaan naar verhouding, zie
     // movementCounts); nog geaccepteerd zodat een oud formulier niet faalt.
@@ -24,8 +25,8 @@ const schema = z
       }
     }, "Ongeldige JSON."),
   })
-  .refine((v) => v.promoteCount + v.demoteCount < v.groupSize, {
-    message: "Promotie- + degradatieplaatsen moeten kleiner zijn dan de groepsgrootte.",
+  .refine((v) => Math.floor((v.groupSize * v.promotePercent) / 100) + v.demoteCount <= v.groupSize, {
+    message: "Promotie (percentage van de groep) + degradatieplaatsen mogen samen niet groter zijn dan de groepsgrootte.",
     path: ["groupSize"],
   });
 

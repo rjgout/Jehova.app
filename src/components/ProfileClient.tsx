@@ -5,6 +5,7 @@ import Link from "next/link";
 import LanguageSettings from "@/components/LanguageSettings";
 import { useRouter, useSearchParams } from "next/navigation";
 import type { LeagueTier } from "@prisma/client";
+import RankMedal from "@/components/versado/RankMedal";
 import DivisionEmblem from "@/components/versado/DivisionEmblem";
 import { formatTag, firstGrapheme, isSingleEmoji } from "@/lib/handle";
 import { enableBrowserPush, disableBrowserPush, isPushSupported } from "@/lib/pushClient";
@@ -92,6 +93,7 @@ interface ProfileData {
   duelsWon: number;
   tier: LeagueTier | null;
   groupPosition: number | null;
+  medals: { gold: number; silver: number; bronze: number };
   bestTierEver: LeagueTier | null;
   lifetimePromotions: number;
   lifetimeDemotions: number;
@@ -640,6 +642,19 @@ function CompactHeroStat({ value, label, href }: { value: ReactNode; label: stri
 function CompetitionDetail({ data, tier, t }: { data: ProfileData; tier: (value: LeagueTier) => string; t: Translate }) {
   return <div className="flex flex-col gap-4">
     <section className="rounded-2xl border border-gold-400/30 bg-gold-50 p-4 dark:bg-slate-800"><div className="grid grid-cols-2 gap-3"><div className="flex flex-col items-start gap-1">{data.tier && <DivisionEmblem tier={data.tier} className="h-20 w-20" />}<p className="text-2xl font-extrabold text-gold-700 dark:text-gold-300">{data.tier ? tier(data.tier) : "—"}</p><p className="text-xs font-bold uppercase text-vs-fg-2">{data.groupPosition ? `#${data.groupPosition} · ` : ""}{t("profile.thisWeek")}</p></div><div className="flex flex-col items-end gap-1 text-right">{data.bestTierEver && <DivisionEmblem tier={data.bestTierEver} className="h-16 w-16" />}<p className="text-lg font-extrabold text-gold-700 dark:text-gold-300">{data.bestTierEver ? tier(data.bestTierEver) : "—"}</p><p className="text-xs font-bold uppercase text-vs-fg-2">{t("profile.bestTier")}</p></div></div></section>
+    <section className="bg-vs-surface rounded-2xl border border-vs-line p-4">
+      <h2 className="font-extrabold text-vs-fg">{t("profile.medals")}</h2>
+      <p className="mt-0.5 text-sm text-vs-fg-2">{t("profile.medalsHint")}</p>
+      <div className="mt-3 grid grid-cols-3 gap-2 text-center">
+        {([[1, data.medals.gold, "profile.medalGold"], [2, data.medals.silver, "profile.medalSilver"], [3, data.medals.bronze, "profile.medalBronze"]] as const).map(([rank, count, label]) => (
+          <div key={rank} className="flex flex-col items-center gap-1">
+            <RankMedal rank={rank} className="h-10 w-10 text-lg" />
+            <span className="text-xl font-extrabold text-vs-fg">{count}</span>
+            <span className="text-xs font-bold uppercase text-vs-fg-2">{t(label)}</span>
+          </div>
+        ))}
+      </div>
+    </section>
     <section className="bg-vs-surface rounded-2xl border border-vs-line p-4"><div className="grid grid-cols-4 gap-2 text-center"><Stat value={data.lifetimePromotions.toString()} label={t("profile.promotions")} small /><Stat value={data.lifetimeDemotions.toString()} label={t("profile.demotions")} small /><Stat value={data.competitionsWon.toString()} label={t("profile.competitions")} small /><Stat value={data.bestNationalRank ? `#${data.bestNationalRank}` : "—"} label={t("profile.nationalRank")} small /></div></section>
     {data.seasons.length > 0 && <section className="bg-vs-surface rounded-2xl border border-vs-line p-4"><h2 className="mb-2 font-extrabold text-vs-fg">{t("pages.seasons")}</h2><div className="divide-y divide-vs-line">{data.seasons.map((season) => <div key={season.seasonIndex} className="flex items-center justify-between gap-3 py-2.5 text-sm"><span className="font-bold text-vs-fg">{t("profile.seasonN", { n: season.seasonIndex })}</span><span className="inline-flex items-center gap-2 text-right text-vs-fg-2"><DivisionEmblem tier={season.finalTier} className="h-8 w-8" />{tier(season.finalTier)}{season.finalGroupPosition ? ` — #${season.finalGroupPosition}` : ""}</span></div>)}</div></section>}
   </div>;

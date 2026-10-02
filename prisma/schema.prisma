@@ -1575,6 +1575,10 @@ model LeagueGroup {
   index        Int // welke groep binnen deze tier+week (0, 1, 2, ...)
   size         Int
   memberCount  Int           @default(0)
+  // Het promotiepercentage dat gold toen de groep ontstond, zodat een latere
+  // wijziging een lopende of afgelopen week niet verandert. Leeg: groep van
+  // vóór deze regel, die volgt promoteCount op groupSize.
+  promotePercent Int?
   createdAt    DateTime      @default(now())
   weeklyScores WeeklyScore[]
 
@@ -1677,8 +1681,13 @@ model CompetitionXpEvent {
 model LeagueSettings {
   id                      String   @id @default("singleton")
   groupSize               Int      @default(30)
+  // Oude regel (aantal op groupSize), alleen nog voor groepen zonder eigen
+  // promotePercent: groepen van vóór de 75%-regel.
   promoteCount            Int      @default(3)
   demoteCount             Int      @default(3)
+  // Welk deel van een groep promoveert (afgerond naar beneden, minstens één).
+  // Een nieuwe groep krijgt dit mee (LeagueGroup.promotePercent).
+  promotePercent          Int      @default(75)
   // Niet meer gebruikt: een kleinere groep volgt nu dezelfde verhouding als
   // promoteCount/demoteCount op groupSize (zie movementCounts in
   // src/lib/leagues.ts). Blijft staan om geen data te laten vallen.

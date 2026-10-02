@@ -57,12 +57,17 @@ van een specifieke cloud-hostingprovider.
   app nergens open staat; het getal op het app-icoon is het aantal meldingen
   in de bel.
 - **Wekelijkse competitie met divisies**: acht divisies, van Zaad tot
-  Eeuwigheid, in groepen van maximaal 30 spelers. In een volle groep
-  promoveren de bovenste 3 en degraderen de onderste 3; een kleinere groep
-  volgt dezelfde verhouding (altijd minstens één promotie). Alleen wie die
+  Eeuwigheid, in groepen van maximaal 30 spelers. De bovenste 75% van een
+  groep promoveert (naar beneden afgerond, altijd minstens één; instelbaar
+  per groep die daarna ontstaat) en de onderste 10% degradeert (3 van een
+  volle groep van 30, een kleinere groep naar verhouding). Alleen wie die
   week XP verdient doet mee; een week niet oefenen laat je divisie staan.
   Berekend zodra je voor het eerst die week actief wordt — geen aparte
-  cron-taak nodig.
+  cron-taak nodig. Het klassement toont hoe lang de week nog loopt
+  (eindigt maandag 00:00 UTC), de promotie- en degradatiezone en
+  medailles voor plek 1-3; je profiel telt hoeveel gouden, zilveren en
+  bronzen medailles je verdiende (afgeleid uit eerdere weken, alleen als
+  er iemand onder je eindigde).
 - **Achievements**: badges voor mijlpalen (eerste week-streak, eerste
   hoofdstuk, 1000 XP, eerste freeze verdiend/weggegeven, eerste vriend,
   eerste gewonnen duel), zichtbaar op je profiel.

@@ -1208,6 +1208,11 @@ export const es: PartialMessages = {
     "promotions": "Promociones",
     "demotions": "Degradaciones",
     "competitions": "Competiciones",
+    "medals": "Medallas",
+    "medalsHint": "Cuántas veces terminaste una semana en primer, segundo o tercer lugar de tu grupo.",
+    "medalGold": "Oro",
+    "medalSilver": "Plata",
+    "medalBronze": "Bronce",
     "nationalRank": "Clasificación general",
     "seasonN": "Temporada {n}",
     "readingProgress": "Progreso de lectura",
@@ -1347,7 +1352,7 @@ export const es: PartialMessages = {
   },
   "leaderboard": {
     "earlier": "Antes",
-    "movementEmpty": "Cualquier persona que gane XP esta semana participa. Cuantos más jugadores, más ascienden y degradan (hasta 3 de los 30).",
+    "movementEmpty": "Cualquier persona que gane XP esta semana participa. El {percent} % superior de tu grupo asciende al final de la semana y el {demote} % inferior desciende.",
     "upNone": "Esta es la división más alta",
     "upOne": "El mejor jugador asciende al final de la semana",
     "upMany": "Los mejores {n} ascienden al final de la semana",
@@ -1366,7 +1371,14 @@ export const es: PartialMessages = {
     "noXp": "Aún no se han ganado XP esta semana. ¡Da una lección para subir a la clasificación!",
     "zonePromotion": "Zona de promoción",
     "zoneRelegation": "Zona de descenso",
-    "zoneSafe": "Zona segura"
+    "zoneSafe": "Zona segura",
+    "timeLeftDays": "Quedan {n} días",
+    "timeLeftDay": "Queda 1 día",
+    "timeLeftHours": "Quedan {n} horas",
+    "timeLeftHour": "Queda 1 hora",
+    "timeLeftMinutes": "Quedan {n} minutos",
+    "timeLeftMinute": "Queda 1 minuto",
+    "weekEnds": "Tiempo hasta el final de la semana"
   },
   "shop": {
     "buyFailed": "No se pudo completar la compra.",
@@ -2439,9 +2451,9 @@ export const es: PartialMessages = {
   "adminLeague": {
     "title": "Configuración de liga",
     "intro1": "Todo aquí se aplica desde la próxima vez que se calcula (nueva semana/temporada): una semana o temporada en curso no cambia retroactivamente.",
-    "intro2": "Los lugares de ascenso y descenso se aplican a un grupo completo. Un grupo más pequeño sigue el mismo ratio, redondeado, siempre con al menos un ascenso.",
+    "intro2": "El ascenso es un porcentaje del grupo (redondeado hacia abajo, siempre al menos uno). Los lugares de descenso se aplican a un grupo completo; un grupo más pequeño sigue el mismo ratio, redondeado. Un nuevo porcentaje se aplica a los grupos creados después.",
     "groupSize": "Jugadores por grupo",
-    "promote": "Lugares de ascenso",
+    "promote": "Ascenso (% del grupo)",
     "demote": "Lugares de descenso",
     "seasonWeeks": "Duración de la temporada (semanas)",
     "localeCode": "Código de idioma/liga",

@@ -5,7 +5,8 @@ import { useT } from "@/components/I18nProvider";
 
 interface LeagueSettingsView {
   groupSize: number;
-  promoteCount: number;
+  promoteCount: number; // oude regel, alleen nog voor groepen zonder percentage
+  promotePercent: number;
   demoteCount: number;
   minGroupSizeForMovement?: number; // niet meer gebruikt: kleinere groepen gaan naar verhouding
   seasonWeekCount: number;
@@ -30,6 +31,7 @@ export default function AdminLeagueSettingsClient({ initial }: { initial: League
         ...form,
         groupSize: Number(form.groupSize),
         promoteCount: Number(form.promoteCount),
+        promotePercent: Number(form.promotePercent),
         demoteCount: Number(form.demoteCount),
         seasonWeekCount: Number(form.seasonWeekCount),
       }),
@@ -76,9 +78,10 @@ export default function AdminLeagueSettingsClient({ initial }: { initial: League
             <input
               type="number"
               className="input"
-              min={0}
-              value={form.promoteCount}
-              onChange={(e) => setForm({ ...form, promoteCount: Number(e.target.value) })}
+              min={1}
+              max={100}
+              value={form.promotePercent}
+              onChange={(e) => setForm({ ...form, promotePercent: Number(e.target.value) })}
             />
           </label>
           <label className="flex flex-col gap-1 text-sm font-bold dark:text-slate-200">

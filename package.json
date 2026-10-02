@@ -21,6 +21,7 @@
     "test:study": "tsx --test tests/study-scoring.test.ts",
     "test:mascots": "tsx --test tests/mascots.test.ts tests/divisions.test.ts",
     "test:artwork": "tsx --test tests/artwork.test.ts",
+    "test:leagues": "tsx --test tests/leagues.test.ts",
     "test:conference": "tsx --test tests/generalConference.test.ts",
     "test:social": "tsx --test tests/social-rules.test.ts tests/social.integration.test.ts tests/social-links.integration.test.ts",
     "test:time": "tsx --test tests/timeZone.test.ts tests/wordGameTime.test.ts tests/streakTravel.integration.test.ts tests/wordGame.integration.test.ts",

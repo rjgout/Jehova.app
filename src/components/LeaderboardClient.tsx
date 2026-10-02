@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
+import { ArrowDown, ArrowUp, Clock } from "lucide-react";
 import type { LeagueTier } from "@prisma/client";
 import DivisionEmblem from "@/components/versado/DivisionEmblem";
 import { useT } from "@/components/I18nProvider";
@@ -8,6 +9,7 @@ import type { TFunction } from "@/lib/i18n/core";
 import UserAvatar from "@/components/UserAvatar";
 import DivisionScroller from "@/components/DivisionScroller";
 import SystemIcon from "@/components/versado/SystemIcon";
+import RankMedal from "@/components/versado/RankMedal";
 
 type Zone = "PROMOTION" | "SAFE" | "RELEGATION" | null;
 
@@ -30,8 +32,11 @@ interface LeagueData {
   scope: "league" | "friends";
   myTier: LeagueTier;
   highestTier: LeagueTier;
+  weekEndsAt: string;
   promoteCount: number;
   demoteCount: number;
+  promotePercent: number;
+  demotePercent: number;
   hasActivityThisWeek: boolean;
   xpGap: XpGap | null;
   entries: LeagueEntry[];
@@ -53,13 +58,67 @@ interface NationalData {
   me: NationalEntry | null;
 }
 
-const MEDALS = ["🥇", "🥈", "🥉"];
+const MEDAL_LABELS = ["profile.medalGold", "profile.medalSilver", "profile.medalBronze"] as const;
 
-const ZONE_DOT: Record<Exclude<Zone, null>, string> = {
-  PROMOTION: "🟢",
-  SAFE: "⚪",
-  RELEGATION: "🔴",
-};
+/** Plek 1-3 als medaille, daarna het cijfer. */
+function RankCell({ rank, t, prefix = "" }: { rank: number; t: TFunction; prefix?: string }) {
+  return (
+    <span className="flex w-8 shrink-0 justify-center text-center font-extrabold text-vs-fg-2">
+      {rank <= 3 ? <RankMedal rank={rank as 1 | 2 | 3} label={t(MEDAL_LABELS[rank - 1])} /> : `${prefix}${rank}`}
+    </span>
+  );
+}
+
+/**
+ * Hoe lang de week nog loopt, zoals "Nog 3 dagen", "Nog 5 uur". Het
+ * eindtijdstip komt van de server (maandag 00:00 UTC); de klok van het
+ * toestel bepaalt alleen hoeveel tijd er nog over is om te tonen, nooit een
+ * uitslag. Ververst elke minuut.
+ */
+function WeekCountdown({ endsAt, t }: { endsAt: string; t: TFunction }) {
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 60_000);
+    return () => clearInterval(id);
+  }, []);
+  const left = new Date(endsAt).getTime() - now;
+  if (!(left > 0)) return null;
+  const days = Math.floor(left / 86_400_000);
+  const hours = Math.floor(left / 3_600_000);
+  const minutes = Math.max(1, Math.ceil(left / 60_000));
+  const text =
+    days >= 1
+      ? days === 1 ? t("leaderboard.timeLeftDay") : t("leaderboard.timeLeftDays", { n: days })
+      : hours >= 1
+        ? hours === 1 ? t("leaderboard.timeLeftHour") : t("leaderboard.timeLeftHours", { n: hours })
+        : minutes === 1 ? t("leaderboard.timeLeftMinute") : t("leaderboard.timeLeftMinutes", { n: minutes });
+  return (
+    <p className="mt-1 inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1 text-sm font-extrabold" title={t("leaderboard.weekEnds")}>
+      <Clock className="h-4 w-4" aria-hidden strokeWidth={2.5} />
+      <span className="sr-only">{t("leaderboard.weekEnds")}: </span>
+      {text}
+    </p>
+  );
+}
+
+/** Lijn in het klassement waar de promotie- of degradatiezone begint. */
+function ZoneDivider({ zone, t }: { zone: "PROMOTION" | "RELEGATION"; t: TFunction }) {
+  const up = zone === "PROMOTION";
+  const Icon = up ? ArrowUp : ArrowDown;
+  return (
+    <div
+      className={`flex items-center gap-2 px-2 py-1.5 text-xs font-extrabold uppercase tracking-wide ${
+        up ? "text-vs-success" : "text-red-600 dark:text-red-400"
+      }`}
+    >
+      <span className={`h-0.5 flex-1 rounded-full ${up ? "bg-vs-success" : "bg-red-500"}`} aria-hidden />
+      <Icon className="h-4 w-4" aria-hidden strokeWidth={2.75} />
+      {up ? t("leaderboard.zonePromotion") : t("leaderboard.zoneRelegation")}
+      <Icon className="h-4 w-4" aria-hidden strokeWidth={2.75} />
+      <span className={`h-0.5 flex-1 rounded-full ${up ? "bg-vs-success" : "bg-red-500"}`} aria-hidden />
+    </div>
+  );
+}
 
 /**
  * Uitleg van promotie/degradatie voor de huidige stand. De aantallen komen
@@ -67,7 +126,7 @@ const ZONE_DOT: Record<Exclude<Zone, null>, string> = {
  */
 function movementText(data: LeagueData, t: TFunction): string {
   if (data.entries.length === 0) {
-    return t("leaderboard.movementEmpty");
+    return t("leaderboard.movementEmpty", { percent: data.promotePercent, demote: data.demotePercent });
   }
   const up =
     data.promoteCount === 0
@@ -90,7 +149,7 @@ export default function LeaderboardClient() {
   const [data, setData] = useState<LeagueData | NationalData | null>(null);
   // Blijft staan bij het wisselen van tabblad, zodat de divisiebalk niet
   // leeg wordt terwijl de nieuwe lijst laadt.
-  const [tiers, setTiers] = useState<{ current: LeagueTier; highest: LeagueTier } | null>(null);
+  const [tiers, setTiers] = useState<{ current: LeagueTier; highest: LeagueTier; weekEndsAt: string } | null>(null);
 
   useEffect(() => {
     setData(null);
@@ -98,7 +157,7 @@ export default function LeaderboardClient() {
       .then((r) => r.json())
       .then((next: LeagueData | NationalData) => {
         setData(next);
-        if (next.scope !== "national") setTiers({ current: next.myTier, highest: next.highestTier });
+        if (next.scope !== "national") setTiers({ current: next.myTier, highest: next.highestTier, weekEndsAt: next.weekEndsAt });
       });
   }, [scope]);
 
@@ -113,6 +172,7 @@ export default function LeaderboardClient() {
             {t("nav.competition")} — {tiers ? t(`tiers.${tiers.current}`) : t("leaderboard.divisionLower")}
           </h1>
           {tiers && <DivisionScroller current={tiers.current} highest={tiers.highest} />}
+          {tiers && <WeekCountdown endsAt={tiers.weekEndsAt} t={t} />}
         </div>
       ) : (
         <header className="flex flex-col gap-0.5 px-1">
@@ -174,39 +234,35 @@ export default function LeaderboardClient() {
 
       {leagueData && leagueData.entries.length > 0 && (
         <div className="card flex flex-col divide-y divide-slate-100 dark:divide-slate-700">
-          {leagueData.entries.map((e) => (
-            <div
-              key={e.userId}
-              className={`flex items-center gap-2.5 px-2 py-2.5 rounded-xl min-w-0 ${
-                e.isMe ? "bg-brand-50 dark:bg-slate-700 font-extrabold" : ""
-              }`}
-            >
-              <div className="flex items-center gap-2 min-w-0 flex-1">
-                <span className="w-8 shrink-0 text-center text-lg">{MEDALS[e.rank - 1] ?? e.rank}</span>
-                {e.zone && (
-                  <span
-                    className="shrink-0"
-                    title={
-                      e.zone === "PROMOTION"
-                        ? t("leaderboard.zonePromotion")
-                        : e.zone === "RELEGATION"
-                          ? t("leaderboard.zoneRelegation")
-                          : t("leaderboard.zoneSafe")
-                    }
-                  >
-                    {ZONE_DOT[e.zone]}
+          {leagueData.entries.map((e, i) => {
+            const prev = leagueData.entries[i - 1];
+            // Zoals bij een klassement met zones: een lijn ónder de laatste
+            // promotieplek en bóven de eerste degradatieplek.
+            const relegationStarts = e.zone === "RELEGATION" && prev?.zone !== "RELEGATION";
+            const promotionEnds = e.zone === "PROMOTION" && leagueData.entries[i + 1]?.zone !== "PROMOTION" && i < leagueData.entries.length - 1;
+            return (
+              <Fragment key={e.userId}>
+                {relegationStarts && <ZoneDivider zone="RELEGATION" t={t} />}
+                <div
+                  className={`flex items-center gap-2.5 px-2 py-2.5 rounded-xl min-w-0 ${
+                    e.isMe ? "bg-brand-50 dark:bg-slate-700 font-extrabold" : ""
+                  }`}
+                >
+                  <div className="flex items-center gap-2 min-w-0 flex-1">
+                    <RankCell rank={e.rank} t={t} />
+                    <UserAvatar id={e.userId} handle={e.handle} />
+                    <span className="min-w-0 truncate dark:text-slate-100" title={e.handle}>
+                      {e.handle} {e.isMe && <span className="text-brand-500 dark:text-brand-300">{t("lobby.you")}</span>}
+                    </span>
+                  </div>
+                  <span className="shrink-0 whitespace-nowrap text-gold-600 dark:text-gold-400 font-extrabold">
+                    {e.xp} XP
                   </span>
-                )}
-                <UserAvatar id={e.userId} handle={e.handle} />
-                <span className="min-w-0 truncate dark:text-slate-100" title={e.handle}>
-                  {e.handle} {e.isMe && <span className="text-brand-500 dark:text-brand-300">{t("lobby.you")}</span>}
-                </span>
-              </div>
-              <span className="shrink-0 whitespace-nowrap text-gold-600 dark:text-gold-400 font-extrabold">
-                {e.xp} XP
-              </span>
-            </div>
-          ))}
+                </div>
+                {promotionEnds && <ZoneDivider zone="PROMOTION" t={t} />}
+              </Fragment>
+            );
+          })}
         </div>
       )}
 
@@ -235,7 +291,7 @@ function NationalRow({ e }: { e: NationalEntry }) {
       e.isMe ? "font-extrabold" : ""
     }`}>
       <div className="flex items-center gap-2 min-w-0 flex-1">
-        <span className="w-8 shrink-0 text-center text-lg">{MEDALS[e.rank - 1] ?? `#${e.rank}`}</span>
+        <RankCell rank={e.rank} t={t} prefix="#" />
         <UserAvatar id={e.userId} handle={e.handle} />
         <span className="min-w-0 truncate dark:text-slate-100" title={e.handle}>
           {e.handle} {e.isMe && <span className="text-brand-500 dark:text-brand-300">{t("lobby.you")}</span>}

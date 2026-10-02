@@ -52,6 +52,7 @@ export interface LeagueSettingsView {
   groupSize: number;
   promoteCount: number;
   demoteCount: number;
+  promotePercent: number;
   minGroupSizeForMovement: number;
   seasonWeekCount: number;
   localeCode: string;
@@ -80,6 +81,7 @@ const DEFAULT_SETTINGS: LeagueSettingsView = {
   groupSize: 30,
   promoteCount: 3,
   demoteCount: 3,
+  promotePercent: 75,
   minGroupSizeForMovement: 10,
   seasonWeekCount: 6,
   localeCode: "nl-NL",
@@ -110,6 +112,7 @@ export async function getLeagueSettings(tx: Tx): Promise<LeagueSettingsView> {
     groupSize: row.groupSize,
     promoteCount: row.promoteCount,
     demoteCount: row.demoteCount,
+    promotePercent: row.promotePercent,
     minGroupSizeForMovement: row.minGroupSizeForMovement,
     seasonWeekCount: row.seasonWeekCount,
     localeCode: row.localeCode,
@@ -123,20 +126,74 @@ export function activityRuleFor(settings: LeagueSettingsView, activityKey: strin
 
 /**
  * Hoeveel spelers promoveren/degraderen in een groep van `total` spelers
- * (alleen wie die week XP verdiende telt). Een volle groep volgt de
- * instellingen (standaard 3 op 30); een kleinere groep dezelfde verhouding,
- * afgerond, met altijd minstens één promotie: anders komt bij weinig spelers
- * nooit iemand vooruit. Voorbeelden bij 3 op 30: 1-4 spelers 1 omhoog en
- * niemand omlaag, 5-14 spelers 1/1, 15-24 spelers 2/2, vanaf 25 spelers 3/3.
- * Gedeeld door de wekelijkse plaatsing en het klassement, zodat wat je ziet
- * altijd klopt met wat er gebeurt.
+ * (alleen wie die week XP verdiende telt). Gedeeld door de wekelijkse
+ * plaatsing en het klassement, zodat wat je ziet altijd klopt met wat er
+ * gebeurt.
+ *
+ * Promotie: `promotePercent` van de groep (standaard 75%), afgerond naar
+ * beneden, met altijd minstens één promotie: bij 30 spelers 22, bij 10
+ * spelers 7, bij 2 spelers 1. Een groep zonder percentage (van vóór die
+ * regel) volgt nog de oude: promoteCount op groupSize, naar verhouding.
+ *
+ * Degradatie blijft demoteCount op groupSize (standaard 3 op 30, dus 10%),
+ * naar verhouding afgerond: 1-4 spelers niemand, 5-14 spelers 1, 15-24
+ * spelers 2, vanaf 25 spelers 3. Nooit meer dan er na de promoties over is.
  */
-export function movementCounts(total: number, settings: LeagueSettingsView): { promote: number; demote: number } {
+export function movementCounts(
+  total: number,
+  settings: LeagueSettingsView,
+  promotePercent: number | null = null
+): { promote: number; demote: number } {
   if (total <= 0) return { promote: 0, demote: 0 };
-  if (total >= settings.groupSize) return { promote: settings.promoteCount, demote: settings.demoteCount };
-  const promote = Math.min(total, Math.max(1, Math.round((total * settings.promoteCount) / settings.groupSize)));
-  const demote = Math.min(total - promote, Math.round((total * settings.demoteCount) / settings.groupSize));
-  return { promote, demote };
+  const full = total >= settings.groupSize;
+  const promote =
+    promotePercent !== null
+      ? Math.min(total, Math.max(1, Math.floor((total * promotePercent) / 100)))
+      : full
+        ? Math.min(total, settings.promoteCount)
+        : Math.min(total, Math.max(1, Math.round((total * settings.promoteCount) / settings.groupSize)));
+  const demoteWanted = full ? settings.demoteCount : Math.round((total * settings.demoteCount) / settings.groupSize);
+  return { promote, demote: Math.max(0, Math.min(total - promote, demoteWanted)) };
+}
+
+/** Het eind van de competitieweek die op `weekStart` begint: maandag 00:00 UTC erna. */
+export function weekEndsAt(weekStart: string): Date {
+  const end = new Date(`${weekStart}T00:00:00Z`);
+  end.setUTCDate(end.getUTCDate() + 7);
+  return end;
+}
+
+export interface MedalCounts {
+  gold: number;
+  silver: number;
+  bronze: number;
+}
+
+/**
+ * Medailles: hoe vaak iemand een afgelopen week als eerste, tweede of derde
+ * van zijn groep eindigde. Afgeleid uit WeeklyScore (dezelfde rangschikking
+ * als de promotie: xp aflopend, id als vaste tiebreaker), dus niets om bij
+ * te houden of te herstellen. Een plek telt alleen als er iemand onder je
+ * eindigde: alleen in je groep is geen goud. De lopende week telt niet mee.
+ */
+export async function medalCountsFor(tx: Tx, userId: string, currentWeekStart: string): Promise<MedalCounts> {
+  const rows = await tx.$queryRaw<{ rank: number; count: number }[]>`
+    WITH ranked AS (
+      SELECT "userId",
+             row_number() OVER (PARTITION BY "groupId" ORDER BY "xp" DESC, "id" ASC) AS rank,
+             count(*) OVER (PARTITION BY "groupId") AS total
+      FROM "WeeklyScore"
+      WHERE "groupId" IN (
+        SELECT "groupId" FROM "WeeklyScore"
+        WHERE "userId" = ${userId} AND "groupId" IS NOT NULL AND "weekStart" < ${currentWeekStart}
+      )
+    )
+    SELECT rank::int AS rank, count(*)::int AS count
+    FROM ranked
+    WHERE "userId" = ${userId} AND rank <= 3 AND total > rank
+    GROUP BY rank`;
+  const byRank = new Map(rows.map((r) => [Number(r.rank), Number(r.count)]));
+  return { gold: byRank.get(1) ?? 0, silver: byRank.get(2) ?? 0, bronze: byRank.get(3) ?? 0 };
 }
 
 function previousWeekStart(weekStart: string): string {
@@ -165,7 +222,14 @@ async function assignToGroup(tx: Tx, weekStart: string, tier: LeagueTier, settin
     const expected = await tx.weeklyScore.count({ where: { weekStart: previousWeekStart(weekStart), tier } });
     const count = Math.max(1, Math.ceil(expected / settings.groupSize));
     await tx.leagueGroup.createMany({
-      data: Array.from({ length: count }, (_, index) => ({ weekStart, tier, index, size: settings.groupSize, memberCount: 0 })),
+      data: Array.from({ length: count }, (_, index) => ({
+        weekStart,
+        tier,
+        index,
+        size: settings.groupSize,
+        memberCount: 0,
+        promotePercent: settings.promotePercent,
+      })),
       skipDuplicates: true,
     });
     groups = await tx.leagueGroup.findMany({ where: { weekStart, tier }, orderBy: { index: "asc" } });
@@ -181,7 +245,7 @@ async function assignToGroup(tx: Tx, weekStart: string, tier: LeagueTier, settin
 
   try {
     const created = await tx.leagueGroup.create({
-      data: { weekStart, tier, index: groups.length, size: settings.groupSize, memberCount: 1 },
+      data: { weekStart, tier, index: groups.length, size: settings.groupSize, memberCount: 1, promotePercent: settings.promotePercent },
     });
     return created.id;
   } catch (e) {
@@ -208,7 +272,8 @@ async function resolveTierFromGroup(
   const rank = peers.findIndex((p) => p.userId === prevScore.userId); // 0-based
   const total = peers.length;
   const tierIndex = TIER_ORDER.indexOf(prevScore.tier);
-  const { promote, demote } = movementCounts(total, settings);
+  const group = await tx.leagueGroup.findUnique({ where: { id: prevScore.groupId }, select: { promotePercent: true } });
+  const { promote, demote } = movementCounts(total, settings, group?.promotePercent ?? null);
 
   if (rank === -1) return prevScore.tier;
 

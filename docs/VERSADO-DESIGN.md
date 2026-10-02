@@ -477,8 +477,13 @@ Gecontroleerd in de code; bestandsnamen om snel terug te vinden.
 
 **Competitie, XP, reeks, prestaties**
 - `/competition` (`LeaderboardClient`): tabbladen divisie, vrienden,
-  nationaal; `DivisionScroller` voor de divisies. Weekelijkse promotie en
-  degradatie in `scheduler.ts`/`leagues.ts`, seizoenen.
+  nationaal; `DivisionScroller` voor de divisies, met daaronder hoe lang
+  de week nog loopt. Lijnen markeren de promotie- en degradatiezone; plek
+  1-3 is een medaille (`versado/RankMedal.tsx`, gekleurde munt met cijfer,
+  geen emoji), ook bij de medailletelling op het profiel. Weekelijkse
+  promotie (`LeagueGroup.promotePercent`, standaard 75%) en degradatie in
+  `scheduler.ts`/`leagues.ts` (`movementCounts`, `medalCountsFor`),
+  seizoenen; getest met `npm run test:leagues`.
 - Divisie-emblemen: acht officiële emblemen in `public/icons/divisions/`
   (`<divisie>.webp`, 384x384, bv. `bronze.webp` voor Zaad), centraal
   gekoppeld in `TIER_EMBLEMS` (`src/lib/leagues.ts`) en getoond via

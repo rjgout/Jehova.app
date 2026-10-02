@@ -4,6 +4,12 @@ Alle belangrijke gebruikersgerichte wijzigingen en releases worden hieronder bij
 
 ## Nog niet uitgebracht
 
+- Competitie: vanaf de nieuwe week promoveert driekwart van je groep (de
+  onderste 10% degradeert nog steeds). Bij je divisie zie je hoe lang de
+  week nog loopt, en in het klassement lijnen voor de promotie- en
+  degradatiezone. Wie een week als eerste, tweede of derde van de groep
+  eindigt, krijgt een gouden, zilveren of bronzen medaille; op je profiel
+  staat hoeveel je er hebt, ook van de weken hiervoor.
 - Elk boek van het Boek van Mormon, de Leer en Verbonden en de Parel van
   Grote Waarde heeft een eigen afbeelding; je cursus toont het boek waar je
   nu bent. Ook Ontdek het Boek van Mormon, de kindercursus, Voor de kracht

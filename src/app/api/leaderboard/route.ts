@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getCurrentUser } from "@/lib/session";
 import { weekStartKey } from "@/lib/dates";
-import { getLeagueSettings, movementCounts, tierForWeek, TIER_ORDER } from "@/lib/leagues";
+import { getLeagueSettings, movementCounts, tierForWeek, TIER_ORDER, weekEndsAt } from "@/lib/leagues";
 import { apiError } from "@/lib/apiError";
 
 type Zone = "PROMOTION" | "SAFE" | "RELEGATION";
@@ -124,9 +124,14 @@ export async function GET(req: NextRequest) {
   });
 
   const total = scores.length;
-  // Zelfde aantallen als de wekelijkse plaatsing (movementCounts); in de
-  // laagste divisie degradeert niemand, in de hoogste promoveert niemand.
-  const counts = movementCounts(total, settings);
+  // Zelfde aantallen als de wekelijkse plaatsing (movementCounts, met het
+  // percentage van deze groep); in de laagste divisie degradeert niemand, in
+  // de hoogste promoveert niemand. Zonder eigen groep (nog geen XP deze
+  // week) het percentage dat een nieuwe groep zou krijgen.
+  const group = myScore?.groupId
+    ? await prisma.leagueGroup.findUnique({ where: { id: myScore.groupId }, select: { promotePercent: true } })
+    : null;
+  const counts = movementCounts(total, settings, group ? group.promotePercent : settings.promotePercent);
   const promoteCount = myTier === TIER_ORDER[TIER_ORDER.length - 1] ? 0 : counts.promote;
   const demoteCount = myTier === TIER_ORDER[0] ? 0 : counts.demote;
   const entries = scores.map((s, i) => {
@@ -167,11 +172,17 @@ export async function GET(req: NextRequest) {
 
   return NextResponse.json({
     weekStart,
+    // Absoluut tijdstip (UTC); de client rekent alleen de resterende tijd uit.
+    weekEndsAt: weekEndsAt(weekStart).toISOString(),
     scope,
     myTier,
     highestTier,
     promoteCount,
     demoteCount,
+    // Voor de uitleg zolang de groep nog leeg is: het percentage van een
+    // nieuwe groep en de degradatieverhouding van een volle groep.
+    promotePercent: settings.promotePercent,
+    demotePercent: Math.round((settings.demoteCount * 100) / settings.groupSize),
     hasActivityThisWeek: Boolean(myScore),
     xpGap,
     // Bewust de handle (gekozen gebruikersnaam) i.p.v. displayName (echte
