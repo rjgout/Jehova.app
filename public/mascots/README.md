@@ -1,9 +1,8 @@
-# Versado-mascottes: productie-assets
+# Versado-mascottes: canon en assets
 
-Deze map bevat alleen **geoptimaliseerde productie-assets** van de
-Versado-mascottes. Originele hoge-resolutiebestanden en mastergeneraties
-horen hier niet. Bewaar ze apart: ze zijn de bron om later opnieuw te
-exporteren of naar animatie (Rive) over te zetten.
+Deze map scheidt visuele referenties, productie-assets, ontwerpkopieën en
+toekomstige animatiebronnen. De definitieve tekstuele character-canon staat
+in `docs/VERSADO-CHARACTER-CANON.md`.
 
 De achtergrond, het karakter en de technische afspraken staan uitgebreider
 in `docs/VERSADO-DESIGN.md` onder "Mascottes".
@@ -44,12 +43,41 @@ persoonlijkheid overbrengen (geen letterlijke vertaling).
 ```
 public/mascots/
   README.md
+  references/  visuele bron van waarheid; nooit door de app geladen
   static/
     novi/      losse statische afbeeldingen van Novi
       novi-<state>.webp
     family/    Varo, Vera en Novi samen in één compositie
       family-<state>.webp
+  figma/       afgeleide ontwerpkopieën; geen productiebron
+  rive/        conventies voor toekomstige animatie; nu geen runtime
 ```
+
+## Asset hierarchy
+
+### `references/`
+
+Visuele bron van waarheid: character canon, modelsheets, kleurreferenties,
+familieverhoudingen en voorbeeldposes. Deze bestanden worden niet door de
+app gerenderd. De eigenaar levert de officiële referentiebeelden; ontbrekende
+bestanden worden niet gegenereerd of vervangen.
+
+### `static/`
+
+Productie-assets voor de app. Features gebruiken uitsluitend
+`MascotSlot(character, state)`; alleen `src/lib/mascots.ts` kent de
+assetpaden.
+
+### `figma/`
+
+Deterministisch van `static/` afgeleide, geoptimaliseerde ontwerpkopieën.
+Applicatiecode mag nooit uit deze map laden. Zie `figma/README.md`.
+
+### `rive/`
+
+Conventies voor toekomstige animatiebronnen en builds. Rive is nog niet
+geïnstalleerd en er worden nu geen `.riv`-bestanden bijgehouden. Zie
+`rive/README.md`.
 
 - Formaat: **WebP met transparante achtergrond**.
 - Bestandsnamen: **lowercase kebab-case**.
@@ -63,7 +91,9 @@ public/mascots/
   bestaande state. Geen nieuwe states zonder bewuste ontwerpkeuze.
 - Niet in de afbeelding: tekst, tekstballonnen of een achtergrond. Tekst
   komt altijd via de app-vertalingen.
-- De lege mappen staan in git dankzij een `.gitkeep`. Laat die staan.
+- Bestaande `.gitkeep`-bestanden onder `static/` blijven staan. Maak voor
+  toekomstige Varo/Vera/Rive-mappen geen lege structuur vooruit; documentatie
+  is voldoende tot er een echt asset bestaat.
 
 ### States voor Novi
 
