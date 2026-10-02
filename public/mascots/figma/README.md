@@ -12,23 +12,25 @@ Het zijn **geen productie-assets**. Applicatiecode mag nooit uit
 - `../rive/` documenteert de toekomstige animatiebron en builds.
 
 Gebruik alleen goedgekeurde productie-assets als bron voor exports. Voor
-Novi bevat iedere state waar mogelijk twee formaten:
+Novi, Varo en Vera bevat iedere state twee formaten:
 
-- `novi/512/novi-<state>.webp`: langste zijde maximaal 512 px;
-- `novi/256/novi-<state>.webp`: langste zijde maximaal 256 px.
+- `<personage>/512/<personage>-<state>.webp`: langste zijde maximaal 512 px;
+- `<personage>/256/<personage>-<state>.webp`: langste zijde maximaal 256 px.
 
 De langste zijde wordt nooit boven de bronresolutie vergroot. Exports houden
 de oorspronkelijke verhouding en alpha-transparantie, zonder crop,
 hercompositie of kleurwijziging.
 
-De huidige Novi-exports zijn reproduceerbaar gemaakt als volgt:
+De huidige exports zijn reproduceerbaar gemaakt als volgt:
 
 - 512: byte-identieke kopie van het officiële static bestand, omdat de bron
-  al 512 px breed is;
-- 256: ImageMagick 6, Lanczos, `-resize '256x256>'`, WebP-kwaliteit 88,
+  al 512 px is;
+- 256: Pillow, Lanczos met voorvermenigvuldigde alfa, WebP-kwaliteit 88,
   methode 6 en alpha-kwaliteit 100.
 
-Daarmee worden de huidige canvassen van 512×468 naar 256×234 geschaald.
+Daarmee worden de huidige canvassen van 512×512 naar 256×256 geschaald.
+`npm run test:mascots` controleert dat de 512-kopieën byte-identiek zijn en
+dat de 256-exports de verhouding behouden.
 
 ## Ontwerpregels
 
@@ -39,6 +41,3 @@ Daarmee worden de huidige canvassen van 512×468 naar 256×234 geschaald.
 - gebruik altijd `docs/VERSADO-CHARACTER-CANON.md` en de goedgekeurde
   referenties;
 - een Figma-export wordt nooit terug de productiecode in gekopieerd.
-
-Nieuwe Varo- en Vera-kopieën volgen later dezelfde conventie onder
-`figma/varo/` en `figma/vera/`, pas nadat officiële productie-assets bestaan.

@@ -91,12 +91,14 @@ lijst hierboven nog volledig.
   `/groups` (bij Vrienden in de navigatie), en een compact "Samen"-blok
   bovenin de sociale kolom op Vandaag (`today/TogetherBlock.tsx`). Gedeelde
   onderdelen staan in `src/components/social/`.
-- **Mascottes**: de uitrol is begonnen, met NOVI als eerste (zie
-  "Mascottes" hieronder). Alle tien Novi-states zijn functioneel in gebruik;
+- **Mascottes**: Novi, Varo en Vera hebben elk alle tien states. Elke
+  gebruiker kiest één van hen als persoonlijke gids (`User.companion`,
+  standaard Novi): bij de onboarding en op het profiel. Persoonlijke momenten
+  tonen de gekozen gids via `versado/PersonalMascot.tsx`;
   `family`/`welcome` blijft de introductie op de publieke homepage.
-  `versado/MascotSlot.tsx` is de enige interface; het register in
+  `versado/MascotSlot.tsx` is de enige renderer; het register in
   `src/lib/mascots.ts` kent de bestanden in `public/mascots/static/`. Zolang
-  een asset ontbreekt, rendert een slot niets.
+  een asset ontbreekt, rendert een slot niets. Zie "Mascottes" hieronder.
 
 ## Wat Versado is
 
@@ -182,9 +184,10 @@ ook als een pagina onder een nieuwe bestemming valt.
 
 ## Mascottes
 
-Versado heeft uiteindelijk drie mascottes: **VARO**, **VERA** en **NOVI**.
-De uitrol gaat gefaseerd. **NOVI komt eerst**, met statische afbeeldingen.
-VARO en VERA volgen later: voeg hun assets nu nog niet toe.
+Versado heeft drie mascottes: **VARO**, **VERA** en **NOVI**, elk met
+dezelfde tien states als statische afbeelding. Een gebruiker kiest er één
+als **persoonlijke gids**; daarnaast is er de familie (`family`) voor
+gedeelde momenten.
 
 ### Character canon
 
@@ -222,7 +225,8 @@ accessoires direct herkenbaar zijn.
 De definitieve tekstuele bron staat in
 `docs/VERSADO-CHARACTER-CANON.md`. Goedgekeurde sheets in
 `public/mascots/references/` vormen de visuele samenvatting; de goedgekeurde
-Novi-set in `public/mascots/static/novi/` is de concrete pose-referentie. Een
+sets in `public/mascots/static/novi/`, `varo/` en `vera/` zijn de concrete
+pose-referentie. Een
 nieuwe asset mag een personage niet opnieuw interpreteren. Tussen alle
 afbeeldingen blijven gelijk:
 - lichaamsverhoudingen, grootte en leeftijdsindruk;
@@ -235,10 +239,20 @@ Een state is een functionele toestand in Versado, niet zomaar een emotie.
 
 ### Techniek
 
-- **Eén interface.** `MascotSlot` (`src/components/versado/MascotSlot.tsx`)
+- **Eén renderer.** `MascotSlot` (`src/components/versado/MascotSlot.tsx`)
   is de enige manier om een mascotte te tonen. Pagina's vragen om een
   personage en een state:
-  `<MascotSlot character="novi" state="greeting" />`.
+  `<MascotSlot character="family" state="welcome" />`.
+- **Persoonlijke gids.** Een persoonlijk moment kiest alleen de state:
+  `<PersonalMascot state="success" />` (`versado/PersonalMascot.tsx`). De
+  `CompanionProvider` in de layout weet welke gids de gebruiker koos
+  (`User.companion`, vertaald door `src/lib/companion.ts`) en geeft die aan
+  `MascotSlot`. Geen feature implementeert zelf `user.companion ?? "novi"`.
+  Kiezen: onboardingstap "Kies je gids" (overslaan kan pas na een opgeslagen
+  keuze) en de sectie "Jouw gids" op het profiel, beide met
+  `versado/CompanionPicker.tsx` en `PATCH /api/account { companion }`. Na
+  een wijziging wisselt de gids meteen overal (`useCompanion`). Bestaande
+  accounts hebben Novi en worden niet opnieuw door de onboarding gestuurd.
 - **Geen paden in pagina's.** Directe assetpaden (`/mascots/static/...`)
   vanuit pagina's of andere componenten zijn verboden. Alleen het register
   `src/lib/mascots.ts` kent paden.
@@ -256,9 +270,10 @@ Een state is een functionele toestand in Versado, niet zomaar een emotie.
   ander personage, geen placeholder. `npm run test:mascots` bewaakt dat
   register en bestanden overeenkomen.
 - **Rive-klaar, nog geen Rive.**
-  - De keten is pagina → `MascotSlot(character, state)` → renderer. Nu is
-    de renderer een statische WebP; later kan er achter `MascotSlot` een
-    Rive-state machine komen, zonder dat pagina's veranderen.
+  - De keten is feature → (persoonlijke gids) → `MascotSlot(character,
+    state)` → renderer. Nu is de renderer een statische WebP; later kan er
+    achter `MascotSlot` een Rive-state machine komen, zonder dat pagina's of
+    `<PersonalMascot state />` veranderen.
   - De statische WebP-assets blijven dan in gebruik: als terugval bij
     `prefers-reduced-motion`, tijdens het laden en bij een fout, en op
     plekken waar beweging niets toevoegt.
@@ -268,14 +283,18 @@ Een state is een functionele toestand in Versado, niet zomaar een emotie.
   `prefers-reduced-motion` staat beweging stil. Een toekomstige renderer
   toont dan de statische afbeelding.
 - **Bestaande plekken.**
-  - Begroeting op Vandaag: `novi`/`greeting`.
+  - Persoonlijke gids (`PersonalMascot`): begroeting, ontdekken en rust op
+    Vandaag (`greeting`, `discovery`, `sleep`), oefening (`thinking` →
+    `success`/`encourage`) en lesuitslag (`success`/`encourage`/`celebrate`),
+    Spelen (`playing`), uitslag van het woord van de dag en van een live
+    spel, Stap voor stap lezen (`reading`) en de lege activiteitspagina
+    (`idle`). Kaders zijn vierkant (het canvas is 512x512), zodat wisselen
+    van state of gids niet verspringt.
   - Publieke homepage, als kennismaking direct ná de kernbelofte en de
     aanmeldknoppen: `family`/`welcome`, met de namen en eigenschappen als gewone tekst
     eronder (het beeld zelf is decoratief, `alt=""`). Er zijn drie
     varianten; elke lading toont de volgende (`variant` op `MascotSlot`,
     teller in `src/lib/mascotRotation.ts`, zonder cookie of browseropslag).
-  - Tekst van de dag: `vera`/`reading`, die pas iets toont als VERA's
-    assets er zijn.
 - **Personage-specifieke states.** `family` heeft een eigen, kleine lijst
   (`welcome`, `celebrate`); de states van NOVI, VARO en VERA gelden daar
   niet. Een combinatie als `family` + `greeting` is een typefout
@@ -287,10 +306,12 @@ Een state is een functionele toestand in Versado, niet zomaar een emotie.
 
 ### Afspraken
 
-- De gebruiker krijgt later een persoonlijke metgezel; de personages kunnen
-  daarnaast contextueel verschijnen (bv. VERA bij lezen, NOVI bij een kort
-  spel). Een keuze bij de onboarding en een databaseveld daarvoor komen
-  later.
+- De gebruiker heeft een persoonlijke gids (zie "Techniek"). In de gewone
+  app-flow staat alleen die gids in beeld, nooit de drie naast elkaar
+  (behalve bij de keuze zelf en op familiemomenten). Contextueel beeld van
+  één personage met de eigen rol (bv. VERA bij lezen) mag via `MascotSlot`,
+  maar alleen als het daar inhoudelijk hoort en niet naast de persoonlijke
+  gids op dezelfde plek concurreert.
 - **De familie: `family-welcome` en `family-celebrate` zijn verschillend.**
   - `family-welcome` is de algemene introductie van VARO, VERA en NOVI
     samen. Hij hoort op plekken waar de mascottefamilie zelf wordt
@@ -340,7 +361,7 @@ een andere standaard als er geen eigen volgorde is. Bouw geen aparte
 Bestaat al: `/onboarding` (`OnboardingClient.tsx`), afgerond via
 `/api/onboarding/complete` (`User.onboardingSeenAt`; bestaande accounts kregen
 bij de invoering een backfill). Stappen nu: kennisniveau
-(`User.bomKnowledgeLevel`), webapp installeren (overgeslagen als de app al
+(`User.bomKnowledgeLevel`), persoonlijke gids (`User.companion`), webapp installeren (overgeslagen als de app al
 geïnstalleerd draait), uitleg, vrienden zoeken en vindbaarheid, online-status,
 notificaties. Opnieuw te openen via Profiel ("rondleiding").
 

@@ -36,7 +36,7 @@ export default function CompanionPicker({
   size?: "large" | "compact";
 }) {
   const t = useT();
-  const mascotWidth = size === "large" ? "w-[clamp(7.5rem,32vw,9rem)] sm:w-36 lg:w-40" : "w-[clamp(6rem,26vw,7rem)] sm:w-32";
+  const mascotWidth = size === "large" ? "w-[clamp(7.5rem,32vw,9rem)] sm:w-36 lg:w-40" : "w-[clamp(7.5rem,32vw,8.5rem)] sm:w-32 lg:w-36";
   return (
     <fieldset className="min-w-0" disabled={disabled}>
       <legend className="sr-only">{legend}</legend>
@@ -47,8 +47,8 @@ export default function CompanionPicker({
           return (
             <label
               key={character}
-              className={`vs-motion relative flex cursor-pointer items-center gap-4 rounded-2xl border-2 bg-vs-surface p-3 transition has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-vs-accent has-[:focus-visible]:ring-offset-2 has-[:focus-visible]:ring-offset-vs-app sm:flex-col sm:gap-2 sm:p-4 sm:text-center ${
-                selected ? "border-vs-accent bg-vs-accent-soft" : "border-vs-line hover:border-vs-line-strong"
+              className={`vs-motion relative flex cursor-pointer items-center gap-4 rounded-2xl border-2 p-3 transition has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-vs-accent has-[:focus-visible]:ring-offset-2 has-[:focus-visible]:ring-offset-vs-app sm:flex-col sm:gap-2 sm:p-4 sm:text-center ${
+                selected ? "border-vs-accent bg-vs-accent-soft" : "border-vs-line bg-vs-surface hover:border-vs-line-strong"
               } ${disabled ? "cursor-default opacity-70" : ""}`}
             >
               <input

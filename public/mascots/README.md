@@ -13,15 +13,17 @@ Gezamenlijk principe: **"Ik ontdek dit samen met jou."**
 
 **NOVI**: vrolijk · ontdekkend · ondeugend. Een jongetje.
 Rol: spelen, experimenteren, korte oefeningen, dagelijkse motivatie en
-verrassingen. De goedgekeurde Novi-afbeeldingen in `static/novi/` vormen
-samen met de character sheet de visuele canon: nieuwe Novi-assets sluiten
-daar visueel op aan.
+verrassingen.
 
 **VARO**: nieuwsgierig · energiek · speels.
 Rol: ontdekken, voortgang, competitie en grotere doelen.
 
 **VERA**: warm · slim · rustig.
 Rol: begrijpen, lezen, verdieping en reflectie.
+
+De goedgekeurde afbeeldingen in `static/novi/`, `static/varo/` en
+`static/vera/` vormen samen met de character sheets de visuele canon: nieuwe
+assets sluiten daar visueel op aan.
 
 Accessoires zijn optioneel. Ze komen alleen in beeld als ze iets toevoegen
 aan de activiteit of het verhaal van de pose.
@@ -32,13 +34,38 @@ persoonlijkheid overbrengen (geen letterlijke vertaling).
 
 ## Stand
 
-- **Novi** wordt als eerste uitgerold, met statische afbeeldingen.
-- **Family**: composities waarin Varo, Vera en Novi samen staan.
-- Losse afbeeldingen van **Varo en Vera**: de mappen `static/varo/` en
-  `static/vera/` staan klaar voor de aangeleverde afbeeldingen. Ze tonen pas
-  iets in de app als ze omgezet en geregistreerd zijn (zie "Een afbeelding
-  toevoegen").
+- **Novi, Varo en Vera** hebben elk alle tien states als statische
+  afbeelding (512x512, zelfde canvas per personage).
+- **Persoonlijke gids**: elke gebruiker kiest één van de drie
+  (`User.companion`, standaard Novi). Keuze bij de onboarding ("Kies je
+  gids"), te wijzigen op het profiel ("Jouw gids"). Persoonlijke momenten
+  tonen de gekozen gids; zie "Persoonlijke gids" hieronder.
+- **Family**: composities waarin Varo, Vera en Novi samen staan, alleen op
+  gedeelde momenten.
 - Er is nog geen Rive. Voeg geen `.riv`-bestanden toe.
+
+## Persoonlijke gids
+
+De app kiest de reactie (de state), de gebruiker kiest wie hem uitvoert:
+
+```
+feature → <PersonalMascot state="success" />
+        → gekozen gids (User.companion, via CompanionProvider in de layout)
+        → <MascotSlot character="vera" state="success" />
+        → geregistreerde asset (nu WebP, later Rive)
+```
+
+- `src/lib/companion.ts` is de enige plek die de databasewaarde
+  (`NOVI`/`VARO`/`VERA`) en het personage (`novi`/`varo`/`vera`) op elkaar
+  afbeeldt. Opslaan gaat via `PATCH /api/account { companion }`.
+- `src/components/versado/PersonalMascot.tsx` levert `PersonalMascot`,
+  `CompanionProvider` en `useCompanion`. Een feature schrijft dus nooit zelf
+  `user.companion ?? "novi"`.
+- `MascotSlot` blijft generiek. Contextueel beeld van één bepaald personage
+  of van de familie gebruikt `MascotSlot` direct.
+- In de gewone app-flow staat alleen de gekozen gids in beeld, nooit de drie
+  naast elkaar; dat gebeurt alleen bij de keuze (onboarding, profiel) en op
+  familiemomenten.
 
 ## Structuur en naamgeving
 
@@ -85,15 +112,16 @@ geïnstalleerd en er worden nu geen `.riv`-bestanden bijgehouden. Zie
 
 - Formaat: **WebP met transparante achtergrond**.
 - Bestandsnamen: **lowercase kebab-case**.
-  - Losse Novi-assets: `novi-<state>.webp`.
+  - Losse assets: `novi-<state>.webp`, `varo-<state>.webp`, `vera-<state>.webp`.
   - Family-assets: `family-<state>.webp`.
   - Een state met meerdere gelijkwaardige composities (varianten):
     `<character>-<state>-<n>.webp`, genummerd vanaf 1, met het aantal als
     `variants` in het register. Elke variant heeft hetzelfde canvas en
     dezelfde betekenis; het zijn geen versies.
 - Aanwezig en geregistreerd:
-  - Novi: alle tien states zijn functioneel in gebruik via `MascotSlot`, van
-    begroeting en oefeningen tot spel-, ontdek-, lees-, lege en ruststatussen;
+  - Novi, Varo en Vera: alle tien states, via `PersonalMascot` in gebruik als
+    persoonlijke gids (begroeting, oefening en uitslag, spel, ontdekken,
+    lezen, lege en ruststatussen);
   - family: `welcome` in drie varianten (`family-welcome-1` t/m `-3`, 1200x800,
     bron 1536x1024 in `references/family/`); de publieke homepage toont bij
     elke lading de volgende (`src/lib/mascotRotation.ts`). Bronbestand
@@ -107,10 +135,11 @@ geïnstalleerd en er worden nu geen `.riv`-bestanden bijgehouden. Zie
   toekomstige Rive-mappen geen lege structuur vooruit; documentatie is
   voldoende tot er een echt asset bestaat.
 
-### States voor Novi
+### States voor Novi, Varo en Vera
 
-Functionele toestanden in Versado, geen willekeurige emoties. Gebruik ze
-consequent met deze betekenis:
+Functionele toestanden in Versado, geen willekeurige emoties. Alle drie de
+gidsen hebben exact dezelfde tien states. Gebruik ze consequent met deze
+betekenis (beschreven voor Novi; voor Varo en Vera geldt hetzelfde):
 
 | state | betekenis |
 |---|---|
@@ -174,13 +203,17 @@ met een zwarte, witte of meegeschilderde schaakbord-achtergrond wordt niet
 omgezet: uitsnijden verandert de randen, en bij Novi's donkere vacht en
 zwarte lijnen gaat dat zichtbaar mis.
 
-Conversie (voor de hele set gelijk): het bron-canvas (bij Novi 1312x1199)
-proportioneel naar 512 px breed, LANCZOS, WebP kwaliteit 88, method 6,
-alpha_quality 100. Niet bijsnijden, zodat Novi in elke pose even groot is.
+Conversie (voor de hele set gelijk): het bron-canvas (nu 1254x1254 voor
+Novi, Varo en Vera) proportioneel naar 512 px langste zijde, met
+voorvermenigvuldigde alfa (geen donkere randen), LANCZOS, WebP kwaliteit 88,
+method 6, alpha_quality 100. Nooit opschalen en niet bijsnijden, zodat een
+personage in elke pose even groot is. Controleer daarna per bestand: echte
+WebP met alfakanaal, afmetingen, transparante hoeken, en randen op een lichte
+en een donkere achtergrond. Pas daarna mag het bronbestand weg.
 
-Pagina's verwijzen nooit rechtstreeks naar deze bestanden. Ze gebruiken
-alleen `MascotSlot` met een personage en state, bv.
-`<MascotSlot character="novi" state="success" />` of
+Pagina's verwijzen nooit rechtstreeks naar deze bestanden. Een persoonlijk
+moment gebruikt `<PersonalMascot state="success" />`; contextueel beeld en de
+familie gebruiken `MascotSlot` met een personage en state, bv.
 `<MascotSlot character="family" state="welcome" />`
 (`src/components/versado/MascotSlot.tsx`).
 
@@ -190,4 +223,5 @@ Als er later animatie (Rive) achter `MascotSlot` komt, blijven deze WebP's
 gewoon in gebruik: als terugval bij `prefers-reduced-motion`, tijdens het
 laden, bij een fout, op plekken waar beweging niets toevoegt, en op
 apparaten of browsers waar animatie ongewenst is. Pagina's veranderen dan
-niet; alleen de renderer in `MascotSlot` krijgt er een variant bij.
+niet; alleen de renderer in `MascotSlot` krijgt er een variant bij. Ook
+`<PersonalMascot state="..." />` blijft dan ongewijzigd.

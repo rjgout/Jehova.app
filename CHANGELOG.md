@@ -4,6 +4,11 @@ Alle belangrijke gebruikersgerichte wijzigingen en releases worden hieronder bij
 
 ## Nog niet uitgebracht
 
+- Kies je eigen gids: Novi, Varo of Vera. Je kiest bij de start van de app
+  en kunt later wisselen in je profiel ("Jouw gids"). Je gids begroet je op
+  Vandaag, denkt mee bij oefeningen, juicht bij een goed antwoord, moedigt
+  aan bij een fout en speelt mee bij de spellen. Alle drie hebben nieuwe
+  afbeeldingen. Wie al een account had, begint met Novi.
 - Op de homepagina staan nu drie nieuwe afbeeldingen van Varo, Vera en Novi;
   bij elke keer laden zie je de volgende.
 - De homepagina legt nu uit wat er allemaal kan: leren (hoofdstuk voor

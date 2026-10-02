@@ -6,8 +6,8 @@ toekomstige beeldproductie en een latere Rive-implementatie.
 
 De visuele samenvatting hoort in
 `public/mascots/references/versado-character-canon.png`. De officiële
-statische Novi-assets in `public/mascots/static/novi/` zijn daarnaast de
-concrete, goedgekeurde pose-referenties. Referentiebeelden worden uitsluitend
+statische assets van Novi, Varo en Vera in `public/mascots/static/` (elk tien
+states) zijn daarnaast de concrete, goedgekeurde pose-referenties. Referentiebeelden worden uitsluitend
 door de eigenaar aangeleverd; ontbrekende referenties worden nooit door code
 of AI vervangen.
 
@@ -242,7 +242,10 @@ Niet toegestaan:
 Accessoires zijn optioneel en contextueel. Gebruik ze alleen wanneer ze
 betekenis toevoegen. Novi moet ook zonder accessoire direct herkenbaar zijn.
 
-## Officiële Novi-states
+## Officiële states (Novi, Varo en Vera)
+
+Novi, Varo en Vera hebben exact dezelfde tien states; de tabel beschrijft ze
+voor Novi.
 
 | State | Betekenis |
 |---|---|
@@ -285,7 +288,7 @@ Oren, staart, poten en accessoires worden niet afgesneden.
 
 ## Family DNA — Varo en Vera
 
-Varo en Vera moeten later duidelijk dezelfde familie vormen als Novi.
+Varo en Vera vormen duidelijk dezelfde familie als Novi.
 
 Gedeeld family DNA:
 
