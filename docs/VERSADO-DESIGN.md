@@ -536,7 +536,8 @@ Om te weten waar de impact zit. **Niet vooraf aanpassen voor het redesign.**
   (`LessonFlow` en verwanten), prestaties (`achievements.ts`,
   `notifyAchievement`), promotie (`notifyWeeklyResult`), reeksmijlpalen
   (`streak.ts`), einde van gezamenlijke spellen.
-- **Publieke startpagina**: `src/app/page.tsx`, `HomeIntroSections`.
+- **Publieke startpagina**: `src/app/page.tsx` en `src/components/home/HomeContent.tsx`
+  (ook onder de persoonlijke boodschap van `/uitnodiging/[code]`).
 
 ## Aandachtspunten voor beeld, mascottes en Rive
 

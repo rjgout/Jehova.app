@@ -9,7 +9,8 @@ import { getT } from "@/lib/i18n";
 import { requestLanguage } from "@/lib/requestLanguage";
 import UserAvatar from "@/components/UserAvatar";
 import InviteAcceptButton from "@/components/InviteAcceptButton";
-import HomeIntroSections from "@/components/HomeIntroSections";
+import HomeContent from "@/components/home/HomeContent";
+import { getGameSettings } from "@/lib/gameSettings";
 import Footer from "@/components/Footer";
 
 // Bewust ook zonder inlog bereikbaar: dit is de pagina die iemand via een
@@ -110,14 +111,21 @@ export default async function InvitePage({ params }: { params: Promise<{ code: s
   // Wie al een account heeft, kent de app: dan alleen de uitnodiging zelf.
   if (user) return <div className="flex justify-center">{hero}</div>;
 
-  // Zonder account dezelfde kennismaking als op de homepage, zodat de
-  // uitgenodigde ziet waar hij of zij voor gevraagd wordt.
+  // Zonder account eerst de persoonlijke boodschap, en daaronder de hele
+  // homepagina, zodat de uitgenodigde ziet waar die voor gevraagd wordt.
+  // De aanmeldknoppen daar nemen de uitnodiging mee.
+  const games = await getGameSettings();
   return (
     <>
-      <div className="flex flex-col items-center text-center gap-10">
-        {hero}
-        <HomeIntroSections displayName={appName} />
-      </div>
+      <div className="flex justify-center">{hero}</div>
+      <HomeContent
+        t={t}
+        displayName={appName}
+        games={games}
+        signUpHref={`/register?invite=${encodeURIComponent(code)}`}
+        loginHref={`/login?next=${encodeURIComponent(`/uitnodiging/${code}`)}`}
+        heroAs="h2"
+      />
       <Footer />
     </>
   );

@@ -1638,7 +1638,7 @@ export const fr: PartialMessages = {
     tagline: "L’étude des Écritures de façon ludique et motivante.",
     heroLine1: "Étudie le Livre de Mormon,",
     heroLine2: "de façon ludique.",
-    heroText: "Des leçons courtes, des textes à trous et des séries quotidiennes — avec des amis, en divisions ou en direct les uns contre les autres.",
+    heroText: "Des leçons courtes, des chapitres lus à voix haute, des exercices et des jeux. Seul, avec tes amis, ta famille ou tout ton groupe.",
     signUp: "S’inscrire",
     whyTitle: "Pourquoi le nom Versado ?",
     why1: "Versado signifie en espagnol et en portugais « versé dans » : quelqu’un qui connaît vraiment son sujet.",
@@ -1650,36 +1650,100 @@ export const fr: PartialMessages = {
       vera: "Chaleureuse · Intelligente · Calme",
       novi: "Joyeux · Aventurier · Espiègle",
     },
+    sections: {
+      learn: {
+        title: "Apprendre à ton rythme",
+        intro: "Choisis comment tu parcours le Livre de Mormon. Ce que tu as déjà lu compte partout, et tu reprends là où tu t’étais arrêté.",
+      },
+      play: {
+        title: "Jouer",
+        intro: "Des jeux avec les mots et les récits du Livre de Mormon, seul ou ensemble.",
+      },
+      together: {
+        title: "Ensemble",
+        intro: "On tient plus facilement quand on n’étudie pas seul.",
+      },
+      motivation: {
+        title: "Reste motivé",
+        intro: "Quelques minutes par jour suffisent pour construire quelque chose.",
+      },
+      anywhere: {
+        title: "Partout, dans ta langue",
+        intro: "Sur ton téléphone, ta tablette ou ton ordinateur, dans la langue qui te convient.",
+      },
+    },
     features: {
-      lessons: {
-        title: "Leçons courtes",
-        description: "Chaque leçon sur le Livre de Mormon tient en quelques minutes — juste ce qu’il faut en déplacement.",
+      routes: {
+        title: "Chapitre par chapitre ou étape par étape",
+        description: "Lis un chapitre entier avec des exercices, parcours le texte en courtes étapes de quelques minutes, ou choisis toi-même un chapitre.",
+      },
+      readAloud: {
+        title: "Lire et écouter",
+        description: "Lis dans l’application ou fais-toi lire les chapitres à voix haute, même en déplacement. Garde tes versets préférés avec un signet ou un surlignage.",
       },
       exercises: {
-        title: "Textes à trous",
-        description: "Pas de choix multiples : complète toi-même les mots manquants ou remets-les dans le bon ordre.",
+        title: "Des exercices qui restent",
+        description: "Complète les mots manquants, remets les phrases dans l’ordre et réponds aux questions. Ainsi, tu retiens ce que tu as lu.",
       },
-      podcast: {
-        title: "Podcast",
-        description: "Écoute le podcast « Geloof je dat ook? » et réponds à des questions sur chaque épisode — y compris le lien avec le Livre de Mormon.",
+      podcasts: {
+        title: "Podcasts",
+        description: "Écoute « Geloof je dat ook? » et « De Kast van Mormon » et réponds à des questions sur chaque épisode, avec le lien vers le Livre de Mormon.",
       },
-      streaks: {
-        title: "Séries quotidiennes et gels",
-        description: "Construis une série, gagne des gels de série aux étapes — et offre-les à tes amis.",
+      kids: {
+        title: "Pour les enfants",
+        description: "Des récits du Livre de Mormon avec des illustrations et de courtes questions, spécialement pour les enfants.",
+      },
+      youth: {
+        title: "Pour les jeunes",
+        description: "Des leçons sur Jeunes, soyez forts, le guide pour les jeunes.",
+      },
+      tools: {
+        title: "Des outils pratiques",
+        description: "Un dictionnaire de tous les mots du texte, qui est qui parmi les personnages, et tes versets enregistrés.",
       },
       friends: {
         title: "Amis",
-        description: "Suivez vos progrès, défiez-vous et célébrez vos réussites ensemble.",
+        description: "Voyez vos progrès, défiez-vous sur un chapitre, envoyez un petit rappel ou offrez un gel de série quand c’est plus dur.",
       },
-      divisions: {
-        title: "Divisions",
-        description: "Affronte chaque semaine des joueurs de ton niveau et monte dans la division suivante.",
+      friendStreaks: {
+        title: "Séries entre amis",
+        description: "Commence une série avec un ami. Elle grandit tant que vous étudiez tous les deux chaque jour.",
+      },
+      groups: {
+        title: "Groupes",
+        description: "Crée un groupe pour ta famille, ta classe ou ta paroisse. La série du groupe grandit quand assez de membres étudient ce jour-là. Invite des gens avec un lien ou un code QR.",
+      },
+      studyTogether: {
+        title: "Étudier ensemble",
+        description: "Suivez un cours avec des amis : tout le monde a les mêmes questions à son rythme, avec les résultats après chaque étape.",
       },
       liveQuiz: {
-        title: "Quiz en direct ensemble",
-        description: "Joue en direct contre des amis sur un chapitre — qui est le plus rapide et le plus vif ?",
+        title: "Quiz en direct",
+        description: "Joue en direct contre des amis sur un chapitre. Qui sera le plus rapide et le plus perspicace ?",
+      },
+      streaks: {
+        title: "Série quotidienne",
+        description: "Étudie un peu chaque jour et construis une série. Un jour manqué ? Un gel de série la sauve.",
+      },
+      divisions: {
+        title: "XP et divisions",
+        description: "Gagne de l’XP en terminant des leçons et des jeux, et affronte chaque semaine les joueurs de ta division pour monter.",
+      },
+      achievements: {
+        title: "Succès",
+        description: "Collectionne des succès pour les étapes que tu franchis en chemin.",
+      },
+      languages: {
+        title: "Cinq langues",
+        description: "Utilise l’application en néerlandais, anglais, allemand, français ou espagnol, et lis le Livre de Mormon dans chacune de ces langues, même dans une autre langue que celle de l’application.",
+      },
+      app: {
+        title: "Comme une application sur ton téléphone",
+        description: "Ajoute {app} à ton écran d’accueil et reçois un rappel si tu le souhaites, pour ne pas oublier ta série.",
       },
     },
+    ctaTitle: "Prêt à commencer ?",
+    ctaText: "Crée un compte, choisis comment tu veux commencer et fais ton premier pas dès aujourd’hui.",
   },
   onboarding: {
     skip: "Passer",

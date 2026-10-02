@@ -4,6 +4,12 @@ Alle belangrijke gebruikersgerichte wijzigingen en releases worden hieronder bij
 
 ## Nog niet uitgebracht
 
+- De homepagina legt nu uit wat er allemaal kan: leren (hoofdstuk voor
+  hoofdstuk of stap voor stap, voorlezen, podcasts, kinderen en jongeren,
+  hulpmiddelen), de spellen die aan staan, Samen (vrienden,
+  vriendenreeksen, groepen, samen studeren), reeks, XP en divisies, en vijf
+  talen. Wie een uitnodigingslink van een vriend opent, ziet de
+  persoonlijke uitnodiging met daaronder dezelfde homepagina.
 - Je account wordt pas aangemaakt als je op de link in de bevestigingsmail
   klikt, en dan ben je meteen ingelogd. Tot die tijd bestaat er alleen een
   aanmelding: geen account, en een uitnodiging wordt pas dan een

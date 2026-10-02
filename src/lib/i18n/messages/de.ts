@@ -1638,7 +1638,7 @@ export const de: PartialMessages = {
     tagline: "Schriftstudium auf spielerische, motivierende Weise.",
     heroLine1: "Studiere das Buch Mormon,",
     heroLine2: "auf spielerische Weise.",
-    heroText: "Kurze Lektionen, Lückentexte und Tagesserien — mit Freunden, in Ligen oder live gegeneinander.",
+    heroText: "Kurze Lektionen, vorgelesene Kapitel, Übungen und Spiele. Allein, mit Freunden, mit deiner Familie oder deiner ganzen Gruppe.",
     signUp: "Registrieren",
     whyTitle: "Warum heißt das Versado?",
     why1: "Versado ist Spanisch und Portugiesisch für „bewandert“: jemand, der sich wirklich auskennt.",
@@ -1650,36 +1650,100 @@ export const de: PartialMessages = {
       vera: "Herzlich · Klug · Ruhig",
       novi: "Fröhlich · Abenteuerlustig · Verschmitzt",
     },
+    sections: {
+      learn: {
+        title: "Lernen in deinem Tempo",
+        intro: "Entscheide selbst, wie du durch das Buch Mormon gehst. Was du schon gelesen hast, zählt überall, und du machst dort weiter, wo du aufgehört hast.",
+      },
+      play: {
+        title: "Spielen",
+        intro: "Spiele mit Wörtern und Geschichten aus dem Buch Mormon, allein oder gemeinsam.",
+      },
+      together: {
+        title: "Gemeinsam",
+        intro: "Lernen fällt leichter, wenn du es nicht allein tust.",
+      },
+      motivation: {
+        title: "Bleib motiviert",
+        intro: "Ein paar Minuten am Tag reichen, um etwas aufzubauen.",
+      },
+      anywhere: {
+        title: "Überall, in deiner Sprache",
+        intro: "Auf Handy, Tablet oder Computer, in der Sprache, die zu dir passt.",
+      },
+    },
     features: {
-      lessons: {
-        title: "Kurze Lektionen",
-        description: "Jede Lektion über das Buch Mormon passt in ein paar Minuten — genau richtig für unterwegs.",
+      routes: {
+        title: "Kapitel für Kapitel oder Schritt für Schritt",
+        description: "Lies ein ganzes Kapitel mit Übungen, geh in kurzen Schritten von wenigen Minuten durch den Text oder wähle selbst ein Kapitel.",
+      },
+      readAloud: {
+        title: "Lesen und vorlesen lassen",
+        description: "Lies in der App oder lass dir Kapitel vorlesen, auch unterwegs. Speichere schöne Verse mit einem Lesezeichen oder einer Markierung.",
       },
       exercises: {
-        title: "Lückentexte",
-        description: "Kein Multiple Choice: Ergänze fehlende Wörter selbst oder bring sie in die richtige Reihenfolge.",
+        title: "Übungen, die hängen bleiben",
+        description: "Ergänze fehlende Wörter, bring Sätze in die richtige Reihenfolge und beantworte Fragen. So behältst du, was du gelesen hast.",
       },
-      podcast: {
-        title: "Podcast",
-        description: "Hör den Podcast „Geloof je dat ook?“ und beantworte Wissensfragen zu jeder Folge — einschließlich der Verbindung zum Buch Mormon.",
+      podcasts: {
+        title: "Podcasts",
+        description: "Hör „Geloof je dat ook?“ und „De Kast van Mormon“ und beantworte Fragen zu jeder Folge, mit dem Bezug zum Buch Mormon.",
       },
-      streaks: {
-        title: "Tagesserien & Freezes",
-        description: "Bau eine Serie auf, verdiene Streak-Freezes bei Meilensteinen — und verschenke sie an Freunde.",
+      kids: {
+        title: "Für Kinder",
+        description: "Geschichten aus dem Buch Mormon mit Illustrationen und kurzen Fragen, speziell für Kinder.",
+      },
+      youth: {
+        title: "Für Jugendliche",
+        description: "Lektionen zu Für eine starke Jugend, dem Leitfaden für junge Menschen.",
+      },
+      tools: {
+        title: "Praktische Hilfsmittel",
+        description: "Ein Wörterbuch mit allen Wörtern aus dem Text, wer wer ist bei den Personen, und deine gespeicherten Verse.",
       },
       friends: {
         title: "Freunde",
-        description: "Seht gegenseitig euren Fortschritt, fordert euch heraus und feiert Erfolge gemeinsam.",
+        description: "Seht euren Fortschritt, fordert euch zu einem Kapitel heraus, schickt einen Anstupser oder schenkt einen Streak-Freeze, wenn es mal schwerfällt.",
       },
-      divisions: {
-        title: "Ligen",
-        description: "Tritt jede Woche gegen Spieler auf deinem Niveau an und steig in die nächste Liga auf.",
+      friendStreaks: {
+        title: "Freundes-Streaks",
+        description: "Starte einen Streak mit einem Freund. Er wächst, solange ihr beide jeden Tag lernt.",
+      },
+      groups: {
+        title: "Gruppen",
+        description: "Erstelle eine Gruppe für deine Familie, Klasse oder Gemeinde. Der Gruppen-Streak wächst, wenn genug Mitglieder an dem Tag lernen. Lade andere per Link oder QR-Code ein.",
+      },
+      studyTogether: {
+        title: "Gemeinsam lernen",
+        description: "Macht einen Kurs zusammen mit Freunden: alle bekommen dieselben Fragen im eigenen Tempo, mit dem Ergebnis nach jedem Schritt.",
       },
       liveQuiz: {
-        title: "Live-Quiz zusammen",
-        description: "Spiel live gegen Freunde zu einem Kapitel — wer ist am schnellsten und schärfsten?",
+        title: "Live-Quiz",
+        description: "Spiel live gegen Freunde zu einem Kapitel. Wer ist am schnellsten und am klügsten?",
+      },
+      streaks: {
+        title: "Täglicher Streak",
+        description: "Lerne jeden Tag ein bisschen und bau einen Streak auf. Einen Tag verpasst? Ein Streak-Freeze rettet deinen Streak.",
+      },
+      divisions: {
+        title: "XP und Divisionen",
+        description: "Verdiene XP mit abgeschlossenen Lektionen und Spielen und tritt jede Woche in deiner Division an, um aufzusteigen.",
+      },
+      achievements: {
+        title: "Erfolge",
+        description: "Sammle Erfolge für die Meilensteine, die du unterwegs erreichst.",
+      },
+      languages: {
+        title: "Fünf Sprachen",
+        description: "Nutze die App auf Niederländisch, Englisch, Deutsch, Französisch oder Spanisch und lies das Buch Mormon in jeder dieser Sprachen, auch in einer anderen als der App-Sprache.",
+      },
+      app: {
+        title: "Als App auf deinem Handy",
+        description: "Leg {app} auf deinen Startbildschirm und erhalte auf Wunsch eine Erinnerung, damit du deinen Streak nicht vergisst.",
       },
     },
+    ctaTitle: "Bereit loszulegen?",
+    ctaText: "Erstelle ein Konto, wähle, wie du anfangen möchtest, und mach heute deinen ersten Schritt.",
   },
   onboarding: {
     skip: "Überspringen",

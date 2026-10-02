@@ -1648,7 +1648,7 @@ export const es: PartialMessages = {
     "tagline": "Estudia las Escrituras de una manera lúdica y motivadora.",
     "heroLine1": "Estudia el Libro de Mormón,",
     "heroLine2": "de una manera lúdica.",
-    "heroText": "Lecciones breves, ejercicios complementarios y rachas diarias: con amigos, en divisiones o viviendo unos contra otros.",
+    "heroText": "Lecciones cortas, capítulos leídos en voz alta, ejercicios y juegos. Solo, con amigos, con tu familia o con todo tu grupo.",
     "signUp": "Regístrate",
     "whyTitle": "¿Por qué se llama Versado?",
     "why1": "Versado significa “bien versado” en español y portugués: alguien que realmente conoce su tema.",
@@ -1660,36 +1660,100 @@ export const es: PartialMessages = {
       "vera": "Cálida · Inteligente · Serena",
       "novi": "Alegre · Aventurero · Travieso"
     },
+    "sections": {
+      "learn": {
+        "title": "Aprende a tu ritmo",
+        "intro": "Elige cómo recorres el Libro de Mormón. Lo que ya has leído cuenta en todas partes, y continúas donde lo dejaste."
+      },
+      "play": {
+        "title": "Jugar",
+        "intro": "Juegos con palabras e historias del Libro de Mormón, solo o en compañía."
+      },
+      "together": {
+        "title": "Juntos",
+        "intro": "Es más fácil mantener el estudio cuando no lo haces solo."
+      },
+      "motivation": {
+        "title": "Mantente motivado",
+        "intro": "Unos minutos al día bastan para construir algo."
+      },
+      "anywhere": {
+        "title": "En todas partes, en tu idioma",
+        "intro": "En tu teléfono, tableta u ordenador, en el idioma que mejor te va."
+      }
+    },
     "features": {
-      "lessons": {
-        "title": "Lecciones breves",
-        "description": "Cada lección sobre el Libro de Mormón cabe en unos pocos minutos, ideal para ir."
+      "routes": {
+        "title": "Capítulo a capítulo o paso a paso",
+        "description": "Lee un capítulo entero con ejercicios, recorre el texto en pasos cortos de unos minutos o elige tú mismo un capítulo."
+      },
+      "readAloud": {
+        "title": "Leer y escuchar",
+        "description": "Lee en la aplicación o escucha los capítulos en voz alta, también cuando vas de camino. Guarda tus versículos favoritos con un marcador o un resaltado."
       },
       "exercises": {
-        "title": "Ejercicios de relleno",
-        "description": "Sin opción múltiple: completa tú mismo las palabras que faltan o ponlas en el orden correcto."
+        "title": "Ejercicios que se quedan",
+        "description": "Completa las palabras que faltan, ordena frases y responde preguntas. Así recuerdas lo que has leído."
       },
-      "podcast": {
-        "title": "Podcast",
-        "description": "Escucha el podcast “Geloof je dat ook?” y responde preguntas de conocimiento sobre cada episodio, incluido el vínculo con el Libro de Mormón."
+      "podcasts": {
+        "title": "Pódcasts",
+        "description": "Escucha «Geloof je dat ook?» y «De Kast van Mormon» y responde preguntas sobre cada episodio, con el vínculo con el Libro de Mormón."
       },
-      "streaks": {
-        "title": "Rachas diarias",
-        "description": "Crea una racha, consigue congelaciones de racha en los hitos y regálalas a tus amigos."
+      "kids": {
+        "title": "Para niños",
+        "description": "Historias del Libro de Mormón con ilustraciones y preguntas cortas, especialmente para niños."
+      },
+      "youth": {
+        "title": "Para jóvenes",
+        "description": "Lecciones sobre Por la Fortaleza de la Juventud, la guía para los jóvenes."
+      },
+      "tools": {
+        "title": "Herramientas útiles",
+        "description": "Un diccionario con todas las palabras del texto, quién es quién entre los personajes y tus versículos guardados."
       },
       "friends": {
         "title": "Amigos",
-        "description": "Vean el progreso de cada uno, desafíense unos a otros y celebren los éxitos juntos."
+        "description": "Ved vuestro progreso, retaos en un capítulo, enviad un recordatorio o regalad una congelación de racha cuando cueste más."
       },
-      "divisions": {
-        "title": "Divisiones",
-        "description": "Compite semanalmente contra jugadores de tu nivel y asciende a la siguiente división."
+      "friendStreaks": {
+        "title": "Rachas con amigos",
+        "description": "Empieza una racha con un amigo. Crece mientras los dos estudiéis cada día."
+      },
+      "groups": {
+        "title": "Grupos",
+        "description": "Crea un grupo para tu familia, tu clase o tu barrio. La racha del grupo crece cuando suficientes miembros estudian ese día. Invita a otros con un enlace o un código QR."
+      },
+      "studyTogether": {
+        "title": "Estudiar juntos",
+        "description": "Haced un curso con amigos: todos las mismas preguntas a su propio ritmo, con los resultados tras cada paso."
       },
       "liveQuiz": {
-        "title": "Prueba en vivo juntos",
-        "description": "Juega en vivo contra amigos en un capítulo: quién es el más rápido y ¿Más nítido?"
+        "title": "Quiz en directo",
+        "description": "Juega en directo contra amigos sobre un capítulo. ¿Quién es el más rápido y el más agudo?"
+      },
+      "streaks": {
+        "title": "Racha diaria",
+        "description": "Estudia un poco cada día y construye una racha. ¿Te saltaste un día? Una congelación salva tu racha."
+      },
+      "divisions": {
+        "title": "XP y divisiones",
+        "description": "Gana XP completando lecciones y juegos, y compite cada semana en tu división para ascender."
+      },
+      "achievements": {
+        "title": "Logros",
+        "description": "Colecciona logros por los hitos que alcanzas por el camino."
+      },
+      "languages": {
+        "title": "Cinco idiomas",
+        "description": "Usa la aplicación en neerlandés, inglés, alemán, francés o español, y lee el Libro de Mormón en cualquiera de esos idiomas, incluso en uno distinto al de la aplicación."
+      },
+      "app": {
+        "title": "Como aplicación en tu teléfono",
+        "description": "Añade {app} a tu pantalla de inicio y recibe un recordatorio si quieres, para no olvidar tu racha."
       }
-    }
+    },
+    "ctaTitle": "¿Listo para empezar?",
+    "ctaText": "Crea una cuenta, elige cómo quieres empezar y da hoy tu primer paso."
   },
   "onboarding": {
     "skip": "Saltar",

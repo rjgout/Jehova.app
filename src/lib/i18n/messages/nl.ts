@@ -1642,7 +1642,7 @@ export const nl = {
     tagline: "Schriftstudie op een speelse, motiverende manier.",
     heroLine1: "Bestudeer het Boek van Mormon,",
     heroLine2: "op een speelse manier.",
-    heroText: "Korte lessen, invuloefeningen en dag-streaks — samen met vrienden, in divisies, of live tegen elkaar.",
+    heroText: "Korte lessen, voorlezen, oefeningen en spellen. Alleen, met vrienden, met je gezin of met je hele groep.",
     signUp: "Aanmelden",
     whyTitle: "Waarom heet dit Versado?",
     why1: "Versado is Spaans en Portugees voor “goed thuis in iets”: iemand die de stof echt kent.",
@@ -1654,36 +1654,100 @@ export const nl = {
       vera: "Warm · Slim · Rustig",
       novi: "Vrolijk · Ontdekkend · Ondeugend",
     },
+    sections: {
+      learn: {
+        title: "Leren in je eigen tempo",
+        intro: "Kies zelf hoe je door het Boek van Mormon gaat. Wat je al gelezen hebt, telt overal mee, en je gaat verder waar je gebleven was.",
+      },
+      play: {
+        title: "Spelen",
+        intro: "Spelletjes met woorden en verhalen uit het Boek van Mormon, alleen of samen.",
+      },
+      together: {
+        title: "Samen",
+        intro: "Studeren houd je makkelijker vol als je het niet alleen doet.",
+      },
+      motivation: {
+        title: "Blijf gemotiveerd",
+        intro: "Een paar minuten per dag is genoeg om iets op te bouwen.",
+      },
+      anywhere: {
+        title: "Overal, in jouw taal",
+        intro: "Op je telefoon, tablet of computer, in de taal die bij jou past.",
+      },
+    },
     features: {
-      lessons: {
-        title: "Korte lessen",
-        description: "Elke les over het Boek van Mormon past in een paar minuten — precies genoeg voor onderweg.",
+      routes: {
+        title: "Hoofdstuk voor hoofdstuk of stap voor stap",
+        description: "Lees een heel hoofdstuk met oefeningen erbij, ga in korte stappen van een paar minuten door de tekst, of kies zelf welk hoofdstuk je wilt.",
+      },
+      readAloud: {
+        title: "Lezen en voorlezen",
+        description: "Lees in de app of laat hoofdstukken voorlezen, ook onderweg. Bewaar mooie verzen met een bladwijzer of markering.",
       },
       exercises: {
-        title: "Invuloefeningen",
-        description: "Geen multiple choice: vul zelf ontbrekende woorden in of leg ze in de juiste volgorde.",
+        title: "Oefeningen die blijven hangen",
+        description: "Vul ontbrekende woorden in, zet zinnen in de goede volgorde en beantwoord vragen. Zo onthoud je wat je gelezen hebt.",
       },
-      podcast: {
-        title: "Podcast",
-        description: "Luister naar de podcast “Geloof je dat ook?” en beantwoord kennisvragen over elke aflevering — inclusief de link met het Boek van Mormon.",
+      podcasts: {
+        title: "Podcasts",
+        description: "Luister naar “Geloof je dat ook?” en “De Kast van Mormon” en beantwoord vragen over elke aflevering, met de link naar het Boek van Mormon.",
       },
-      streaks: {
-        title: "Dag-streaks & freezes",
-        description: "Bouw een reeks op, verdien streak freezes bij mijlpalen — en geef ze weg aan vrienden.",
+      kids: {
+        title: "Voor kinderen",
+        description: "Verhalen uit het Boek van Mormon met illustraties en korte vragen, speciaal voor kinderen.",
+      },
+      youth: {
+        title: "Voor jongeren",
+        description: "Lessen over Voor de kracht van de jeugd, de gids voor jongeren.",
+      },
+      tools: {
+        title: "Handige hulpmiddelen",
+        description: "Een woordenboek met alle woorden uit de tekst, wie-is-wie bij de personages, en je opgeslagen verzen.",
       },
       friends: {
         title: "Vrienden",
-        description: "Zie elkaars voortgang, daag elkaar uit en vier successen samen.",
+        description: "Zie elkaars voortgang, daag elkaar uit op een hoofdstuk, geef een seintje of schenk een bevriezing als het even tegenzit.",
       },
-      divisions: {
-        title: "Divisies",
-        description: "Strijd wekelijks tegen spelers op jouw niveau en klim naar de volgende divisie.",
+      friendStreaks: {
+        title: "Vriendenreeksen",
+        description: "Start een reeks met een vriend. Die groeit zolang jullie allebei elke dag studeren.",
+      },
+      groups: {
+        title: "Groepen",
+        description: "Maak een groep voor je gezin, klas of wijk. De groepsreeks groeit als genoeg leden die dag studeren. Nodig mensen uit met een link of QR-code.",
+      },
+      studyTogether: {
+        title: "Samen studeren",
+        description: "Doe een cursus samen met vrienden: iedereen dezelfde vragen in eigen tempo, met na elke stap de uitslag.",
       },
       liveQuiz: {
-        title: "Live quiz samen",
-        description: "Speel live tegen vrienden over een hoofdstuk — wie is het snelst en scherpst?",
+        title: "Live quiz",
+        description: "Speel live tegen vrienden over een hoofdstuk. Wie is het snelst en het scherpst?",
+      },
+      streaks: {
+        title: "Dagelijkse reeks",
+        description: "Studeer elke dag een beetje en bouw een reeks op. Een dag gemist? Een bevriezing redt je reeks.",
+      },
+      divisions: {
+        title: "XP en divisies",
+        description: "Verdien XP met afgeronde lessen en spellen, en strijd elke week in je divisie om te promoveren.",
+      },
+      achievements: {
+        title: "Prestaties",
+        description: "Verzamel prestaties voor de mijlpalen die je onderweg haalt.",
+      },
+      languages: {
+        title: "Vijf talen",
+        description: "Gebruik de app in het Nederlands, Engels, Duits, Frans of Spaans, en lees het Boek van Mormon in elk van die talen, ook in een andere taal dan de app.",
+      },
+      app: {
+        title: "Als app op je telefoon",
+        description: "Zet {app} op je beginscherm en krijg desgewenst een herinnering, zodat je je reeks niet vergeet.",
       },
     },
+    ctaTitle: "Klaar om te beginnen?",
+    ctaText: "Maak een account, kies hoe je wilt beginnen en zet vandaag je eerste stap.",
   },
   onboarding: {
     skip: "Overslaan",

@@ -1638,7 +1638,7 @@ export const en: PartialMessages = {
     tagline: "Scripture study in a playful, motivating way.",
     heroLine1: "Study the Book of Mormon,",
     heroLine2: "in a playful way.",
-    heroText: "Short lessons, fill-in exercises and daily streaks — with friends, in divisions, or live against each other.",
+    heroText: "Short lessons, read-aloud chapters, exercises and games. On your own, with friends, with your family or your whole group.",
     signUp: "Sign up",
     whyTitle: "Why is it called Versado?",
     why1: "Versado is Spanish and Portuguese for “well-versed”: someone who really knows their subject.",
@@ -1650,36 +1650,100 @@ export const en: PartialMessages = {
       vera: "Warm · Smart · Calm",
       novi: "Cheerful · Adventurous · Mischievous",
     },
+    sections: {
+      learn: {
+        title: "Learn at your own pace",
+        intro: "Choose how you work through the Book of Mormon. Whatever you’ve already read counts everywhere, and you pick up where you left off.",
+      },
+      play: {
+        title: "Play",
+        intro: "Games with words and stories from the Book of Mormon, on your own or together.",
+      },
+      together: {
+        title: "Together",
+        intro: "Studying is easier to keep up when you don’t do it alone.",
+      },
+      motivation: {
+        title: "Stay motivated",
+        intro: "A few minutes a day is enough to build something.",
+      },
+      anywhere: {
+        title: "Anywhere, in your language",
+        intro: "On your phone, tablet or computer, in the language that suits you.",
+      },
+    },
     features: {
-      lessons: {
-        title: "Short lessons",
-        description: "Every lesson about the Book of Mormon fits into a few minutes — just right for on the go.",
+      routes: {
+        title: "Chapter by chapter or step by step",
+        description: "Read a whole chapter with exercises, go through the text in short steps of a few minutes, or pick any chapter you like.",
+      },
+      readAloud: {
+        title: "Reading and listening",
+        description: "Read in the app or have chapters read aloud, even on the go. Save favourite verses with a bookmark or highlight.",
       },
       exercises: {
-        title: "Fill-in exercises",
-        description: "No multiple choice: fill in missing words yourself or put them in the right order.",
+        title: "Exercises that stick",
+        description: "Fill in missing words, put sentences in the right order and answer questions. That way you remember what you’ve read.",
       },
-      podcast: {
-        title: "Podcast",
-        description: "Listen to the podcast “Geloof je dat ook?” and answer knowledge questions about each episode — including the link with the Book of Mormon.",
+      podcasts: {
+        title: "Podcasts",
+        description: "Listen to “Geloof je dat ook?” and “De Kast van Mormon” and answer questions about each episode, with the link to the Book of Mormon.",
       },
-      streaks: {
-        title: "Daily streaks & freezes",
-        description: "Build a streak, earn streak freezes at milestones — and give them away to friends.",
+      kids: {
+        title: "For children",
+        description: "Stories from the Book of Mormon with illustrations and short questions, especially for children.",
+      },
+      youth: {
+        title: "For youth",
+        description: "Lessons on For the Strength of Youth, the guide for young people.",
+      },
+      tools: {
+        title: "Handy tools",
+        description: "A dictionary of every word in the text, who’s who among the people, and your saved verses.",
       },
       friends: {
         title: "Friends",
-        description: "See each other's progress, challenge each other and celebrate successes together.",
+        description: "See each other’s progress, challenge each other on a chapter, send a nudge or give a streak freeze when someone needs it.",
       },
-      divisions: {
-        title: "Divisions",
-        description: "Compete weekly against players at your level and climb to the next division.",
+      friendStreaks: {
+        title: "Friend streaks",
+        description: "Start a streak with a friend. It grows as long as you both study every day.",
+      },
+      groups: {
+        title: "Groups",
+        description: "Create a group for your family, class or ward. The group streak grows when enough members study that day. Invite people with a link or QR code.",
+      },
+      studyTogether: {
+        title: "Study together",
+        description: "Take a course together with friends: everyone gets the same questions at their own pace, with the results after each step.",
       },
       liveQuiz: {
-        title: "Live quiz together",
-        description: "Play live against friends on a chapter — who's the fastest and sharpest?",
+        title: "Live quiz",
+        description: "Play live against friends on a chapter. Who is the fastest and sharpest?",
+      },
+      streaks: {
+        title: "Daily streak",
+        description: "Study a little every day and build a streak. Missed a day? A streak freeze saves your streak.",
+      },
+      divisions: {
+        title: "XP and divisions",
+        description: "Earn XP by completing lessons and games, and compete in your division every week to get promoted.",
+      },
+      achievements: {
+        title: "Achievements",
+        description: "Collect achievements for the milestones you reach along the way.",
+      },
+      languages: {
+        title: "Five languages",
+        description: "Use the app in Dutch, English, German, French or Spanish, and read the Book of Mormon in any of those languages, even in a different language from the app.",
+      },
+      app: {
+        title: "As an app on your phone",
+        description: "Add {app} to your home screen and get a reminder if you like, so you don’t forget your streak.",
       },
     },
+    ctaTitle: "Ready to start?",
+    ctaText: "Create an account, choose how you want to begin and take your first step today.",
   },
   onboarding: {
     skip: "Skip",
