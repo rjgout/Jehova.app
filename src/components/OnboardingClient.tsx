@@ -10,6 +10,7 @@ import UserTag from "@/components/UserTag";
 import { useT } from "@/components/I18nProvider";
 import SystemIcon from "@/components/versado/SystemIcon";
 import CompanionPicker, { companionName } from "@/components/versado/CompanionPicker";
+import MascotSlot from "@/components/versado/MascotSlot";
 import { useCompanion } from "@/components/versado/PersonalMascot";
 import type { PersonalMascotCharacter } from "@/lib/mascots";
 
@@ -201,6 +202,10 @@ function KennisStep({ onNext }: { onNext: () => void }) {
 
   return (
     <div className="flex flex-col gap-4">
+      {/* Gezamenlijk welkom van de familie; de eigen gids wordt in de volgende stap gekozen. */}
+      <div className="mx-auto aspect-square w-[clamp(10rem,48vw,13rem)]">
+        <MascotSlot character="family" state="huddle" size={208} fill />
+      </div>
       <h1 className="text-xl font-extrabold text-brand-800 dark:text-brand-300 text-center">{t("onboarding.welcome")}</h1>
       <p className="text-sm text-slate-500 dark:text-slate-400 text-center">
         {t("onboarding.knowledgeQuestion")}

@@ -25,12 +25,24 @@ export const MASCOT_STATES = [
 export type MascotState = (typeof MASCOT_STATES)[number];
 
 /**
- * States van de drie samen ("family"). Bewust een eigen, kleine lijst: de
- * familie is geen vierde personage dat overal kan reageren. "welcome" is de
- * algemene introductie; "celebrate" is gereserveerd voor betekenisvolle
- * mijlpalen en heeft nog geen asset.
+ * States van de drie samen ("family"): composities voor gedeelde
+ * Versado-momenten, geen persoonlijke reacties. Bewust een eigen lijst; de
+ * familie is geen vierde gids en heeft dus niet de tien persoonlijke states.
+ * "celebrate" is zwaarder dan de persoonlijke celebrate: alleen voor echt
+ * grote Versado-mijlpalen. Betekenis per state: public/mascots/README.md.
  */
-export const FAMILY_STATES = ["welcome", "celebrate"] as const;
+export const FAMILY_STATES = [
+  "welcome",
+  "hero",
+  "huddle",
+  "celebrate",
+  "discovery",
+  "learning",
+  "playing",
+  "progress",
+  "support",
+  "rest",
+] as const;
 
 export type FamilyState = (typeof FAMILY_STATES)[number];
 
@@ -133,10 +145,19 @@ const STATIC_ASSETS: { [C in MascotCharacter]: Partial<Record<MascotStateOf<C>, 
   novi: SQUARE_SET,
   varo: SQUARE_SET,
   vera: SQUARE_SET,
-  // Drie welkomstcomposities (bron 1536x1024 in references/family/,
-  // verkleind naar 1200x800); de homepagina wisselt ze af.
+  // Familiecomposities, langste zijde 1200 px met de verhouding van de bron
+  // (meestal 1536x1024, huddle vierkant, support 1374x1145).
   family: {
-    welcome: { width: 1200, height: 800, variants: 3 },
+    welcome: { width: 1200, height: 800 },
+    hero: { width: 1200, height: 800 },
+    huddle: { width: 1200, height: 1200 },
+    celebrate: { width: 1200, height: 800 },
+    discovery: { width: 1200, height: 800 },
+    learning: { width: 1200, height: 800 },
+    playing: { width: 1200, height: 800 },
+    progress: { width: 1200, height: 800 },
+    support: { width: 1200, height: 1000 },
+    rest: { width: 1200, height: 800 },
   },
 };
 

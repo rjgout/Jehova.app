@@ -19,6 +19,8 @@ import {
 // Een combinatie die niet bestaat, is al een typefout (tsc controleert deze map ook).
 // @ts-expect-error family heeft geen greeting
 staticMascotPath("family", "greeting");
+// @ts-expect-error family heeft geen thinking
+staticMascotPath("family", "thinking");
 
 const PUBLIC = path.join(path.dirname(fileURLToPath(import.meta.url)), "..", "public");
 const STATIC_DIR = path.join(PUBLIC, "mascots", "static");
@@ -85,23 +87,34 @@ test("persoonlijke gids: alleen Novi, Varo en Vera; family blijft apart", () => 
   assert.equal(DEFAULT_PERSONAL_MASCOT, "novi");
   for (const ok of ["novi", "varo", "vera"]) assert.equal(isPersonalMascot(ok), true);
   for (const wrong of ["family", "NOVI", "", null, undefined, 3, "lisa"]) assert.equal(isPersonalMascot(wrong), false);
-  // family kent geen persoonlijke states, en geen andere dan welcome/celebrate.
-  assert.deepEqual([...mascotStates("family")], ["welcome", "celebrate"]);
-  assert.ok(!(mascotStates("family") as readonly string[]).includes("greeting"));
+  // family heeft een eigen lijst, zonder de persoonlijke reacties.
+  for (const personal of ["greeting", "thinking", "success", "encourage", "idle", "sleep", "reading"]) {
+    assert.ok(!(mascotStates("family") as readonly string[]).includes(personal), `family heeft geen ${personal}`);
+  }
   assert.ok(staticMascotAsset("family", "welcome"), "family-welcome blijft geldig");
-  assert.equal(staticMascotAsset("family", "celebrate"), null, "family-celebrate is gereserveerd en heeft nog geen asset");
   assert.equal(staticMascotPath("varo", "greeting"), "/mascots/static/varo/varo-greeting.webp");
-  assert.equal(staticMascotPath("family", "welcome", 2), "/mascots/static/family/family-welcome-2.webp");
+  assert.equal(staticMascotPath("family", "welcome"), "/mascots/static/family/family-welcome.webp");
 });
 
-test("varianten: elke variant een eigen bestand, en een teller loopt rond", () => {
-  assert.equal(mascotVariantCount("family", "welcome"), 3);
+test("family: alle tien states hebben een echt bestand (WebP met alfa)", () => {
+  const expected = ["welcome", "hero", "huddle", "celebrate", "discovery", "learning", "playing", "progress", "support", "rest"];
+  assert.deepEqual([...mascotStates("family")].sort(), [...expected].sort());
+  for (const state of mascotStates("family")) {
+    const asset = staticMascotAsset("family", state);
+    assert.ok(asset, `family-${state}: niet geregistreerd`);
+    const file = path.join(PUBLIC, asset.src);
+    const b = readFileSync(file);
+    assert.equal(b.toString("ascii", 12, 16), "VP8X", `family-${state}: geen uitgebreide WebP`);
+    assert.ok((b[20] & 0x10) !== 0, `family-${state}: WebP zonder alfakanaal`);
+    assert.equal(Math.max(asset.width, asset.height), 1200, `family-${state}: langste zijde hoort 1200 px te zijn`);
+  }
+});
+
+test("varianten: zonder varianten telt het nummer niet", () => {
+  assert.equal(mascotVariantCount("family", "welcome"), 1);
   assert.equal(mascotVariantCount("novi", "greeting"), 1);
-  assert.equal(mascotVariantCount("family", "celebrate"), 0);
-  assert.equal(staticMascotAsset("family", "welcome", 1)?.src, "/mascots/static/family/family-welcome-1.webp");
-  assert.equal(staticMascotAsset("family", "welcome", 4)?.src, "/mascots/static/family/family-welcome-1.webp");
-  assert.equal(staticMascotAsset("family", "welcome", 0)?.src, "/mascots/static/family/family-welcome-3.webp");
-  assert.equal(staticMascotAsset("novi", "greeting", 2)?.src, "/mascots/static/novi/novi-greeting.webp", "zonder varianten telt het nummer niet");
+  assert.equal(staticMascotAsset("family", "welcome", 2)?.src, "/mascots/static/family/family-welcome.webp");
+  assert.equal(staticMascotAsset("novi", "greeting", 2)?.src, "/mascots/static/novi/novi-greeting.webp");
 });
 
 test("Figma-kopieën van alle states van Novi, Varo en Vera volgen bron, formaat en verhouding", () => {
