@@ -13,6 +13,9 @@ import { translateServerText } from "@/lib/i18n/serverTexts";
 import { rich } from "@/lib/i18n/rich";
 import { iconButton } from "@/components/versado/styles";
 import SystemIcon from "@/components/versado/SystemIcon";
+import GroupsEntryCard from "@/components/social/GroupsEntryCard";
+import FriendStreaksSection, { type FriendStreaksData } from "@/components/social/FriendStreaksSection";
+import { socialRequest } from "@/components/social/shared";
 
 interface FriendUser {
   id: string;
@@ -34,6 +37,7 @@ interface FriendsData {
   incoming: { friendshipId: string; from: FriendUser }[];
   outgoing: { friendshipId: string; to: FriendUser }[];
   statusByUserId: Record<string, FriendStatus>;
+  nudge: { availableAt: Record<string, string>; disabled: string[] };
 }
 
 interface SearchResult {
@@ -43,7 +47,12 @@ interface SearchResult {
   friendshipStatus: "PENDING" | "ACCEPTED" | "DECLINED" | null;
 }
 
-function FriendOverflowMenu({ onRemove }: { onRemove: () => void }) {
+interface MenuAction {
+  label: string;
+  onSelect: () => void;
+}
+
+function FriendOverflowMenu({ actions, onRemove }: { actions: MenuAction[]; onRemove: () => void }) {
   const t = useT();
   const [open, setOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -77,7 +86,21 @@ function FriendOverflowMenu({ onRemove }: { onRemove: () => void }) {
         <MoreHorizontal className="h-5 w-5" aria-hidden />
       </button>
       {open && (
-        <div role="menu" className="absolute right-0 top-full z-10 mt-1 min-w-36 rounded-xl border border-slate-200 bg-white p-1 shadow-lg dark:border-slate-700 dark:bg-slate-900">
+        <div role="menu" className="absolute right-0 top-full z-10 mt-1 min-w-44 rounded-xl border border-slate-200 bg-white p-1 shadow-lg dark:border-slate-700 dark:bg-slate-900">
+          {actions.map((action) => (
+            <button
+              key={action.label}
+              type="button"
+              role="menuitem"
+              className="flex min-h-10 w-full items-center rounded-lg px-3 text-left text-sm font-semibold text-vs-fg hover:bg-vs-subtle"
+              onClick={() => {
+                setOpen(false);
+                action.onSelect();
+              }}
+            >
+              {action.label}
+            </button>
+          ))}
           <button
             type="button"
             role="menuitem"
@@ -106,8 +129,15 @@ export default function FriendsClient({ appName }: { appName: string }) {
   const [giftedTo, setGiftedTo] = useState<string | null>(null);
   const [pendingFreeze, setPendingFreeze] = useState<FriendUser | null>(null);
   const [confirmingFreeze, setConfirmingFreeze] = useState(false);
+  const [streaks, setStreaks] = useState<FriendStreaksData | null>(null);
+
+  async function loadStreaks() {
+    const res = await fetch("/api/friend-streaks");
+    if (res.ok) setStreaks(await res.json());
+  }
 
   async function load() {
+    loadStreaks();
     const res = await fetch("/api/friends");
     if (!res.ok) return;
     setData(await res.json());
@@ -230,7 +260,34 @@ export default function FriendsClient({ appName }: { appName: string }) {
     }
   }
 
+  async function startFriendStreak(friend: FriendUser) {
+    setMessage(null);
+    const result = await socialRequest("/api/friend-streaks", { friendId: friend.id });
+    setMessage(result.ok ? t("together.friendStreaks.started") : (result.error ?? t("together.common.error")));
+    loadStreaks();
+  }
+
+  async function nudgeFriend(friend: FriendUser) {
+    setMessage(null);
+    const result = await socialRequest("/api/nudges", { recipientId: friend.id, context: { kind: "general" } });
+    setMessage(result.ok ? t("together.nudge.given") : (result.error ?? t("together.common.error")));
+    if (result.ok) load();
+  }
+
   if (!data) return <p className="text-slate-400 dark:text-slate-500">{t("common.loading")}</p>;
+
+  // Vrienden met een open of lopende vriendenreeks (dan geen "start"-actie).
+  const streakFriendIds = new Set((streaks?.streaks ?? []).map((s) => s.friend.id));
+  const streakSlotsFull = !!streaks && streaks.activeCount >= streaks.limit;
+  function menuActions(friend: FriendUser): MenuAction[] {
+    const actions: MenuAction[] = [];
+    if (streaks && !streakFriendIds.has(friend.id) && !streakSlotsFull) actions.push({ label: t("together.friendStreaks.start"), onSelect: () => startFriendStreak(friend) });
+    const waitUntil = data?.nudge.availableAt[friend.id];
+    if (!data?.nudge.disabled.includes(friend.id) && !(waitUntil && Date.parse(waitUntil) > Date.now())) {
+      actions.push({ label: t("together.nudge.give"), onSelect: () => nudgeFriend(friend) });
+    }
+    return actions;
+  }
 
   const onlineCount = Object.values(data.statusByUserId).filter((s) => s.online).length;
   // Houd actieve vrienden direct zichtbaar; de volgorde binnen online en
@@ -264,6 +321,8 @@ export default function FriendsClient({ appName }: { appName: string }) {
           </div>
         </div>
       )}
+
+      <GroupsEntryCard />
 
       <div className="card flex flex-col gap-2.5 sm:gap-3">
         <p className="font-bold text-sm dark:text-slate-100 flex items-center gap-2">
@@ -370,6 +429,10 @@ export default function FriendsClient({ appName }: { appName: string }) {
         </section>
       )}
 
+      {streaks && (data.friends.length > 0 || streaks.streaks.length > 0) && (
+        <FriendStreaksSection data={streaks} nudge={data.nudge} onChanged={load} />
+      )}
+
       <section className="flex flex-col gap-2">
         <h2 className="font-extrabold text-slate-700 dark:text-slate-200">
           {t("friends.yourFriends")}
@@ -417,7 +480,7 @@ export default function FriendsClient({ appName }: { appName: string }) {
                       </button>
                     </div>
                   </div>
-                  <FriendOverflowMenu onRemove={() => removeFriendship(friendshipId, "friendship")} />
+                  <FriendOverflowMenu actions={menuActions(f)} onRemove={() => removeFriendship(friendshipId, "friendship")} />
                 </div>
               </div>
             );

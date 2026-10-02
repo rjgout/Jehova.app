@@ -82,6 +82,12 @@ lijst hierboven nog volledig.
   `GAME_COVERS` en worden overal gebruikt waar een spel als kaart staat
   (Vandaag, Voor jou en de spelkaarten op Spelen in `LiveLobbyForm`).
   `versado/Carousel.tsx` is de veegrij met puntjes en pijlen.
+- **Samen** (vriendenreeksen, groepen, seintjes; zie `docs/SAMEN.md`):
+  gebouwd met de `vs`-tokens en `lucide-react`. Ingangen: het blok
+  Vriendenreeksen en de kaart Groepen op `/friends`, de groepspagina's onder
+  `/groups` (bij Vrienden in de navigatie), en een compact "Samen"-blok
+  bovenin de sociale kolom op Vandaag (`today/TogetherBlock.tsx`). Gedeelde
+  onderdelen staan in `src/components/social/`.
 - **Mascottes**: de uitrol is begonnen, met NOVI als eerste (zie
   "Mascottes" hieronder). In gebruik: `novi`/`greeting` (Vandaag) en
   `family`/`welcome` (publieke homepage). Beschikbaar maar nog nergens
@@ -158,7 +164,7 @@ verplaatsen. Routes blijven bestaan (zie "Deep links").
 | Vandaag | `/dashboard`; delen van `/streak`, tekst van de dag, open acties |
 | Leren | `/courses`, `/courses/[courseId]` (+ `/chapter/[chapterId]`), `/lesson/[chapterId]`, `/reading-lesson/[lessonId]`, `/intro/[lessonId]`, `/kids/[storyId]`, `/fsy/[lessonId]`, `/podcast/[episodeId]/[mode]`, `/bookmarks`, `/tools` (`/dictionary`, `/persons`), `/practice` |
 | Spelen | `/live` (spellenoverzicht + live duel), `/live/[code]`, `/challenges`, `/scrabble` (+ `[gameId]`), `/word-game`, `/word-search` (+ `[gameId]`), `/jigsaw`, `/alleskenner` (+ `alleen`, `seizoen`), `/chapter-guess` (+ `solo/[gameId]`), `/gezinsavond` |
-| Vrienden | `/friends`, `/competition`, `/activity`, `/challenges` (ook sociaal) |
+| Vrienden | `/friends`, `/groups` (+ `new`, `leaderboard`, `[groupId]`, `[groupId]/settings`), `/competition`, `/activity`, `/challenges` (ook sociaal) |
 | Profiel (via avatar) | `/profile`, `/xp`, `/streak`, `/shop`, `/feedback`, `/change-password`, `/onboarding` (rondleiding), `/adminbackend` |
 | Publiek | `/`, `/login`, `/register`, `/verify-email`, `/forgot-password`, `/reset-password`, `/uitnodiging/[code]`, `/privacy`, `/cookies`, `/feedback/respond/[token]` |
 
@@ -513,7 +519,8 @@ Om te weten waar de impact zit. **Niet vooraf aanpassen voor het redesign.**
   podcastposities, dagelijkse content).
 - **Vrienden**: `/friends`, `/competition` en `/activity` samen onder één
   bestemming; `FriendsClient`, `LeaderboardClient`, `ActivityFeedClient`,
-  `DivisionScroller`.
+  `DivisionScroller`, en de Samen-onderdelen (`src/components/social/`,
+  `/groups`).
 - **Leren/Spelen**: `CoursesClient` en de cursusweergaven (`*CourseView`),
   `LiveLobbyForm` (spellenoverzicht), spelkaarten en cursuskaarten krijgen
   eigen beeld.

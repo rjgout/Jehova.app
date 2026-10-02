@@ -16,6 +16,7 @@ import { localizedCourse } from "@/lib/courseText";
 import { chapterTerm, localizeTerm } from "@/lib/chapterTerm";
 import { getT } from "@/lib/i18n";
 import { courseArtworkKeys, gameArtworkKeys, podcastArtworkKeys } from "@/lib/artwork";
+import { getTogetherSummary, type TogetherSummary } from "@/lib/social/together";
 
 // Alle gegevens voor Vandaag (src/app/dashboard/page.tsx), in één keer en
 // parallel opgehaald. Elke bron is bestaande functionaliteit: de open
@@ -95,6 +96,8 @@ export interface TodayData {
   dailyQuiz: DailyGameState | null;
   /** Alle vrienden (voor live bijwerken: een vriend die online komt, moet al bekend zijn) en wie nu online is, met diens gedeelde activiteit. */
   social: { friends: FriendSummary[]; online: Record<string, string | null>; viewerSharesOnline: boolean };
+  /** Vriendenreeksen en groepen: alleen wat vandaag telt (null = niets om te tonen). */
+  together: TogetherSummary | null;
   discover: DiscoverItem[];
 }
 
@@ -295,7 +298,14 @@ export async function getTodayData(user: User): Promise<TodayData> {
   const friends: FriendSummary[] = friendships
     .map((f) => (f.senderId === user.id ? f.receiver : f.sender))
     .sort((a, b) => a.handle.localeCompare(b.handle));
-  const statusMap = await getFriendStatusMap(friends.map((f) => f.id), user.shareOnlineStatus);
+  const [statusMap, together] = await Promise.all([
+    getFriendStatusMap(friends.map((f) => f.id), user.shareOnlineStatus),
+    // Een fout in Samen mag Vandaag nooit blokkeren.
+    getTogetherSummary(user.id, user.timeZone).catch((e) => {
+      console.error("Samen op Vandaag:", e);
+      return null;
+    }),
+  ]);
   const online: Record<string, string | null> = Object.fromEntries(
     friends.filter((f) => statusMap[f.id]?.online).map((f) => [f.id, statusMap[f.id]?.activity?.label ?? null])
   );
@@ -352,6 +362,7 @@ export async function getTodayData(user: User): Promise<TodayData> {
       ? { href: "/alleskenner/alleen", status: !dailyQuiz ? "todo" : dailyQuiz.status === "IN_PROGRESS" ? "in-progress" : "done" }
       : null,
     social: { friends, online, viewerSharesOnline: user.shareOnlineStatus },
+    together,
     discover,
   };
 }

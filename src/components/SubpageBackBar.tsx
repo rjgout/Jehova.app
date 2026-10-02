@@ -64,6 +64,13 @@ function detailPageFor(pathname: string, profileView: string | null): DetailPage
   if (tool) return { fallback: "/tools", title: tool };
   const game = GAME_PAGES[pathname];
   if (game) return { fallback: "/live", title: game };
+  // Groepen (Samen) horen bij Vrienden.
+  if (pathname === "/groups") return { fallback: "/friends", title: "together.pages.groups" };
+  if (pathname === "/groups/new") return { fallback: "/groups", title: "together.pages.newGroup" };
+  if (pathname === "/groups/leaderboard") return { fallback: "/groups", title: "together.pages.groupLeaderboard" };
+  const groupSettings = /^\/groups\/([^/]+)\/settings$/.exec(pathname);
+  if (groupSettings) return { fallback: `/groups/${groupSettings[1]}`, title: "together.pages.groupSettings" };
+  if (/^\/groups\/[^/]+$/.test(pathname)) return { fallback: "/groups", title: "together.pages.group" };
   if (pathname === "/alleskenner/alleen") return { fallback: "/alleskenner", title: "pages.playAlone" };
   if (pathname === "/alleskenner/seizoen") return { fallback: "/alleskenner", title: "pages.seasons" };
   if (/^\/alleskenner\/seizoen\/[^/]+$/.test(pathname)) return { fallback: "/alleskenner/seizoen", title: "pages.season" };

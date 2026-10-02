@@ -4,6 +4,14 @@ Alle belangrijke gebruikersgerichte wijzigingen en releases worden hieronder bij
 
 ## Nog niet uitgebracht
 
+- Samen: vriendenreeksen, groepen en seintjes. Start met een vriend een
+  vriendenreeks (maximaal 5): die groeit zolang jullie allebei je reeks
+  vasthouden. Maak een groep voor je gezin, klas of wijk (tot 500 leden): de
+  groepsreeks groeit als genoeg leden die dag studeren. Een groepslid kan
+  een reeksbevriezing aanbieden die alleen wordt gebruikt als de groep het
+  doel echt mist. Geef vrienden een seintje, bekijk de groepsranglijst en
+  zie op Vandaag in één oogopslag wat vandaag telt. Seintjes van vrienden
+  zijn uit te zetten bij Meldingen op je profiel.
 - Een nieuwe, eigen reeksvlam. Zolang je vandaag nog niet hebt gestudeerd
   is hij blauw-wit; daarna brandt hij.
 - Op Vandaag verschijnt vanaf 60 dagen vooraf een kleine countdown naar de

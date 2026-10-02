@@ -29,7 +29,7 @@ export const PRIMARY_NAV: PrimaryNavItem[] = [
     labelKey: "nav.play",
     match: ["/live", "/scrabble", "/word-game", "/word-search", "/jigsaw", "/alleskenner", "/chapter-guess", "/gezinsavond"],
   },
-  { id: "friends", href: "/friends", labelKey: "nav.friends", match: ["/friends", "/competition", "/activity", "/challenges"] },
+  { id: "friends", href: "/friends", labelKey: "nav.friends", match: ["/friends", "/groups", "/competition", "/activity", "/challenges"] },
 ];
 
 export function activeDestination(pathname: string | null): PrimaryDestination | null {

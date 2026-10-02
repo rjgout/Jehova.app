@@ -61,7 +61,7 @@ export default async function DashboardPage() {
         <div
           className={`min-w-0 lg:col-start-2 lg:row-start-1 lg:self-start lg:sticky lg:top-[calc(var(--header-height,4.5rem)+1.5rem)] ${ROW_SPANS[mainBlocks]}`}
         >
-          <SocialPreview social={data.social} language={language} />
+          <SocialPreview social={data.social} together={data.together} language={language} />
         </div>
         {data.discover.length > 0 && (
           <div className="min-w-0 lg:col-start-1">

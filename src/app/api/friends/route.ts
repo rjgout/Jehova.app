@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { getCurrentUser } from "@/lib/session";
 import { getFriendStatusMap } from "@/lib/presence";
 import { apiError } from "@/lib/apiError";
+import { nudgeAvailability, nudgesDisabled } from "@/lib/social/nudges";
 
 export async function GET() {
   const user = await getCurrentUser();
@@ -38,5 +39,10 @@ export async function GET() {
   // van met een "verborgen" waarde, zodat er ook via deze route niets lekt.
   const statusByUserId = await getFriendStatusMap(friends.map((f) => f.user.id), user.shareOnlineStatus);
 
-  return NextResponse.json({ friends, incoming, outgoing, statusByUserId });
+  // Seintjes: wanneer kan het weer, en wie heeft ze uitgezet (dan geen knop).
+  const friendIds = friends.map((f) => f.user.id);
+  const [availability, disabled] = await Promise.all([nudgeAvailability(prisma, user.id, friendIds), nudgesDisabled(prisma, friendIds)]);
+  const nudge = { availableAt: Object.fromEntries(availability), disabled: [...disabled] };
+
+  return NextResponse.json({ friends, incoming, outgoing, statusByUserId, nudge });
 }

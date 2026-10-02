@@ -172,6 +172,16 @@ In de praktijk:
 - Geen eigen vraagaantal of XP-formule per route, geen voortgang aan een cursus-id als de inhoud gedeeld is.
 - `ChapterProgress` niet meer gebruiken.
 
+## ⚠️ Harde regel: Samen (vriendenreeksen, groepen, seintjes)
+
+Zie `docs/SAMEN.md`. Sociale reeksen hebben geen eigen activiteitsregels:
+iemand draagt bij als hij op zijn eigen kalenderdag een `StreakDay` heeft
+(gestudeerd of bevroren). Dus nooit een tweede plek die bepaalt of iemand
+vandaag "geldig actief" was, geen XP voor bijdragen, seintjes of geschonken
+bevriezingen, en limieten (5 vriendenreeksen, 10 groepen, 500 leden, 7 en 30
+dagen wachttijd) alleen via `src/lib/social/rules.ts` en de bestaande
+transacties met rijvergrendeling. Ledenlijsten zijn alleen voor leden.
+
 ## ⚠️ Harde regel: tijd en tijdzones
 
 Zie `docs/TIJD.md`. UTC is de waarheid voor tijdstippen; de IANA-tijdzone
