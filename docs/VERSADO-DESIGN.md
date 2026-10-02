@@ -94,8 +94,8 @@ lijst hierboven nog volledig.
 - **Mascottes**: de uitrol is begonnen, met NOVI als eerste (zie
   "Mascottes" hieronder). In gebruik: `novi`/`greeting` (Vandaag) en
   `family`/`welcome` (publieke homepage). Beschikbaar maar nog nergens
-  ingezet: `novi`/`playing`, `success`, `encourage`, `thinking` en
-  `discovery`.
+  ingezet: de overige negen Novi-states (`idle`, `thinking`, `discovery`,
+  `reading`, `playing`, `success`, `encourage`, `celebrate` en `sleep`).
   `versado/MascotSlot.tsx` is de enige interface; het register in
   `src/lib/mascots.ts` kent de bestanden in `public/mascots/static/`. Zolang
   een asset ontbreekt, rendert een slot niets.

@@ -56,13 +56,10 @@ public/mascots/
   - Losse Novi-assets: `novi-<state>.webp`.
   - Family-assets: `family-<state>.webp`.
 - Aanwezig en geregistreerd:
-  - Novi: `greeting` (in gebruik op Vandaag), `playing`, `success`,
-    `encourage`, `thinking` en `discovery` (beschikbaar, nog nergens
-    ingezet);
+  - Novi: alle tien states; `greeting` is in gebruik op Vandaag en `idle`,
+    `playing`, `success`, `encourage`, `thinking`, `discovery`, `reading`,
+    `celebrate` en `sleep` zijn beschikbaar maar nog nergens ingezet;
   - family: `welcome` (in gebruik op de publieke homepage).
-- Nog nodig, met echte transparantie: Novi `idle`, `reading`, `celebrate`
-  en `sleep`. De aangeleverde PNG's daarvan zijn RGB met een
-  meegeschilderd schaakbord in plaats van een alfakanaal.
 - Niet in een bestandsnaam: `v1`, `v2`, `final` of synoniemen voor een
   bestaande state. Geen nieuwe states zonder bewuste ontwerpkeuze.
 - Niet in de afbeelding: tekst, tekstballonnen of een achtergrond. Tekst
