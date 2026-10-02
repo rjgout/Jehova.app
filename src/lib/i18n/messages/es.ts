@@ -1766,6 +1766,18 @@ export const es: PartialMessages = {
     "ctaTitle": "¿Listo para empezar?",
     "ctaText": "Crea una cuenta, elige cómo quieres empezar y da hoy tu primer paso."
   },
+  "companion": {
+    "chooseTitle": "Elige tu guía",
+    "chooseIntro": "Tu guía te acompaña por la aplicación y reacciona a lo que haces: en los ejercicios, los juegos y en Hoy. Siempre puedes cambiarlo más tarde en tu perfil.",
+    "legend": "Tu guía",
+    "selected": "Elegido",
+    "continueWith": "Continuar con {name}",
+    "chooseFirst": "Elige primero un guía para continuar.",
+    "saveFailed": "Tu elección no se ha guardado. Inténtalo de nuevo.",
+    "profileTitle": "Tu guía",
+    "profileIntro": "Tu guía te acompaña en los ejercicios, los juegos y en Hoy.",
+    "saved": "{name} es ahora tu guía."
+  },
   "onboarding": {
     "skip": "Saltar",
     "welcome": "¡Bienvenido!",

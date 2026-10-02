@@ -9,6 +9,9 @@ import InstallAppCard from "@/components/InstallAppCard";
 import UserTag from "@/components/UserTag";
 import { useT } from "@/components/I18nProvider";
 import SystemIcon from "@/components/versado/SystemIcon";
+import CompanionPicker, { companionName } from "@/components/versado/CompanionPicker";
+import { useCompanion } from "@/components/versado/PersonalMascot";
+import type { PersonalMascotCharacter } from "@/lib/mascots";
 
 interface OnboardingClientProps {
   email: string;
@@ -19,11 +22,15 @@ interface OnboardingClientProps {
   notifyDailyText: boolean;
   dailyTextTime: string;
   emailConfigured: boolean;
+  /** Huidige gids; voor een nieuwe gebruiker is dat de standaard, nog geen eigen keuze. */
+  companion: PersonalMascotCharacter;
+  /** Rondleiding al eens gezien (opnieuw geopend via het profiel): de gids is dan al gekozen. */
+  alreadyOnboarded: boolean;
 }
 
-type StepId = "kennis" | "webapp" | "uitleg" | "vrienden" | "online-status" | "notificaties";
+type StepId = "kennis" | "gids" | "webapp" | "uitleg" | "vrienden" | "online-status" | "notificaties";
 
-const ALL_STEPS: StepId[] = ["kennis", "webapp", "uitleg", "vrienden", "online-status", "notificaties"];
+const ALL_STEPS: StepId[] = ["kennis", "gids", "webapp", "uitleg", "vrienden", "online-status", "notificaties"];
 
 /**
  * Vierstaps onboarding: webapp-installatie (overgeslagen als de app al
@@ -42,6 +49,8 @@ export default function OnboardingClient({
   notifyDailyText,
   dailyTextTime,
   emailConfigured,
+  companion,
+  alreadyOnboarded,
 }: OnboardingClientProps) {
   const router = useRouter();
   const t = useT();
@@ -49,6 +58,9 @@ export default function OnboardingClient({
   const [steps, setSteps] = useState<StepId[]>(ALL_STEPS);
   const [index, setIndex] = useState(0);
   const [finishing, setFinishing] = useState(false);
+  // Een nieuwe gebruiker kiest zelf een gids voordat de rondleiding klaar is;
+  // daarom kan "Overslaan" pas na die keuze. Bij opnieuw bekijken is er al een.
+  const [companionChosen, setCompanionChosen] = useState(alreadyOnboarded);
 
   useEffect(() => {
     setSteps(isStandalone() ? ALL_STEPS.filter((s) => s !== "webapp") : ALL_STEPS);
@@ -72,7 +84,8 @@ export default function OnboardingClient({
   const step = steps[index];
 
   return (
-    <div className="max-w-xl mx-auto flex flex-col gap-6 py-6">
+    // De gidskeuze krijgt meer breedte: drie kaarten naast elkaar met een mascotte die groot genoeg is.
+    <div className={`${step === "gids" ? "max-w-3xl" : "max-w-xl"} mx-auto flex w-full flex-col gap-6 py-6`}>
       <div className="flex items-center gap-1.5 justify-center">
         {steps.map((s, i) => (
           <span
@@ -85,6 +98,15 @@ export default function OnboardingClient({
       </div>
 
       {step === "kennis" && <KennisStep onNext={next} />}
+      {step === "gids" && (
+        <GidsStep
+          initial={alreadyOnboarded ? companion : null}
+          onSaved={() => {
+            setCompanionChosen(true);
+            next();
+          }}
+        />
+      )}
       {step === "webapp" && <WebappStep onNext={next} />}
       {step === "uitleg" && <UitlegStep onNext={next} />}
       {step === "vrienden" && <VriendenStep email={email} initialSearchable={searchableByEmail} onNext={next} />}
@@ -101,8 +123,55 @@ export default function OnboardingClient({
         />
       )}
 
-      <button className="text-sm text-slate-400 dark:text-slate-500 underline self-center" onClick={finish} disabled={finishing}>
-        {t("onboarding.skip")}
+      {companionChosen && (
+        <button className="text-sm text-slate-400 dark:text-slate-500 underline self-center" onClick={finish} disabled={finishing}>
+          {t("onboarding.skip")}
+        </button>
+      )}
+    </div>
+  );
+}
+
+function GidsStep({ initial, onSaved }: { initial: PersonalMascotCharacter | null; onSaved: () => void }) {
+  const t = useT();
+  const { setCharacter } = useCompanion();
+  const [choice, setChoice] = useState<PersonalMascotCharacter | null>(initial);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function save() {
+    if (!choice) return;
+    setSaving(true);
+    setError(null);
+    const res = await fetch("/api/account", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ companion: choice }),
+    }).catch(() => null);
+    setSaving(false);
+    // Pas na een bevestigde opslag verder; anders blijft de keuze staan om opnieuw te proberen.
+    if (!res?.ok) {
+      setError(t("companion.saveFailed"));
+      return;
+    }
+    setCharacter(choice);
+    onSaved();
+  }
+
+  return (
+    <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-1 text-center">
+        <h1 id="onboarding-gids" className="text-xl font-extrabold text-brand-800 dark:text-brand-300">{t("companion.chooseTitle")}</h1>
+        <p className="text-sm text-slate-500 dark:text-slate-400">{t("companion.chooseIntro")}</p>
+      </div>
+      <CompanionPicker name="onboarding-companion" legend={t("companion.legend")} value={choice} onSelect={setChoice} disabled={saving} size="large" />
+      {error && (
+        <p role="alert" className="text-center text-sm font-semibold text-red-600 dark:text-red-400">
+          {error}
+        </p>
+      )}
+      <button className="btn-primary" onClick={save} disabled={!choice || saving}>
+        {saving ? t("courses.busy") : choice ? t("companion.continueWith", { name: companionName(choice) }) : t("companion.chooseFirst")}
       </button>
     </div>
   );

@@ -1760,6 +1760,18 @@ export const nl = {
     ctaTitle: "Klaar om te beginnen?",
     ctaText: "Maak een account, kies hoe je wilt beginnen en zet vandaag je eerste stap.",
   },
+  companion: {
+    chooseTitle: "Kies je gids",
+    chooseIntro: "Je gids gaat met je mee door de app en reageert op wat je doet: bij oefeningen, spellen en op Vandaag. Je kunt later altijd wisselen in je profiel.",
+    legend: "Je gids",
+    selected: "Gekozen",
+    continueWith: "Verder met {name}",
+    chooseFirst: "Kies eerst een gids om verder te gaan.",
+    saveFailed: "Je keuze is niet opgeslagen. Probeer het opnieuw.",
+    profileTitle: "Jouw gids",
+    profileIntro: "Je gids begeleidt je bij oefeningen, spellen en op Vandaag.",
+    saved: "{name} is nu je gids.",
+  },
   onboarding: {
     skip: "Overslaan",
     welcome: "Welkom!",

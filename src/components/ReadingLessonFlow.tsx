@@ -10,7 +10,7 @@ import { ExerciseCard, LessonResultMascot, ReaderView, type ChapterAudio, type E
 import type { ChapterTerm } from "@/lib/chapterTerm";
 import { useT } from "@/components/I18nProvider";
 import { translateOr } from "@/lib/i18n/core";
-import MascotSlot from "@/components/versado/MascotSlot";
+import PersonalMascot from "@/components/versado/PersonalMascot";
 
 interface VerseView {
   id: string;
@@ -126,8 +126,8 @@ export default function ReadingLessonFlow({
               {startVerse}–{endVerse}
             </p>
           </div>
-          <div className="aspect-[512/468] w-[clamp(5.5rem,24vw,6.75rem)] shrink-0 sm:w-28 lg:w-32">
-            <MascotSlot character="novi" state="reading" size={128} fill />
+          <div className="aspect-square w-[clamp(5.5rem,24vw,6.75rem)] shrink-0 sm:w-28 lg:w-32">
+            <PersonalMascot state="reading" size={128} fill />
           </div>
         </div>
         <ReaderView

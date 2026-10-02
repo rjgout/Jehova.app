@@ -1756,6 +1756,18 @@ export const de: PartialMessages = {
     ctaTitle: "Bereit loszulegen?",
     ctaText: "Erstelle ein Konto, wähle, wie du anfangen möchtest, und mach heute deinen ersten Schritt.",
   },
+  companion: {
+    chooseTitle: "Wähle deinen Begleiter",
+    chooseIntro: "Dein Begleiter geht mit dir durch die App und reagiert auf das, was du tust: bei Übungen, Spielen und unter Heute. Du kannst später jederzeit in deinem Profil wechseln.",
+    legend: "Dein Begleiter",
+    selected: "Ausgewählt",
+    continueWith: "Weiter mit {name}",
+    chooseFirst: "Wähle zuerst einen Begleiter, um fortzufahren.",
+    saveFailed: "Deine Auswahl wurde nicht gespeichert. Bitte versuche es noch einmal.",
+    profileTitle: "Dein Begleiter",
+    profileIntro: "Dein Begleiter ist bei Übungen, Spielen und unter Heute an deiner Seite.",
+    saved: "{name} ist jetzt dein Begleiter.",
+  },
   onboarding: {
     skip: "Überspringen",
     welcome: "Willkommen!",

@@ -2,12 +2,12 @@ import { Check } from "lucide-react";
 import SystemIcon from "@/components/versado/SystemIcon";
 import { getT } from "@/lib/i18n";
 import { getLanguage } from "@/lib/languages";
-import MascotSlot from "@/components/versado/MascotSlot";
+import PersonalMascot from "@/components/versado/PersonalMascot";
 import type { TodayData } from "@/lib/today";
 
 // Kop van Vandaag: datum, persoonlijke begroeting en in één zin waar je
-// reeks staat. Novi vormt rechts een herkenbare metgezel zonder dat lange
-// namen of de statusregel daarvoor hoeven te worden afgekapt.
+// reeks staat. De persoonlijke gids vormt rechts een herkenbare metgezel
+// zonder dat lange namen of de statusregel daarvoor hoeven te worden afgekapt.
 export default function Greeting({ data, language, showMascot = true }: { data: TodayData; language: string; showMascot?: boolean }) {
   const t = getT(language);
   const locale = getLanguage(language).intlLocale;
@@ -34,9 +34,9 @@ export default function Greeting({ data, language, showMascot = true }: { data: 
         </p>
       </div>
       {showMascot && (
-        // Het vaste canvas houdt de compositie stabiel; Novi zelf blijft volledig in beeld.
-        <div className="aspect-[512/468] w-[clamp(5.5rem,26vw,7rem)] shrink-0 sm:w-32 lg:w-36">
-          <MascotSlot character="novi" state="greeting" size={144} fill />
+        // Het vaste canvas houdt de compositie stabiel; de gids zelf blijft volledig in beeld.
+        <div className="aspect-square w-[clamp(5.5rem,26vw,7rem)] shrink-0 sm:w-32 lg:w-36">
+          <PersonalMascot state="greeting" size={144} fill />
         </div>
       )}
     </header>

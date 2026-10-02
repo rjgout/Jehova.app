@@ -36,6 +36,8 @@ import ReadAloudMiniPlayer from "@/components/ReadAloudMiniPlayer";
 import ActivityTracker from "@/components/ActivityTracker";
 import TimeZoneSync from "@/components/TimeZoneSync";
 import { I18nProvider } from "@/components/I18nProvider";
+import { CompanionProvider } from "@/components/versado/PersonalMascot";
+import { companionToMascot } from "@/lib/companion";
 import { messagesFor } from "@/lib/i18n";
 import { requestLanguage } from "@/lib/requestLanguage";
 import { APP_TAGLINE, resolveAppName } from "@/lib/brand";
@@ -154,6 +156,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       </head>
       <body>
         <I18nProvider language={uiLanguage} messages={messagesFor(uiLanguage)}>
+        <CompanionProvider character={companionToMascot(user?.companion)}>
         <ConfirmProvider>
         <PodcastPlayerProvider>
         <ReadAloudPlayerProvider>
@@ -237,6 +240,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         </ReadAloudPlayerProvider>
         </PodcastPlayerProvider>
         </ConfirmProvider>
+        </CompanionProvider>
         </I18nProvider>
       </body>
     </html>

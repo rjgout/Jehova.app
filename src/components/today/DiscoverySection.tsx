@@ -5,7 +5,7 @@ import SectionHeader from "@/components/today/SectionHeader";
 import { interactiveCard } from "@/components/versado/styles";
 import type { DiscoverItem } from "@/lib/today";
 import type { MessageKey } from "@/lib/i18n/core";
-import MascotSlot from "@/components/versado/MascotSlot";
+import PersonalMascot from "@/components/versado/PersonalMascot";
 
 // Iets nieuws om te ontdekken. Nu eenvoudig (nog niet toegevoegde cursussen
 // en spellen in je eigen volgorde, zie getTodayData); de kaart ondersteunt
@@ -21,8 +21,8 @@ export default function DiscoverySection({ items, language, showMascot = true }:
           <SectionHeader id="today-discover" title={t("today.discoverTitle")} />
         </div>
         {showMascot && (
-          <div className="-mb-1 aspect-[512/468] w-[clamp(5.5rem,24vw,6.5rem)] shrink-0 sm:w-28 lg:w-32">
-            <MascotSlot character="novi" state="discovery" size={128} fill />
+          <div className="-mb-1 aspect-square w-[clamp(5.5rem,24vw,6.5rem)] shrink-0 sm:w-28 lg:w-32">
+            <PersonalMascot state="discovery" size={128} fill />
           </div>
         )}
       </div>

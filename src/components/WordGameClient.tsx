@@ -7,7 +7,7 @@ import UserTag from "@/components/UserTag";
 import UserAvatar from "@/components/UserAvatar";
 import { useT } from "@/components/I18nProvider";
 import { rich } from "@/lib/i18n/rich";
-import MascotSlot from "@/components/versado/MascotSlot";
+import PersonalMascot from "@/components/versado/PersonalMascot";
 
 type LetterState = "correct" | "present" | "absent";
 
@@ -251,8 +251,8 @@ export default function WordGameClient() {
 
       {finished && (
         <div className="card flex flex-col items-center gap-3 text-center animate-pop">
-          <div className="aspect-[512/468] w-[clamp(6.875rem,30vw,8.125rem)] shrink-0 sm:w-36">
-            <MascotSlot character="novi" state={game.status === "WON" ? "success" : "encourage"} size={144} fill />
+          <div className="aspect-square w-[clamp(6.875rem,30vw,8.125rem)] shrink-0 sm:w-36">
+            <PersonalMascot state={game.status === "WON" ? "success" : "encourage"} size={144} fill />
           </div>
           <p className="text-lg font-extrabold dark:text-slate-100">
             {game.status === "WON" ? t("wordOfTheDay.won") : t("wordOfTheDay.lost")}

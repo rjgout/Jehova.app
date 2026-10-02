@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { getCurrentUser } from "@/lib/session";
 import { weekStartKey } from "@/lib/dates";
 import { TIER_ORDER } from "@/lib/leagues";
+import { companionToMascot } from "@/lib/companion";
 import { apiError } from "@/lib/apiError";
 
 export async function GET() {
@@ -89,6 +90,7 @@ export async function GET() {
     nudgesEnabled: user.nudgesEnabled,
     timeZone: user.timeZone,
     uiLanguage: user.uiLanguage,
+    companion: companionToMascot(user.companion),
     totpEnabled: user.totpEnabled,
     xpTotal: user.xpTotal,
     currentStreak: user.currentStreak,

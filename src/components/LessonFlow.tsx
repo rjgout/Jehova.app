@@ -16,7 +16,7 @@ import ReadAloudPlayer from "@/components/ReadAloudPlayer";
 import { useReadAloudPlayer } from "@/lib/readAloudPlayerContext";
 import { chapterTerm, type ChapterTerm } from "@/lib/chapterTerm";
 import { ContentStatusLine, LongChapterNotice, type ReadState } from "@/components/learning/ContentStatus";
-import MascotSlot from "@/components/versado/MascotSlot";
+import PersonalMascot from "@/components/versado/PersonalMascot";
 
 export type ExerciseType = "FILL_BLANK" | "WORD_BANK" | "TRUE_FALSE" | "MULTIPLE_CHOICE" | "SEQUENCE" | "IMAGE_CHOICE";
 
@@ -950,8 +950,8 @@ export function ExerciseCard({
 function ExerciseMascotReaction({ checked, correct }: { checked: boolean; correct: boolean }) {
   const state = checked ? (correct ? "success" : "encourage") : "thinking";
   return (
-    <div className="mx-auto aspect-[512/468] w-[clamp(5.5rem,24vw,6.75rem)] shrink-0 sm:w-28 lg:w-32">
-      <MascotSlot character="novi" state={state} size={128} fill />
+    <div className="mx-auto aspect-square w-[clamp(5.5rem,24vw,6.75rem)] shrink-0 sm:w-28 lg:w-32">
+      <PersonalMascot state={state} size={128} fill />
     </div>
   );
 }
@@ -959,8 +959,8 @@ function ExerciseMascotReaction({ checked, correct }: { checked: boolean; correc
 export function LessonResultMascot({ scorePercent, celebrate = false, successThreshold = 50 }: { scorePercent: number; celebrate?: boolean; successThreshold?: number }) {
   const state = celebrate ? "celebrate" : scorePercent >= successThreshold ? "success" : "encourage";
   return (
-    <div className="aspect-[512/468] w-[clamp(6.875rem,30vw,8.125rem)] shrink-0 sm:w-36">
-      <MascotSlot character="novi" state={state} size={144} fill />
+    <div className="aspect-square w-[clamp(6.875rem,30vw,8.125rem)] shrink-0 sm:w-36">
+      <PersonalMascot state={state} size={144} fill />
     </div>
   );
 }

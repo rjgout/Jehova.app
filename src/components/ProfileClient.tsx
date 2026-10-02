@@ -19,6 +19,9 @@ import { getLanguage } from "@/lib/languages";
 import { translateOr } from "@/lib/i18n/core";
 import AppSelect from "@/components/AppSelect";
 import SystemIcon from "@/components/versado/SystemIcon";
+import CompanionPicker, { companionName } from "@/components/versado/CompanionPicker";
+import { useCompanion } from "@/components/versado/PersonalMascot";
+import type { PersonalMascotCharacter } from "@/lib/mascots";
 import { parseProfileView, profileViewHref, PROFILE_VIEWS, type ProfileView } from "@/lib/profileViews";
 import {
   Bell,
@@ -77,6 +80,7 @@ interface ProfileData {
   nudgesEnabled: boolean;
   timeZone: string | null;
   uiLanguage: string;
+  companion: PersonalMascotCharacter;
   totpEnabled: boolean;
   xpTotal: number;
   currentStreak: number;
@@ -519,6 +523,11 @@ export default function ProfileClient() {
         <ProfileAction icon={<MessageSquare className="h-5 w-5 text-vs-accent" aria-hidden />} label={t("pages.feedback")} href="/feedback" />
       </div>
 
+      <CompanionSection
+        current={data.companion}
+        onChanged={(companion) => setData((current) => (current ? { ...current, companion } : current))}
+      />
+
       <section className="bg-vs-surface rounded-2xl border border-vs-line p-4 sm:p-5">
         <SectionHeading icon={<Trophy className="h-5 w-5 text-vs-xp" aria-hidden />} title={t("nav.competition")} />
         {/* Smal scherm: beste divisie onder de huidige, anders breekt de
@@ -761,4 +770,46 @@ function Stat({
     );
   }
   return <div>{content}</div>;
+}
+
+/**
+ * Jouw gids: dezelfde keuze als bij de onboarding. Opslaan gebeurt meteen;
+ * pas na een bevestigd antwoord wisselt de gids in de hele app (useCompanion),
+ * zodat het scherm nooit een keuze toont die niet is opgeslagen.
+ */
+function CompanionSection({ current, onChanged }: { current: PersonalMascotCharacter; onChanged: (companion: PersonalMascotCharacter) => void }) {
+  const t = useT();
+  const { setCharacter } = useCompanion();
+  const [saving, setSaving] = useState(false);
+  const [status, setStatus] = useState<{ kind: "saved" | "error"; text: string } | null>(null);
+
+  async function choose(choice: PersonalMascotCharacter) {
+    if (choice === current || saving) return;
+    setSaving(true);
+    setStatus(null);
+    const res = await fetch("/api/account", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ companion: choice }),
+    }).catch(() => null);
+    setSaving(false);
+    if (!res?.ok) {
+      setStatus({ kind: "error", text: t("companion.saveFailed") });
+      return;
+    }
+    setCharacter(choice);
+    onChanged(choice);
+    setStatus({ kind: "saved", text: t("companion.saved", { name: companionName(choice) }) });
+  }
+
+  return (
+    <section aria-labelledby="profile-companion" className="bg-vs-surface rounded-2xl border border-vs-line p-4 sm:p-5">
+      <h2 id="profile-companion" className="text-xs font-extrabold uppercase tracking-wider text-vs-fg-2">{t("companion.profileTitle")}</h2>
+      <p className="mb-3 mt-1 text-sm text-vs-fg-2">{t("companion.profileIntro")}</p>
+      <CompanionPicker name="profile-companion" legend={t("companion.profileTitle")} value={current} onSelect={choose} disabled={saving} size="compact" />
+      <p role="status" className={`mt-3 min-h-5 text-sm font-semibold ${status?.kind === "error" ? "text-red-600 dark:text-red-400" : "text-vs-success"}`}>
+        {status?.text}
+      </p>
+    </section>
+  );
 }

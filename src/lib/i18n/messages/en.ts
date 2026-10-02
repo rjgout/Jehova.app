@@ -1756,6 +1756,18 @@ export const en: PartialMessages = {
     ctaTitle: "Ready to start?",
     ctaText: "Create an account, choose how you want to begin and take your first step today.",
   },
+  companion: {
+    chooseTitle: "Choose your guide",
+    chooseIntro: "Your guide goes with you through the app and reacts to what you do: in exercises, games and on Today. You can always switch later in your profile.",
+    legend: "Your guide",
+    selected: "Selected",
+    continueWith: "Continue with {name}",
+    chooseFirst: "Choose a guide to continue.",
+    saveFailed: "Your choice wasn’t saved. Please try again.",
+    profileTitle: "Your guide",
+    profileIntro: "Your guide accompanies you in exercises, games and on Today.",
+    saved: "{name} is now your guide.",
+  },
   onboarding: {
     skip: "Skip",
     welcome: "Welcome!",

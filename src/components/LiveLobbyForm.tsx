@@ -12,7 +12,7 @@ import AppSelect from "@/components/AppSelect";
 import { GAME_CATALOG, type GameCatalogEntry } from "@/lib/gameCatalog";
 import { gameArtworkKeys } from "@/lib/artwork";
 import MediaArtwork from "@/components/versado/MediaArtwork";
-import MascotSlot from "@/components/versado/MascotSlot";
+import PersonalMascot from "@/components/versado/PersonalMascot";
 
 interface ChapterOption {
   id: string;
@@ -104,8 +104,8 @@ export default function LiveLobbyForm({ settings, isAdmin, allowedGameKeys, cont
           <h1 className="text-2xl font-extrabold text-brand-800 dark:text-brand-300">{t("gamesHub.title")}</h1>
           <p className="text-sm text-slate-500 dark:text-slate-400">{t("gamesHub.intro")}</p>
         </div>
-        <div className="aspect-[512/468] w-[clamp(6rem,27vw,7.25rem)] shrink-0 sm:w-32 lg:w-36">
-          <MascotSlot character="novi" state="playing" size={144} fill />
+        <div className="aspect-square w-[clamp(6rem,27vw,7.25rem)] shrink-0 sm:w-32 lg:w-36">
+          <PersonalMascot state="playing" size={144} fill />
         </div>
       </div>
 

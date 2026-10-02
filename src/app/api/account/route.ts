@@ -10,6 +10,8 @@ import { LANGUAGES, getLanguage } from "@/lib/languages";
 import { apiError, apiErrorText } from "@/lib/apiError";
 import { leaveAllGroups } from "@/lib/social/groups";
 import { isValidTimeZone } from "@/lib/timeZone";
+import { PERSONAL_MASCOTS } from "@/lib/mascots";
+import { mascotToCompanion } from "@/lib/companion";
 
 const patchSchema = z.object({
   handle: z
@@ -55,6 +57,8 @@ const patchSchema = z.object({
   // Taal van de app (menu's, meldingen, e-mails); de taal van de content
   // loopt via /api/content-context, omdat die ook de actieve uitgave wisselt.
   uiLanguage: z.enum(LANGUAGES.map((language) => language.code) as [string, ...string[]]).optional(),
+  // Persoonlijke gids (src/lib/companion.ts): alleen novi, varo of vera.
+  companion: z.enum(PERSONAL_MASCOTS).optional(),
   // Vrienden-aanwezigheid (zie src/lib/presence.ts).
   shareOnlineStatus: z.boolean().optional(),
   shareCurrentActivity: z.boolean().optional(),
@@ -118,7 +122,8 @@ export async function PATCH(req: NextRequest) {
   if (Object.keys(parsed.data).length === 0) {
     return await apiError("apiErrors.nothingToSave", 400);
   }
-  const { handle, incognitoHours, ...rest } = parsed.data;
+  const { handle, incognitoHours, companion: companionChoice, ...fields } = parsed.data;
+  const rest = { ...fields, ...(companionChoice ? { companion: mascotToCompanion(companionChoice) } : {}) };
   // Een taal waarvan de app-teksten nog niet af zijn, alleen voor beheerders
   // (om de vertaling te bekijken).
   if (rest.uiLanguage && !getLanguage(rest.uiLanguage).uiReady && !user.isAdmin) {

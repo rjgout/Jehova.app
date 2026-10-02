@@ -89,6 +89,12 @@ model User {
   // iemand die de onboarding oversloeg vóór dit scherm bereikt werd) — dan
   // blijft de standaardvolgorde gewoon ongewijzigd.
   bomKnowledgeLevel  IntroKnowledgeLevel?
+  // Persoonlijke gids (Novi, Varo of Vera) die de gebruiker door de app
+  // begeleidt: gekozen bij de onboarding, te wijzigen op het profiel. De
+  // app kiest de reactie (state), dit veld wie hem uitvoert; zie
+  // src/lib/companion.ts. Bestaande accounts krijgen Novi, die al de
+  // metgezel op de persoonlijke momenten was.
+  companion          Companion @default(NOVI)
 
   // De actieve contentcollectie voor de contentswitcher. Null betekent dat de gebruiker
   // nog geen expliciete keuze heeft gemaakt; de app gebruikt dan de standaardcollectie.
@@ -986,6 +992,15 @@ enum IntroKnowledgeLevel {
   SOME // "Een paar stukjes"
   READ_BEFORE // "Ik heb het al eens gelezen"
   UNSURE // "Ik weet het eigenlijk niet meer"
+}
+
+// De drie personages die je als persoonlijke gids kunt kiezen (User.companion).
+// In de app heten ze "novi", "varo" en "vera" (src/lib/mascots.ts); de namen
+// worden nooit vertaald.
+enum Companion {
+  NOVI
+  VARO
+  VERA
 }
 
 // Persoonlijke volgorde van cursussen/spelletjes (sleep-en-herordenen op

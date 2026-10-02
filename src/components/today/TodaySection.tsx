@@ -2,7 +2,7 @@ import Link from "next/link";
 import { ArrowRight, Check, Quote } from "lucide-react";
 import { getT } from "@/lib/i18n";
 import MediaArtwork from "@/components/versado/MediaArtwork";
-import MascotSlot from "@/components/versado/MascotSlot";
+import PersonalMascot from "@/components/versado/PersonalMascot";
 import SectionHeader from "@/components/today/SectionHeader";
 import { interactiveCard, secondaryButton, surfaceCard } from "@/components/versado/styles";
 import type { DailyGameState, TodayData } from "@/lib/today";
@@ -108,8 +108,6 @@ export default function TodaySection({ data, language, dayComplete = false }: { 
                   {t("dashboard.readMore")}
                 </Link>
               </div>
-              {/* VERA hoort bij lezen en verdieping; rendert niets tot haar assets er zijn (latere fase). */}
-              <MascotSlot character="vera" state="reading" size={64} className="absolute bottom-4 right-4" />
             </div>
           </article>
         )}
@@ -126,8 +124,8 @@ export default function TodaySection({ data, language, dayComplete = false }: { 
       {dayComplete && (
         <div className={`${surfaceCard} mt-3 flex items-center justify-between gap-4 p-4 sm:mt-4 sm:p-5`}>
           <p className="max-w-md text-sm font-semibold leading-relaxed text-vs-fg-2 sm:text-base">{t("today.dayComplete")}</p>
-          <div className="aspect-[512/468] w-[clamp(6rem,28vw,7.5rem)] shrink-0 sm:w-32">
-            <MascotSlot character="novi" state="sleep" size={128} fill />
+          <div className="aspect-square w-[clamp(6rem,28vw,7.5rem)] shrink-0 sm:w-32">
+            <PersonalMascot state="sleep" size={128} fill />
           </div>
         </div>
       )}
