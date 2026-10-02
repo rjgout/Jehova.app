@@ -131,6 +131,28 @@ Dit gebeurt op drie momenten:
 
 Tellingen gaan per groep in één query (`groupDays.ts`), ook bij 500 leden.
 
+**Schaal van de minuuttaak.** Elke stap zoekt via een index alleen wat nu
+relevant is:
+
+- **Nieuwe reeksdagen**: `StreakDay.createdAt` (index) sinds de vorige
+  ronde. Alleen de groepen en vriendenreeksen van die mensen worden
+  bijgewerkt.
+- **Af te sluiten groepsdagen**: groepen met `nextCheckAt <= nu` (index).
+  `nextCheckAt` is het moment waarop de open dag voor alle leden voorbij
+  is. Wacht een dag nog op een paar leden (bv. na een tijdzonewissel), dan
+  bepalen alleen hún tijdzones de volgende poging. Alleen als het nog op de
+  eigen reeksafsluiting wacht, wordt het over een minuut opnieuw
+  geprobeerd.
+- **Vriendenreeksen**: hetzelfde patroon met `FriendStreak.nextCheckAt`
+  (index op status + nextCheckAt).
+- **Beheerders, elk uur**: eerst alleen de beheerders zelf en een telling
+  per groep (`adminMaintenanceCandidates`). Alleen groepen met een inactieve
+  of ontbrekende beheerder laden daarna hun leden.
+
+Er wordt dus nooit elke minuut over alle gebruikers, groepen of leden
+gelopen. Een groep van 500 leden kost per afgesloten dag één keer het laden
+van de leden, en verder alleen telqueries.
+
 ### Geschonken reeksbevriezing
 
 - Een lid biedt een eigen reeksbevriezing aan voor de groepsdag van vandaag
@@ -173,6 +195,100 @@ Tellingen gaan per groep in één query (`groupDays.ts`), ook bij 500 leden.
 - Vanuit de ledenlijst kun je een vriendschapsverzoek sturen aan leden die
   nog geen vriend zijn.
 
+### Groepslink en QR-code (`joinLinks.ts`)
+
+Een groeps-QR is een veilige voordeur naar een besloten groep, geen sleutel
+waarmee iemand rechtstreeks naar binnen kan. Er zijn daarom twee manieren
+om lid te worden.
+
+- **Persoonlijke uitnodiging** (bestond al): een lid nodigt een eigen
+  vriend uit, die accepteert.
+- **Groepslink of QR**: iemand vraagt toegang, en een bevoegd persoon uit de
+  groep laat hem binnen. De link maakt nooit zelf lid.
+
+#### Token
+
+- Een beheerder zet de link aan in Groepsinstellingen. De link is
+  `/uitnodiging/groep/<token>`. Het token bestaat uit 32 willekeurige bytes
+  (256 bits, als base64url 43 tekens), staat in `SocialGroup.joinLinkToken`
+  (uniek) en bevat geen groeps-id of naam.
+- De QR-code bevat precies die link. Er is geen tweede token, dus intrekken
+  geldt voor link en QR samen.
+- **Intrekken** zet het token op `null`: oude links en QR-codes (bv. op een
+  poster) werken meteen niet meer. Opnieuw aanzetten geeft altijd een nieuw
+  token. Een ingetrokken token komt nooit terug, want er wordt nooit een
+  oud token hergebruikt en 256 willekeurige bits botsen in de praktijk niet.
+- Een misvormd, ingetrokken of onbekend token geeft dezelfde neutrale
+  melding ("Deze groepslink is niet meer geldig."), zonder naam, leden of
+  reeks. Gokken op tokens of groeps-id's levert dus niets op.
+- Link en ranglijst staan los van elkaar. Een privégroep met een link blijft
+  privé, en een openbare groep op de ranglijst is zonder link of uitnodiging
+  niet aan te vragen.
+
+#### Wat iemand met de link ziet (`groupLinkView`)
+
+| Situatie | Wat er gebeurt |
+|---|---|
+| Niet ingelogd | Alleen "Open deze uitnodiging in Versado" met Inloggen en Account maken, geen enkel groepsgegeven. |
+| Al lid | Rechtstreeks naar `/groups/<id>`, zonder nieuw verzoek. |
+| Anders | Een beperkte voorpagina, zie hieronder. |
+
+De voorpagina toont:
+
+- naam, groepsreeks, aantal leden en de groepsprestaties;
+- eerst de eigen vrienden die al lid zijn;
+- kent hij niemand, dan alleen de beheerders, met naam en avatar maar zonder
+  id of nummer;
+- nooit de ledenlijst, bijdragen, instellingen of geschiedenis;
+- één knop: "Vraag om mee te doen". Er is geen formulier en geen bericht.
+
+**Terug na inloggen**: inloggen en registreren krijgen `?next=` mee.
+Registreren onthoudt het doel ook in de browser (`src/lib/returnTo.ts`, 24
+uur), omdat de weg via de e-mailbevestiging en een nieuwe inlog loopt. Er
+worden alleen paden binnen de app geaccepteerd.
+
+#### Toegangsverzoeken
+
+Een verzoek (`GroupJoinRequest`) hoort bij de groep, niet bij één persoon,
+zodat het niet blijft hangen als iemand niet actief is.
+
+- **Afhandelen**: beheerders handelen alle verzoeken af. Een gewoon lid
+  handelt alleen het verzoek van zijn eigen vriend af, en alleen als
+  "Leden mogen verzoeken van vrienden goedkeuren" aan staat (standaard aan).
+  Een gewoon lid ziet nooit onbekende aanvragers.
+- **Dubbel**: hooguit één open verzoek per persoon per groep (unieke
+  `openKey`), ook bij twee klikken tegelijk.
+- **Spam**: na een weigering kan iemand
+  `JOIN_REQUEST_DECLINE_COOLDOWN_DAYS` (3) dagen niet opnieuw vragen. Over
+  alle groepen samen zijn hooguit `JOIN_REQUEST_HOURLY_LIMIT` (5) nieuwe
+  verzoeken per uur toegestaan. Beide staan in `rules.ts` en gelden per
+  database, dus ook na een herstart. Iemand wordt nooit voor altijd
+  geblokkeerd.
+- **Goedkeuren** (`decideJoinRequest`): in één transactie met dezelfde
+  vergrendeling als elke toetreding (eerst de aanvrager, dan de groep)
+  worden opnieuw gecontroleerd:
+  - de rechten van wie goedkeurt;
+  - of het verzoek nog openstaat;
+  - via de gewone `joinTx`: een bestaand lidmaatschap, 7 dagen wachttijd,
+    10 groepen en 500 leden.
+
+  Gaat er iets mis, dan rolt alles terug en blijft het verzoek open. Bij twee
+  gelijktijdige goedkeuringen ontstaat één lidmaatschap; de tweede krijgt
+  "al afgehandeld". Na toelating gelden de gewone regels: het nieuwe lid telt
+  pas vanaf de volgende groepsdag mee.
+- **Andere weg**: wordt iemand langs een andere weg lid (persoonlijke
+  uitnodiging), dan sluit een open verzoek vanzelf (`CANCELLED`).
+- **Na intrekken**: openstaande verzoeken blijven bestaan als de link wordt
+  ingetrokken. Ze zijn al gedaan, en een bevoegd persoon beslist erover.
+
+Meldingen:
+
+- een nieuw verzoek gaat alleen naar wie het mag afhandelen
+  (`joinRequestRecipients`): de beheerders, plus leden die vriend van de
+  aanvrager zijn als dat mag. Nooit naar de hele groep;
+- de aanvrager hoort "Je bent toegelaten tot …" of een neutrale melding na
+  een weigering.
+
 ## Seintjes (`nudges.ts`)
 
 - Generiek opgezet (`NudgeContext`). De context bepaalt alleen de tweede
@@ -192,8 +308,10 @@ Meldingen gaan via `notify.ts`, met de bestaande voorkeuren (categorie
 "social").
 
 - **Persoonlijk**, als gewone melding met push en e-mail volgens de
-  voorkeuren: uitnodigingen, seintjes, "Niet nodig!", "Jouw reeksbevriezing is
-  gebruikt" en nieuwe beheerder.
+  voorkeuren: uitnodigingen, toegangsverzoeken voor wie ze mag afhandelen,
+  toegelaten of geweigerd, seintjes en nieuwe beheerder. Daarbij horen ook
+  de twee meldingen voor wie een reeksbevriezing aanbood: "Niet nodig!" en
+  "Je hebt de reeks gered!". Die gaan alleen naar de aanbieder.
 - **Groepsbreed**, zoals "Thomas heeft de reeks gered!": alleen in het
   meldingencentrum, in één keer (`notifyGroupMembersInApp`), zonder push of
   e-mail. Zo wordt een groep van honderden leden niet bestookt.

@@ -8,6 +8,7 @@ import UserAvatar from "@/components/UserAvatar";
 import UserTag from "@/components/UserTag";
 import { primaryButton, secondaryButton, surfaceCard } from "@/components/versado/styles";
 import { SocialHeading, socialRequest, type Person } from "@/components/social/shared";
+import GroupLinkSettings from "@/components/social/GroupLinkSettings";
 import { GROUP_NAME_MAX_LENGTH } from "@/lib/social/rules";
 
 interface SettingsData {
@@ -15,7 +16,9 @@ interface SettingsData {
   name: string;
   role: "ADMIN" | "MEMBER";
   membersCanInvite: boolean;
+  membersCanApprove: boolean;
   showOnLeaderboard: boolean;
+  joinLink: { token: string | null } | null;
   members: { person: Person; role: "ADMIN" | "MEMBER"; isMe: boolean }[];
 }
 
@@ -46,7 +49,7 @@ export default function GroupSettingsClient({ groupId }: { groupId: string }) {
     load();
   }, [load]);
 
-  async function patch(changes: Partial<Pick<SettingsData, "name" | "membersCanInvite" | "showOnLeaderboard">>) {
+  async function patch(changes: Partial<Pick<SettingsData, "name" | "membersCanInvite" | "membersCanApprove" | "showOnLeaderboard">>) {
     setMessage(null);
     setSaved(false);
     const result = await socialRequest(`/api/groups/${groupId}`, changes, "PATCH");
@@ -101,8 +104,11 @@ export default function GroupSettingsClient({ groupId }: { groupId: string }) {
 
       <section className={`${surfaceCard} flex flex-col gap-4 p-4 sm:p-5`}>
         <Toggle label={t("together.settings.membersCanInvite")} hint={t("together.settings.membersCanInviteHint")} checked={data.membersCanInvite} onChange={(v) => patch({ membersCanInvite: v })} />
+        <Toggle label={t("together.link.membersCanApprove")} hint={t("together.link.membersCanApproveHint")} checked={data.membersCanApprove} onChange={(v) => patch({ membersCanApprove: v })} />
         <Toggle label={t("together.settings.showOnLeaderboard")} hint={t("together.settings.showOnLeaderboardHint")} checked={data.showOnLeaderboard} onChange={(v) => patch({ showOnLeaderboard: v })} />
       </section>
+
+      <GroupLinkSettings groupId={data.id} groupName={data.name} token={data.joinLink?.token ?? null} onChanged={load} />
 
       <section aria-labelledby="manage-members" className={`${surfaceCard} flex flex-col gap-1 p-4 sm:p-5`}>
         <SocialHeading id="manage-members" title={t("together.settings.membersTitle")} count={String(data.members.length)} />

@@ -4,6 +4,12 @@ Alle belangrijke gebruikersgerichte wijzigingen en releases worden hieronder bij
 
 ## Nog niet uitgebracht
 
+- Groepslink en QR-code: een beheerder kan voor een groep een link of
+  QR-code (bv. voor een poster) aanzetten en op elk moment intrekken.
+  Wie hem opent, logt in, ziet welke vrienden al meedoen en vraagt om mee
+  te doen; een beheerder of (als de groep dat toestaat) een vriend in de
+  groep laat hem binnen. Wie een reeksbevriezing aanbood, krijgt nu ook een
+  pushmelding als die niet nodig bleek of de reeks heeft gered.
 - Samen: vriendenreeksen, groepen en seintjes. Start met een vriend een
   vriendenreeks (maximaal 5): die groeit zolang jullie allebei je reeks
   vasthouden. Maak een groep voor je gezin, klas of wijk (tot 500 leden): de

@@ -17,6 +17,14 @@ export const GROUP_FREEZE_COOLDOWN_DAYS = 30;
 export const ADMIN_INACTIVE_DAYS = 14;
 export const NUDGE_INTERVAL_HOURS = 6;
 
+// Groepslink/QR en toegangsverzoeken (zie joinLinks.ts).
+/** 32 willekeurige bytes: 256 bits, als base64url 43 tekens. Niet te raden, en een ingetrokken token komt nooit terug. */
+export const GROUP_LINK_TOKEN_BYTES = 32;
+/** Na een geweigerd verzoek zoveel dagen geen nieuw verzoek voor dezelfde groep. */
+export const JOIN_REQUEST_DECLINE_COOLDOWN_DAYS = 3;
+/** Hooguit zoveel nieuwe toegangsverzoeken per persoon per uur (over alle groepen). */
+export const JOIN_REQUEST_HOURLY_LIMIT = 5;
+
 export const FRIEND_STREAK_MILESTONES = [1, 7, 30, 100, 365] as const;
 export const GROUP_STREAK_MILESTONES = [7, 30, 100, 365] as const;
 

@@ -27,6 +27,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ gro
 const schema = z.object({
   name: z.string().max(200).optional(),
   membersCanInvite: z.boolean().optional(),
+  membersCanApprove: z.boolean().optional(),
   showOnLeaderboard: z.boolean().optional(),
 });
 

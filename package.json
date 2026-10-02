@@ -21,7 +21,7 @@
     "test:study": "tsx --test tests/study-scoring.test.ts",
     "test:mascots": "tsx --test tests/mascots.test.ts",
     "test:conference": "tsx --test tests/generalConference.test.ts",
-    "test:social": "tsx --test tests/social-rules.test.ts tests/social.integration.test.ts",
+    "test:social": "tsx --test tests/social-rules.test.ts tests/social.integration.test.ts tests/social-links.integration.test.ts",
     "test:time": "tsx --test tests/timeZone.test.ts tests/wordGameTime.test.ts tests/streakTravel.integration.test.ts tests/wordGame.integration.test.ts",
     "test:learning": "tsx --test tests/learning-rules.test.ts tests/learning-progress.integration.test.ts",
     "audio:mirror": "tsx scripts/mirrorAudio.ts"

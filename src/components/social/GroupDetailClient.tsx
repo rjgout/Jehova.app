@@ -43,6 +43,7 @@ interface MemberGroup {
   members: MemberView[];
   achievements: GroupAchievementView[];
   invites: { id: string; invitee: Person; inviter: Person }[];
+  joinRequests: { id: string; person: Person; createdAt: string; friendsInGroup: string[] }[];
 }
 
 interface PublicGroup {
@@ -219,6 +220,9 @@ function MemberGroupView({ group, reload }: { group: MemberGroup; reload: () => 
           {message}
         </p>
       )}
+
+      {/* Bovenaan, ook op een telefoon: iemand wacht hierop. */}
+      {group.joinRequests.length > 0 && <JoinRequests groupId={group.id} requests={group.joinRequests} locale={locale} onDecided={reload} />}
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_22rem]">
         <div className="flex min-w-0 flex-col gap-4">
@@ -421,6 +425,65 @@ function InviteFriends({ groupId, onInvited }: { groupId: string; onInvited: () 
           ))}
         </div>
       )}
+    </section>
+  );
+}
+
+/**
+ * Toegangsverzoeken die deze persoon mag afhandelen (de server filtert al:
+ * een gewoon lid krijgt alleen die van zijn eigen vrienden).
+ */
+function JoinRequests({ groupId, requests, locale, onDecided }: { groupId: string; requests: MemberGroup["joinRequests"]; locale: string; onDecided: () => void }) {
+  const t = useT();
+  const [done, setDone] = useState<Record<string, "approved" | "declined">>({});
+  const [error, setError] = useState<string | null>(null);
+  const list = new Intl.ListFormat(locale, { style: "long", type: "conjunction" });
+
+  async function decide(id: string, approve: boolean) {
+    setError(null);
+    const result = await socialRequest(`/api/groups/${groupId}/requests/${id}`, { action: approve ? "approve" : "decline" });
+    if (!result.ok) {
+      setError(result.error ?? t("together.common.error"));
+      onDecided();
+      return;
+    }
+    setDone((prev) => ({ ...prev, [id]: approve ? "approved" : "declined" }));
+    setTimeout(onDecided, 800);
+  }
+
+  return (
+    <section aria-labelledby="join-requests" className={`${surfaceCard} flex flex-col gap-2 p-4`}>
+      <SocialHeading id="join-requests" title={t("together.requests.title")} count={String(requests.length)} />
+      {error && (
+        <p role="alert" className="text-xs font-semibold text-vs-danger">
+          {error}
+        </p>
+      )}
+      <ul className="flex flex-col">
+        {requests.map((r) => (
+          <li key={r.id} className="flex min-w-0 flex-wrap items-center gap-2.5 border-b border-vs-line py-2.5 last:border-b-0">
+            <UserAvatar id={r.person.id} handle={r.person.handle} avatarEmoji={r.person.avatarEmoji} size="sm" />
+            <div className="min-w-[9rem] flex-1">
+              <p className="text-sm font-bold text-vs-fg">{t("together.requests.wants", { name: r.person.handle })}</p>
+              {r.friendsInGroup.length > 0 && <p className="text-xs text-vs-fg-3">{t("together.requests.friendOf", { names: list.format(r.friendsInGroup) })}</p>}
+            </div>
+            {done[r.id] ? (
+              <span className={`text-xs font-bold ${done[r.id] === "approved" ? "text-vs-success" : "text-vs-fg-3"}`}>
+                {done[r.id] === "approved" ? t("together.requests.approved") : t("together.requests.declined")}
+              </span>
+            ) : (
+              <div className="flex gap-2">
+                <button type="button" className={`${primaryButton} !h-9 !px-3 !text-xs`} onClick={() => decide(r.id, true)}>
+                  {t("together.requests.approve")}
+                </button>
+                <button type="button" className={`${secondaryButton} !h-9 !px-3 !text-xs`} onClick={() => decide(r.id, false)}>
+                  {t("together.requests.decline")}
+                </button>
+              </div>
+            )}
+          </li>
+        ))}
+      </ul>
     </section>
   );
 }

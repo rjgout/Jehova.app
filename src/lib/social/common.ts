@@ -94,7 +94,12 @@ export type SocialEventKind =
   | "FRIEND_STREAK_DAY"
   | "FRIEND_STREAK_MILESTONE"
   | "FRIEND_STREAK_BROKEN"
-  | "FRIEND_STREAK_ENDED";
+  | "FRIEND_STREAK_ENDED"
+  | "GROUP_LINK_ENABLED"
+  | "GROUP_LINK_REVOKED"
+  | "JOIN_REQUESTED"
+  | "JOIN_APPROVED"
+  | "JOIN_DECLINED";
 
 /** Legt een gebeurtenis vast voor een latere tijdlijn van een groep of vriendenreeks. */
 export async function recordSocialEvent(

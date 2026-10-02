@@ -46,6 +46,14 @@ export async function getVapidPublicKey(): Promise<string> {
   return (await getVapidKeys()).publicKey;
 }
 
+/**
+ * Het daadwerkelijke versturen, als vervangbaar object: zo kunnen tests
+ * vaststellen wie wel en wie geen push krijgt, zonder echte pushdienst.
+ */
+export const pushTransport = {
+  send: (subscription: webpush.PushSubscription, payload: string) => webpush.sendNotification(subscription, payload),
+};
+
 export interface PushPayload {
   title: string;
   body: string;
@@ -80,7 +88,7 @@ export async function sendPushToUser(userId: string, payload: PushPayload): Prom
   await Promise.all(
     subscriptions.map(async (sub) => {
       try {
-        await webpush.sendNotification(
+        await pushTransport.send(
           { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
           JSON.stringify({
             title: payload.title,

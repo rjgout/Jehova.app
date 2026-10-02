@@ -406,9 +406,13 @@ async function runIncognitoExpiryTick(): Promise<void> {
 // vriendenreeksen en groepen van die mensen. Daarnaast worden dagen
 // afgesloten die voor iedereen voorbij zijn. Alles is idempotent; een
 // overlap in het tijdvenster kan dus geen kwaad.
+//
+// Schaal: elke stap zoekt via een index alleen wat nu relevant is (nieuwe
+// StreakDay-rijen op createdAt, groepen en vriendenreeksen op nextCheckAt,
+// beheerders apart). Er wordt nooit elke minuut over alle gebruikers,
+// groepen of leden gelopen; zie docs/SAMEN.md.
 let socialWatermark = new Date(Date.now() - 10 * 60_000);
 let socialTickRunning = false;
-let lastFriendStreakSweep = 0;
 let lastAdminMaintenance = 0;
 
 async function runSocialTick(): Promise<void> {
@@ -423,10 +427,7 @@ async function runSocialTick(): Promise<void> {
     await refreshFriendStreaksFor(userIds, now);
     await refreshGroupsFor(userIds, now);
     await refreshDueGroups(now);
-    if (now.getTime() - lastFriendStreakSweep >= 5 * 60_000) {
-      lastFriendStreakSweep = now.getTime();
-      await refreshDueFriendStreaks(now);
-    }
+    await refreshDueFriendStreaks(now);
     if (now.getTime() - lastAdminMaintenance >= 60 * 60_000) {
       lastAdminMaintenance = now.getTime();
       await runGroupAdminMaintenance(now);

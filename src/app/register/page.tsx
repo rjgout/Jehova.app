@@ -3,6 +3,7 @@
 import { useEffect, useState, FormEvent } from "react";
 import Link from "next/link";
 import { useT } from "@/components/I18nProvider";
+import { rememberReturnTo, safeReturnPath } from "@/lib/returnTo";
 
 interface Inviter {
   id: string;
@@ -21,6 +22,17 @@ export default function RegisterPage() {
   // statische pagina een Suspense-grens zou vereisen.
   const [inviteCode, setInviteCode] = useState<string | null>(null);
   const [inviter, setInviter] = useState<Inviter | null>(null);
+  // Binnengekomen via bv. een groepslink (?next=): na registreren en inloggen
+  // weer daarheen, ook als de weg via de e-mailbevestiging loopt.
+  const [nextPath, setNextPath] = useState<string | null>(null);
+
+  useEffect(() => {
+    const next = safeReturnPath(new URLSearchParams(window.location.search).get("next"));
+    if (next) {
+      setNextPath(next);
+      rememberReturnTo(next);
+    }
+  }, []);
 
   useEffect(() => {
     const code = new URLSearchParams(window.location.search).get("invite");
@@ -60,7 +72,7 @@ export default function RegisterPage() {
         <p className="text-sm text-slate-500 dark:text-slate-400">
           {t("auth.registrationSubmitted")}
         </p>
-        <Link className="btn-primary" href="/login">{t("auth.logIn")}</Link>
+        <Link className="btn-primary" href={nextPath ? `/login?next=${encodeURIComponent(nextPath)}` : "/login"}>{t("auth.logIn")}</Link>
       </div>
     );
   }
@@ -88,7 +100,7 @@ export default function RegisterPage() {
       <p className="text-sm text-slate-500 dark:text-slate-400 mt-4">
         {t("auth.haveAccount")}{" "}
         <Link
-          href={inviteCode ? `/login?next=${encodeURIComponent(`/uitnodiging/${inviteCode}`)}` : "/login"}
+          href={inviteCode ? `/login?next=${encodeURIComponent(`/uitnodiging/${inviteCode}`)}` : nextPath ? `/login?next=${encodeURIComponent(nextPath)}` : "/login"}
           className="text-brand-600 font-bold"
         >
           {t("auth.logIn")}

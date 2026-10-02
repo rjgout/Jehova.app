@@ -11,6 +11,7 @@ import { keptOn, personSelect, type PersonSummary } from "@/lib/social/common";
 import { groupDayCounts } from "@/lib/social/groupDays";
 import { freezeCooldownUntil } from "@/lib/social/groupFreeze";
 import { nudgeAvailability, nudgesDisabled } from "@/lib/social/nudges";
+import { visibleJoinRequests } from "@/lib/social/joinLinks";
 
 export interface GroupToday {
   dayKey: string;
@@ -191,7 +192,12 @@ export async function groupDetail(groupId: string, userId: string, timeZone: str
     currentStreak: group.currentStreak,
     longestStreak: group.longestStreak,
     membersCanInvite: group.membersCanInvite,
+    membersCanApprove: group.membersCanApprove,
     showOnLeaderboard: group.showOnLeaderboard,
+    // De groepslink zien en beheren alleen beheerders.
+    joinLink: isAdmin ? { token: group.joinLinkToken } : null,
+    // Alleen verzoeken die deze persoon ook mag afhandelen (zie joinLinks.ts).
+    joinRequests: await visibleJoinRequests(group.id, userId),
     role: membership.role,
     canInvite: isAdmin || group.membersCanInvite,
     today,

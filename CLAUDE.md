@@ -181,6 +181,9 @@ vandaag "geldig actief" was, geen XP voor bijdragen, seintjes of geschonken
 bevriezingen, en limieten (5 vriendenreeksen, 10 groepen, 500 leden, 7 en 30
 dagen wachttijd) alleen via `src/lib/social/rules.ts` en de bestaande
 transacties met rijvergrendeling. Ledenlijsten zijn alleen voor leden.
+Lid worden gaat altijd via `joinTx` (`src/lib/social/groups.ts`); een
+groepslink/QR geeft nooit zelf lidmaatschap, alleen een voorpagina en een
+toegangsverzoek dat een bevoegd persoon goedkeurt (`joinLinks.ts`).
 
 ## ⚠️ Harde regel: tijd en tijdzones
 

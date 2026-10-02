@@ -4,14 +4,14 @@ import { useState, FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useT } from "@/components/I18nProvider";
+import { safeReturnPath, takeReturnTo } from "@/lib/returnTo";
 
-// Terug naar waar je vandaan kwam (bv. een uitnodigingslink). Alleen een pad
-// binnen de app: "//" of "/\\" zou de browser als ander domein lezen, en dan
-// kan een link je na het inloggen naar een nagemaakte site sturen.
+// Terug naar waar je vandaan kwam (bv. een uitnodigings- of groepslink): eerst
+// ?next=, anders wat de registratie onthield (zie src/lib/returnTo.ts).
 function nextPath(): string {
-  const next = new URLSearchParams(window.location.search).get("next");
-  if (!next || !next.startsWith("/") || next.startsWith("//") || next.startsWith("/\\")) return "/dashboard";
-  return next;
+  const next = safeReturnPath(new URLSearchParams(window.location.search).get("next"));
+  const remembered = takeReturnTo();
+  return next ?? remembered ?? "/dashboard";
 }
 
 export default function LoginPage() {

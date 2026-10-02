@@ -11,6 +11,7 @@ import { notifyFriendStreakAccepted, notifyFriendStreakInvite, notifyNewAchievem
 import {
   FRIEND_STREAK_LIMIT,
   FRIEND_STREAK_MILESTONES,
+  dayEndsForAll,
   latestDayKey,
   resolveSocialDay,
 } from "@/lib/social/rules";
@@ -179,12 +180,20 @@ export async function refreshFriendStreak(streakId: string, now: Date = new Date
       await recordSocialEvent(tx, { kind: "FRIEND_STREAK_BROKEN", friendStreakId: streakId, dayKey: day, data: { streak: currentStreak } });
       break;
     }
-    if (!changed) return [] as string[];
+    // Pas weer kijken als de open dag voor allebei voorbij kan zijn; is hij
+    // dat al (de eigen reeksafsluiting loopt nog), dan over een minuut.
+    const zones = await tx.user.findMany({ where: { id: { in: users } }, select: { timeZone: true, lastStudyTimeZone: true } });
+    const endsAt = dayEndsForAll(day, zones.flatMap((z) => [z.timeZone, z.lastStudyTimeZone]));
+    const nextCheckAt = endsAt > now ? endsAt : new Date(now.getTime() + 60_000);
+    if (!changed) {
+      await tx.friendStreak.update({ where: { id: streakId }, data: { nextCheckAt } });
+      return [] as string[];
+    }
     await tx.friendStreak.update({
       where: { id: streakId },
       data: broken
         ? { status: "BROKEN", openKey: null, endedAt: now, currentStreak, longestStreak, lastAchievedDay, nextDay: day }
-        : { currentStreak, longestStreak, lastAchievedDay, nextDay: day },
+        : { currentStreak, longestStreak, lastAchievedDay, nextDay: day, nextCheckAt },
     });
     if (!milestone) return [] as string[];
     const newly: string[] = [];
@@ -210,10 +219,13 @@ export async function refreshFriendStreaksFor(userIds: string[], now: Date = new
   for (const s of streaks) await refreshFriendStreak(s.id, now).catch((e) => console.error(`Vriendenreeks ${s.id}:`, e));
 }
 
-/** Lopende vriendenreeksen waarvan een dag mogelijk definitief is geworden. */
+/**
+ * Lopende vriendenreeksen waarvan de open dag nu voor beiden voorbij kan
+ * zijn. Via de index (status, nextCheckAt): meestal een handvol rijen, nooit
+ * alle reeksen.
+ */
 export async function refreshDueFriendStreaks(now: Date = new Date()): Promise<void> {
-  const horizon = latestDayKey(now);
-  const due = await prisma.friendStreak.findMany({ where: { status: "ACTIVE", nextDay: { lt: horizon } }, select: { id: true } });
+  const due = await prisma.friendStreak.findMany({ where: { status: "ACTIVE", nextCheckAt: { lte: now } }, select: { id: true } });
   for (const s of due) await refreshFriendStreak(s.id, now).catch((e) => console.error(`Vriendenreeks ${s.id}:`, e));
 }
 

@@ -35,7 +35,7 @@ export async function activeMembership(db: Db, groupId: string, userId: string) 
   return membership && !membership.leftAt ? membership : null;
 }
 
-async function requireAdmin(db: Db, groupId: string, userId: string) {
+export async function requireAdmin(db: Db, groupId: string, userId: string) {
   const membership = await activeMembership(db, groupId, userId);
   if (!membership) throw new SocialError("together.errors.groupNotFound", 404);
   if (membership.role !== "ADMIN") throw new SocialError("together.errors.groupAdminOnly", 403);
@@ -82,7 +82,7 @@ export async function createGroup(userId: string, rawName: string, now: Date = n
  * lidmaatschap, wachttijd na vertrek, maximaal 10 groepen per persoon en de
  * groepsgrens. Al lid = niets te doen.
  */
-async function joinTx(tx: Tx, userId: string, groupId: string, now: Date): Promise<"joined" | "already"> {
+export async function joinTx(tx: Tx, userId: string, groupId: string, now: Date): Promise<"joined" | "already"> {
   await lockUsers(tx, [userId]);
   if (!(await lockGroup(tx, groupId))) throw new SocialError("together.errors.groupNotFound", 404);
   const existing = await tx.groupMembership.findUnique({ where: { groupId_userId: { groupId, userId } } });
@@ -100,6 +100,9 @@ async function joinTx(tx: Tx, userId: string, groupId: string, now: Date): Promi
   if (existing) await tx.groupMembership.update({ where: { id: existing.id }, data });
   else await tx.groupMembership.create({ data: { groupId, userId, ...data } });
   await tx.socialGroup.update({ where: { id: groupId }, data: { memberCount: { increment: 1 } } });
+  // Lid geworden (bv. via een persoonlijke uitnodiging): een openstaand
+  // toegangsverzoek heeft dan geen zin meer.
+  await tx.groupJoinRequest.updateMany({ where: { groupId, userId, status: "PENDING" }, data: { status: "CANCELLED", openKey: null, decidedAt: now } });
   await recordSocialEvent(tx, { kind: "MEMBER_JOINED", groupId, userId, data: { eligibleFromDay } });
   return "joined";
 }
@@ -159,16 +162,17 @@ export async function respondGroupInvite(userId: string, inviteId: string, accep
 export async function updateGroupSettings(
   adminId: string,
   groupId: string,
-  changes: { name?: string; membersCanInvite?: boolean; showOnLeaderboard?: boolean }
+  changes: { name?: string; membersCanInvite?: boolean; membersCanApprove?: boolean; showOnLeaderboard?: boolean }
 ): Promise<void> {
   await requireAdmin(prisma, groupId, adminId);
-  const data: { name?: string; membersCanInvite?: boolean; showOnLeaderboard?: boolean } = {};
+  const data: { name?: string; membersCanInvite?: boolean; membersCanApprove?: boolean; showOnLeaderboard?: boolean } = {};
   if (changes.name !== undefined) {
     const name = normalizeGroupName(changes.name);
     if (!name) throw new SocialError("together.errors.groupNameInvalid", 400, { n: GROUP_NAME_MAX_LENGTH });
     data.name = name;
   }
   if (changes.membersCanInvite !== undefined) data.membersCanInvite = changes.membersCanInvite;
+  if (changes.membersCanApprove !== undefined) data.membersCanApprove = changes.membersCanApprove;
   if (changes.showOnLeaderboard !== undefined) data.showOnLeaderboard = changes.showOnLeaderboard;
   await prisma.socialGroup.update({ where: { id: groupId }, data });
 }
@@ -304,16 +308,36 @@ export async function ensureAdminTx(tx: Tx, groupId: string, now: Date): Promise
 }
 
 /**
+ * Welke groepen moeten nu iets met beheerders: een beheerder die 14 dagen
+ * niet studeerde, of geen beheerder meer. Bewust in twee kleine queries over
+ * alleen de beheerders en een telling per groep, zodat het uurlijkse rondje
+ * nooit alle 500 leden van elke groep hoeft te laden.
+ */
+export async function adminMaintenanceCandidates(now: Date = new Date()): Promise<string[]> {
+  const admins = await prisma.$queryRaw<{ groupId: string; userId: string; adminSince: Date | null; joinedAt: Date; timeZone: string | null; lastStudied: string | null }[]>`
+    SELECT m."groupId", m."userId", m."adminSince", m."joinedAt", u."timeZone",
+      (SELECT max(s."dayKey") FROM "StreakDay" s WHERE s."userId" = m."userId" AND s."status" = 'STUDIED') AS "lastStudied"
+    FROM "GroupMembership" m JOIN "User" u ON u."id" = m."userId"
+    WHERE m."leftAt" IS NULL AND m."role" = 'ADMIN'`;
+  const adminless = await prisma.$queryRaw<{ groupId: string }[]>`
+    SELECT m."groupId" FROM "GroupMembership" m
+    WHERE m."leftAt" IS NULL
+    GROUP BY m."groupId"
+    HAVING count(*) FILTER (WHERE m."role" = 'ADMIN') = 0`;
+  const groups = new Set(adminless.map((g) => g.groupId));
+  for (const admin of admins) {
+    if (idleDays(admin.lastStudied, admin.adminSince ?? admin.joinedAt, admin.timeZone, now) >= ADMIN_INACTIVE_DAYS) groups.add(admin.groupId);
+  }
+  return [...groups];
+}
+
+/**
  * Beheerders die 14 dagen op rij niet hebben gestudeerd, verliezen hun rol
  * (ze blijven gewoon lid en kunnen later opnieuw beheerder worden). Daarna
  * krijgt elke groep zonder beheerder een opvolger, als die er is.
  */
 export async function runGroupAdminMaintenance(now: Date = new Date()): Promise<void> {
-  const groups = await prisma.$queryRaw<{ groupId: string }[]>`
-    SELECT DISTINCT m."groupId" FROM "GroupMembership" m
-    WHERE m."leftAt" IS NULL AND (m."role" = 'ADMIN' OR NOT EXISTS (
-      SELECT 1 FROM "GroupMembership" a WHERE a."groupId" = m."groupId" AND a."leftAt" IS NULL AND a."role" = 'ADMIN'))`;
-  for (const { groupId } of groups) {
+  for (const groupId of await adminMaintenanceCandidates(now)) {
     const promoted = await prisma
       .$transaction(async (tx) => {
         if (!(await lockGroup(tx, groupId))) return null;

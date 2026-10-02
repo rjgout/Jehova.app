@@ -283,6 +283,8 @@ model User {
   groupInvitesReceived GroupInvite[]      @relation("GroupInvitee")
   groupInvitesSent     GroupInvite[]      @relation("GroupInviter")
   groupFreezeOffers    GroupFreezeOffer[]
+  groupJoinRequests    GroupJoinRequest[] @relation("GroupJoinRequester")
+  groupJoinDecisions   GroupJoinRequest[] @relation("GroupJoinDecider")
   nudgesSent           Nudge[]            @relation("NudgeSender")
   nudgesReceived       Nudge[]            @relation("NudgeRecipient")
   seasonResults       SeasonResult[]
@@ -1473,6 +1475,9 @@ model StreakDay {
   createdAt DateTime        @default(now())
 
   @@unique([userId, dayKey])
+  // Voor Samen: de minuuttaak in scheduler.ts zoekt alleen de nieuwe rijen
+  // sinds de vorige ronde, zonder de hele tabel te doorlopen.
+  @@index([createdAt])
 }
 
 // --- Vrienden -------------------------------------------------------------
@@ -2392,6 +2397,9 @@ model FriendStreak {
   // beoordeeld (yyyy-mm-dd, kalenderdagen zoals StreakDay.dayKey).
   startDay        String?
   nextDay         String?
+  // Wanneer de oudste open dag (nextDay) voor beiden voorbij kan zijn: de
+  // minuuttaak kijkt alleen naar reeksen die zover zijn.
+  nextCheckAt     DateTime           @default(now())
   currentStreak   Int                @default(0)
   longestStreak   Int                @default(0)
   lastAchievedDay String?
@@ -2403,6 +2411,7 @@ model FriendStreak {
 
   @@index([userAId, status])
   @@index([userBId, status])
+  @@index([status, nextCheckAt])
 }
 
 model SocialGroup {
@@ -2413,6 +2422,16 @@ model SocialGroup {
   // Zichtbaar op de openbare groepsranglijst (naam, aantal leden, reeks,
   // prestaties; nooit de leden). Standaard privé.
   showOnLeaderboard Boolean  @default(false)
+  // Gewone leden mogen een toegangsverzoek van hun eigen vriend goedkeuren
+  // (beheerders altijd, van iedereen).
+  membersCanApprove Boolean  @default(true)
+  // Groepslink/QR (zie src/lib/social/joinLinks.ts): een willekeurig,
+  // niet te raden token dat alleen toegang geeft tot een beperkte
+  // voorpagina en een toegangsverzoek, nooit tot lidmaatschap. Null = geen
+  // actieve link. Intrekken maakt hem null; een nieuwe link krijgt altijd
+  // een nieuw token. Staat los van showOnLeaderboard.
+  joinLinkToken     String?  @unique
+  joinLinkCreatedAt DateTime?
   // Snelle tellers voor lijsten en de ranglijst; de bron zijn de
   // lidmaatschappen en GroupDay.
   memberCount       Int      @default(0)
@@ -2434,6 +2453,7 @@ model SocialGroup {
   freezeOffers GroupFreezeOffer[]
   achievements GroupAchievement[]
   events       SocialEvent[]
+  joinRequests GroupJoinRequest[]
 
   @@index([showOnLeaderboard, currentStreak])
   @@index([showOnLeaderboard, memberCount])
@@ -2585,4 +2605,33 @@ model Nudge {
   lastSentAt  DateTime @default(now())
 
   @@id([senderId, recipientId])
+}
+
+enum GroupJoinRequestStatus {
+  PENDING
+  APPROVED
+  DECLINED
+  CANCELLED // ingetrokken, of lid geworden langs een andere weg
+}
+
+// Toegangsverzoek via de groepslink. Het verzoek hoort bij de groep, niet
+// bij één persoon: elke bevoegde (beheerder, of een lid dat een vriend van de
+// aanvrager is als de groep dat toestaat) kan het afhandelen.
+model GroupJoinRequest {
+  id          String                 @id @default(cuid())
+  groupId     String
+  group       SocialGroup            @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User                   @relation("GroupJoinRequester", fields: [userId], references: [id], onDelete: Cascade)
+  status      GroupJoinRequestStatus @default(PENDING)
+  // "groupId:userId" zolang het verzoek openstaat, daarna null: hooguit één
+  // open verzoek per persoon per groep, ook bij twee gelijktijdige klikken.
+  openKey     String?                @unique
+  createdAt   DateTime               @default(now())
+  decidedAt   DateTime?
+  decidedById String?
+  decidedBy   User?                  @relation("GroupJoinDecider", fields: [decidedById], references: [id], onDelete: SetNull)
+
+  @@index([groupId, status])
+  @@index([userId, createdAt])
 }

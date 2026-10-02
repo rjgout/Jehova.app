@@ -523,6 +523,38 @@ export async function notifyGroupFreezeUsed(userId: string, groupId: string, gro
   });
 }
 
+/** Nieuw toegangsverzoek via de groepslink: alleen voor wie het mag afhandelen (zie joinRequestRecipients). */
+export async function notifyGroupJoinRequest(userId: string, requesterName: string, groupId: string, groupName: string): Promise<void> {
+  await notifyUser({
+    userId,
+    category: "social",
+    kind: "groups",
+    url: `/groups/${groupId}`,
+    content: (t) => simple(t("together.notify.joinRequestTitle"), t("together.notify.joinRequestTitle"), t("together.notify.joinRequestText", { name: requesterName, group: groupName }), t("together.notify.ctaGroup")),
+  });
+}
+
+export async function notifyGroupJoinApproved(userId: string, groupId: string, groupName: string): Promise<void> {
+  await notifyUser({
+    userId,
+    category: "social",
+    kind: "groups",
+    url: `/groups/${groupId}`,
+    content: (t) => simple(t("together.notify.joinApprovedTitle"), t("together.notify.joinApprovedTitle"), t("together.notify.joinApprovedText", { group: groupName }), t("together.notify.ctaGroup")),
+  });
+}
+
+/** Bewust neutraal: geen reden, geen naam van wie weigerde. */
+export async function notifyGroupJoinDeclined(userId: string, groupName: string): Promise<void> {
+  await notifyUser({
+    userId,
+    category: "social",
+    kind: "groups",
+    url: "/groups",
+    content: (t) => simple(t("together.notify.joinDeclinedTitle"), t("together.notify.joinDeclinedTitle"), t("together.notify.joinDeclinedText", { group: groupName }), t("together.notify.ctaGroups")),
+  });
+}
+
 export async function notifyGroupAdminAssigned(userId: string, groupId: string, groupName: string): Promise<void> {
   await notifyUser({
     userId,

@@ -99,10 +99,19 @@ async function isPerfectWeek(tx: Tx, groupId: string, dayKey: string): Promise<b
   return days.length === 7;
 }
 
-async function settleDay(tx: Tx, state: GroupState, dayKey: string, now: Date, effects: Effects): Promise<boolean> {
+/** true = afgesloten; anders het moment waarop het opnieuw zin heeft om te kijken. */
+async function settleDay(tx: Tx, state: GroupState, dayKey: string, now: Date, effects: Effects): Promise<true | Date> {
   const members = await eligibleMemberIds(tx, state.id, dayKey);
   const states = await memberDayStates(tx, members, dayKey, now);
-  if ([...states.values()].some((s) => s === "pending")) return false;
+  const pending = [...states.entries()].filter(([, s]) => s === "pending").map(([id]) => id);
+  if (pending.length > 0) {
+    // Alleen de leden die nog bezig zijn bepalen wanneer het weer zin heeft
+    // (bv. iemand die net van tijdzone wisselde). Is hun dag al voorbij, dan
+    // wacht het alleen nog op de eigen reeksafsluiting: over een minuut.
+    const zones = await tx.user.findMany({ where: { id: { in: pending } }, select: { timeZone: true, lastStudyTimeZone: true } });
+    const endsAt = dayEndsForAll(dayKey, zones.flatMap((z) => [z.timeZone, z.lastStudyTimeZone]));
+    return endsAt > now ? endsAt : new Date(now.getTime() + 60_000);
+  }
 
   const eligible = members.length;
   const contributors = [...states.values()].filter((s) => s === "kept").length;
@@ -179,8 +188,9 @@ export async function refreshGroup(groupId: string, now: Date = new Date()): Pro
 
       // Afsluiten: de oudste open dag(en), zodra ze voor iedereen voorbij zijn.
       while (state.nextDay < horizon && now >= state.nextCheckAt) {
-        if (!(await settleDay(tx, state, state.nextDay, now, effects))) {
-          state.nextCheckAt = new Date(now.getTime() + 60_000);
+        const settled = await settleDay(tx, state, state.nextDay, now, effects);
+        if (settled !== true) {
+          state.nextCheckAt = settled;
           break;
         }
         state.nextDay = addDays(state.nextDay, 1);
