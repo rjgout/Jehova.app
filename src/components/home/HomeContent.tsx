@@ -31,6 +31,7 @@ import type { GameSettingsView } from "@/lib/gameSettings";
 import { GAME_CATALOG, type GameId } from "@/lib/gameCatalog";
 import { APP_NAME } from "@/lib/brand";
 import MascotSlot from "@/components/versado/MascotSlot";
+import { nextFamilyWelcomeVariant } from "@/lib/mascotRotation";
 import SystemIcon from "@/components/versado/SystemIcon";
 import { surfaceCard } from "@/components/versado/styles";
 
@@ -152,6 +153,8 @@ export interface HomeContentProps {
 
 export default function HomeContent({ t, displayName, games, signUpHref, loginHref, heroAs = "h1" }: HomeContentProps) {
   const Hero = heroAs;
+  // Elke lading de volgende welkomstcompositie (zie mascotRotation.ts).
+  const welcomeVariant = nextFamilyWelcomeVariant();
   const feature = (key: FeatureKey, visual: Visual) => (
     <FeatureCard key={key} visual={visual} title={t(`home.features.${key}.title`)}>
       {t(`home.features.${key}.description`, { app: displayName })}
@@ -187,7 +190,7 @@ export default function HomeContent({ t, displayName, games, signUpHref, loginHr
           schermlezer het niet dubbel hoort. Bewust ná de kernbelofte en de
           knoppen: eerst wat Versado is, dan wie je onderweg tegenkomt. */}
       <div className="flex w-full max-w-md flex-col items-center gap-4 sm:max-w-lg">
-        <MascotSlot character="family" state="welcome" size={512} className="w-[87%] sm:w-full" />
+        <MascotSlot character="family" state="welcome" variant={welcomeVariant} size={512} className="w-[87%] sm:w-full" />
         <p className="max-w-sm text-slate-600 dark:text-slate-300">{t("home.mascotsIntro")}</p>
         <ul className="grid w-full grid-cols-3 gap-3 text-sm">
           {MASCOTS.map((m) => (

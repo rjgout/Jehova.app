@@ -70,9 +70,24 @@ export interface StaticMascotAsset {
   height: number;
 }
 
-/** Vaste naamconventie: public/mascots/static/<character>/<character>-<state>.webp */
-export function staticMascotPath<C extends MascotCharacter>(character: C, state: MascotStateOf<C>): string {
-  return `/mascots/static/${character}/${character}-${state}.webp`;
+/**
+ * Vaste naamconventie: public/mascots/static/<character>/<character>-<state>.webp,
+ * of met varianten <character>-<state>-<n>.webp (n = 1, 2, ...).
+ */
+export function staticMascotPath<C extends MascotCharacter>(character: C, state: MascotStateOf<C>, variant?: number): string {
+  return `/mascots/static/${character}/${character}-${state}${variant ? `-${variant}` : ""}.webp`;
+}
+
+interface RegisteredSize {
+  width: number;
+  height: number;
+  /**
+   * Aantal gelijkwaardige afbeeldingen voor deze state (zelfde betekenis,
+   * zelfde canvas), genummerd vanaf 1. Geen versies: een variant is een
+   * andere compositie van hetzelfde moment, zoals de familie die zich op
+   * verschillende manieren voorstelt.
+   */
+  variants?: number;
 }
 
 // Alleen states waarvan het bestand echt in public/mascots/static/ staat,
@@ -81,7 +96,7 @@ export function staticMascotPath<C extends MascotCharacter>(character: C, state:
 //   greeting: { width: 512, height: 512 },
 // tests/mascots.test.ts controleert dat elk geregistreerd bestand bestaat,
 // dat de afmetingen kloppen en dat elk bestand in de map een geldige naam heeft.
-const STATIC_ASSETS: { [C in MascotCharacter]: Partial<Record<MascotStateOf<C>, { width: number; height: number }>> } = {
+const STATIC_ASSETS: { [C in MascotCharacter]: Partial<Record<MascotStateOf<C>, RegisteredSize>> } = {
   // Alle Novi-poses komen van hetzelfde canvas (1312x1199, verkleind naar
   // 512 px breed), zodat Novi in elke state even groot is.
   novi: {
@@ -99,25 +114,45 @@ const STATIC_ASSETS: { [C in MascotCharacter]: Partial<Record<MascotStateOf<C>, 
   // Losse VARO- en VERA-afbeeldingen komen in een latere fase.
   vera: {},
   varo: {},
+  // Drie welkomstcomposities (bron 1536x1024 in references/family/,
+  // verkleind naar 1200x800); de homepagina wisselt ze af.
   family: {
-    welcome: { width: 1200, height: 800 },
+    welcome: { width: 1200, height: 800, variants: 3 },
   },
 };
 
-/** De statische afbeelding voor dit personage in deze state, of null als die er (nog) niet is. */
-export function staticMascotAsset<C extends MascotCharacter>(character: C, state: MascotStateOf<C>): StaticMascotAsset | null {
-  const assets: Partial<Record<MascotStateOf<C>, { width: number; height: number }>> = STATIC_ASSETS[character];
-  const size = assets[state];
-  return size ? { src: staticMascotPath(character, state), ...size } : null;
+function registeredSize<C extends MascotCharacter>(character: C, state: MascotStateOf<C>): RegisteredSize | undefined {
+  const assets: Partial<Record<MascotStateOf<C>, RegisteredSize>> = STATIC_ASSETS[character];
+  return assets[state];
 }
 
-/** Alle geregistreerde statische assets (voor de controle in de tests). */
-export function registeredStaticMascots(): (MascotTarget & { asset: StaticMascotAsset })[] {
+/** Hoeveel varianten deze state heeft: 0 zonder asset, anders minstens 1. */
+export function mascotVariantCount<C extends MascotCharacter>(character: C, state: MascotStateOf<C>): number {
+  const size = registeredSize(character, state);
+  return size ? (size.variants ?? 1) : 0;
+}
+
+/**
+ * De statische afbeelding voor dit personage in deze state, of null als die
+ * er (nog) niet is. Bij een state met varianten kiest `variant` (vanaf 1) welke;
+ * een getal buiten het bereik loopt rond, zodat een teller nooit misgrijpt.
+ */
+export function staticMascotAsset<C extends MascotCharacter>(character: C, state: MascotStateOf<C>, variant = 1): StaticMascotAsset | null {
+  const size = registeredSize(character, state);
+  if (!size) return null;
+  const n = size.variants ? (((Math.trunc(variant) - 1) % size.variants) + size.variants) % size.variants + 1 : undefined;
+  return { src: staticMascotPath(character, state, n), width: size.width, height: size.height };
+}
+
+/** Alle geregistreerde statische assets, elke variant apart (voor de controle in de tests). */
+export function registeredStaticMascots(): (MascotTarget & { variant?: number; asset: StaticMascotAsset })[] {
   return MASCOT_CHARACTERS.flatMap((character) =>
     mascotStates(character).flatMap((state) => {
       const target = { character, state } as MascotTarget;
-      const asset = staticMascotAsset(target.character, target.state);
-      return asset ? [{ ...target, asset }] : [];
+      const size = registeredSize(target.character, target.state);
+      if (!size) return [];
+      const variants = size.variants ? Array.from({ length: size.variants }, (_, i) => i + 1) : [undefined];
+      return variants.map((variant) => ({ ...target, variant, asset: staticMascotAsset(target.character, target.state, variant ?? 1)! }));
     })
   );
 }

@@ -4,6 +4,8 @@ Alle belangrijke gebruikersgerichte wijzigingen en releases worden hieronder bij
 
 ## Nog niet uitgebracht
 
+- Op de homepagina staan nu drie nieuwe afbeeldingen van Varo, Vera en Novi;
+  bij elke keer laden zie je de volgende.
 - De homepagina legt nu uit wat er allemaal kan: leren (hoofdstuk voor
   hoofdstuk of stap voor stap, voorlezen, podcasts, kinderen en jongeren,
   hulpmiddelen), de spellen die aan staan, Samen (vrienden,

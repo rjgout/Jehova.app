@@ -271,7 +271,9 @@ Een state is een functionele toestand in Versado, niet zomaar een emotie.
   - Begroeting op Vandaag: `novi`/`greeting`.
   - Publieke homepage, als kennismaking direct ná de kernbelofte en de
     aanmeldknoppen: `family`/`welcome`, met de namen en eigenschappen als gewone tekst
-    eronder (het beeld zelf is decoratief, `alt=""`).
+    eronder (het beeld zelf is decoratief, `alt=""`). Er zijn drie
+    varianten; elke lading toont de volgende (`variant` op `MascotSlot`,
+    teller in `src/lib/mascotRotation.ts`, zonder cookie of browseropslag).
   - Tekst van de dag: `vera`/`reading`, die pas iets toont als VERA's
     assets er zijn.
 - **Personage-specifieke states.** `family` heeft een eigen, kleine lijst

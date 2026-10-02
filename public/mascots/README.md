@@ -83,10 +83,18 @@ geïnstalleerd en er worden nu geen `.riv`-bestanden bijgehouden. Zie
 - Bestandsnamen: **lowercase kebab-case**.
   - Losse Novi-assets: `novi-<state>.webp`.
   - Family-assets: `family-<state>.webp`.
+  - Een state met meerdere gelijkwaardige composities (varianten):
+    `<character>-<state>-<n>.webp`, genummerd vanaf 1, met het aantal als
+    `variants` in het register. Elke variant heeft hetzelfde canvas en
+    dezelfde betekenis; het zijn geen versies.
 - Aanwezig en geregistreerd:
   - Novi: alle tien states zijn functioneel in gebruik via `MascotSlot`, van
     begroeting en oefeningen tot spel-, ontdek-, lees-, lege en ruststatussen;
-  - family: `welcome` (in gebruik op de publieke homepage).
+  - family: `welcome` in drie varianten (`family-welcome-1` t/m `-3`, 1200x800,
+    bron 1536x1024 in `references/family/`); de publieke homepage toont bij
+    elke lading de volgende (`src/lib/mascotRotation.ts`). Bronbestand
+    `versado-family-4.png` staat ook in `references/family/` maar is nog
+    niet in gebruik.
 - Niet in een bestandsnaam: `v1`, `v2`, `final` of synoniemen voor een
   bestaande state. Geen nieuwe states zonder bewuste ontwerpkeuze.
 - Niet in de afbeelding: tekst, tekstballonnen of een achtergrond. Tekst

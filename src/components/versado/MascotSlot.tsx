@@ -2,7 +2,7 @@
 // personage en een functionele state, nooit om een bestand:
 //
 //   <MascotSlot character="novi" state="greeting" />
-//   <MascotSlot character="family" state="welcome" />
+//   <MascotSlot character="family" state="welcome" variant={2} />
 //
 // Welke states bij een personage horen staat in het register; een combinatie
 // als family + greeting is daardoor al een typefout.
@@ -38,10 +38,12 @@ type MascotSlotProps = MascotTarget & {
   className?: string;
   /** Tekstuele betekenis als de mascotte iets uitdrukt; weglaten = decoratief. */
   labelKey?: MessageKey;
+  /** Welke afbeelding bij een state met varianten (vanaf 1); zie mascotVariantCount. */
+  variant?: number;
 };
 
-export default function MascotSlot({ size = 72, fill = false, className = "", ...target }: MascotSlotProps) {
-  const asset = staticMascotAsset(target.character, target.state);
+export default function MascotSlot({ size = 72, fill = false, className = "", variant = 1, ...target }: MascotSlotProps) {
+  const asset = staticMascotAsset(target.character, target.state, variant);
   if (!asset) return null;
   return <StaticMascot asset={asset} size={size} fill={fill} className={className} />;
 }
