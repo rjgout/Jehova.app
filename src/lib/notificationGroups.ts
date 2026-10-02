@@ -9,6 +9,7 @@ export const NOTIFICATION_GROUPS = {
   wordgame: { labelKey: "notifications.groups.wordgame", icon: "🔤" },
   challenges: { labelKey: "notifications.groups.challenges", icon: "⚔️" },
   friends: { labelKey: "notifications.groups.friends", icon: "👥" },
+  groups: { labelKey: "together.notificationGroup", icon: "🤝" },
   achievements: { labelKey: "notifications.groups.achievements", icon: "🏅" },
   competition: { labelKey: "notifications.groups.competition", icon: "🏆" },
 } as const satisfies Record<string, { labelKey: MessageKey; icon: string }>;

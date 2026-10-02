@@ -160,6 +160,20 @@ const ACHIEVEMENTS: AchievementDef[] = [
   },
 ];
 
+// Vriendenreeksen (src/lib/social/friendStreaks.ts): de langste reeks die je
+// ooit met een vriend haalde, dus een verbroken reeks neemt niets terug.
+async function longestFriendStreak(tx: Prisma.TransactionClient, userId: string): Promise<number> {
+  const best = await tx.friendStreak.aggregate({
+    where: { OR: [{ userAId: userId }, { userBId: userId }] },
+    _max: { longestStreak: true },
+  });
+  return best._max.longestStreak ?? 0;
+}
+
+for (const days of [1, 7, 30, 100, 365]) {
+  ACHIEVEMENTS.push({ slug: `friend-streak-${days}`, check: async (tx, userId) => (await longestFriendStreak(tx, userId)) >= days });
+}
+
 export async function checkAndAwardAchievements(tx: Prisma.TransactionClient, userId: string): Promise<string[]> {
   const earned = await tx.userAchievement.findMany({
     where: { userId },

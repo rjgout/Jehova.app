@@ -76,6 +76,11 @@ const achievementDefs = [
   { slug: "kids-10-stories", name: "Verhalenverteller", icon: "📚", description: "Rondde 10 verhalen uit de kindercursus af." },
   { slug: "intro-first-lesson", name: "Op ontdekking", icon: "🧭", description: "Rondde je eerste introductieles af." },
   { slug: "intro-all-lessons", name: "Helemaal op weg", icon: "🎓", description: "Rondde alle introductielessen af." },
+  { slug: "friend-streak-1", name: "Samen begonnen", icon: "🤝", description: "Haalde de eerste dag van een vriendenreeks." },
+  { slug: "friend-streak-7", name: "Een week samen", icon: "🔥", description: "Hield een vriendenreeks 7 dagen vol." },
+  { slug: "friend-streak-30", name: "Een maand samen", icon: "📅", description: "Hield een vriendenreeks 30 dagen vol." },
+  { slug: "friend-streak-100", name: "Honderd dagen", icon: "💯", description: "Hield een vriendenreeks 100 dagen vol." },
+  { slug: "friend-streak-365", name: "Een jaar samen", icon: "🏆", description: "Hield een vriendenreeks 365 dagen vol." },
 ];
 
 /**

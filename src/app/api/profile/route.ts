@@ -86,6 +86,7 @@ export async function GET() {
     notifyFriendOnline: user.notifyFriendOnline,
     changelogEnabled: user.changelogEnabled,
     conferenceCountdownEnabled: user.conferenceCountdownEnabled,
+    nudgesEnabled: user.nudgesEnabled,
     timeZone: user.timeZone,
     uiLanguage: user.uiLanguage,
     totpEnabled: user.totpEnabled,

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/session";
 import { prisma } from "@/lib/db";
 import { apiError } from "@/lib/apiError";
+import { endFriendStreaksBetween } from "@/lib/social/friendStreaks";
 
 export async function DELETE(
   _req: Request,
@@ -18,5 +19,7 @@ export async function DELETE(
   }
 
   await prisma.friendship.delete({ where: { id: friendshipId } });
+  // Een vriendenreeks bestaat alleen tussen vrienden.
+  await endFriendStreaksBetween(friendship.senderId, friendship.receiverId);
   return NextResponse.json({ ok: true });
 }

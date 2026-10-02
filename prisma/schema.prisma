@@ -271,6 +271,20 @@ model User {
 
   feedbackReports     Feedback[]
   streakDays          StreakDay[]
+
+  // Samen: vriendenreeksen, groepen en seintjes (zie src/lib/social/ en
+  // docs/SAMEN.md). Seintjes van vrienden staan standaard aan, ook voor
+  // bestaande accounts: zonder vrienden kan niemand je er een sturen.
+  nudgesEnabled        Boolean            @default(true)
+  friendStreaksA       FriendStreak[]     @relation("FriendStreakA")
+  friendStreaksB       FriendStreak[]     @relation("FriendStreakB")
+  friendStreaksInvited FriendStreak[]     @relation("FriendStreakInviter")
+  groupMemberships     GroupMembership[]
+  groupInvitesReceived GroupInvite[]      @relation("GroupInvitee")
+  groupInvitesSent     GroupInvite[]      @relation("GroupInviter")
+  groupFreezeOffers    GroupFreezeOffer[]
+  nudgesSent           Nudge[]            @relation("NudgeSender")
+  nudgesReceived       Nudge[]            @relation("NudgeRecipient")
   seasonResults       SeasonResult[]
   competitionXpEvents CompetitionXpEvent[]
 
@@ -1419,6 +1433,11 @@ enum FreezeTxType {
   GIFT_RECEIVED
   // Ingewisseld tegen XP in de winkel. Zie src/lib/shop.ts.
   PURCHASED
+  // Aangeboden om een groepsreeks te beschermen (src/lib/social/groupFreeze.ts):
+  // bij het aanbieden alvast apart gezet (-1), en terug (+1) als hij niet
+  // nodig bleek. Werd hij wel gebruikt, dan blijft het bij de -1.
+  GROUP_RESERVED
+  GROUP_RELEASED
 }
 
 model FreezeTransaction {
@@ -2338,4 +2357,232 @@ model AlleskennerEvening {
   finishedAt DateTime?
 
   @@index([seasonId])
+}
+
+// --- Samen: vriendenreeksen, groepen en seintjes --------------------------
+//
+// Zie docs/SAMEN.md. De persoonlijke reeks blijft de enige bron van waarheid:
+// een dag telt voor een vriendenreeks of groepsreeks als die gebruiker op zijn
+// eigen kalenderdag een StreakDay heeft (gestudeerd of bevroren). Hier staat
+// dus geen eigen activiteit, alleen de stand van de sociale reeksen zelf.
+
+enum FriendStreakStatus {
+  PENDING // uitnodiging verstuurd
+  ACTIVE
+  DECLINED
+  CANCELLED
+  BROKEN // een dag niet allebei behouden
+  ENDED // geen vrienden meer
+}
+
+model FriendStreak {
+  id              String             @id @default(cuid())
+  // Het paar, altijd met de kleinste id als A: zo is er één volgorde per paar.
+  userAId         String
+  userA           User               @relation("FriendStreakA", fields: [userAId], references: [id], onDelete: Cascade)
+  userBId         String
+  userB           User               @relation("FriendStreakB", fields: [userBId], references: [id], onDelete: Cascade)
+  inviterId       String
+  inviter         User               @relation("FriendStreakInviter", fields: [inviterId], references: [id], onDelete: Cascade)
+  status          FriendStreakStatus @default(PENDING)
+  // "A:B" zolang de reeks openstaat of loopt, daarna null: per paar hooguit
+  // één open of lopende vriendenreeks (null mag vaker voorkomen).
+  openKey         String?            @unique
+  // Eerste dag die meetelt, en de eerste dag die nog niet definitief is
+  // beoordeeld (yyyy-mm-dd, kalenderdagen zoals StreakDay.dayKey).
+  startDay        String?
+  nextDay         String?
+  currentStreak   Int                @default(0)
+  longestStreak   Int                @default(0)
+  lastAchievedDay String?
+  createdAt       DateTime           @default(now())
+  acceptedAt      DateTime?
+  endedAt         DateTime?
+
+  events SocialEvent[]
+
+  @@index([userAId, status])
+  @@index([userBId, status])
+}
+
+model SocialGroup {
+  id                String   @id @default(cuid())
+  name              String
+  // Gewone leden mogen hun eigen vrienden uitnodigen.
+  membersCanInvite  Boolean  @default(true)
+  // Zichtbaar op de openbare groepsranglijst (naam, aantal leden, reeks,
+  // prestaties; nooit de leden). Standaard privé.
+  showOnLeaderboard Boolean  @default(false)
+  // Snelle tellers voor lijsten en de ranglijst; de bron zijn de
+  // lidmaatschappen en GroupDay.
+  memberCount       Int      @default(0)
+  currentStreak     Int      @default(0)
+  longestStreak     Int      @default(0)
+  streakStartDay    String?
+  lastAchievedDay   String?
+  // Eerste groepsdag die nog niet definitief is afgesloten, en wanneer dat op
+  // zijn vroegst kan (iedereen moet die dag in de eigen tijdzone voorbij zijn).
+  nextDay           String
+  nextCheckAt       DateTime @default(now())
+  // Minder dan 3 leden die meetellen: de reeks staat stil, maar blijft staan.
+  paused            Boolean  @default(true)
+  createdAt         DateTime @default(now())
+
+  memberships  GroupMembership[]
+  invites      GroupInvite[]
+  days         GroupDay[]
+  freezeOffers GroupFreezeOffer[]
+  achievements GroupAchievement[]
+  events       SocialEvent[]
+
+  @@index([showOnLeaderboard, currentStreak])
+  @@index([showOnLeaderboard, memberCount])
+  @@index([nextCheckAt])
+}
+
+enum GroupRole {
+  MEMBER
+  ADMIN
+}
+
+// Eén rij per gebruiker per groep, ook na vertrek (leftAt): zo blijft de
+// wachttijd voor opnieuw toetreden bewaard en telt de eigen bijdrage na
+// terugkomst opnieuw vanaf de nieuwe instapdag.
+model GroupMembership {
+  id              String      @id @default(cuid())
+  groupId         String
+  group           SocialGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  userId          String
+  user            User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role            GroupRole   @default(MEMBER)
+  adminSince      DateTime?
+  joinedAt        DateTime    @default(now())
+  // Eerste groepsdag waarop dit lid meetelt: de dag na de laatste dag die bij
+  // het toetreden al bij een van de leden was begonnen (zie groups.ts).
+  eligibleFromDay String
+  leftAt          DateTime?
+  // Na vertrek of verwijdering pas na dit moment opnieuw lid.
+  rejoinAfter     DateTime?
+
+  @@unique([groupId, userId])
+  @@index([userId, leftAt])
+  @@index([groupId, leftAt])
+}
+
+enum GroupInviteStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+  CANCELLED
+}
+
+model GroupInvite {
+  id          String            @id @default(cuid())
+  groupId     String
+  group       SocialGroup       @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  inviterId   String
+  inviter     User              @relation("GroupInviter", fields: [inviterId], references: [id], onDelete: Cascade)
+  inviteeId   String
+  invitee     User              @relation("GroupInvitee", fields: [inviteeId], references: [id], onDelete: Cascade)
+  status      GroupInviteStatus @default(PENDING)
+  createdAt   DateTime          @default(now())
+  respondedAt DateTime?
+
+  @@unique([groupId, inviteeId])
+  @@index([inviteeId, status])
+}
+
+enum GroupDayStatus {
+  OPEN
+  ACHIEVED
+  PROTECTED // doel niet gehaald, beschermd met een geschonken reeksbevriezing
+  PAUSED // minder dan 3 leden die meetelden
+  MISSED
+}
+
+// Eén rij per groepsdag die bekeken of afgesloten is. Een afgesloten dag
+// (settledAt) verandert nooit meer; een gehaalde dag blijft gehaald.
+model GroupDay {
+  groupId          String
+  group            SocialGroup    @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  dayKey           String
+  status           GroupDayStatus @default(OPEN)
+  eligibleCount    Int?
+  requiredCount    Int?
+  contributorCount Int?
+  perfect          Boolean        @default(false)
+  streakAfter      Int?
+  achievedAt       DateTime?
+  settledAt        DateTime?
+
+  @@id([groupId, dayKey])
+  @@index([groupId, status, dayKey])
+}
+
+enum GroupFreezeOfferStatus {
+  RESERVED
+  RELEASED // niet nodig: terug naar de aanbieder
+  CONSUMED // gebruikt om de groepsreeks te beschermen
+  CANCELLED // aanbieder ging weg uit de groep: terug naar de aanbieder
+}
+
+// Hooguit één aangeboden reeksbevriezing per groepsdag. De wachttijd van 30
+// dagen per gebruiker per groep volgt uit de CONSUMED-rijen zelf, dus
+// verlaten en opnieuw toetreden zet hem niet terug.
+model GroupFreezeOffer {
+  id         String                 @id @default(cuid())
+  groupId    String
+  group      SocialGroup            @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  dayKey     String
+  userId     String
+  user       User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status     GroupFreezeOfferStatus @default(RESERVED)
+  createdAt  DateTime               @default(now())
+  resolvedAt DateTime?
+
+  @@unique([groupId, dayKey])
+  @@index([userId, groupId, status])
+}
+
+model GroupAchievement {
+  groupId    String
+  group      SocialGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  slug       String
+  dayKey     String
+  achievedAt DateTime    @default(now())
+
+  @@id([groupId, slug])
+}
+
+// Geschiedenis van vriendenreeksen en groepen, voor een latere tijdlijn.
+// userId is de betrokkene (bv. wie de reeks redde), bewust zonder relatie:
+// de gebeurtenis blijft staan als dat account verdwijnt.
+model SocialEvent {
+  id             String        @id @default(cuid())
+  kind           String
+  groupId        String?
+  group          SocialGroup?  @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  friendStreakId String?
+  friendStreak   FriendStreak? @relation(fields: [friendStreakId], references: [id], onDelete: Cascade)
+  userId         String?
+  dayKey         String?
+  data           String? // JSON, bv. {"streak": 184}
+  createdAt      DateTime      @default(now())
+
+  @@index([groupId, createdAt])
+  @@index([friendStreakId, createdAt])
+}
+
+// Seintje (algemeen sociaal duwtje, niet alleen voor reeksen). Alleen het
+// laatste seintje per richting: genoeg voor de grens van één per 6 uur, en er
+// is bewust geen teller of geschiedenis.
+model Nudge {
+  senderId    String
+  sender      User     @relation("NudgeSender", fields: [senderId], references: [id], onDelete: Cascade)
+  recipientId String
+  recipient   User     @relation("NudgeRecipient", fields: [recipientId], references: [id], onDelete: Cascade)
+  context     String
+  lastSentAt  DateTime @default(now())
+
+  @@id([senderId, recipientId])
 }

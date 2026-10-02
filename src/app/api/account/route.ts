@@ -8,6 +8,7 @@ import { generateDiscriminator, HANDLE_REGEX, HANDLE_MIN_LENGTH, HANDLE_MAX_LENG
 import { setIncognito, INCOGNITO_DURATIONS_HOURS } from "@/lib/presence";
 import { LANGUAGES, getLanguage } from "@/lib/languages";
 import { apiError, apiErrorText } from "@/lib/apiError";
+import { leaveAllGroups } from "@/lib/social/groups";
 import { isValidTimeZone } from "@/lib/timeZone";
 
 const patchSchema = z.object({
@@ -46,6 +47,8 @@ const patchSchema = z.object({
   notifyFriendOnline: z.boolean().optional(),
   changelogEnabled: z.boolean().optional(),
   conferenceCountdownEnabled: z.boolean().optional(),
+  // Seintjes van vrienden (src/lib/social/nudges.ts).
+  nudgesEnabled: z.boolean().optional(),
   // Door de browser gedetecteerde IANA-tijdzone (TimeZoneSync.tsx). Alleen
   // namen die Intl kent; een offset als "+01:00" wordt geweigerd.
   timeZone: z.string().refine(isValidTimeZone, "Onbekende tijdzone.").optional(),
@@ -171,6 +174,9 @@ export async function DELETE() {
   const user = await getCurrentUser();
   if (!user) return await apiError("apiErrors.notLoggedIn", 401);
 
+  // Eerst netjes uit elke groep, zodat ledentallen kloppen en een groep
+  // zonder beheerder een opvolger krijgt; daarna ruimt de cascade de rest op.
+  await leaveAllGroups(user.id);
   await prisma.user.delete({ where: { id: user.id } });
 
   const res = NextResponse.json({ ok: true });

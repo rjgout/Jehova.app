@@ -9,6 +9,9 @@ import { getIO } from "@/server/gameServer";
 import { runFsyWeeklyCheckIfDue } from "@/lib/fsyContent";
 import { dayKeyInZone, hhmmInZone, resolveTimeZone } from "@/lib/timeZone";
 import { streakDayGap } from "@/lib/learning/streakRules";
+import { refreshDueFriendStreaks, refreshFriendStreaksFor } from "@/lib/social/friendStreaks";
+import { refreshDueGroups, refreshGroupsFor } from "@/lib/social/groupStreak";
+import { runGroupAdminMaintenance } from "@/lib/social/groups";
 
 const TICK_MS = 60_000;
 // Vast (niet instelbaar) moment voor de wekelijkse uitslag — dit is geen
@@ -396,6 +399,43 @@ async function runIncognitoExpiryTick(): Promise<void> {
   }
 }
 
+// --- Samen: vriendenreeksen en groepsreeksen ------------------------------
+//
+// De persoonlijke reeks is de bron: nieuwe StreakDay-rijen (gestudeerd, of
+// bevroren door de reeksafsluiting hierboven) worden hier opgepakt voor de
+// vriendenreeksen en groepen van die mensen. Daarnaast worden dagen
+// afgesloten die voor iedereen voorbij zijn. Alles is idempotent; een
+// overlap in het tijdvenster kan dus geen kwaad.
+let socialWatermark = new Date(Date.now() - 10 * 60_000);
+let socialTickRunning = false;
+let lastFriendStreakSweep = 0;
+let lastAdminMaintenance = 0;
+
+async function runSocialTick(): Promise<void> {
+  if (socialTickRunning) return;
+  socialTickRunning = true;
+  try {
+    const now = new Date();
+    const since = new Date(socialWatermark.getTime() - 5_000);
+    socialWatermark = now;
+    const fresh = await prisma.streakDay.findMany({ where: { createdAt: { gt: since } }, select: { userId: true }, distinct: ["userId"] });
+    const userIds = fresh.map((row) => row.userId);
+    await refreshFriendStreaksFor(userIds, now);
+    await refreshGroupsFor(userIds, now);
+    await refreshDueGroups(now);
+    if (now.getTime() - lastFriendStreakSweep >= 5 * 60_000) {
+      lastFriendStreakSweep = now.getTime();
+      await refreshDueFriendStreaks(now);
+    }
+    if (now.getTime() - lastAdminMaintenance >= 60 * 60_000) {
+      lastAdminMaintenance = now.getTime();
+      await runGroupAdminMaintenance(now);
+    }
+  } finally {
+    socialTickRunning = false;
+  }
+}
+
 let started = false;
 
 /** Start de in-process schedulers — bewust geen losse cron-infrastructuur (zie ook src/lib/leagues.ts). Eenmalig aan te roepen vanuit server.ts. */
@@ -411,6 +451,7 @@ export function startNotificationSchedulers(): void {
     runWordGameBonusTick().catch((e) => console.error("Woord-van-de-dag-bonus mislukt:", e));
     runStreakRolloverTick().catch((e) => console.error("Streak rollover mislukt:", e));
     runIncognitoExpiryTick().catch((e) => console.error("Incognito-vervaltijd mislukt:", e));
+    runSocialTick().catch((e) => console.error("Samen (vrienden- en groepsreeksen) mislukt:", e));
     runFsyWeeklyCheckIfDue(prisma).catch((e) => console.error("FSY-weekcontrole mislukt:", e));
   }, TICK_MS);
 }

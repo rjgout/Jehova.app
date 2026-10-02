@@ -458,3 +458,99 @@ export async function notifyWordGame(userId: string): Promise<void> {
     }),
   });
 }
+
+// --- Samen: vriendenreeksen, groepen en seintjes (src/lib/social/) ---------
+
+export async function notifyFriendStreakInvite(userId: string, inviterName: string): Promise<void> {
+  await notifyUser({
+    userId,
+    category: "social",
+    kind: "friends",
+    url: "/friends",
+    content: (t) => simple(t("together.notify.friendStreakInviteTitle"), t("together.notify.friendStreakInviteTitle"), t("together.notify.friendStreakInviteText", { name: inviterName }), t("notify.ctaFriends")),
+  });
+}
+
+export async function notifyFriendStreakAccepted(userId: string, friendName: string): Promise<void> {
+  await notifyUser({
+    userId,
+    category: "social",
+    kind: "friends",
+    url: "/friends",
+    content: (t) => simple(t("together.notify.friendStreakAcceptedTitle"), t("together.notify.friendStreakAcceptedTitle"), t("together.notify.friendStreakAcceptedText", { name: friendName }), t("notify.ctaFriends")),
+  });
+}
+
+export async function notifyGroupInvite(userId: string, inviterName: string, groupName: string): Promise<void> {
+  await notifyUser({
+    userId,
+    category: "social",
+    kind: "groups",
+    url: "/groups",
+    content: (t) => simple(t("together.notify.groupInviteTitle"), t("together.notify.groupInviteTitle"), t("together.notify.groupInviteText", { name: inviterName, group: groupName }), t("together.notify.ctaGroups")),
+  });
+}
+
+/** Seintje van een vriend. `line` is de tweede regel uit de context (bv. de vriendenreeks), in de taal van de ontvanger. */
+export async function notifyNudge(userId: string, senderName: string, url: string, line: (t: TFunction) => string): Promise<void> {
+  await notifyUser({
+    userId,
+    category: "social",
+    kind: "friends",
+    url,
+    pushOnly: true,
+    content: (t) => simple(t("together.notify.nudgeTitle", { name: senderName }), t("together.notify.nudgeTitle", { name: senderName }), line(t), t("together.notify.ctaOpen")),
+  });
+}
+
+export async function notifyGroupFreezeNotNeeded(userId: string, groupId: string, groupName: string): Promise<void> {
+  await notifyUser({
+    userId,
+    category: "social",
+    kind: "groups",
+    url: `/groups/${groupId}`,
+    content: (t) => simple(t("together.notify.freezeNotNeededTitle"), t("together.notify.freezeNotNeededTitle"), t("together.notify.freezeNotNeededText", { group: groupName }), t("together.notify.ctaGroup")),
+  });
+}
+
+export async function notifyGroupFreezeUsed(userId: string, groupId: string, groupName: string): Promise<void> {
+  await notifyUser({
+    userId,
+    category: "social",
+    kind: "groups",
+    url: `/groups/${groupId}`,
+    content: (t) => simple(t("together.notify.freezeUsedTitle"), t("together.notify.freezeUsedTitle"), t("together.notify.freezeUsedText", { group: groupName }), t("together.notify.ctaGroup")),
+  });
+}
+
+export async function notifyGroupAdminAssigned(userId: string, groupId: string, groupName: string): Promise<void> {
+  await notifyUser({
+    userId,
+    category: "social",
+    kind: "groups",
+    url: `/groups/${groupId}`,
+    content: (t) => simple(t("together.notify.groupAdminTitle"), t("together.notify.groupAdminTitle"), t("together.notify.groupAdminText", { group: groupName }), t("together.notify.ctaGroup")),
+  });
+}
+
+/**
+ * Een gebeurtenis voor een hele groep (bv. "Thomas heeft de reeks gered!"):
+ * alleen in het meldingencentrum, in één keer, zonder push of e-mail, zodat
+ * een groep van honderden leden niemand bestookt. Alleen voor wie sociale
+ * meldingen aan heeft.
+ */
+export async function notifyGroupMembersInApp(
+  userIds: string[],
+  url: string,
+  content: (t: TFunction) => { title: string; body: string }
+): Promise<void> {
+  if (userIds.length === 0) return;
+  const users = await prisma.user.findMany({ where: { id: { in: userIds }, notifySocial: true }, select: { id: true, uiLanguage: true } });
+  const rows = users.map((user) => {
+    const text = content(getT(user.uiLanguage));
+    return { userId: user.id, kind: "groups", title: text.title, body: text.body, url };
+  });
+  if (rows.length === 0) return;
+  await prisma.notification.createMany({ data: rows });
+  for (const user of users) emitToUser(user.id, "notifications_changed");
+}
