@@ -1,9 +1,9 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { prisma } from "@/lib/db";
 import { getCurrentUser } from "@/lib/session";
-import { consumeAuthToken } from "@/lib/authTokens";
 import ResendVerificationButton from "@/components/ResendVerificationButton";
+import ContinueAfterVerify from "@/components/ContinueAfterVerify";
+import { safeReturnPath } from "@/lib/returnTo";
 import { getT } from "@/lib/i18n";
 import { rich } from "@/lib/i18n/rich";
 import { requestLanguage } from "@/lib/requestLanguage";
@@ -11,33 +11,49 @@ import { requestLanguage } from "@/lib/requestLanguage";
 export default async function VerifyEmailPage({
   searchParams,
 }: {
-  searchParams: Promise<{ token?: string }>;
+  searchParams: Promise<{ token?: string; status?: string; next?: string }>;
 }) {
-  const { token } = await searchParams;
+  const { token, status, next } = await searchParams;
+  // Het token verwerkt een route (die kan inloggen door een cookie te zetten);
+  // daarna komt de uitkomst hier terug als ?status=.
+  if (token) redirect(`/api/auth/verify-email/confirm?token=${encodeURIComponent(token)}`);
+
   const user = await getCurrentUser();
   const t = getT(await requestLanguage(user));
 
-  if (token) {
-    const userId = await consumeAuthToken(token, "EMAIL_VERIFY");
-    if (!userId) {
-      return (
-        <div className="max-w-md mx-auto card text-center flex flex-col gap-4">
-          <h1 className="text-xl font-extrabold text-red-600 dark:text-red-400">{t("verify.invalid")}</h1>
-          <p className="text-slate-500 dark:text-slate-400 text-sm">
-            {t("verify.requestNew")}
-          </p>
-          <ResendVerificationButton />
-        </div>
-      );
-    }
-    await prisma.user.update({ where: { id: userId }, data: { emailVerifiedAt: new Date() } });
+  if (status === "confirmed") {
     return (
       <div className="max-w-md mx-auto card text-center flex flex-col gap-4">
         <div className="text-5xl">✅</div>
         <h1 className="text-xl font-extrabold text-brand-800 dark:text-brand-300">{t("verify.confirmed")}</h1>
-        <Link href="/dashboard" className="btn-primary self-center">
-          {t("verify.toLessons")}
-        </Link>
+        <ContinueAfterVerify next={safeReturnPath(next)} />
+      </div>
+    );
+  }
+
+  if (status === "already" || status === "expired" || status === "invalid") {
+    const title = status === "already" ? t("verify.alreadyTitle") : status === "expired" ? t("verify.expiredTitle") : t("verify.invalid");
+    // Een ingelogd account van vóór de aanmeldingsstap vraagt hier zelf een
+    // nieuwe link aan; verder loopt een nieuwe link via inloggen.
+    const legacyUnverified = status !== "already" && user && !user.emailVerifiedAt;
+    return (
+      <div className="max-w-md mx-auto card text-center flex flex-col gap-4">
+        <h1 className={`text-xl font-extrabold ${status === "already" ? "text-brand-800 dark:text-brand-300" : "text-red-600 dark:text-red-400"}`}>{title}</h1>
+        {legacyUnverified ? (
+          <>
+            <p className="text-slate-500 dark:text-slate-400 text-sm">{t("verify.requestNew")}</p>
+            <ResendVerificationButton />
+          </>
+        ) : user && status === "already" ? (
+          <ContinueAfterVerify next={null} />
+        ) : (
+          <>
+            <p className="text-slate-500 dark:text-slate-400 text-sm">{status === "already" ? t("verify.alreadyText") : t("verify.newLinkViaLogin")}</p>
+            <Link href="/login" className="btn-primary self-center">
+              {t("auth.logIn")}
+            </Link>
+          </>
+        )}
       </div>
     );
   }

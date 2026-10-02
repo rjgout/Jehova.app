@@ -301,6 +301,33 @@ enum AuthTokenType {
 // Eenmalige, verlopende tokens voor e-mailbevestiging en wachtwoordreset.
 // Er wordt alleen een sha256-hash van het token opgeslagen — de ruwe waarde
 // staat alleen (kortstondig) in de link in de e-mail zelf. Zie src/lib/authTokens.ts.
+// Een registratie die nog op e-mailbevestiging wacht. Pas bij het klikken op
+// de link wordt hier een User van gemaakt (src/lib/registration.ts): zo
+// bestaat er vóór bevestiging geen account, geen naam en nummer, geen
+// vriendschap uit een uitnodiging en geen melding aan wie uitnodigde. Een
+// nieuwe registratie met hetzelfde adres vervangt deze rij, zodat niemand
+// andermans adres bezet kan houden. Na bevestiging blijft de rij nog even
+// staan (confirmedAt), zodat een tweede klik op dezelfde link "al bevestigd"
+// toont in plaats van "ongeldig" (mailscanners openen links soms als eerste).
+model PendingRegistration {
+  id              String    @id @default(cuid())
+  email           String    @unique
+  handle          String
+  passwordHash    String
+  uiLanguage      String    @default("nl")
+  contentLanguage String    @default("nl")
+  inviteCode      String?
+  // Waar iemand na bevestiging heen wil (bv. een groepslink), alleen een pad binnen de app.
+  returnTo        String?
+  tokenHash       String    @unique
+  expiresAt       DateTime
+  confirmedAt     DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([expiresAt])
+}
+
 model AuthToken {
   id        String        @id @default(cuid())
   userId    String

@@ -18,9 +18,13 @@ van een specifieke cloud-hostingprovider.
 - **Accounts & sessies**: registreren/inloggen/account verwijderen (AVG) via
   een httpOnly session-cookie. Zelf je wachtwoord resetten via "Wachtwoord
   vergeten?" op de inlogpagina (mailt een resetlink) en accountbevestiging
-  per e-mail bij registratie — beide werken pas zodra een admin e-mail heeft
+  per e-mail bij registratie: het account wordt pas aangemaakt (en je bent
+  meteen ingelogd) als je op de link in de mail klikt; tot dan is het alleen
+  een aanmelding. Onbevestigde accounts van vóór die stap worden na 30 dagen
+  zonder activiteit opgeruimd. Beide werken pas zodra een admin e-mail heeft
   geconfigureerd (zie **Adminbeheer** hieronder); zonder die configuratie
-  werkt de app gewoon door zonder ergens op te blokkeren.
+  maakt registreren direct een account en werkt de app gewoon door zonder
+  ergens op te blokkeren.
 - **Privacyvriendelijke gebruikersnaam**: je gebruikersnaam wordt bij registratie
   automatisch aangevuld met een uniek nummer (bv. `Jan#83173`), zodat
   iedereen dezelfde naam kan kiezen en je nooit je e-mailadres hoeft te

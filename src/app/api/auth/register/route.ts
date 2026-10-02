@@ -1,19 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { Prisma } from "@prisma/client";
 import { createHash } from "crypto";
 import { anonymousLanguage } from "@/lib/requestLanguage";
 import { prisma } from "@/lib/db";
 import { hashPassword } from "@/lib/auth";
-import { generateDiscriminator, HANDLE_REGEX, HANDLE_MIN_LENGTH, HANDLE_MAX_LENGTH, containsForbiddenEmoji } from "@/lib/handle";
-import { createAuthToken } from "@/lib/authTokens";
+import { HANDLE_REGEX, HANDLE_MIN_LENGTH, HANDLE_MAX_LENGTH, containsForbiddenEmoji } from "@/lib/handle";
 import { isEmailConfigured, sendMail } from "@/lib/email";
-import { registrationAttemptTemplate, verifyEmailTemplate } from "@/lib/emailTemplates";
+import { registrationAttemptTemplate } from "@/lib/emailTemplates";
 import { getT } from "@/lib/i18n";
 import { getBaseUrl } from "@/lib/baseUrl";
-import { FRONT_TO_BACK_SLUG, subscribeUserToCourse } from "@/lib/courses";
 import { BOFM_WORK, resolveEditionId } from "@/lib/contentCollections";
-import { becomeFriendsViaInvite } from "@/lib/friendInvite";
+import { createAccount, startPendingRegistration } from "@/lib/registration";
+import { safeReturnPath } from "@/lib/returnTo";
 import { apiError, apiErrorText } from "@/lib/apiError";
 
 const schema = z.object({
@@ -28,9 +26,10 @@ const schema = z.object({
   password: z.string().min(8, "Wachtwoord moet minstens 8 tekens zijn."),
   // Code uit een uitnodigingslink (zie src/lib/friendInvite.ts), optioneel.
   inviteCode: z.string().trim().max(32).optional(),
+  // Waar iemand na bevestiging heen wil (bv. een groepslink), zie src/lib/returnTo.ts.
+  next: z.string().max(512).optional(),
 });
 
-const MAX_DISCRIMINATOR_ATTEMPTS = 25;
 const REGISTRATION_NOTICE_WINDOW_MS = 24 * 60 * 60 * 1000;
 const noticeSentAt = new Map<string, number>();
 
@@ -64,7 +63,7 @@ export async function POST(req: NextRequest) {
   if (!parsed.success) {
     return await apiErrorText(parsed.error.issues[0].message, 400);
   }
-  const { email, handle, password, inviteCode } = parsed.data;
+  const { email, handle, password, inviteCode, next } = parsed.data;
 
   const existingEmail = await prisma.user.findUnique({ where: { email } });
   if (existingEmail) {
@@ -80,81 +79,33 @@ export async function POST(req: NextRequest) {
 
   const passwordHash = await hashPassword(password);
 
-  // De allereerste registratie op een verse installatie wordt automatisch
-  // admin, zodat er zonder handmatige databasetoegang altijd een beheerder
-  // is voor /adminbackend.
-  const isFirstUser = (await prisma.user.count()) === 0;
-
-  // Standaard-cursus voor nieuwe accounts: "van voor naar achter". Bestaat
-  // die nog niet (content nog niet geïmporteerd), dan blijft dit gewoon leeg
-  // — dashboard/page.tsx vangt dat later alsnog af.
   // Taal van het apparaat (zie requestLanguage): bepaalt de taal van de app
-  // en welke uitgave iemand leest. De startcursus is die van die uitgave.
-  const language = await anonymousLanguage();
-  const editionId = await resolveEditionId(BOFM_WORK, language);
+  // en welke uitgave iemand leest.
+  const uiLanguage = await anonymousLanguage();
+  const editionId = await resolveEditionId(BOFM_WORK, uiLanguage);
   const edition = editionId
     ? await prisma.contentCollection.findUnique({ where: { id: editionId }, select: { language: true } })
     : null;
-  const defaultCourse =
-    (editionId && (await prisma.course.findFirst({ where: { type: "FRONT_TO_BACK", contentCollectionId: editionId } }))) ||
-    (await prisma.course.findUnique({ where: { slug: FRONT_TO_BACK_SLUG } }));
+  const contentLanguage = edition?.language ?? "nl";
 
-  // handle+discriminator is uniek, handle alleen niet — bij een botsing
-  // (1 op 100 voor exact dezelfde combinatie) proberen we gewoon een
-  // nieuw willekeurig nummer.
-  for (let attempt = 0; attempt < MAX_DISCRIMINATOR_ATTEMPTS; attempt++) {
-    const discriminator = generateDiscriminator();
-    try {
-      const user = await prisma.user.create({
-        data: {
-          email,
-          handle,
-          discriminator,
-          passwordHash,
-          isAdmin: isFirstUser,
-          activeCourseId: defaultCourse?.id,
-          // De taal waarin de bezoeker de app tot nu toe zag (zie requestLanguage).
-          uiLanguage: language,
-          contentLanguage: edition?.language ?? "nl",
-        },
-      });
-
-      // Meteen ook in de persoonlijke cursussenlijst ("Cursussen") zetten —
-      // anders staat die leeg totdat de gebruiker toevallig een pagina
-      // bezoekt die dit lazy aanmaakt (zie subscribeUserToCourse).
-      if (defaultCourse) {
-        await subscribeUserToCourse(prisma, user.id, defaultCourse.id);
-      }
-
-      // Als e-mail is geconfigureerd, moet de gebruiker eerst bevestigen. De
-      // registratie krijgt daarom nog geen sessie: zo is het antwoord voor een
-      // bestaand en een nieuw e-mailadres niet uit elkaar te houden.
-      if (await isEmailConfigured()) {
-        const rawToken = await createAuthToken(user.id, "EMAIL_VERIFY");
-        const link = `${getBaseUrl(req)}/verify-email?token=${rawToken}`;
-        const { subject, html, text } = verifyEmailTemplate(getT(user.uiLanguage), link);
-        await sendMail({ to: user.email, subject, html, text });
-      }
-
-      // Een ongeldige of vervangen link mag de registratie nooit laten mislukken:
-      // dan wordt het gewoon een account zonder vriend.
-      if (inviteCode) {
-        const invite = await becomeFriendsViaInvite(inviteCode, user.id, { isNewAccount: true }).catch(() => null);
-        if (invite?.ok) {
-          await prisma.user.update({ where: { id: user.id }, data: { registeredViaInvite: true } });
-        }
-      }
-
-      // Geen id, tag, uitnodiger of sessie teruggeven: ook de normale
-      // registratie mag vóór e-mailbevestiging geen accountinformatie lekken.
-      return NextResponse.json(GENERIC_RESPONSE);
-    } catch (e) {
-      if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
-        continue; // discriminator-botsing voor deze handle, probeer opnieuw
-      }
-      throw e;
-    }
+  // Met e-mail: nog geen account, alleen een aanmelding die pas bij het
+  // klikken op de link een account wordt (src/lib/registration.ts). Het
+  // antwoord is gelijk aan dat voor een bestaand adres, en er komt geen
+  // sessie: niets verraadt of een adres al een account heeft.
+  if (await isEmailConfigured()) {
+    await startPendingRegistration(
+      { email, handle, passwordHash, uiLanguage, contentLanguage, inviteCode, returnTo: safeReturnPath(next) },
+      getBaseUrl(req)
+    );
+    return NextResponse.json(GENERIC_RESPONSE);
   }
 
-  return await apiError("apiErrors.uniqueHandleFailed", 409);
+  try {
+    await createAccount({ email, handle, passwordHash, uiLanguage, contentLanguage, inviteCode, emailVerifiedAt: null });
+  } catch (e) {
+    console.error("Account aanmaken mislukt:", e);
+    return await apiError("apiErrors.uniqueHandleFailed", 409);
+  }
+  // Geen id, tag, uitnodiger of sessie teruggeven: zie hierboven.
+  return NextResponse.json(GENERIC_RESPONSE);
 }

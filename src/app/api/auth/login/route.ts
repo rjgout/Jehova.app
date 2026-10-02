@@ -5,6 +5,9 @@ import { createSessionToken, createTwoFactorChallengeToken, verifyPassword, SESS
 import { parseTag } from "@/lib/handle";
 import { clearFailures, clientIp, failureLockSeconds, registerFailure, tooManyAttempts } from "@/lib/rateLimit";
 import { apiError, apiErrorText } from "@/lib/apiError";
+import { isEmailConfigured } from "@/lib/email";
+import { getBaseUrl } from "@/lib/baseUrl";
+import { findOpenPendingRegistration, resendPendingVerification } from "@/lib/registration";
 
 // Per IP+account een krappe grens tegen wachtwoord raden op één account,
 // per IP een ruimere tegen het afgaan van veel accounts. Bewust niet alleen
@@ -52,7 +55,17 @@ export async function POST(req: NextRequest) {
       })
     : await prisma.user.findUnique({ where: { email: identifier.toLowerCase() } });
 
-  if (!user) return fail();
+  if (!user) {
+    // Nog geen account, wel een aanmelding die op bevestiging wacht: met het
+    // juiste wachtwoord zeggen we dat, en sturen we (binnen de mailgrens) een
+    // nieuwe link. Zonder het juiste wachtwoord is het gewoon een foute inlog,
+    // zodat niemand kan nagaan welke adressen zich hebben aangemeld.
+    const pending = tag ? null : await findOpenPendingRegistration(identifier.toLowerCase());
+    if (!pending || !(await verifyPassword(password, pending.passwordHash))) return fail();
+    clearFailures(accountKey);
+    const sent = (await isEmailConfigured()) && (await resendPendingVerification(pending, getBaseUrl(req)));
+    return await apiError(sent ? "apiErrors.emailNotConfirmedSent" : "apiErrors.emailNotConfirmed", 403);
+  }
 
   const valid = await verifyPassword(password, user.passwordHash);
   if (!valid) return fail();

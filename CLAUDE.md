@@ -240,6 +240,12 @@ Bij iedere wijziging aan de database moeten **schema, migratie en gebruikende co
 
 - Sessie = httpOnly JWT-cookie (`bvm_session`, `jose`, 30 dagen), wachtwoorden
   gehasht met `bcryptjs`. Geen aparte rollen-tabel: alleen `User.isAdmin`.
+- **Registreren met e-mail maakt nog geen account**: eerst een
+  `PendingRegistration`, pas bij het klikken op de bevestigingslink een `User`
+  (`src/lib/registration.ts`; `createAccount` is de enige plek waar een
+  account ontstaat, ook zonder e-mailconfiguratie). Een uitnodigingslink
+  wordt dus ook pas dan een vriendschap. Opruimen van oude aanmeldingen en
+  onbevestigde accounts loopt uurlijks via `scheduler.ts`.
 - **De allereerste registratie op een verse installatie wordt automatisch
   admin** (geen setup-stap nodig). Er bestaan geen demo-accounts meer: de
   seed maakt nooit gebruikers aan.

@@ -1582,7 +1582,7 @@ export const es: PartialMessages = {
     "createOne": "Crea uno",
     "accountCreated": "¡Cuenta creada!",
     "registrationSubmittedTitle": "Solicitud recibida",
-    "registrationSubmitted": "Su solicitud de registro ha sido procesada. Si se requiere confirmación por correo electrónico, recibirá un correo electrónico con los siguientes pasos. Luego puedes iniciar sesión.",
+    "registrationSubmitted": "Hemos recibido tu solicitud. Si se requiere confirmación por correo electrónico, recibirás un correo con un enlace: tu cuenta se crea en cuanto hagas clic en él. Si no, ya puedes iniciar sesión.",
     "yourUsername": "Tu nombre de usuario único es:",
     "nowFriends": "Ahora eres amigo de {tag}. 🎉",
     "confirmEmailFirst": "Primero confirma tu dirección de correo electrónico. Después de eso, te ayudaremos a comenzar paso a paso.",
@@ -1625,7 +1625,12 @@ export const es: PartialMessages = {
     "confirmed": "¡Cuenta confirmada!",
     "toLessons": "A las lecciones →",
     "title": "Confirma tu dirección de correo electrónico",
-    "sentTo": "Enviamos un enlace de confirmación a {email}. Haz clic en él para continuar."
+    "sentTo": "Enviamos un enlace de confirmación a {email}. Haz clic en él para continuar.",
+    "continue": "Continuar →",
+    "alreadyTitle": "Tu cuenta ya está confirmada",
+    "alreadyText": "Inicia sesión para continuar.",
+    "expiredTitle": "Este enlace ha caducado",
+    "newLinkViaLogin": "Inicia sesión con tu correo electrónico y contraseña y te enviaremos un enlace nuevo enseguida."
   },
   "invitePage": {
     "becomeFriends": "Hazte amigo de {name}",
@@ -1918,6 +1923,8 @@ export const es: PartialMessages = {
     "invalidApiKey": "Clave API no válida o faltante.",
     "invalidSkip": "Valor de omisión no válido",
     "wrongCredentials": "Detalles de inicio de sesión incorrectos.",
+    "emailNotConfirmedSent": "Tu correo electrónico aún no está confirmado. Te hemos enviado un nuevo enlace de confirmación; revisa también la carpeta de correo no deseado.",
+    "emailNotConfirmed": "Tu correo electrónico aún no está confirmado. Haz clic en el enlace del correo de confirmación; revisa también la carpeta de correo no deseado.",
     "personNotFound": "Persona no encontrada",
     "seasonNotFound": "Temporada no encontrado.",
     "gameNotFound": "Juego no encontrado.",

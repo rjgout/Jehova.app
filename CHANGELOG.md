@@ -4,6 +4,12 @@ Alle belangrijke gebruikersgerichte wijzigingen en releases worden hieronder bij
 
 ## Nog niet uitgebracht
 
+- Je account wordt pas aangemaakt als je op de link in de bevestigingsmail
+  klikt, en dan ben je meteen ingelogd. Tot die tijd bestaat er alleen een
+  aanmelding: geen account, en een uitnodiging wordt pas dan een
+  vriendschap. Log je in voordat je hebt bevestigd, dan krijg je een nieuwe
+  link. Onbevestigde accounts die ouder zijn dan 30 dagen en nooit iets
+  gedaan hebben, worden opgeruimd.
 - Nieuwe, eigen iconen voor XP (een ster) en reeksbevriezingen (een blauwe
   vlam met sneeuwvlok), overal in de app.
 - Groepslink en QR-code: een beheerder kan voor een groep een link of

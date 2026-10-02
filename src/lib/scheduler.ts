@@ -11,6 +11,7 @@ import { dayKeyInZone, hhmmInZone, resolveTimeZone } from "@/lib/timeZone";
 import { streakDayGap } from "@/lib/learning/streakRules";
 import { refreshDueFriendStreaks, refreshFriendStreaksFor } from "@/lib/social/friendStreaks";
 import { refreshDueGroups, refreshGroupsFor } from "@/lib/social/groupStreak";
+import { cleanupRegistrations } from "@/lib/registration";
 import { runGroupAdminMaintenance } from "@/lib/social/groups";
 
 const TICK_MS = 60_000;
@@ -437,6 +438,18 @@ async function runSocialTick(): Promise<void> {
   }
 }
 
+// Aanmeldingen en onbevestigde accounts opruimen (src/lib/registration.ts):
+// eens per uur is ruim genoeg, het gaat om dagen en weken.
+let lastRegistrationCleanup = 0;
+
+async function runRegistrationCleanupTick(): Promise<void> {
+  const now = Date.now();
+  if (now - lastRegistrationCleanup < 60 * 60_000) return;
+  lastRegistrationCleanup = now;
+  const { pending, accounts } = await cleanupRegistrations(new Date(now));
+  if (pending || accounts) console.log(`Opgeruimd: ${pending} aanmelding(en), ${accounts} onbevestigd(e) account(s).`);
+}
+
 let started = false;
 
 /** Start de in-process schedulers — bewust geen losse cron-infrastructuur (zie ook src/lib/leagues.ts). Eenmalig aan te roepen vanuit server.ts. */
@@ -453,6 +466,7 @@ export function startNotificationSchedulers(): void {
     runStreakRolloverTick().catch((e) => console.error("Streak rollover mislukt:", e));
     runIncognitoExpiryTick().catch((e) => console.error("Incognito-vervaltijd mislukt:", e));
     runSocialTick().catch((e) => console.error("Samen (vrienden- en groepsreeksen) mislukt:", e));
+    runRegistrationCleanupTick().catch((e) => console.error("Aanmeldingen opruimen mislukt:", e));
     runFsyWeeklyCheckIfDue(prisma).catch((e) => console.error("FSY-weekcontrole mislukt:", e));
   }, TICK_MS);
 }
