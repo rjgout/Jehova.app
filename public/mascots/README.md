@@ -34,8 +34,10 @@ persoonlijkheid overbrengen (geen letterlijke vertaling).
 
 - **Novi** wordt als eerste uitgerold, met statische afbeeldingen.
 - **Family**: composities waarin Varo, Vera en Novi samen staan.
-- Losse afbeeldingen van **Varo en Vera** volgen later. Voeg die nu nog
-  niet toe.
+- Losse afbeeldingen van **Varo en Vera**: de mappen `static/varo/` en
+  `static/vera/` staan klaar voor de aangeleverde afbeeldingen. Ze tonen pas
+  iets in de app als ze omgezet en geregistreerd zijn (zie "Een afbeelding
+  toevoegen").
 - Er is nog geen Rive. Voeg geen `.riv`-bestanden toe.
 
 ## Structuur en naamgeving
@@ -47,6 +49,8 @@ public/mascots/
   static/
     novi/      losse statische afbeeldingen van Novi
       novi-<state>.webp
+    varo/      losse statische afbeeldingen van Varo (varo-<state>.webp)
+    vera/      losse statische afbeeldingen van Vera (vera-<state>.webp)
     family/    Varo, Vera en Novi samen in één compositie
       family-<state>.webp
   figma/       afgeleide ontwerpkopieën; geen productiebron
@@ -100,8 +104,8 @@ geïnstalleerd en er worden nu geen `.riv`-bestanden bijgehouden. Zie
 - Niet in de afbeelding: tekst, tekstballonnen of een achtergrond. Tekst
   komt altijd via de app-vertalingen.
 - Bestaande `.gitkeep`-bestanden onder `static/` blijven staan. Maak voor
-  toekomstige Varo/Vera/Rive-mappen geen lege structuur vooruit; documentatie
-  is voldoende tot er een echt asset bestaat.
+  toekomstige Rive-mappen geen lege structuur vooruit; documentatie is
+  voldoende tot er een echt asset bestaat.
 
 ### States voor Novi
 
