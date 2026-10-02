@@ -1,8 +1,9 @@
 "use client";
 
-import { Check, Pause, Snowflake } from "lucide-react";
+import { Check, Pause } from "lucide-react";
 import { useT } from "@/components/I18nProvider";
 import { ProgressBar, type Person } from "@/components/social/shared";
+import SystemIcon from "@/components/versado/SystemIcon";
 
 export interface GroupTodayData {
   dayKey: string;
@@ -59,7 +60,7 @@ export default function GroupTodayLine({ today, size = "sm", showProtection = tr
         <span className="text-vs-fg-2">{today.missing === 1 ? t("together.group.missingOne") : t("together.group.missingMany", { n: today.missing })}</span>
         {showProtection && today.protectedBy && (
           <span className="inline-flex items-center gap-1 text-vs-accent">
-            <Snowflake className="h-3.5 w-3.5" aria-hidden />
+            <SystemIcon kind="freeze" className="h-3.5 w-3.5" aria-hidden />
             {t("together.group.protectedBy", { name: today.protectedBy.handle })}
           </span>
         )}

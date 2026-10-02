@@ -41,7 +41,6 @@ import {
   Trophy,
   Users,
   Volume2,
-  Snowflake,
 } from "lucide-react";
 
 interface AchievementView {
@@ -507,7 +506,7 @@ export default function ProfileClient() {
         <div className="mt-5 grid grid-cols-4 divide-x divide-white/15 rounded-2xl bg-black/10 py-2">
           <CompactHeroStat value={<><SystemIcon kind="streak" className="h-4 w-4" fill="currentColor" aria-hidden /> {data.currentStreak}</>} label={t("profile.streak")} href="/streak" />
           <CompactHeroStat value={<><SystemIcon kind="xp" className="h-4 w-4" fill="currentColor" aria-hidden /> {data.xpTotal}</>} label="XP" href="/xp" />
-          <CompactHeroStat value={<><Snowflake className="h-4 w-4" aria-hidden /> {data.freezeCount}</>} label={t("lesson.freezes")} />
+          <CompactHeroStat value={<><SystemIcon kind="freeze" className="h-4 w-4" aria-hidden /> {data.freezeCount}</>} label={t("lesson.freezes")} />
           <CompactHeroStat value={<><BookOpen className="h-4 w-4" aria-hidden /> {data.chaptersCompleted}</>} label={t("profile.chapters")} />
         </div>
       </section>

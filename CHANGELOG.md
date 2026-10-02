@@ -4,6 +4,8 @@ Alle belangrijke gebruikersgerichte wijzigingen en releases worden hieronder bij
 
 ## Nog niet uitgebracht
 
+- Nieuwe, eigen iconen voor XP (een ster) en reeksbevriezingen (een blauwe
+  vlam met sneeuwvlok), overal in de app.
 - Groepslink en QR-code: een beheerder kan voor een groep een link of
   QR-code (bv. voor een poster) aanzetten en op elk moment intrekken.
   Wie hem opent, logt in, ziet welke vrienden al meedoen en vraagt om mee

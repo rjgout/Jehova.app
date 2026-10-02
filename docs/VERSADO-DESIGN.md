@@ -40,9 +40,12 @@ lijst hierboven nog volledig.
   `vs-rise` is een rustige binnenkomst, `vs-scroller` verbergt de scrollbalk
   van een veegrij.
 - **Iconen**: `lucide-react`. Geen emoji als structureel icoon. Uitzondering:
-  de reeksvlam is een eigen illustratie (`public/icons/streak-flame.webp`,
-  en `streak-flame-empty.webp` voor "vandaag nog niet gestudeerd"), altijd via
-  `SystemIcon kind="streak"` (`fill="none"` = de lege vlam), nooit los.
+  reeks, XP en reeksbevriezing zijn eigen illustraties in `public/icons/`
+  (`streak-flame.webp` met `streak-flame-empty.webp` voor "vandaag nog niet
+  gestudeerd", `xp.webp`, `freeze.webp`), altijd via `SystemIcon kind="streak"
+  | "xp" | "freeze"` (`fill="none"` = de lege vlam), nooit los. Ze nemen geen
+  tekstkleur over. In pushmeldingen, e-mails en toasts kan geen afbeelding:
+  daar blijft het emoji in de tekst staan.
 - **Shell**: vier hoofdbestemmingen in `src/lib/navigation.ts`
   (`PRIMARY_NAV`, met per bestemming de routes die erbij horen);
   `BottomNav.tsx` op telefoon en tablet, `shell/PrimaryNav.tsx` op desktop,

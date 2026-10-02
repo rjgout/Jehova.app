@@ -1374,7 +1374,7 @@ export const de: PartialMessages = {
     quantity: "Anzahl",
     buyFor: "Kaufen für {xp} XP",
     notEnough: "Du hast nicht genug XP.",
-    freezeTitle: "🧊 Streak-Freeze",
+    freezeTitle: "Streak-Freeze",
     freezeText: "Rettet deine Tagesserie automatisch, wenn du einmal keine Zeit zum Üben hast — genau wie ein Freeze, den du bei einem Meilenstein verdienst oder von einem Freund bekommst.",
   },
   xpHistory: {
@@ -1422,8 +1422,8 @@ export const de: PartialMessages = {
     daysThisMonth: "Tage diesen Monat",
     prevMonth: "Vorheriger Monat",
     nextMonth: "Nächster Monat",
-    freezesUsedOne: "🧊 {n} Freeze verwendet",
-    freezesUsedMany: "🧊 {n} Freezes verwendet",
+    freezesUsedOne: "{n} Freeze verwendet",
+    freezesUsedMany: "{n} Freezes verwendet",
     weekdays: "Mo,Di,Mi,Do,Fr,Sa,So",
   },
   achievements: {

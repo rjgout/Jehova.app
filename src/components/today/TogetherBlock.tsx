@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Check, ChevronRight, Snowflake, UsersRound } from "lucide-react";
+import { Check, ChevronRight, UsersRound } from "lucide-react";
 import { getT } from "@/lib/i18n";
 import SystemIcon from "@/components/versado/SystemIcon";
 import { focusRing } from "@/components/versado/styles";
@@ -23,7 +23,7 @@ export default function TogetherBlock({ together, language }: { together: Togeth
           tone: "text-vs-fg",
         };
       case "group-protected":
-        return { href: `/groups/${h.groupId}`, icon: <Snowflake className="h-4 w-4" aria-hidden />, text: t("together.dashboard.groupProtected", { group: h.name }), tone: "text-vs-accent" };
+        return { href: `/groups/${h.groupId}`, icon: <SystemIcon kind="freeze" className="h-4 w-4" aria-hidden />, text: t("together.dashboard.groupProtected", { group: h.name }), tone: "text-vs-accent" };
       case "group-achieved":
         return { href: `/groups/${h.groupId}`, icon: <Check className="h-4 w-4" strokeWidth={3} aria-hidden />, text: t("together.dashboard.groupAchieved", { group: h.name }), tone: "text-vs-success" };
     }

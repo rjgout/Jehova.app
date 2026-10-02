@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useT, useUiLanguage } from "@/components/I18nProvider";
 import { getLanguage } from "@/lib/languages";
 import SystemIcon from "@/components/versado/SystemIcon";
-import { Snowflake } from "lucide-react";
+
 
 type XPReason =
   | "LESSON_COMPLETED"
@@ -42,7 +42,7 @@ const REASON_ICONS: Record<XPReason, ReactNode> = {
   PODCAST_LESSON_COMPLETED: "🎙️",
   KIDS_STORY_COMPLETED: "🧒",
   HINT_PURCHASED: "💡",
-  FREEZE_PURCHASED: <Snowflake className="h-4 w-4 text-ice-500" aria-hidden />,
+  FREEZE_PURCHASED: <SystemIcon kind="freeze" className="h-4 w-4 text-ice-500" aria-hidden />,
   CHAPTER_GUESS_COMPLETED: "🔍",
   WORD_GAME_WON: "🔤",
   INTRO_LESSON_COMPLETED: "🧭",

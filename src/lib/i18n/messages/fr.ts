@@ -1374,7 +1374,7 @@ export const fr: PartialMessages = {
     quantity: "Quantité",
     buyFor: "Acheter pour {xp} XP",
     notEnough: "Tu n’as pas assez d’XP.",
-    freezeTitle: "🧊 Gel de série",
+    freezeTitle: "Gel de série",
     freezeText: "Sauve automatiquement ta série quotidienne si un jour tu n’as pas le temps de t’entraîner — comme un gel gagné à une étape ou reçu d’un ami.",
   },
   xpHistory: {
@@ -1422,8 +1422,8 @@ export const fr: PartialMessages = {
     daysThisMonth: "Jours ce mois-ci",
     prevMonth: "Mois précédent",
     nextMonth: "Mois suivant",
-    freezesUsedOne: "🧊 {n} gel utilisé",
-    freezesUsedMany: "🧊 {n} gels utilisés",
+    freezesUsedOne: "{n} gel utilisé",
+    freezesUsedMany: "{n} gels utilisés",
     weekdays: "Lu,Ma,Me,Je,Ve,Sa,Di",
   },
   achievements: {

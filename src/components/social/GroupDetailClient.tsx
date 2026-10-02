@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
-import { Award, Check, Clock3, LogOut, Settings, ShieldCheck, Snowflake, UserPlus, UsersRound } from "lucide-react";
+import { Award, Check, Clock3, LogOut, Settings, ShieldCheck, UserPlus, UsersRound } from "lucide-react";
 import { useT, useUiLanguage } from "@/components/I18nProvider";
 import { useConfirm } from "@/components/ConfirmProvider";
 import UserAvatar from "@/components/UserAvatar";
@@ -245,7 +245,7 @@ function MemberGroupView({ group, reload }: { group: MemberGroup; reload: () => 
               {group.today.protectedBy ? (
                 <>
                   <p className="flex items-center gap-2 font-bold text-vs-fg">
-                    <Snowflake className="h-5 w-5 text-vs-accent" aria-hidden />
+                    <SystemIcon kind="freeze" className="h-5 w-5 text-vs-accent" aria-hidden />
                     {protectedByMe ? t("together.group.protectedByMe") : t("together.group.protectedBy", { name: group.today.protectedBy.handle })}
                   </p>
                   <p className="text-sm text-vs-fg-2">{t("together.group.protectedHint")}</p>
@@ -258,7 +258,7 @@ function MemberGroupView({ group, reload }: { group: MemberGroup; reload: () => 
                   )}
                   {group.freeze.reason === "none" && <p className="text-xs font-semibold text-vs-fg-3">{t("together.group.offerNone")}</p>}
                   <button type="button" className={`${secondaryButton} self-start`} disabled={!group.freeze.canOffer} onClick={() => setConfirmOffer(true)}>
-                    <Snowflake className="h-4 w-4" aria-hidden />
+                    <SystemIcon kind="freeze" className="h-4 w-4" aria-hidden />
                     {t("together.group.offer")}
                   </button>
                 </>
@@ -363,7 +363,7 @@ function MemberGroupView({ group, reload }: { group: MemberGroup; reload: () => 
                 {t("together.group.cancel")}
               </button>
               <button type="button" className={primaryButton} disabled={offering} onClick={offerFreeze}>
-                <Snowflake className="h-4 w-4" aria-hidden />
+                <SystemIcon kind="freeze" className="h-4 w-4" aria-hidden />
                 {t("together.group.offerConfirm")}
               </button>
             </div>

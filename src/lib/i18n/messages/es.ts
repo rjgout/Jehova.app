@@ -1384,7 +1384,7 @@ export const es: PartialMessages = {
     "quantity": "Cantidad",
     "buyFor": "Comprar por {xp} XP",
     "notEnough": "No tienes suficiente XP.",
-    "freezeTitle": "🧊 Congelación de racha",
+    "freezeTitle": "Congelación de racha",
     "freezeText": "Guarda automáticamente tu racha diaria si alguna vez no tienes tiempo para practicar, al igual que una congelación que obtienes en un hito o que obtienes de un amigo."
   },
   "xpHistory": {
@@ -1432,8 +1432,8 @@ export const es: PartialMessages = {
     "daysThisMonth": "Días de este mes",
     "prevMonth": "Mes anterior",
     "nextMonth": "Próximo mes",
-    "freezesUsedOne": "🧊 Se usó congelación {n}",
-    "freezesUsedMany": "🧊 Se usó congelación {n}",
+    "freezesUsedOne": "{n} congelación usada",
+    "freezesUsedMany": "{n} congelaciones usadas",
     "weekdays": "lu, martes, mi, jueves, viernes, sábado, domingo"
   },
   "achievements": {

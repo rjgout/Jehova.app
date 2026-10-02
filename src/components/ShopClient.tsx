@@ -5,7 +5,7 @@ import { announceXpChanged } from "@/lib/xpBroadcast";
 import { useT } from "@/components/I18nProvider";
 import AppSelect from "@/components/AppSelect";
 import SystemIcon from "@/components/versado/SystemIcon";
-import { Snowflake } from "lucide-react";
+
 
 interface ShopData {
   xpTotal: number;
@@ -105,7 +105,7 @@ export default function ShopClient() {
           <div className="text-xs font-bold uppercase text-slate-400 dark:text-slate-500">{t("shop.hints")}</div>
         </div>
         <div className="card !py-3 !px-5 !bg-ice-50 dark:!bg-slate-800 !border-ice-400/30 dark:!border-slate-700">
-          <div className="flex items-center gap-1 text-xl font-extrabold text-ice-600 dark:text-ice-400"><Snowflake className="h-5 w-5" aria-hidden />{data.freezeCount}</div>
+          <div className="flex items-center gap-1 text-xl font-extrabold text-ice-600 dark:text-ice-400"><SystemIcon kind="freeze" className="h-5 w-5" aria-hidden />{data.freezeCount}</div>
           <div className="text-xs font-bold uppercase text-slate-400 dark:text-slate-500">{t("lesson.freezes")}</div>
         </div>
       </div>
@@ -153,7 +153,10 @@ export default function ShopClient() {
       <div className="card flex flex-col gap-3">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <h2 className="font-extrabold text-lg dark:text-slate-100">{t("shop.freezeTitle")}</h2>
+            <h2 className="flex items-center gap-2 font-extrabold text-lg dark:text-slate-100">
+              <SystemIcon kind="freeze" className="h-6 w-6" />
+              {t("shop.freezeTitle")}
+            </h2>
             <p className="text-sm text-slate-500 dark:text-slate-400">
               {t("shop.freezeText")}
             </p>

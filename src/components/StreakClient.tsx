@@ -6,7 +6,7 @@ import { getLanguage } from "@/lib/languages";
 import { rich } from "@/lib/i18n/rich";
 import Link from "next/link";
 import SystemIcon from "@/components/versado/SystemIcon";
-import { Snowflake } from "lucide-react";
+
 
 type StreakDayState = "STUDIED" | "FROZEN" | "NONE" | "FUTURE";
 
@@ -136,7 +136,7 @@ export default function StreakClient() {
 
       <div className="card !py-3 !bg-ice-50 dark:!bg-slate-800 !border-ice-400/30 dark:!border-slate-700 flex items-center gap-3">
         <span className="text-2xl shrink-0" aria-hidden>
-          <Snowflake className="h-7 w-7 text-ice-500" aria-hidden />
+          <SystemIcon kind="freeze" className="h-7 w-7 text-ice-500" aria-hidden />
         </span>
         <p className="text-sm text-ice-700 dark:text-ice-400">
           {rich(t("streakPage.explain"), { streak: <span className="font-bold text-orange-500">{t("streakPage.streakWord")}</span> })}
@@ -149,7 +149,7 @@ export default function StreakClient() {
           <div className="text-xs font-bold uppercase text-slate-400 dark:text-slate-500">{t("streakPage.daysThisMonth")}</div>
         </div>
         <div className="card !py-3 flex flex-col items-center gap-0.5">
-          <div className="flex items-center gap-1 text-xl font-extrabold text-ice-600 dark:text-ice-400"><Snowflake className="h-5 w-5" aria-hidden />{overview.freezeCount}</div>
+          <div className="flex items-center gap-1 text-xl font-extrabold text-ice-600 dark:text-ice-400"><SystemIcon kind="freeze" className="h-5 w-5" aria-hidden />{overview.freezeCount}</div>
           <div className="text-xs font-bold uppercase text-slate-400 dark:text-slate-500">{t("lesson.freezes")}</div>
         </div>
       </div>
@@ -162,7 +162,7 @@ export default function StreakClient() {
           <div className="text-center">
             <h2 className="font-extrabold text-lg capitalize dark:text-slate-100">{monthLabel(month.year, month.month, intlLocale)}</h2>
             {month.freezesUsed > 0 && (
-              <p className="text-xs text-slate-400 dark:text-slate-500">{month.freezesUsed > 1 ? t("streakPage.freezesUsedMany", { n: month.freezesUsed }) : t("streakPage.freezesUsedOne", { n: month.freezesUsed })}</p>
+              <p className="flex items-center justify-center gap-1 text-xs text-slate-400 dark:text-slate-500"><SystemIcon kind="freeze" className="h-3.5 w-3.5" />{month.freezesUsed > 1 ? t("streakPage.freezesUsedMany", { n: month.freezesUsed }) : t("streakPage.freezesUsedOne", { n: month.freezesUsed })}</p>
             )}
           </div>
           <button
@@ -202,7 +202,7 @@ export default function StreakClient() {
                             isToday ? "ring-2 ring-offset-1 ring-orange-300 dark:ring-offset-slate-800" : ""
                           }`}
                         >
-                          {d.state === "FROZEN" ? <Snowflake className="h-4 w-4" aria-hidden /> : d.day}
+                          {d.state === "FROZEN" ? <SystemIcon kind="freeze" className="h-4 w-4" aria-hidden /> : d.day}
                         </div>
                       </div>
                     );

@@ -1378,7 +1378,7 @@ export const nl = {
     quantity: "Aantal",
     buyFor: "Koop voor {xp} XP",
     notEnough: "Je hebt niet genoeg XP.",
-    freezeTitle: "🧊 Streak freeze",
+    freezeTitle: "Streak freeze",
     freezeText: "Redt je dagstreak automatisch als je een keer geen tijd hebt om te oefenen — net als een freeze die je verdient op een mijlpaal of van een vriend krijgt.",
   },
   xpHistory: {
@@ -1426,8 +1426,8 @@ export const nl = {
     daysThisMonth: "Dagen deze maand",
     prevMonth: "Vorige maand",
     nextMonth: "Volgende maand",
-    freezesUsedOne: "🧊 {n} bevriezing gebruikt",
-    freezesUsedMany: "🧊 {n} bevriezingen gebruikt",
+    freezesUsedOne: "{n} bevriezing gebruikt",
+    freezesUsedMany: "{n} bevriezingen gebruikt",
     weekdays: "Ma,Di,Wo,Do,Vr,Za,Zo",
   },
   achievements: {

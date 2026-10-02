@@ -1,35 +1,44 @@
-import { Zap, type LucideProps } from "lucide-react";
+import type { CSSProperties } from "react";
 
-export type SystemIconKind = "streak" | "xp";
+export type SystemIconKind = "streak" | "xp" | "freeze";
 
-/**
- * Centrale bron voor de systeemiconen die in de header canonical zijn.
- *
- * De reeksvlam is een eigen illustratie (public/icons/streak-flame*.webp),
- * geen lijnicoon: hij neemt dus geen tekstkleur over. fill="none" geeft, net
- * als bij het oude lijnicoon, de "lege" vlam: vandaag nog niet gestudeerd.
- * De maat komt zoals altijd uit className (bv. h-4 w-4); beide bestanden
- * zijn strak om de vlam uitgesneden en even hoog, zodat de vlam bij het
- * wisselen even groot blijft (in de bronbestanden is de lege vlam groter
- * getekend).
- */
-export default function SystemIcon({ kind, strokeWidth = 2.4, ...props }: { kind: SystemIconKind } & LucideProps) {
-  if (kind === "streak") {
-    const { className = "", fill, style } = props;
-    return (
-      // eslint-disable-next-line @next/next/no-img-element
-      <img
-        src={fill === "none" ? "/icons/streak-flame-empty.webp" : "/icons/streak-flame.webp"}
-        alt=""
-        aria-hidden
-        draggable={false}
-        decoding="async"
-        width={128}
-        height={128}
-        style={style}
-        className={`inline-block shrink-0 object-contain ${className}`}
-      />
-    );
-  }
-  return <Zap {...props} strokeWidth={strokeWidth} />;
+// Eigen illustraties voor de systeemiconen (public/icons/), geen lijniconen:
+// ze nemen dus geen tekstkleur over. fill="none" geeft bij de reeks, net als
+// bij het oude lijnicoon, de "lege" vlam: vandaag nog niet gestudeerd. Elk
+// bestand is strak om de figuur uitgesneden, zodat dezelfde maat (uit
+// className, bv. h-4 w-4) overal even groot oogt.
+const SOURCES: Record<SystemIconKind, string> = {
+  streak: "/icons/streak-flame.webp",
+  xp: "/icons/xp.webp",
+  freeze: "/icons/freeze.webp",
+};
+
+interface SystemIconProps {
+  kind: SystemIconKind;
+  className?: string;
+  style?: CSSProperties;
+  /** Alleen voor de reeks: "none" = de lege vlam. */
+  fill?: string;
+  /** Overgebleven van de lijniconen; een illustratie is altijd decoratief naast een getal of tekst. */
+  strokeWidth?: number;
+  "aria-hidden"?: boolean | "true" | "false";
+}
+
+/** Centrale bron voor de systeemiconen: reeks, XP en reeksbevriezing. */
+export default function SystemIcon({ kind, className = "", style, fill }: SystemIconProps) {
+  const src = kind === "streak" && fill === "none" ? "/icons/streak-flame-empty.webp" : SOURCES[kind];
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={src}
+      alt=""
+      aria-hidden
+      draggable={false}
+      decoding="async"
+      width={128}
+      height={128}
+      style={style}
+      className={`inline-block shrink-0 object-contain ${className}`}
+    />
+  );
 }

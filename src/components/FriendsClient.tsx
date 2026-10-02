@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Clock3, MoreHorizontal, Snowflake } from "lucide-react";
+import { Clock3, MoreHorizontal } from "lucide-react";
 import { formatTag } from "@/lib/handle";
 import { getSocket } from "@/lib/socketClient";
 import UserTag from "@/components/UserTag";
@@ -475,7 +475,7 @@ export default function FriendsClient({ appName }: { appName: string }) {
                         disabled={giftedTo === f.id}
                         aria-label={giftedTo === f.id ? t("friends.sentExcl") : t("friends.giveFreeze")}
                       >
-                        <Snowflake className="h-3.5 w-3.5" aria-hidden />
+                        <SystemIcon kind="freeze" className="h-3.5 w-3.5" aria-hidden />
                         {giftedTo === f.id ? t("friends.sentExcl") : t("friends.giveFreeze")}
                       </button>
                     </div>
