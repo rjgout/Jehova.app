@@ -6,10 +6,11 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { ACHIEVEMENT_DISPLAY } from "@/lib/achievementDisplay";
 import { announceXpChanged } from "@/lib/xpBroadcast";
-import { ExerciseCard, ReaderView, type ChapterAudio, type Exercise } from "@/components/LessonFlow";
+import { ExerciseCard, LessonResultMascot, ReaderView, type ChapterAudio, type Exercise } from "@/components/LessonFlow";
 import type { ChapterTerm } from "@/lib/chapterTerm";
 import { useT } from "@/components/I18nProvider";
 import { translateOr } from "@/lib/i18n/core";
+import MascotSlot from "@/components/versado/MascotSlot";
 
 interface VerseView {
   id: string;
@@ -116,13 +117,18 @@ export default function ReadingLessonFlow({
   if (phase === "read") {
     return (
       <div className="max-w-2xl mx-auto flex flex-col gap-4">
-        <div className="flex items-center justify-between gap-3">
-          <p className="text-xs font-bold uppercase tracking-wide text-slate-400 dark:text-slate-500">
-            {t("readingLesson.stepOf", { n: lessonNumber, total: totalLessons })}
-          </p>
-          <p className="text-xs font-bold text-slate-400 dark:text-slate-500">
-            {startVerse}–{endVerse}
-          </p>
+        <div className="flex items-center justify-between gap-4">
+          <div className="min-w-0 flex-1">
+            <p className="text-xs font-bold uppercase tracking-wide text-slate-400 dark:text-slate-500">
+              {t("readingLesson.stepOf", { n: lessonNumber, total: totalLessons })}
+            </p>
+            <p className="mt-1 text-xs font-bold text-slate-400 dark:text-slate-500">
+              {startVerse}–{endVerse}
+            </p>
+          </div>
+          <div className="aspect-[512/468] w-[clamp(5.5rem,24vw,6.75rem)] shrink-0 sm:w-28 lg:w-32">
+            <MascotSlot character="novi" state="reading" size={128} fill />
+          </div>
         </div>
         <ReaderView
           chapterId={chapterId}
@@ -191,7 +197,7 @@ export default function ReadingLessonFlow({
     }
     return (
       <div className="max-w-md mx-auto card flex flex-col items-center gap-4 text-center animate-pop">
-        <div className="text-5xl">{result.scorePercent >= 80 ? "🎉" : result.scorePercent >= 60 ? "👍" : "💪"}</div>
+        <LessonResultMascot scorePercent={result.scorePercent} celebrate={result.newAchievements.length > 0} successThreshold={60} />
         <p className="text-xs font-bold uppercase tracking-wide text-slate-400 dark:text-slate-500">
           {t("readingLesson.stepDone", { n: lessonNumber })}
         </p>

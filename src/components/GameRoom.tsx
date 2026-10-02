@@ -12,6 +12,7 @@ import LobbyInviteCard from "@/components/LobbyInviteCard";
 import { useT } from "@/components/I18nProvider";
 import { useConfirm } from "@/components/ConfirmProvider";
 import { translateServerText } from "@/lib/i18n/serverTexts";
+import MascotSlot from "@/components/versado/MascotSlot";
 
 interface LobbyPlayer {
   userId: string;
@@ -332,8 +333,14 @@ export default function GameRoom({ code, myUserId }: { code: string; myUserId: s
 
   if (phase === "finished") {
     const forfeiter = players.find((p) => p.userId === forfeitedBy);
+    // De server levert het scorebord aflopend op score; alleen een echte
+    // eigen overwinning is hier het grotere celebrate-moment.
+    const resultState = players[0]?.userId === myUserId && forfeitedBy !== myUserId ? "celebrate" : "encourage";
     return (
       <div className="max-w-xl mx-auto flex flex-col gap-6 items-center">
+        <div className="aspect-[512/468] w-[clamp(6.875rem,30vw,8.125rem)] shrink-0 sm:w-36">
+          <MascotSlot character="novi" state={resultState} size={144} fill />
+        </div>
         <h1 className="text-3xl font-extrabold text-brand-800 dark:text-brand-300">{t("lobby.gameOver")}</h1>
         {forfeiter && (
           <p className="text-sm font-bold text-red-500 bg-red-50 dark:bg-slate-700 rounded-xl px-3 py-2">

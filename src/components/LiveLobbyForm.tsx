@@ -12,6 +12,7 @@ import AppSelect from "@/components/AppSelect";
 import { GAME_CATALOG, type GameCatalogEntry } from "@/lib/gameCatalog";
 import { gameArtworkKeys } from "@/lib/artwork";
 import MediaArtwork from "@/components/versado/MediaArtwork";
+import MascotSlot from "@/components/versado/MascotSlot";
 
 interface ChapterOption {
   id: string;
@@ -98,9 +99,14 @@ export default function LiveLobbyForm({ settings, isAdmin, allowedGameKeys, cont
     <div className="max-w-5xl mx-auto flex flex-col gap-6 sm:gap-8">
       <ActiveGamesBanner />
 
-      <div>
-        <h1 className="text-2xl font-extrabold text-brand-800 dark:text-brand-300">{t("gamesHub.title")}</h1>
-        <p className="text-sm text-slate-500 dark:text-slate-400">{t("gamesHub.intro")}</p>
+      <div className="flex items-center justify-between gap-4">
+        <div className="min-w-0 flex-1">
+          <h1 className="text-2xl font-extrabold text-brand-800 dark:text-brand-300">{t("gamesHub.title")}</h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400">{t("gamesHub.intro")}</p>
+        </div>
+        <div className="aspect-[512/468] w-[clamp(6rem,27vw,7.25rem)] shrink-0 sm:w-32 lg:w-36">
+          <MascotSlot character="novi" state="playing" size={144} fill />
+        </div>
       </div>
 
       {settings.liveExercisesEnabled && allowedGameKeys.includes("live-exercises") && (

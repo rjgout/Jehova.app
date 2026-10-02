@@ -33,30 +33,32 @@ type MascotSlotProps = MascotTarget & {
    * className (bv. w-full max-w-md) gaat voor, voor een vloeiende maat.
    */
   size?: number;
+  /** Vult een door de feature gereserveerd kader; handig bij wisselende states zonder layout shift. */
+  fill?: boolean;
   className?: string;
   /** Tekstuele betekenis als de mascotte iets uitdrukt; weglaten = decoratief. */
   labelKey?: MessageKey;
 };
 
-export default function MascotSlot({ size = 72, className = "", ...target }: MascotSlotProps) {
+export default function MascotSlot({ size = 72, fill = false, className = "", ...target }: MascotSlotProps) {
   const asset = staticMascotAsset(target.character, target.state);
   if (!asset) return null;
-  return <StaticMascot asset={asset} size={size} className={className} />;
+  return <StaticMascot asset={asset} size={size} fill={fill} className={className} />;
 }
 
-function StaticMascot({ asset, size, className }: { asset: StaticMascotAsset; size: number; className: string }) {
+function StaticMascot({ asset, size, fill, className }: { asset: StaticMascotAsset; size: number; fill: boolean; className: string }) {
   return (
     // eslint-disable-next-line @next/next/no-img-element
     <img
       src={asset.src}
-      width={size}
-      height={Math.round((asset.height / asset.width) * size)}
+      width={fill ? asset.width : size}
+      height={fill ? asset.height : Math.round((asset.height / asset.width) * size)}
       alt=""
       aria-hidden
       decoding="async"
-      // h-auto + object-contain: de verhouding blijft altijd die van de asset,
-      // ook als de breedte via CSS vloeiend is; nooit afsnijden of uitrekken.
-      className={`vs-motion h-auto max-w-full object-contain ${className}`}
+      // object-contain bewaart de verhouding ook in een door de feature
+      // gereserveerd kader; zonder kader volgt de hoogte vloeiend de breedte.
+      className={`vs-motion object-contain ${fill ? "h-full w-full" : "h-auto max-w-full"} ${className}`}
     />
   );
 }

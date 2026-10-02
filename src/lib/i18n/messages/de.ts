@@ -299,6 +299,7 @@ export const de: PartialMessages = {
       night: "Gute Nacht, {name}",
     },
     streakDone: "Deine Serie ist für heute gesichert.",
+    dayComplete: "Für heute ist alles erledigt. Zeit, dich etwas auszuruhen.",
     streakKeep: "Lerne heute und halte deine Serie von {n} Tagen.",
     streakKeepOne: "Lerne heute, dann sind es zwei Tage in Folge.",
     streakStart: "Starte heute eine neue Serie.",

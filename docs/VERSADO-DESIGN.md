@@ -92,10 +92,8 @@ lijst hierboven nog volledig.
   bovenin de sociale kolom op Vandaag (`today/TogetherBlock.tsx`). Gedeelde
   onderdelen staan in `src/components/social/`.
 - **Mascottes**: de uitrol is begonnen, met NOVI als eerste (zie
-  "Mascottes" hieronder). In gebruik: `novi`/`greeting` (Vandaag) en
-  `family`/`welcome` (publieke homepage). Beschikbaar maar nog nergens
-  ingezet: de overige negen Novi-states (`idle`, `thinking`, `discovery`,
-  `reading`, `playing`, `success`, `encourage`, `celebrate` en `sleep`).
+  "Mascottes" hieronder). Alle tien Novi-states zijn functioneel in gebruik;
+  `family`/`welcome` blijft de introductie op de publieke homepage.
   `versado/MascotSlot.tsx` is de enige interface; het register in
   `src/lib/mascots.ts` kent de bestanden in `public/mascots/static/`. Zolang
   een asset ontbreekt, rendert een slot niets.

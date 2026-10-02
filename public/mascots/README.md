@@ -56,9 +56,8 @@ public/mascots/
   - Losse Novi-assets: `novi-<state>.webp`.
   - Family-assets: `family-<state>.webp`.
 - Aanwezig en geregistreerd:
-  - Novi: alle tien states; `greeting` is in gebruik op Vandaag en `idle`,
-    `playing`, `success`, `encourage`, `thinking`, `discovery`, `reading`,
-    `celebrate` en `sleep` zijn beschikbaar maar nog nergens ingezet;
+  - Novi: alle tien states zijn functioneel in gebruik via `MascotSlot`, van
+    begroeting en oefeningen tot spel-, ontdek-, lees-, lege en ruststatussen;
   - family: `welcome` (in gebruik op de publieke homepage).
 - Niet in een bestandsnaam: `v1`, `v2`, `final` of synoniemen voor een
   bestaande state. Geen nieuwe states zonder bewuste ontwerpkeuze.

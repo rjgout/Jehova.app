@@ -4,7 +4,7 @@ import SystemIcon from "@/components/versado/SystemIcon";
 
 import { useCallback, useState } from "react";
 import Link from "next/link";
-import { ExerciseCard, type Exercise } from "@/components/LessonFlow";
+import { ExerciseCard, LessonResultMascot, type Exercise } from "@/components/LessonFlow";
 import PersonCard from "@/components/PersonCard";
 import ChapterPopup from "@/components/ChapterPopup";
 import { ACHIEVEMENT_DISPLAY } from "@/lib/achievementDisplay";
@@ -175,7 +175,10 @@ export default function IntroLessonFlow({
   if (phase === "summary" && summary) {
     return (
       <div className="max-w-md mx-auto card flex flex-col items-center gap-4 text-center animate-pop">
-        <div className="text-5xl">📖</div>
+        <LessonResultMascot
+          scorePercent={summary.total > 0 ? Math.round((summary.correctCount / summary.total) * 100) : 100}
+          celebrate={summary.newAchievements.length > 0}
+        />
         <h2 className="text-2xl font-extrabold text-brand-800 dark:text-brand-300">
           {t("readingLesson.score", { correct: summary.correctCount, total: summary.total })}
         </h2>
