@@ -60,7 +60,7 @@ function DailyGameCard({
   );
 }
 
-export default function TodaySection({ data, language }: { data: TodayData; language: string }) {
+export default function TodaySection({ data, language, dayComplete = false }: { data: TodayData; language: string; dayComplete?: boolean }) {
   const t = getT(language);
   const { dailyText, wordGame, dailyQuiz } = data;
   if (!dailyText && !wordGame && !dailyQuiz) return null;
@@ -123,6 +123,14 @@ export default function TodaySection({ data, language }: { data: TodayData; lang
           <DailyGameCard state={dailyQuiz} kind="quiz" artwork={gameArtworkKeys("alleskenner")} title={t("today.dailyQuiz.title", { name: t("pages.alleskenner") })} statusKey={quizStatus} language={language} />
         )}
       </div>
+      {dayComplete && (
+        <div className={`${surfaceCard} mt-3 flex items-center justify-between gap-4 p-4 sm:mt-4 sm:p-5`}>
+          <p className="max-w-md text-sm font-semibold leading-relaxed text-vs-fg-2 sm:text-base">{t("today.dayComplete")}</p>
+          <div className="aspect-[512/468] w-[clamp(6rem,28vw,7.5rem)] shrink-0 sm:w-32">
+            <MascotSlot character="novi" state="sleep" size={128} fill />
+          </div>
+        </div>
+      )}
     </section>
   );
 }

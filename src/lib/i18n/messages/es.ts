@@ -309,6 +309,7 @@ export const es: PartialMessages = {
       "night": "Buenas noches, {name}"
     },
     "streakDone": "Tu racha está asegurada por hoy.",
+    "dayComplete": "Todo está listo por hoy. Es hora de descansar un poco.",
     "streakKeep": "Estudia hoy para mantener tu racha de {n} días.",
     "streakKeepOne": "Estudia hoy y serán dos días seguidos.",
     "streakStart": "Empieza hoy una nueva racha.",

@@ -7,6 +7,7 @@ import { MASCOT_CHARACTERS, MASCOT_STATES, mascotStates, registeredStaticMascots
 
 const PUBLIC = path.join(path.dirname(fileURLToPath(import.meta.url)), "..", "public");
 const STATIC_DIR = path.join(PUBLIC, "mascots", "static");
+const FIGMA_NOVI_DIR = path.join(PUBLIC, "mascots", "figma", "novi");
 
 // Breedte en hoogte uit de WebP-header (VP8X, VP8L of VP8), zodat de
 // geregistreerde afmetingen altijd met het echte bestand overeenkomen.
@@ -54,4 +55,25 @@ test("zonder bestand is er geen asset (en dus geen vervanger)", () => {
   assert.equal(staticMascotAsset("family", "celebrate"), null, "family-celebrate is gereserveerd en heeft nog geen asset");
   assert.equal(staticMascotPath("novi", "greeting"), "/mascots/static/novi/novi-greeting.webp");
   assert.equal(staticMascotPath("family", "welcome"), "/mascots/static/family/family-welcome.webp");
+});
+
+test("Figma-kopieën van alle Novi-states volgen bron, formaat en verhouding", () => {
+  const expectedFiles = MASCOT_STATES.map((state) => `novi-${state}.webp`).sort();
+  assert.deepEqual(readdirSync(path.join(FIGMA_NOVI_DIR, "512")).sort(), expectedFiles);
+  assert.deepEqual(readdirSync(path.join(FIGMA_NOVI_DIR, "256")).sort(), expectedFiles);
+
+  for (const state of MASCOT_STATES) {
+    const source = path.join(STATIC_DIR, "novi", `novi-${state}.webp`);
+    const copy512 = path.join(FIGMA_NOVI_DIR, "512", `novi-${state}.webp`);
+    const copy256 = path.join(FIGMA_NOVI_DIR, "256", `novi-${state}.webp`);
+    const sourceSize = webpSize(source);
+    const size512 = webpSize(copy512);
+    const size256 = webpSize(copy256);
+
+    assert.deepEqual(size512, sourceSize, `${state}: 512-kopie veranderde de canvasmaat`);
+    assert.deepEqual(readFileSync(copy512), readFileSync(source), `${state}: 512-kopie is niet byte-identiek aan productie`);
+    assert.equal(Math.max(size256.width, size256.height), 256, `${state}: 256-export heeft niet de bedoelde langste zijde`);
+    assert.equal(size256.width * sourceSize.height, size256.height * sourceSize.width, `${state}: 256-export veranderde de verhouding`);
+    assert.ok(size256.width <= sourceSize.width && size256.height <= sourceSize.height, `${state}: Figma-export is opgeschaald`);
+  }
 });

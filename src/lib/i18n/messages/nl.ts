@@ -247,6 +247,7 @@ export const nl = {
       night: "Goedenacht, {name}",
     },
     streakDone: "Je reeks is voor vandaag binnen.",
+    dayComplete: "Alles voor vandaag is afgerond. Tijd om even uit te rusten.",
     streakKeep: "Studeer vandaag en houd je reeks van {n} dagen vast.",
     streakKeepOne: "Studeer vandaag en maak er twee dagen van.",
     streakStart: "Begin vandaag aan een nieuwe reeks.",

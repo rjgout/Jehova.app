@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/session";
 import { isEmailConfigured } from "@/lib/email";
-import { getTodayData } from "@/lib/today";
+import { getTodayData, isTodayComplete } from "@/lib/today";
 import Greeting from "@/components/today/Greeting";
 import OpenActions from "@/components/today/OpenActions";
 import ContinueSection from "@/components/today/ContinueSection";
@@ -34,13 +34,15 @@ export default async function DashboardPage() {
   const serverNow = Date.now();
   const timeZone = userTimeZone(user);
   const countdownVisible = user.conferenceCountdownEnabled && shouldShowGeneralConferenceCountdown(new Date(serverNow), timeZone);
+  const dayComplete = isTodayComplete(data);
+  const showRestState = dayComplete && Boolean(data.dailyText || data.wordGame || data.dailyQuiz);
   // Aantal blokken in de hoofdkolom: de sociale kolom overspant op desktop
   // precies zoveel rijen (lege extra rijen zouden anders ruimte kosten).
   const mainBlocks = 1 + (countdownVisible ? 1 : 0) + (data.actions.length > 0 ? 1 : 0) + (data.continueItems.length > 0 ? 1 : 0) + (data.discover.length > 0 ? 1 : 0);
 
   return (
     <div className="vs-motion mx-auto flex max-w-5xl flex-col gap-8 sm:gap-10">
-      <Greeting data={data} language={language} />
+      <Greeting data={data} language={language} showMascot={!showRestState} />
       <div className="grid grid-cols-1 gap-8 sm:gap-10 lg:grid-cols-[minmax(0,1fr)_20rem] lg:gap-x-8 lg:gap-y-10">
         {/* Vaste plek: direct boven "Wacht op jou". Rendert zelf niets (dus
             ook geen lege rij of marge) als hij niet zichtbaar is. */}
@@ -56,7 +58,7 @@ export default async function DashboardPage() {
           </div>
         )}
         <div className="min-w-0 lg:col-start-1">
-          <TodaySection data={data} language={language} />
+          <TodaySection data={data} language={language} dayComplete={showRestState} />
         </div>
         <div
           className={`min-w-0 lg:col-start-2 lg:row-start-1 lg:self-start lg:sticky lg:top-[calc(var(--header-height,4.5rem)+1.5rem)] ${ROW_SPANS[mainBlocks]}`}
@@ -65,7 +67,7 @@ export default async function DashboardPage() {
         </div>
         {data.discover.length > 0 && (
           <div className="min-w-0 lg:col-start-1">
-            <DiscoverySection items={data.discover} language={language} />
+            <DiscoverySection items={data.discover} language={language} showMascot={!showRestState} />
           </div>
         )}
       </div>

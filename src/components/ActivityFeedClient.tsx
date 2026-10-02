@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import UserAvatar from "@/components/UserAvatar";
 import { useT, useUiLanguage } from "@/components/I18nProvider";
 import { getLanguage } from "@/lib/languages";
+import MascotSlot from "@/components/versado/MascotSlot";
 
 const REACTIONS = ["🫶🏻", "❤️", "🎉", "🔥", "🙌"] as const;
 
@@ -79,7 +80,12 @@ export default function ActivityFeedClient() {
       </div>
 
       {items.length === 0 ? (
-        <div className="card text-center text-slate-500 dark:text-slate-400">{t("activityFeed.empty")}</div>
+        <div className="card flex flex-col items-center gap-2 text-center text-slate-500 dark:text-slate-400">
+          <div className="aspect-[512/468] w-[clamp(6rem,28vw,7.5rem)] shrink-0 sm:w-32">
+            <MascotSlot character="novi" state="idle" size={128} fill />
+          </div>
+          <p>{t("activityFeed.empty")}</p>
+        </div>
       ) : (
         <div className="flex flex-col gap-2.5">
           {items.map((item) => {

@@ -16,6 +16,7 @@ import ReadAloudPlayer from "@/components/ReadAloudPlayer";
 import { useReadAloudPlayer } from "@/lib/readAloudPlayerContext";
 import { chapterTerm, type ChapterTerm } from "@/lib/chapterTerm";
 import { ContentStatusLine, LongChapterNotice, type ReadState } from "@/components/learning/ContentStatus";
+import MascotSlot from "@/components/versado/MascotSlot";
 
 export type ExerciseType = "FILL_BLANK" | "WORD_BANK" | "TRUE_FALSE" | "MULTIPLE_CHOICE" | "SEQUENCE" | "IMAGE_CHOICE";
 
@@ -676,12 +677,14 @@ export function ExerciseCard({
           : t("lesson.wrongAnswer", { answer: formatCorrectAnswer(exercise.type, correctAnswer ?? [], t) })}
     </p>
   );
+  const mascotReaction = <ExerciseMascotReaction checked={checked} correct={wasCorrect} />;
 
   if (exercise.type === "TRUE_FALSE") {
     return (
       <div className="card flex flex-col gap-5">
         <p className="text-xs font-bold uppercase text-slate-400 dark:text-slate-500">{exercise.verseRef}</p>
         {showHint && <HintControl exercise={exercise} checked={checked} />}
+        {mascotReaction}
         <p className="text-xl leading-relaxed dark:text-slate-100">{exercise.prompt}</p>
         <div className="flex gap-3">
           {(["true", "false"] as const).map((value) => {
@@ -744,6 +747,7 @@ export function ExerciseCard({
       <div className="card flex flex-col gap-5">
         <p className="text-xs font-bold uppercase text-slate-400 dark:text-slate-500">{exercise.verseRef}</p>
         {showHint && <HintControl exercise={exercise} checked={checked} />}
+        {mascotReaction}
         <p className="text-xl leading-relaxed dark:text-slate-100">
           {promptParts.map((part, i) => (
             <span key={i}>
@@ -800,6 +804,7 @@ export function ExerciseCard({
       <div className="card flex flex-col gap-5">
         <p className="text-xs font-bold uppercase text-slate-400 dark:text-slate-500">{exercise.verseRef}</p>
         {showHint && <HintControl exercise={exercise} checked={checked} />}
+        {mascotReaction}
         <p className="text-xl leading-relaxed dark:text-slate-100">{exercise.prompt}</p>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {options.map((opt) => {
@@ -845,6 +850,7 @@ export function ExerciseCard({
       <div className="card flex flex-col gap-5">
         <p className="text-xs font-bold uppercase text-slate-400 dark:text-slate-500">{exercise.verseRef}</p>
         {showHint && <HintControl exercise={exercise} checked={checked} />}
+        {mascotReaction}
         <p className="text-xl leading-relaxed dark:text-slate-100">{exercise.prompt}</p>
         <div className="grid grid-cols-2 gap-3">
           {options.map((opt) => {
@@ -891,6 +897,7 @@ export function ExerciseCard({
     <div className="card flex flex-col gap-5">
       <p className="text-xs font-bold uppercase text-slate-400 dark:text-slate-500">{exercise.verseRef}</p>
       {showHint && <HintControl exercise={exercise} checked={checked} />}
+      {mascotReaction}
       <p className="text-xl leading-relaxed dark:text-slate-100">{exercise.prompt}</p>
 
       <div className="flex flex-wrap gap-2 min-h-[3rem] p-3 rounded-2xl bg-slate-50 dark:bg-slate-900 border-2 border-dashed border-slate-200 dark:border-slate-700">
@@ -936,6 +943,24 @@ export function ExerciseCard({
         onNext={next}
         onSkip={onSkip}
       />
+    </div>
+  );
+}
+
+function ExerciseMascotReaction({ checked, correct }: { checked: boolean; correct: boolean }) {
+  const state = checked ? (correct ? "success" : "encourage") : "thinking";
+  return (
+    <div className="mx-auto aspect-[512/468] w-[clamp(5.5rem,24vw,6.75rem)] shrink-0 sm:w-28 lg:w-32">
+      <MascotSlot character="novi" state={state} size={128} fill />
+    </div>
+  );
+}
+
+export function LessonResultMascot({ scorePercent, celebrate = false, successThreshold = 50 }: { scorePercent: number; celebrate?: boolean; successThreshold?: number }) {
+  const state = celebrate ? "celebrate" : scorePercent >= successThreshold ? "success" : "encourage";
+  return (
+    <div className="aspect-[512/468] w-[clamp(6.875rem,30vw,8.125rem)] shrink-0 sm:w-36">
+      <MascotSlot character="novi" state={state} size={144} fill />
     </div>
   );
 }
@@ -999,7 +1024,7 @@ function SummaryScreen({
   const t = useT();
   return (
     <div className="max-w-md mx-auto card flex flex-col items-center gap-4 text-center animate-pop">
-      <div className="text-5xl">{summary.scorePercent >= 80 ? "🎉" : summary.scorePercent >= 50 ? "👍" : "💪"}</div>
+      <LessonResultMascot scorePercent={summary.scorePercent} celebrate={summary.newAchievements.length > 0} />
       <h2 className="text-2xl font-extrabold text-brand-800 dark:text-brand-300">
         {t("lesson.score", { correct: summary.correctCount, total: summary.total, pct: summary.scorePercent })}
       </h2>

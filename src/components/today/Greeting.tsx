@@ -6,8 +6,9 @@ import MascotSlot from "@/components/versado/MascotSlot";
 import type { TodayData } from "@/lib/today";
 
 // Kop van Vandaag: datum, persoonlijke begroeting en in één zin waar je
-// reeks staat. Rechts de plek voor je persoonlijke metgezel (later).
-export default function Greeting({ data, language }: { data: TodayData; language: string }) {
+// reeks staat. Novi vormt rechts een herkenbare metgezel zonder dat lange
+// namen of de statusregel daarvoor hoeven te worden afgekapt.
+export default function Greeting({ data, language, showMascot = true }: { data: TodayData; language: string; showMascot?: boolean }) {
   const t = getT(language);
   const locale = getLanguage(language).intlLocale;
   const date = new Intl.DateTimeFormat(locale, { weekday: "long", day: "numeric", month: "long", timeZone: data.timeZone }).format(new Date());
@@ -21,7 +22,7 @@ export default function Greeting({ data, language }: { data: TodayData; language
         : t("today.streakStart");
 
   return (
-    <header className="vs-rise flex items-start justify-between gap-4">
+    <header className="vs-rise grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 min-[390px]:gap-4">
       <div className="min-w-0">
         <p className="text-sm font-semibold first-letter:uppercase text-vs-fg-3">{date}</p>
         <h1 className="mt-1 text-[1.75rem] font-extrabold leading-tight tracking-tight text-vs-fg sm:text-3xl">
@@ -32,8 +33,12 @@ export default function Greeting({ data, language }: { data: TodayData; language
           {status}
         </p>
       </div>
-      {/* NOVI begroet (novi/greeting via het mascotteregister). */}
-      <MascotSlot character="novi" state="greeting" size={72} className="shrink-0" />
+      {showMascot && (
+        // Het vaste canvas houdt de compositie stabiel; Novi zelf blijft volledig in beeld.
+        <div className="aspect-[512/468] w-[clamp(5.5rem,26vw,7rem)] shrink-0 sm:w-32 lg:w-36">
+          <MascotSlot character="novi" state="greeting" size={144} fill />
+        </div>
+      )}
     </header>
   );
 }

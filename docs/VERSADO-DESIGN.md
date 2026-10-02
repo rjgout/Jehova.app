@@ -92,10 +92,8 @@ lijst hierboven nog volledig.
   bovenin de sociale kolom op Vandaag (`today/TogetherBlock.tsx`). Gedeelde
   onderdelen staan in `src/components/social/`.
 - **Mascottes**: de uitrol is begonnen, met NOVI als eerste (zie
-  "Mascottes" hieronder). In gebruik: `novi`/`greeting` (Vandaag) en
-  `family`/`welcome` (publieke homepage). Beschikbaar maar nog nergens
-  ingezet: `novi`/`playing`, `success`, `encourage`, `thinking` en
-  `discovery`.
+  "Mascottes" hieronder). Alle tien Novi-states zijn functioneel in gebruik;
+  `family`/`welcome` blijft de introductie op de publieke homepage.
   `versado/MascotSlot.tsx` is de enige interface; het register in
   `src/lib/mascots.ts` kent de bestanden in `public/mascots/static/`. Zolang
   een asset ontbreekt, rendert een slot niets.
@@ -221,10 +219,12 @@ accessoires direct herkenbaar zijn.
 
 ### Consistentie
 
-De goedgekeurde Versado character sheet en de goedgekeurde Novi-set in
-`public/mascots/static/novi/` zijn de visuele bron van waarheid. Een nieuwe
-asset mag een personage niet opnieuw interpreteren. Tussen alle afbeeldingen
-blijven gelijk:
+De definitieve tekstuele bron staat in
+`docs/VERSADO-CHARACTER-CANON.md`. Goedgekeurde sheets in
+`public/mascots/references/` vormen de visuele samenvatting; de goedgekeurde
+Novi-set in `public/mascots/static/novi/` is de concrete pose-referentie. Een
+nieuwe asset mag een personage niet opnieuw interpreteren. Tussen alle
+afbeeldingen blijven gelijk:
 - lichaamsverhoudingen, grootte en leeftijdsindruk;
 - hoofdvorm, snuit, ogen en oren;
 - vachtpatroon en de navy/crème/oranje kleurverdeling;
@@ -247,8 +247,10 @@ Een state is een functionele toestand in Versado, niet zomaar een emotie.
   een nieuwe state is een bewuste ontwerpkeuze.
 - **Bestanden.** `public/mascots/static/<personage>/<personage>-<state>.webp`:
   transparante WebP, kleine letters, zonder tekst, tekstballon of
-  achtergrond in de afbeelding. Zie `public/mascots/README.md`. Originele
-  bronbestanden horen niet in `public/`.
+  achtergrond in de afbeelding. Zie `public/mascots/README.md`. Ruwe
+  generatie- en werkbestanden horen niet in `public/`; alleen goedgekeurde
+  referenties, productie-assets, Figma-kopieën en toekomstige beheerde
+  Rive-bronnen volgen daar de vastgelegde hiërarchie.
 - **Registreren.** Een asset staat pas in het register als het bestand
   bestaat. Ontbreekt een asset, dan rendert het slot niets: geen emoji, geen
   ander personage, geen placeholder. `npm run test:mascots` bewaakt dat

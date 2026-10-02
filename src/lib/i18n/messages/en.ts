@@ -299,6 +299,7 @@ export const en: PartialMessages = {
       night: "Hello, night owl {name}",
     },
     streakDone: "Your streak is safe for today.",
+    dayComplete: "Everything for today is complete. Time to get some rest.",
     streakKeep: "Study today to keep your {n}-day streak.",
     streakKeepOne: "Study today to make it two days in a row.",
     streakStart: "Start a new streak today.",

@@ -101,6 +101,15 @@ export interface TodayData {
   discover: DiscoverItem[];
 }
 
+/** Alleen afgerond als alle expliciete dagelijkse verplichtingen klaar zijn. */
+export function isTodayComplete(data: Pick<TodayData, "streak" | "actions" | "wordGame" | "dailyQuiz">): boolean {
+  return (
+    data.streak.studiedToday &&
+    data.actions.length === 0 &&
+    [data.wordGame, data.dailyQuiz].every((game) => game === null || game.status === "done")
+  );
+}
+
 const MAX_ACTIONS = 6;
 const MAX_CONTINUE = 8;
 const MAX_DISCOVER = 6;
