@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import type { LeagueTier } from "@prisma/client";
-import { TIER_ICONS } from "@/lib/leagues";
+import DivisionEmblem from "@/components/versado/DivisionEmblem";
 import { useT } from "@/components/I18nProvider";
 import type { TFunction } from "@/lib/i18n/core";
 import UserAvatar from "@/components/UserAvatar";
@@ -242,7 +242,7 @@ function NationalRow({ e }: { e: NationalEntry }) {
         </span>
         {e.tier && (
           <span className="shrink-0" title={t(`tiers.${e.tier}`)}>
-            {TIER_ICONS[e.tier]}
+            <DivisionEmblem tier={e.tier} label={t(`tiers.${e.tier}`)} className="h-7 w-7" />
           </span>
         )}
       </div>

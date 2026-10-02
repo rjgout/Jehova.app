@@ -2,11 +2,12 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Shield } from "lucide-react";
 import SystemIcon from "@/components/versado/SystemIcon";
 import { onXpChanged } from "@/lib/xpBroadcast";
 import { useT, useUiLanguage } from "@/components/I18nProvider";
 import { getLanguage } from "@/lib/languages";
+import DivisionEmblem from "@/components/versado/DivisionEmblem";
+import type { LeagueTier } from "@prisma/client";
 import type { MessageKey } from "@/lib/i18n/core";
 
 // Beloningsstatus in de header: reeks, XP en divisie. Bewust prominent (dit
@@ -22,7 +23,7 @@ export default function NavUserBadges({
   streak: number;
   xp: number;
   studiedToday: boolean;
-  tier: string | null;
+  tier: LeagueTier | null;
 }) {
   // De props zijn de server-gerenderde waarde bij laden van de pagina —
   // vanaf dan houdt deze component ze zelf bij, zodat een XP-wijziging
@@ -66,10 +67,10 @@ export default function NavUserBadges({
           href="/competition"
           title={t(`tiers.${tier}` as MessageKey)}
           aria-label={t("header.divisionAria", { name: t(`tiers.${tier}` as MessageKey) })}
-          // Op de kleinste schermen alleen het schild: de naam past er niet naast.
+          // Op de kleinste schermen alleen het embleem: de naam past er niet naast.
           className={`${chip} hidden min-[380px]:flex text-vs-league hover:bg-vs-league-soft`}
         >
-          <Shield className="h-[18px] w-[18px]" strokeWidth={2.4} aria-hidden />
+          <DivisionEmblem tier={tier} className="h-6 w-6" />
           <span className="hidden sm:inline">{t(`tiers.${tier}` as MessageKey)}</span>
         </Link>
       )}

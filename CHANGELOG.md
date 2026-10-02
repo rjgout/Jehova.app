@@ -4,6 +4,10 @@ Alle belangrijke gebruikersgerichte wijzigingen en releases worden hieronder bij
 
 ## Nog niet uitgebracht
 
+- Nieuwe afbeeldingen van Novi, Varo en Vera samen: op de homepagina en bij
+  het welkom in de app.
+- Elke divisie heeft nu een eigen embleem, van Zaad tot Eeuwigheid: in de
+  kopbalk, op de competitiepagina, in de ranglijst en op je profiel.
 - Kies je eigen gids: Novi, Varo of Vera. Je kiest bij de start van de app
   en kunt later wisselen in je profiel ("Jouw gids"). Je gids begroet je op
   Vandaag, denkt mee bij oefeningen, juicht bij een goed antwoord, moedigt

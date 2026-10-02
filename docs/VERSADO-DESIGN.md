@@ -292,12 +292,17 @@ Een state is een functionele toestand in Versado, niet zomaar een emotie.
     van state of gids niet verspringt.
   - Publieke homepage, als kennismaking direct ná de kernbelofte en de
     aanmeldknoppen: `family`/`welcome`, met de namen en eigenschappen als gewone tekst
-    eronder (het beeld zelf is decoratief, `alt=""`). Er zijn drie
-    varianten; elke lading toont de volgende (`variant` op `MascotSlot`,
-    teller in `src/lib/mascotRotation.ts`, zonder cookie of browseropslag).
-- **Personage-specifieke states.** `family` heeft een eigen, kleine lijst
-  (`welcome`, `celebrate`); de states van NOVI, VARO en VERA gelden daar
-  niet. Een combinatie als `family` + `greeting` is een typefout
+    eronder (het beeld zelf is decoratief, `alt=""`). Heeft `welcome` ooit
+    meerdere varianten, dan toont elke lading de volgende (`variant` op
+    `MascotSlot`, teller in `src/lib/mascotRotation.ts`, zonder cookie of
+    browseropslag); nu is er één.
+  - Onboarding, eerste stap ("Welkom!"): `family`/`huddle`, vóór de keuze
+    van de eigen gids.
+- **Personage-specifieke states.** `family` heeft een eigen lijst
+  (`welcome`, `hero`, `huddle`, `celebrate`, `discovery`, `learning`,
+  `playing`, `progress`, `support`, `rest`; betekenis en gebruik in
+  `public/mascots/README.md`); de persoonlijke states van NOVI, VARO en VERA
+  gelden daar niet. Een combinatie als `family` + `greeting` is een typefout
   (`MascotTarget` in `src/lib/mascots.ts`).
 - **Maat.** Een slot behoudt altijd de verhouding van de asset
   (`h-auto` + `object-contain`): nooit afsnijden of uitrekken. `size` is een
@@ -316,10 +321,13 @@ Een state is een functionele toestand in Versado, niet zomaar een emotie.
   - `family-welcome` is de algemene introductie van VARO, VERA en NOVI
     samen. Hij hoort op plekken waar de mascottefamilie zelf wordt
     voorgesteld, zoals de publieke homepage.
-  - `family-celebrate` (nog geen asset) is uitsluitend voor betekenisvolle
-    momenten in de app: een belangrijke mijlpaal, een afgeronde cursus, een
-    bijzondere prestatie, promotie in een divisie, een lange reeks of een
-    belangrijk gezamenlijk spelmoment.
+  - `family-celebrate` is uitsluitend voor betekenisvolle momenten in de
+    app: een belangrijke mijlpaal, een afgeronde cursus, een bijzondere
+    prestatie, promotie in een divisie, een lange reeks of een belangrijk
+    gezamenlijk spelmoment. Zwaarder dan de persoonlijke `celebrate`; er is
+    nog geen scherm voor zo'n moment, dus nog niet in gebruik.
+  - De familie is nooit de persoonlijke gids: een goed antwoord of de
+    begroeting op Vandaag blijft de gekozen gids.
   - Dat `family-welcome` bestaat, betekent niet dat de familie overal als
     decoratie mag verschijnen.
 - **Namen en vertalingen.** De namen VARO, VERA en NOVI (in de app: Varo,
@@ -465,6 +473,15 @@ Gecontroleerd in de code; bestandsnamen om snel terug te vinden.
 - `/competition` (`LeaderboardClient`): tabbladen divisie, vrienden,
   nationaal; `DivisionScroller` voor de divisies. Weekelijkse promotie en
   degradatie in `scheduler.ts`/`leagues.ts`, seizoenen.
+- Divisie-emblemen: acht officiële emblemen in `public/icons/divisions/`
+  (`<divisie>.webp`, 384x384, bv. `bronze.webp` voor Zaad), centraal
+  gekoppeld in `TIER_EMBLEMS` (`src/lib/leagues.ts`) en getoond via
+  `versado/DivisionEmblem.tsx`: in de kopbalk (24 px), de nationale
+  ranglijst (28 px, met de divisienaam als toegankelijke naam), de
+  divisiescroller (40/64 px, hogere divisies als silhouet), het profiel en de
+  competitiedetails (28 tot 80 px) en de seizoenen. Naast een zichtbare
+  divisienaam is het embleem decoratief. Geen emoji of eigen pad per
+  component.
 - XP: `src/lib/xp.ts` (bron van waarheid, `XPTransaction`),
   competitie-XP `competitionXp.ts`, historie `/xp`.
 - Reeks: `src/lib/streak.ts`, `/streak`, freezes (ook automatisch ingezet
@@ -529,8 +546,8 @@ Gecontroleerd in de code; bestandsnamen om snel terug te vinden.
 - Emoji als data in de database: `Achievement.icon`, `ContentCollection.icon`,
   `User.avatarEmoji` (keuze van de gebruiker), en als kopie in
   `ActivityFeedItem.achievementIcon`.
-- Goed voorbereid: `DivisionScroller` houdt het divisie-icoon bewust
-  vervangbaar (alleen `TierIcon` hoeft later een afbeelding te tonen).
+- Divisies hebben officiële emblemen (zie "Competitie, XP, reeks,
+  prestaties").
 - Geen illustratie- of animatiebibliotheek. Mascottes lopen via
   `MascotSlot` met statische WebP (zie "Mascottes"); beweging valt onder
   `vs-motion` (`prefers-reduced-motion`).

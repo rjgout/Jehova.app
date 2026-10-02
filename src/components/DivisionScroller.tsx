@@ -2,14 +2,14 @@
 
 import { useLayoutEffect, useRef } from "react";
 import type { LeagueTier } from "@prisma/client";
-import { TIER_ICONS, TIER_ORDER } from "@/lib/leagues";
+import { TIER_ORDER } from "@/lib/leagues";
+import DivisionEmblem from "@/components/versado/DivisionEmblem";
 import { useT } from "@/components/I18nProvider";
 
 type TierState = "current" | "reached" | "previously" | "locked";
 
-// De "schaduw" is bewust een CSS-filter op het icoon zelf, niet een eigen
-// kleur of ander icoon: zo werkt hij hetzelfde op een emoji nu en op een
-// afbeelding later (alleen TierIcon hoeft dan een <img> te renderen).
+// De "schaduw" is bewust een CSS-filter op het embleem zelf, niet een eigen
+// kleur of ander beeld.
 // brightness-0 maakt er een silhouet van; bij "eerder behaald" blijft er
 // bewust wat kleur over.
 const STATE_FILTER: Record<TierState, string> = {
@@ -21,9 +21,7 @@ const STATE_FILTER: Record<TierState, string> = {
 
 function TierIcon({ tier, state, className = "" }: { tier: LeagueTier; state: TierState; className?: string }) {
   return (
-    <span className={`block leading-none select-none ${STATE_FILTER[state]} ${className}`} aria-hidden>
-      {TIER_ICONS[tier]}
-    </span>
+    <DivisionEmblem tier={tier} className={`block select-none ${STATE_FILTER[state]} ${className}`} />
   );
 }
 
@@ -75,7 +73,7 @@ export default function DivisionScroller({ current, highest }: { current: League
               className="snap-center shrink-0 w-24 flex flex-col items-center gap-1.5"
               aria-current={isCurrent ? "true" : undefined}
             >
-              <TierIcon tier={tier} state={state} className={isCurrent ? "text-6xl drop-shadow-lg" : "text-4xl"} />
+              <TierIcon tier={tier} state={state} className={isCurrent ? "h-16 w-16 drop-shadow-lg" : "h-10 w-10"} />
               <span
                 className={`text-center leading-tight ${
                   isCurrent

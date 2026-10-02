@@ -122,11 +122,12 @@ geïnstalleerd en er worden nu geen `.riv`-bestanden bijgehouden. Zie
   - Novi, Varo en Vera: alle tien states, via `PersonalMascot` in gebruik als
     persoonlijke gids (begroeting, oefening en uitslag, spel, ontdekken,
     lezen, lege en ruststatussen);
-  - family: `welcome` in drie varianten (`family-welcome-1` t/m `-3`, 1200x800,
-    bron 1536x1024 in `references/family/`); de publieke homepage toont bij
-    elke lading de volgende (`src/lib/mascotRotation.ts`). Bronbestand
-    `versado-family-4.png` staat ook in `references/family/` maar is nog
-    niet in gebruik.
+  - family: tien composities (zie "States voor family"), langste zijde
+    1200 px met de verhouding van de bron (meest 1200x800, `huddle`
+    1200x1200, `support` 1200x1000). In gebruik: `welcome` op de publieke
+    homepage, `huddle` bij het welkom van de onboarding. De oudere
+    welkomstbeelden (`versado-family-1` t/m `-4`) staan alleen nog als bron
+    in `references/family/`.
 - Niet in een bestandsnaam: `v1`, `v2`, `final` of synoniemen voor een
   bestaande state. Geen nieuwe states zonder bewuste ontwerpkeuze.
 - Niet in de afbeelding: tekst, tekstballonnen of een achtergrond. Tekst
@@ -178,14 +179,29 @@ tekst in de interface: een fout antwoord is nooit alleen te zien aan
 
 ### States voor family
 
-| state | betekenis |
-|---|---|
-| `welcome` | de algemene introductie van de drie mascottes samen |
-| `celebrate` | gereserveerd voor betekenisvolle momenten in de app (mijlpaal, cursus afgerond, bijzondere prestatie, promotie, lange reeks, gezamenlijk spelmoment); nog geen bestand |
+De familie is **geen persoonlijke gids** en heeft dus niet de tien
+persoonlijke states. Persoonlijke momenten (goed antwoord, begroeting op
+Vandaag, ...) blijven altijd de gekozen gids via `PersonalMascot`; de familie
+is alleen voor bewust gedeelde Versado-momenten.
 
-`family-welcome` en `family-celebrate` zijn dus nadrukkelijk verschillende
-afbeeldingen met een verschillend doel. Dat `family-welcome` bestaat,
-betekent niet dat de familie overal als decoratie mag verschijnen.
+| state | betekenis | in gebruik |
+|---|---|---|
+| `welcome` | de algemene introductie van de drie samen | publieke homepage (en daarmee onder de vriendenuitnodiging) |
+| `hero` | promotionele familieweergave | nog niet |
+| `huddle` | compact gezamenlijk welkom | onboarding, eerste stap ("Welkom!") |
+| `celebrate` | alleen een echt grote Versado-mijlpaal (cursus afgerond, promotie, lange reeks, belangrijk gezamenlijk spelmoment) | nog niet: zo'n scherm bestaat nog niet |
+| `discovery` | samen iets ontdekken | nog niet |
+| `learning` | samen leren of studeren | nog niet |
+| `playing` | samen spelen | nog niet |
+| `progress` | grotere voortgang of ontwikkeling | nog niet |
+| `support` | gezamenlijke motivatie | nog niet |
+| `rest` | rustige gezamenlijke eindstatus | nog niet |
+
+Beloningshiërarchie, om beloningsinflatie te voorkomen: gewoon goed antwoord
+→ persoonlijke `success`; groter individueel moment → persoonlijke
+`celebrate`; echt grote Versado-mijlpaal → `family`/`celebrate`. Een state
+die bestaat is geen reden om hem te gebruiken: alleen op een plek waar de
+gedeelde betekenis echt klopt.
 
 ## Een afbeelding toevoegen
 

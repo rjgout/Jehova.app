@@ -5,7 +5,7 @@ import Link from "next/link";
 import LanguageSettings from "@/components/LanguageSettings";
 import { useRouter, useSearchParams } from "next/navigation";
 import type { LeagueTier } from "@prisma/client";
-import { TIER_ICONS } from "@/lib/leagues";
+import DivisionEmblem from "@/components/versado/DivisionEmblem";
 import { formatTag, firstGrapheme, isSingleEmoji } from "@/lib/handle";
 import { enableBrowserPush, disableBrowserPush, isPushSupported } from "@/lib/pushClient";
 import { getSocket } from "@/lib/socketClient";
@@ -505,7 +505,7 @@ export default function ProfileClient() {
               </div>}
             </div>
           </div>
-          {data.tier && <span className="shrink-0 rounded-full bg-black/15 px-3 py-1.5 text-sm font-bold text-gold-400">{TIER_ICONS[data.tier]} {tier(data.tier)}</span>}
+          {data.tier && <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-black/15 py-1 pl-1.5 pr-3 text-sm font-bold text-gold-400"><DivisionEmblem tier={data.tier} className="h-7 w-7" />{tier(data.tier)}</span>}
         </div>
         <div className="mt-5 grid grid-cols-4 divide-x divide-white/15 rounded-2xl bg-black/10 py-2">
           <CompactHeroStat value={<><SystemIcon kind="streak" className="h-4 w-4" fill="currentColor" aria-hidden /> {data.currentStreak}</>} label={t("profile.streak")} href="/streak" />
@@ -534,7 +534,7 @@ export default function ProfileClient() {
             huidige divisie af in losse woorden. */}
         <button type="button" onClick={() => openView("competition")} className="mt-3 flex min-h-12 w-full items-center gap-3 rounded-xl px-2 py-2 text-left hover:bg-vs-subtle">
           <span className="flex min-w-0 flex-1 flex-col gap-1 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
-            <span className="min-w-0"><span className="block font-bold text-vs-fg">{data.tier ? `${TIER_ICONS[data.tier]} ${tier(data.tier)}` : "—"}</span><span className="block text-sm text-vs-fg-2">{data.groupPosition ? `#${data.groupPosition} · ` : ""}{t("profile.thisWeek")}</span></span>
+            <span className="flex min-w-0 items-center gap-3">{data.tier && <DivisionEmblem tier={data.tier} className="h-12 w-12" />}<span className="min-w-0"><span className="block font-bold text-vs-fg">{data.tier ? tier(data.tier) : "—"}</span><span className="block text-sm text-vs-fg-2">{data.groupPosition ? `#${data.groupPosition} · ` : ""}{t("profile.thisWeek")}</span></span></span>
             <span className="text-sm font-bold text-vs-fg-2">{data.bestTierEver ? `${t("profile.bestTier")}: ${tier(data.bestTierEver)}` : "—"}</span>
           </span>
           <ChevronRight className="h-5 w-5 shrink-0 text-vs-fg-2" aria-hidden />
@@ -639,9 +639,9 @@ function CompactHeroStat({ value, label, href }: { value: ReactNode; label: stri
 
 function CompetitionDetail({ data, tier, t }: { data: ProfileData; tier: (value: LeagueTier) => string; t: Translate }) {
   return <div className="flex flex-col gap-4">
-    <section className="rounded-2xl border border-gold-400/30 bg-gold-50 p-4 dark:bg-slate-800"><div className="grid grid-cols-2 gap-3"><div><p className="text-2xl font-extrabold text-gold-700 dark:text-gold-300">{data.tier ? `${TIER_ICONS[data.tier]} ${tier(data.tier)}` : "—"}</p><p className="text-xs font-bold uppercase text-vs-fg-2">{data.groupPosition ? `#${data.groupPosition} · ` : ""}{t("profile.thisWeek")}</p></div><div className="text-right"><p className="text-lg font-extrabold text-gold-700 dark:text-gold-300">{data.bestTierEver ? `${TIER_ICONS[data.bestTierEver]} ${tier(data.bestTierEver)}` : "—"}</p><p className="text-xs font-bold uppercase text-vs-fg-2">{t("profile.bestTier")}</p></div></div></section>
+    <section className="rounded-2xl border border-gold-400/30 bg-gold-50 p-4 dark:bg-slate-800"><div className="grid grid-cols-2 gap-3"><div className="flex flex-col items-start gap-1">{data.tier && <DivisionEmblem tier={data.tier} className="h-20 w-20" />}<p className="text-2xl font-extrabold text-gold-700 dark:text-gold-300">{data.tier ? tier(data.tier) : "—"}</p><p className="text-xs font-bold uppercase text-vs-fg-2">{data.groupPosition ? `#${data.groupPosition} · ` : ""}{t("profile.thisWeek")}</p></div><div className="flex flex-col items-end gap-1 text-right">{data.bestTierEver && <DivisionEmblem tier={data.bestTierEver} className="h-16 w-16" />}<p className="text-lg font-extrabold text-gold-700 dark:text-gold-300">{data.bestTierEver ? tier(data.bestTierEver) : "—"}</p><p className="text-xs font-bold uppercase text-vs-fg-2">{t("profile.bestTier")}</p></div></div></section>
     <section className="bg-vs-surface rounded-2xl border border-vs-line p-4"><div className="grid grid-cols-4 gap-2 text-center"><Stat value={data.lifetimePromotions.toString()} label={t("profile.promotions")} small /><Stat value={data.lifetimeDemotions.toString()} label={t("profile.demotions")} small /><Stat value={data.competitionsWon.toString()} label={t("profile.competitions")} small /><Stat value={data.bestNationalRank ? `#${data.bestNationalRank}` : "—"} label={t("profile.nationalRank")} small /></div></section>
-    {data.seasons.length > 0 && <section className="bg-vs-surface rounded-2xl border border-vs-line p-4"><h2 className="mb-2 font-extrabold text-vs-fg">{t("pages.seasons")}</h2><div className="divide-y divide-vs-line">{data.seasons.map((season) => <div key={season.seasonIndex} className="flex items-center justify-between gap-3 py-2.5 text-sm"><span className="font-bold text-vs-fg">{t("profile.seasonN", { n: season.seasonIndex })}</span><span className="text-right text-vs-fg-2">{TIER_ICONS[season.finalTier]} {tier(season.finalTier)}{season.finalGroupPosition ? ` — #${season.finalGroupPosition}` : ""}</span></div>)}</div></section>}
+    {data.seasons.length > 0 && <section className="bg-vs-surface rounded-2xl border border-vs-line p-4"><h2 className="mb-2 font-extrabold text-vs-fg">{t("pages.seasons")}</h2><div className="divide-y divide-vs-line">{data.seasons.map((season) => <div key={season.seasonIndex} className="flex items-center justify-between gap-3 py-2.5 text-sm"><span className="font-bold text-vs-fg">{t("profile.seasonN", { n: season.seasonIndex })}</span><span className="inline-flex items-center gap-2 text-right text-vs-fg-2"><DivisionEmblem tier={season.finalTier} className="h-8 w-8" />{tier(season.finalTier)}{season.finalGroupPosition ? ` — #${season.finalGroupPosition}` : ""}</span></div>)}</div></section>}
   </div>;
 }
 

@@ -1,7 +1,8 @@
 import { mascotVariantCount } from "@/lib/mascots";
 
 // Bij elke paginalading de volgende welkomstafbeelding van de familie
-// (1, 2, 3, 1, ...). Bewust een teller op de server en niets bij de
+// (1, 2, 3, 1, ...), zodra family/welcome varianten heeft; met één beeld
+// blijft het gewoon dat beeld. Bewust een teller op de server en niets bij de
 // bezoeker: geen extra cookie of browseropslag (zie het cookiebeleid, dat
 // alleen de inlogsessie noemt). Bij meerdere bezoekers tegelijk lopen hun
 // beurten door elkaar; elke lading toont dan nog steeds de volgende. Op

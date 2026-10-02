@@ -23,15 +23,20 @@ export const TIER_LABELS: Record<LeagueTier, string> = {
   LEGEND: "Eeuwigheid",
 };
 
-export const TIER_ICONS: Record<LeagueTier, string> = {
-  BRONZE: "🌱",
-  SILVER: "🔥",
-  GOLD: "🛡️",
-  PLATINUM: "🪨",
-  DIAMOND: "👑",
-  MASTER: "⭐",
-  GRANDMASTER: "🏛️",
-  LEGEND: "✨",
+/**
+ * De officiële divisie-emblemen (public/icons/divisions/, 384x384 WebP),
+ * één per divisie. De enige plek die deze paden kent; tonen gaat via
+ * <DivisionEmblem tier /> (src/components/versado/DivisionEmblem.tsx).
+ */
+export const TIER_EMBLEMS: Record<LeagueTier, string> = {
+  BRONZE: "/icons/divisions/bronze.webp",
+  SILVER: "/icons/divisions/silver.webp",
+  GOLD: "/icons/divisions/gold.webp",
+  PLATINUM: "/icons/divisions/platinum.webp",
+  DIAMOND: "/icons/divisions/diamond.webp",
+  MASTER: "/icons/divisions/master.webp",
+  GRANDMASTER: "/icons/divisions/grandmaster.webp",
+  LEGEND: "/icons/divisions/legend.webp",
 };
 
 type Tx = Prisma.TransactionClient;
