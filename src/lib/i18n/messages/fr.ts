@@ -1637,7 +1637,7 @@ export const fr: PartialMessages = {
   },
   home: {
     tagline: "L’étude des Écritures de façon ludique et motivante.",
-    heroLine1: "Étudie le Livre de Mormon,",
+    heroLine1: "Étudie les Écritures,",
     heroLine2: "de façon ludique.",
     heroText: "Des leçons courtes, des chapitres lus à voix haute, des exercices et des jeux. Seul, avec tes amis, ta famille ou tout ton groupe.",
     signUp: "S’inscrire",
@@ -1654,11 +1654,11 @@ export const fr: PartialMessages = {
     sections: {
       learn: {
         title: "Apprendre à ton rythme",
-        intro: "Choisis comment tu parcours le Livre de Mormon. Ce que tu as déjà lu compte partout, et tu reprends là où tu t’étais arrêté.",
+        intro: "Choisis comment tu parcours les Écritures. Ce que tu as déjà lu compte partout, et tu reprends là où tu t’étais arrêté.",
       },
       play: {
         title: "Jouer",
-        intro: "Des jeux avec les mots et les récits du Livre de Mormon, seul ou ensemble.",
+        intro: "Des jeux avec les mots et les récits des Écritures, seul ou ensemble.",
       },
       together: {
         title: "Ensemble",
@@ -1672,6 +1672,16 @@ export const fr: PartialMessages = {
         title: "Partout, dans ta langue",
         intro: "Sur ton téléphone, ta tablette ou ton ordinateur, dans la langue qui te convient.",
       },
+    },
+    games: {
+      jigsaw: "Fais un puzzle avec des illustrations de récits des Écritures. Choisis le nombre de pièces.",
+      wordSearch: "Trouve des mots cachés des Écritures dans une grille toujours nouvelle. Joue sans limite ni pression.",
+      wordGame: "Devine chaque jour un mot de cinq lettres tiré des Écritures. Un nouveau mot arrive à 18 h, et il compte pour ta série.",
+      scrabble: "Un jeu de lettres avec des mots des Écritures. Défie un ami et jouez chacun votre tour, à votre rythme.",
+      alleskenner: "Une soirée quiz pour quand vous êtes ensemble : chacun joue sur son téléphone, avec ou sans maître du jeu. Gagne des secondes et ramène ton adversaire à zéro en finale.",
+      gezinsavond: "Un jeu de plateau plein d’aventure sur les Écritures pour toute la famille, ensemble à table sur un seul appareil ou chacun sur son téléphone. Amusant même sans beaucoup de connaissances.",
+      chapterGuess: "Lis le premier verset d’un chapitre et devine de quel chapitre il s’agit. Choisis ton niveau, seul ou en direct avec des amis.",
+      challenges: "Défie un ami sur un chapitre : vous jouez tous les deux quand ça vous arrange, puis vous voyez qui a le meilleur score.",
     },
     features: {
       routes: {
@@ -1688,11 +1698,11 @@ export const fr: PartialMessages = {
       },
       podcasts: {
         title: "Podcasts",
-        description: "Écoute « Geloof je dat ook? » et « De Kast van Mormon » et réponds à des questions sur chaque épisode, avec le lien vers le Livre de Mormon.",
+        description: "Écoute « Geloof je dat ook? » et « De Kast van Mormon » et réponds à des questions sur chaque épisode, avec le lien vers les Écritures.",
       },
       kids: {
         title: "Pour les enfants",
-        description: "Des récits du Livre de Mormon avec des illustrations et de courtes questions, spécialement pour les enfants.",
+        description: "Des récits des Écritures avec des illustrations et de courtes questions, spécialement pour les enfants.",
       },
       youth: {
         title: "Pour les jeunes",
@@ -1736,7 +1746,7 @@ export const fr: PartialMessages = {
       },
       languages: {
         title: "Cinq langues",
-        description: "Utilise l’application en néerlandais, anglais, allemand, français ou espagnol, et lis le Livre de Mormon dans chacune de ces langues, même dans une autre langue que celle de l’application.",
+        description: "Utilise l’application en néerlandais, anglais, allemand, français ou espagnol, et lis les Écritures dans chacune de ces langues, même dans une autre langue que celle de l’application.",
       },
       app: {
         title: "Comme une application sur ton téléphone",

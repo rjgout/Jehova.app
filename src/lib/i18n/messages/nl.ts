@@ -1641,7 +1641,7 @@ export const nl = {
   },
   home: {
     tagline: "Schriftstudie op een speelse, motiverende manier.",
-    heroLine1: "Bestudeer het Boek van Mormon,",
+    heroLine1: "Bestudeer de Schriften,",
     heroLine2: "op een speelse manier.",
     heroText: "Korte lessen, voorlezen, oefeningen en spellen. Alleen, met vrienden, met je gezin of met je hele groep.",
     signUp: "Aanmelden",
@@ -1658,11 +1658,11 @@ export const nl = {
     sections: {
       learn: {
         title: "Leren in je eigen tempo",
-        intro: "Kies zelf hoe je door het Boek van Mormon gaat. Wat je al gelezen hebt, telt overal mee, en je gaat verder waar je gebleven was.",
+        intro: "Kies zelf hoe je door de Schriften gaat. Wat je al gelezen hebt, telt overal mee, en je gaat verder waar je gebleven was.",
       },
       play: {
         title: "Spelen",
-        intro: "Spelletjes met woorden en verhalen uit het Boek van Mormon, alleen of samen.",
+        intro: "Spelletjes met woorden en verhalen uit de Schriften, alleen of samen.",
       },
       together: {
         title: "Samen",
@@ -1676,6 +1676,16 @@ export const nl = {
         title: "Overal, in jouw taal",
         intro: "Op je telefoon, tablet of computer, in de taal die bij jou past.",
       },
+    },
+    games: {
+      jigsaw: "Maak een legpuzzel met illustraties bij verhalen uit de Schriften. Kies zelf hoeveel stukjes je wilt.",
+      wordSearch: "Zoek verborgen woorden uit de Schriften in een steeds nieuw raster. Speel onbeperkt, zonder tijdsdruk.",
+      wordGame: "Raad elke dag een woord van vijf letters uit de Schriften. Om 18:00 uur komt er een nieuw woord, en het telt mee voor je reeks.",
+      scrabble: "Een woordlegspel met woorden uit de Schriften. Daag een vriend uit en speel om de beurt, ieder op je eigen tempo.",
+      alleskenner: "Een quizavond voor als je bij elkaar bent: iedereen speelt op zijn eigen telefoon, met of zonder quizmaster. Verdien seconden en zet in de finale je tegenstander op nul.",
+      gezinsavond: "Een avontuurlijk bordspel over de Schriften voor het hele gezin, samen aan tafel op één apparaat of ieder op je eigen telefoon. Ook leuk zonder veel voorkennis.",
+      chapterGuess: "Lees het eerste vers van een hoofdstuk en raad welk hoofdstuk het is. Kies zelf je niveau, alleen of live met vrienden.",
+      challenges: "Daag een vriend uit op een hoofdstuk: jullie spelen allebei wanneer het uitkomt, en zien daarna wie beter scoorde.",
     },
     features: {
       routes: {
@@ -1692,11 +1702,11 @@ export const nl = {
       },
       podcasts: {
         title: "Podcasts",
-        description: "Luister naar “Geloof je dat ook?” en “De Kast van Mormon” en beantwoord vragen over elke aflevering, met de link naar het Boek van Mormon.",
+        description: "Luister naar “Geloof je dat ook?” en “De Kast van Mormon” en beantwoord vragen over elke aflevering, met de link naar de Schriften.",
       },
       kids: {
         title: "Voor kinderen",
-        description: "Verhalen uit het Boek van Mormon met illustraties en korte vragen, speciaal voor kinderen.",
+        description: "Verhalen uit de Schriften met illustraties en korte vragen, speciaal voor kinderen.",
       },
       youth: {
         title: "Voor jongeren",
@@ -1740,7 +1750,7 @@ export const nl = {
       },
       languages: {
         title: "Vijf talen",
-        description: "Gebruik de app in het Nederlands, Engels, Duits, Frans of Spaans, en lees het Boek van Mormon in elk van die talen, ook in een andere taal dan de app.",
+        description: "Gebruik de app in het Nederlands, Engels, Duits, Frans of Spaans, en lees de Schriften in elk van die talen, ook in een andere taal dan de app.",
       },
       app: {
         title: "Als app op je telefoon",

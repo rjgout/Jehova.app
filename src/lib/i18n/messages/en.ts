@@ -1637,7 +1637,7 @@ export const en: PartialMessages = {
   },
   home: {
     tagline: "Scripture study in a playful, motivating way.",
-    heroLine1: "Study the Book of Mormon,",
+    heroLine1: "Study the scriptures,",
     heroLine2: "in a playful way.",
     heroText: "Short lessons, read-aloud chapters, exercises and games. On your own, with friends, with your family or your whole group.",
     signUp: "Sign up",
@@ -1654,11 +1654,11 @@ export const en: PartialMessages = {
     sections: {
       learn: {
         title: "Learn at your own pace",
-        intro: "Choose how you work through the Book of Mormon. Whatever you’ve already read counts everywhere, and you pick up where you left off.",
+        intro: "Choose how you work through the scriptures. Whatever you’ve already read counts everywhere, and you pick up where you left off.",
       },
       play: {
         title: "Play",
-        intro: "Games with words and stories from the Book of Mormon, on your own or together.",
+        intro: "Games with words and stories from the scriptures, on your own or together.",
       },
       together: {
         title: "Together",
@@ -1672,6 +1672,16 @@ export const en: PartialMessages = {
         title: "Anywhere, in your language",
         intro: "On your phone, tablet or computer, in the language that suits you.",
       },
+    },
+    games: {
+      jigsaw: "Make a jigsaw puzzle with illustrations of stories from the scriptures. Choose how many pieces you want.",
+      wordSearch: "Find hidden words from the scriptures in an ever-new grid. Play without limits or time pressure.",
+      wordGame: "Guess a five-letter word from the scriptures every day. A new word arrives at 6:00 p.m., and it counts toward your streak.",
+      scrabble: "A word-building game with words from the scriptures. Challenge a friend and take turns, each at your own pace.",
+      alleskenner: "A quiz night for when you’re together: everyone plays on their own phone, with or without a quizmaster. Earn seconds and bring your opponent down to zero in the final.",
+      gezinsavond: "An adventurous board game about the scriptures for the whole family, together at the table on one device or each on your own phone. Fun even without much prior knowledge.",
+      chapterGuess: "Read the first verse of a chapter and guess which chapter it is. Choose your own level, alone or live with friends.",
+      challenges: "Challenge a friend on a chapter: you both play whenever it suits you, and then see who scored better.",
     },
     features: {
       routes: {
@@ -1688,11 +1698,11 @@ export const en: PartialMessages = {
       },
       podcasts: {
         title: "Podcasts",
-        description: "Listen to “Geloof je dat ook?” and “De Kast van Mormon” and answer questions about each episode, with the link to the Book of Mormon.",
+        description: "Listen to “Geloof je dat ook?” and “De Kast van Mormon” and answer questions about each episode, with the link to the scriptures.",
       },
       kids: {
         title: "For children",
-        description: "Stories from the Book of Mormon with illustrations and short questions, especially for children.",
+        description: "Stories from the scriptures with illustrations and short questions, especially for children.",
       },
       youth: {
         title: "For youth",
@@ -1736,7 +1746,7 @@ export const en: PartialMessages = {
       },
       languages: {
         title: "Five languages",
-        description: "Use the app in Dutch, English, German, French or Spanish, and read the Book of Mormon in any of those languages, even in a different language from the app.",
+        description: "Use the app in Dutch, English, German, French or Spanish, and read the scriptures in any of those languages, even in a different language from the app.",
       },
       app: {
         title: "As an app on your phone",

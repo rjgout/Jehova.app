@@ -39,10 +39,11 @@ import { surfaceCard } from "@/components/versado/styles";
 // wie via een vriend binnenkomt precies hetzelfde ziet als op de homepagina,
 // alleen met aanmeldknoppen die de uitnodiging meenemen.
 //
-// "Boek van Mormon" mag hier met opzet genoemd worden: dit beschrijft wat je
-// vandaag daadwerkelijk krijgt (zie CLAUDE.md). Spellen komen uit de
-// spelcatalogus en tonen alleen wat de beheerder aan heeft staan; zo belooft
-// de pagina niets wat er niet is.
+// Bewust "de Schriften", niet één schriftwerk: de app is algemene
+// schriftstudie, ook als het Boek van Mormon vandaag de belangrijkste inhoud
+// is. Daarom eigen spelteksten (home.games) naast die van het spellenoverzicht.
+// Spellen komen uit de spelcatalogus en tonen alleen wat de beheerder aan
+// heeft staan; zo belooft de pagina niets wat er niet is.
 
 // Namen worden niet vertaald; de eigenschappen wel (home.mascots.*).
 const MASCOTS = [
@@ -222,7 +223,7 @@ export default function HomeContent({ t, displayName, games, signUpHref, loginHr
         <Section id="home-play" title={t("home.sections.play.title")} intro={t("home.sections.play.intro")}>
           {enabledGames.map((game) => (
             <FeatureCard key={game.id} visual={GAME_ICONS[game.id]} title={t(game.titleKey)}>
-              {t(`gamesHub.${game.textKey}.description`)}
+              {t(`home.games.${game.textKey}`)}
             </FeatureCard>
           ))}
         </Section>

@@ -1637,7 +1637,7 @@ export const de: PartialMessages = {
   },
   home: {
     tagline: "Schriftstudium auf spielerische, motivierende Weise.",
-    heroLine1: "Studiere das Buch Mormon,",
+    heroLine1: "Studiere die heiligen Schriften,",
     heroLine2: "auf spielerische Weise.",
     heroText: "Kurze Lektionen, vorgelesene Kapitel, Übungen und Spiele. Allein, mit Freunden, mit deiner Familie oder deiner ganzen Gruppe.",
     signUp: "Registrieren",
@@ -1654,11 +1654,11 @@ export const de: PartialMessages = {
     sections: {
       learn: {
         title: "Lernen in deinem Tempo",
-        intro: "Entscheide selbst, wie du durch das Buch Mormon gehst. Was du schon gelesen hast, zählt überall, und du machst dort weiter, wo du aufgehört hast.",
+        intro: "Entscheide selbst, wie du durch die heiligen Schriften gehst. Was du schon gelesen hast, zählt überall, und du machst dort weiter, wo du aufgehört hast.",
       },
       play: {
         title: "Spielen",
-        intro: "Spiele mit Wörtern und Geschichten aus dem Buch Mormon, allein oder gemeinsam.",
+        intro: "Spiele mit Wörtern und Geschichten aus den heiligen Schriften, allein oder gemeinsam.",
       },
       together: {
         title: "Gemeinsam",
@@ -1672,6 +1672,16 @@ export const de: PartialMessages = {
         title: "Überall, in deiner Sprache",
         intro: "Auf Handy, Tablet oder Computer, in der Sprache, die zu dir passt.",
       },
+    },
+    games: {
+      jigsaw: "Setze ein Puzzle mit Bildern zu Geschichten aus den heiligen Schriften zusammen. Wähle selbst, wie viele Teile du möchtest.",
+      wordSearch: "Finde versteckte Wörter aus den heiligen Schriften in einem immer neuen Raster. Spiele ohne Limit und Zeitdruck.",
+      wordGame: "Errate jeden Tag ein Wort mit fünf Buchstaben aus den heiligen Schriften. Um 18:00 Uhr kommt ein neues Wort, und es zählt für deinen Streak.",
+      scrabble: "Ein Wortlegespiel mit Wörtern aus den heiligen Schriften. Fordere einen Freund heraus und spielt abwechselnd, jeder in seinem eigenen Tempo.",
+      alleskenner: "Ein Quizabend für gemeinsame Treffen: Jeder spielt auf dem eigenen Handy, mit oder ohne Quizmaster. Verdiene Sekunden und bring deinen Gegner im Finale auf null.",
+      gezinsavond: "Ein abenteuerliches Brettspiel über die heiligen Schriften für die ganze Familie, zusammen am Tisch auf einem Gerät oder jeder auf dem eigenen Handy. Macht auch ohne viel Vorwissen Spaß.",
+      chapterGuess: "Lies den ersten Vers eines Kapitels und errate, welches Kapitel es ist. Wähle dein Niveau, allein oder live mit Freunden.",
+      challenges: "Fordere einen Freund zu einem Kapitel heraus: Ihr spielt beide, wann es euch passt, und seht danach, wer besser abgeschnitten hat.",
     },
     features: {
       routes: {
@@ -1688,11 +1698,11 @@ export const de: PartialMessages = {
       },
       podcasts: {
         title: "Podcasts",
-        description: "Hör „Geloof je dat ook?“ und „De Kast van Mormon“ und beantworte Fragen zu jeder Folge, mit dem Bezug zum Buch Mormon.",
+        description: "Hör „Geloof je dat ook?“ und „De Kast van Mormon“ und beantworte Fragen zu jeder Folge, mit dem Bezug zu den heiligen Schriften.",
       },
       kids: {
         title: "Für Kinder",
-        description: "Geschichten aus dem Buch Mormon mit Illustrationen und kurzen Fragen, speziell für Kinder.",
+        description: "Geschichten aus den heiligen Schriften mit Illustrationen und kurzen Fragen, speziell für Kinder.",
       },
       youth: {
         title: "Für Jugendliche",
@@ -1736,7 +1746,7 @@ export const de: PartialMessages = {
       },
       languages: {
         title: "Fünf Sprachen",
-        description: "Nutze die App auf Niederländisch, Englisch, Deutsch, Französisch oder Spanisch und lies das Buch Mormon in jeder dieser Sprachen, auch in einer anderen als der App-Sprache.",
+        description: "Nutze die App auf Niederländisch, Englisch, Deutsch, Französisch oder Spanisch und lies die heiligen Schriften in jeder dieser Sprachen, auch in einer anderen als der App-Sprache.",
       },
       app: {
         title: "Als App auf deinem Handy",
