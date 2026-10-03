@@ -5,9 +5,10 @@ import Link from "next/link";
 import { announceXpChanged } from "@/lib/xpBroadcast";
 import UserTag from "@/components/UserTag";
 import UserAvatar from "@/components/UserAvatar";
-import { useT } from "@/components/I18nProvider";
+import { useT, useUiLanguage } from "@/components/I18nProvider";
 import { rich } from "@/lib/i18n/rich";
 import PersonalMascot from "@/components/versado/PersonalMascot";
+import { futureTime } from "@/lib/timeFormat";
 
 type LetterState = "correct" | "present" | "absent";
 
@@ -35,6 +36,7 @@ interface LeaderboardEntry {
 interface GameView {
   dayKey: string;
   nextReleaseAt: string;
+  bonusSettlesAt: string;
   serverNow: number;
   wordLength: number;
   maxGuesses: number;
@@ -63,7 +65,10 @@ const TILE_STYLES: Record<LetterState, string> = {
 
 export default function WordGameClient() {
   const t = useT();
+  const uiLanguage = useUiLanguage();
   const [game, setGame] = useState<GameView | null>(null);
+  const [serverOffset, setServerOffset] = useState(0);
+  const [clockNow, setClockNow] = useState(() => Date.now());
   const [loadError, setLoadError] = useState<string | null>(null);
   const [guess, setGuess] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -75,6 +80,8 @@ export default function WordGameClient() {
       .then(async (r) => {
         const data = await r.json();
         if (!r.ok) throw new Error(data.error ?? t("wordOfTheDay.loadFailed"));
+        setServerOffset(data.serverNow - Date.now());
+        setClockNow(Date.now());
         setGame(data);
       })
       .catch((e) => setLoadError(e instanceof Error ? e.message : t("wordOfTheDay.somethingWrong")));
@@ -112,6 +119,12 @@ export default function WordGameClient() {
     };
   }, [nextReleaseAt, serverNow]);
 
+  useEffect(() => {
+    if (!game || game.settled || game.status !== "WON") return;
+    const timer = window.setInterval(() => setClockNow(Date.now()), 60_000);
+    return () => window.clearInterval(timer);
+  }, [game]);
+
   async function submitGuess() {
     if (!game || submitting) return;
     if (guess.length !== game.wordLength) {
@@ -135,6 +148,8 @@ export default function WordGameClient() {
       setTimeout(() => setShake(false), 350);
       return;
     }
+    setServerOffset(data.serverNow - Date.now());
+    setClockNow(Date.now());
     setGame(data);
     setGuess("");
     if (data.status !== "IN_PROGRESS") announceXpChanged();
@@ -156,6 +171,7 @@ export default function WordGameClient() {
   }
 
   const finished = game.status !== "IN_PROGRESS";
+  const bonusWait = futureTime(game.bonusSettlesAt, uiLanguage, clockNow + serverOffset);
   const rows: GuessView[] = [...game.guesses];
   const emptyRows = game.maxGuesses - rows.length - (finished ? 0 : 1);
 
@@ -274,14 +290,15 @@ export default function WordGameClient() {
                   {t("wordOfTheDay.rankBonus", { rank: game.leaderboardRank, xp: game.leaderboardXpBonus })}
                 </p>
               ) : !game.settled && game.provisionalRank && game.provisionalRank <= 10 ? (
-                <p className="text-sm text-slate-500 dark:text-slate-400">{t("wordOfTheDay.provisionalRank", { rank: game.provisionalRank })}</p>
+                <p className="text-sm text-slate-500 dark:text-slate-400">
+                  {bonusWait
+                    ? t("wordOfTheDay.provisionalRank", { rank: game.provisionalRank, when: bonusWait })
+                    : t("wordOfTheDay.provisionalRankSoon", { rank: game.provisionalRank })}
+                </p>
               ) : null}
             </div>
           )}
           <p className="text-sm text-slate-400 dark:text-slate-500">{t("wordOfTheDay.comeBack")}</p>
-          <Link href="/live" className="btn-secondary mt-1">
-            {t("wordOfTheDay.back")}
-          </Link>
         </div>
       )}
 

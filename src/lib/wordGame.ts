@@ -188,6 +188,8 @@ export interface WordGameView {
   dayKey: string;
   /** Wanneer het volgende woord beschikbaar komt (absoluut), en de servertijd: de client ververst daarop zonder eigen tijdzonerekensom. */
   nextReleaseAt: string;
+  /** Wanneer de wereldwijde rang definitief is en de rangbonus kan worden uitgedeeld. */
+  bonusSettlesAt: string;
   serverNow: number;
   wordLength: number;
   maxGuesses: number;
@@ -308,6 +310,7 @@ async function buildView(period: WordGamePeriod, now: Date, game: {
   return {
     dayKey: game.dayKey,
     nextReleaseAt: period.nextReleaseAt.toISOString(),
+    bonusSettlesAt: wordDayClosesAt(game.dayKey).toISOString(),
     serverNow: now.getTime(),
     wordLength: WORD_LENGTH,
     maxGuesses: MAX_GUESSES,

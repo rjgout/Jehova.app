@@ -22,6 +22,16 @@ export function relativeTime(iso: string | null | undefined, locale: string, now
   return format.format(0, "minute");
 }
 
+/** "over 7 uur": resterende tijd zonder de misleidende kalenderterm "morgen". */
+export function futureTime(iso: string | null | undefined, locale: string, now = Date.now()): string | null {
+  if (!iso) return null;
+  const seconds = Math.ceil((new Date(iso).getTime() - now) / 1000);
+  if (!Number.isFinite(seconds) || seconds <= 0) return null;
+  const format = new Intl.RelativeTimeFormat(locale, { numeric: "always" });
+  if (seconds >= 3600) return format.format(Math.ceil(seconds / 3600), "hour");
+  return format.format(Math.max(1, Math.ceil(seconds / 60)), "minute");
+}
+
 /** "12:34" of "1:02:05". */
 export function clockDuration(totalSeconds: number): string {
   const s = Math.max(0, Math.floor(totalSeconds));

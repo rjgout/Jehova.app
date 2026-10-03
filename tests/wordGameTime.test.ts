@@ -4,6 +4,7 @@ import { amsterdamNow } from "../src/lib/dates";
 import { dayKeyInZone } from "../src/lib/timeZone";
 import { streakDayGap } from "../src/lib/learning/streakRules";
 import { getWordForDay, wordDayClosesAt, wordGameDayKey, wordGamePeriod } from "../src/lib/wordGame";
+import { futureTime } from "../src/lib/timeFormat";
 
 const AMS = "Europe/Amsterdam";
 const NY = "America/New_York";
@@ -122,4 +123,12 @@ test("de rangbonus wacht tot de woorddag in elke tijdzone voorbij is", () => {
   assert.equal(wordGameDayKey(new Date(closes.getTime() - 60_000), "Etc/GMT+12"), "2026-10-02");
   // ... daarna niemand meer, waar ook ter wereld.
   for (const zone of zones) assert.ok(wordGameDayKey(closes, zone) > "2026-10-02", zone);
+});
+
+test("de wachttijd voor de rangbonus is relatief aan het echte sluitingsmoment", () => {
+  const now = Date.parse("2026-10-03T04:15:00.000Z");
+  const closes = wordDayClosesAt("2026-10-02").toISOString();
+  assert.equal(futureTime(closes, "nl", now), "over 26 uur");
+  assert.equal(futureTime(closes, "en", now), "in 26 hours");
+  assert.equal(futureTime(closes, "nl", Date.parse(closes)), null);
 });
