@@ -582,8 +582,8 @@ Om te weten waar de impact zit. **Niet vooraf aanpassen voor het redesign.**
   `DivisionScroller`, en de Samen-onderdelen (`src/components/social/`,
   `/groups`).
 - **Leren/Spelen**: `CoursesClient` en de cursusweergaven (`*CourseView`),
-  `LiveLobbyForm` (spellenoverzicht), spelkaarten en cursuskaarten krijgen
-  eigen beeld.
+  `LiveLobbyForm` (spellenoverzicht). Cursus- en spelkaarten volgen één
+  standaard (`ContentCard`, `SortableList`; zie `docs/KAARTEN.md`).
 - **Profiel**: `ProfileClient` waarschijnlijk splitsen in "wie ben ik"
   (statistieken, prestaties) en instellingen.
 - **Onboarding**: `OnboardingClient` (metgezel kiezen, meer uitleg).

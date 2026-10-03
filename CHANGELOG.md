@@ -4,6 +4,13 @@ Alle belangrijke gebruikersgerichte wijzigingen en releases worden hieronder bij
 
 ## Nog niet uitgebracht
 
+- Leren en Spelen hebben dezelfde kaarten: tik op de afbeelding of titel om
+  een cursus of spel te openen, versleep een kaart aan de greep links, en
+  verberg of verplaats hem via ⋯. Tijdens het slepen zie je waar de kaart
+  vandaan komt en waar hij terechtkomt. Onderaan voeg je verborgen
+  cursussen en spellen weer toe; je voortgang en scores blijven bewaard.
+  "Ga verder" brengt je meteen naar je volgende les. Een cursus wordt je
+  huidige leerreis zodra je er een les van opent.
 - Profiel en alle onderdelen ervan (taal, voorlezen, notificaties, privacy,
   online en activiteit, wat is er nieuw, tweestapsverificatie,
   leesvoortgang, prestaties, competitie, wachtwoord en feedback) zien er nu

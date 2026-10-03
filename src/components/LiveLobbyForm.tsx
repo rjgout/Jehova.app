@@ -1,17 +1,16 @@
 "use client";
 
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
-import { ArrowRight } from "lucide-react";
+import { X } from "lucide-react";
 import ActiveGamesBanner from "@/components/ActiveGamesBanner";
-import { SortableList, DragHandle, type DragHandleProps } from "@/components/SortableList";
-import { applyPersonalOrder, fetchListOrder, saveListOrder } from "@/lib/listOrder";
+import { SortableList } from "@/components/SortableList";
+import { applyPersonalOrder, fetchListState, saveListOrder } from "@/lib/listOrder";
 import { useT } from "@/components/I18nProvider";
 import AppSelect from "@/components/AppSelect";
-import { GAME_CATALOG, type GameCatalogEntry } from "@/lib/gameCatalog";
+import { GAME_CATALOG, isGameVisible, type GameCatalogEntry } from "@/lib/gameCatalog";
 import { gameArtworkKeys } from "@/lib/artwork";
-import MediaArtwork from "@/components/versado/MediaArtwork";
+import { CardPicker, ContentCard, StatusChip, cardActions, type PickerItem } from "@/components/versado/ContentCard";
 import PersonalMascot from "@/components/versado/PersonalMascot";
 
 interface ChapterOption {
@@ -41,10 +40,16 @@ interface Props {
 }
 
 // De catalogus zelf staat in src/lib/gameCatalog.ts (gedeeld met Vandaag);
-// het beeld per spel in src/lib/artwork.ts (GAME_COVERS), zodat een spel
-// overal dezelfde cover heeft.
+// het beeld per spel in src/lib/artwork.ts (GAME_COVERS). De kaarten volgen
+// de standaard in docs/KAARTEN.md.
+//
+// Twee soorten "niet zichtbaar", bewust gescheiden:
+// - niet beschikbaar: hoort niet bij deze content of staat uit in
+//   /adminbackend (isGameVisible). Daar verandert personaliseren niets aan.
+// - verborgen: de gebruiker haalde het uit het eigen overzicht
+//   (UserListOrder.hidden); "Spel toevoegen" zet het terug, maar alleen
+//   als het beschikbaar is.
 type GameEntry = GameCatalogEntry;
-const GAMES: GameEntry[] = GAME_CATALOG;
 
 export default function LiveLobbyForm({ settings, isAdmin, allowedGameKeys, contentName }: Props) {
   const t = useT();
@@ -53,7 +58,13 @@ export default function LiveLobbyForm({ settings, isAdmin, allowedGameKeys, cont
   const [chapterId, setChapterId] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
-  const [games, setGames] = useState<GameEntry[]>(() => GAMES.filter((g) => allowedGameKeys.includes(g.id) && (settings[g.enabledKey] || isAdmin)));
+  const available = useMemo(
+    () => GAME_CATALOG.filter((g) => isGameVisible(g, settings, allowedGameKeys, isAdmin)),
+    [settings, allowedGameKeys, isAdmin]
+  );
+  const [order, setOrder] = useState<string[] | null>(null);
+  const [hidden, setHidden] = useState<string[]>([]);
+  const [rulesFor, setRulesFor] = useState<GameEntry | null>(null);
 
   useEffect(() => {
     fetch("/api/chapters")
@@ -65,15 +76,49 @@ export default function LiveLobbyForm({ settings, isAdmin, allowedGameKeys, cont
   }, []);
 
   useEffect(() => {
-    const visible = GAMES.filter((g) => allowedGameKeys.includes(g.id) && (settings[g.enabledKey] || isAdmin));
-    fetchListOrder("games").then((order) => setGames(applyPersonalOrder(visible, order)));
-  }, [allowedGameKeys, isAdmin, settings]);
+    fetchListState("games").then((state) => {
+      setOrder(state.order);
+      setHidden(state.hidden);
+    });
+  }, []);
 
-  function reorderGames(newGames: GameEntry[]) {
-    setGames(newGames);
-    saveListOrder(
-      "games",
-      newGames.map((g) => g.id)
+  const hiddenSet = new Set(hidden);
+  const games = applyPersonalOrder(
+    available.filter((g) => !hiddenSet.has(g.id)),
+    order ?? []
+  );
+  const hiddenGames = available.filter((g) => hiddenSet.has(g.id));
+
+  // Altijd de hele verborgen set meesturen: ook spellen die bij andere
+  // content horen en nu niet in beeld zijn, blijven zo verborgen.
+  function save(nextGames: GameEntry[], nextHidden: string[]) {
+    const ids = nextGames.map((g) => g.id);
+    setOrder(ids);
+    setHidden(nextHidden);
+    saveListOrder("games", ids, nextHidden);
+  }
+
+  function move(from: number, to: number) {
+    if (to < 0 || to >= games.length) return;
+    const next = [...games];
+    const [item] = next.splice(from, 1);
+    next.splice(to, 0, item);
+    save(next, hidden);
+  }
+
+  function hide(gameId: string) {
+    save(
+      games.filter((g) => g.id !== gameId),
+      [...hidden.filter((id) => id !== gameId), gameId]
+    );
+  }
+
+  function add(gameId: string) {
+    const game = available.find((g) => g.id === gameId);
+    if (!game) return;
+    save(
+      [...games, game],
+      hidden.filter((id) => id !== gameId)
     );
   }
 
@@ -95,6 +140,14 @@ export default function LiveLobbyForm({ settings, isAdmin, allowedGameKeys, cont
     router.push(`/live/${data.code}`);
   }
 
+  const text = (game: GameEntry, part: "description" | "linkLabel" | "rule1" | "rule2" | "rule3") => t(`gamesHub.${game.textKey}.${part}`);
+  const pickerItems: PickerItem[] = hiddenGames.map((game) => ({
+    id: game.id,
+    title: t(game.titleKey),
+    description: text(game, "description"),
+    artwork: { kind: "game", keys: gameArtworkKeys(game.id) },
+  }));
+
   return (
     <div className="max-w-5xl mx-auto flex flex-col gap-6 sm:gap-8">
       <ActiveGamesBanner />
@@ -102,7 +155,7 @@ export default function LiveLobbyForm({ settings, isAdmin, allowedGameKeys, cont
       <div className="flex items-center justify-between gap-4">
         <div className="min-w-0 flex-1">
           <h1 className="text-2xl font-extrabold text-brand-800 dark:text-brand-300">{t("gamesHub.title")}</h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400">{t("gamesHub.intro")}</p>
+          <p className="text-sm text-vs-fg-2">{t("gamesHub.intro")}</p>
         </div>
         <div className="aspect-square w-[clamp(6rem,27vw,7.25rem)] shrink-0 sm:w-32 lg:w-36">
           <PersonalMascot state="playing" size={144} fill />
@@ -138,98 +191,93 @@ export default function LiveLobbyForm({ settings, isAdmin, allowedGameKeys, cont
       {/* Sommige content (zoals podcasts) heeft bewust geen spellen: die
           halen hun hoofdstukken uit een boek. Zonder deze melding bleef de
           pagina leeg zonder uitleg. */}
-      {games.length === 0 && (
+      {available.length === 0 && (
         <div className="card text-center flex flex-col gap-1">
           <p className="font-bold dark:text-slate-100">{t("gamesHub.noGames", { name: contentName })}</p>
-          <p className="text-sm text-slate-500 dark:text-slate-400">
-            {t("gamesHub.switchContent")}
-          </p>
+          <p className="text-sm text-slate-500 dark:text-slate-400">{t("gamesHub.switchContent")}</p>
         </div>
       )}
+      {available.length > 0 && order && games.length === 0 && <p className="text-sm text-vs-fg-2">{t("gamesHub.allHidden")}</p>}
 
-      <SortableList
-        dndId="games-list"
-        items={games}
-        onReorder={reorderGames}
-        className="grid gap-3 sm:grid-cols-2 sm:gap-4 items-stretch"
-        getItemClassName={(game) => (game.id === "word-game" ? "sm:col-span-2" : undefined)}
-        renderItem={(game, handle) => {
-          const enabled = settings[game.enabledKey];
-          if (!enabled && !isAdmin) return null;
-          return <GameCardBody game={game} enabled={enabled} handle={handle} />;
-        }}
-      />
+      {order && (
+        <SortableList
+          dndId="games-list"
+          items={games}
+          onReorder={(next) => save(next, hidden)}
+          getItemLabel={(game) => t(game.titleKey)}
+          className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3"
+          renderItem={(game, handle) => {
+            const enabled = settings[game.enabledKey];
+            const title = t(game.titleKey);
+            return (
+              <ContentCard
+                title={title}
+                href={game.href}
+                artwork={{ kind: "game", keys: gameArtworkKeys(game.id), sizes: "(min-width: 1024px) 320px, (min-width: 640px) 50vw, 100vw" }}
+                chips={
+                  <>
+                    {/* Uitgezet in /adminbackend: alleen een beheerder ziet het spel nog, met dit label. */}
+                    {!enabled && <StatusChip tone="danger">{t("gamesHub.disabledForUsers")}</StatusChip>}
+                    {game.id === "word-game" && <StatusChip tone="accent">{t("gamesHub.featured")}</StatusChip>}
+                  </>
+                }
+                description={text(game, "description")}
+                info={{ label: t("gamesHub.rulesFor", { title }), onClick: () => setRulesFor(game) }}
+                handle={handle}
+                priority={games.indexOf(game) === 0}
+                actions={cardActions({ t, index: games.indexOf(game), count: games.length, onMove: move, onHide: () => hide(game.id) })}
+              />
+            );
+          }}
+        />
+      )}
+
+      {available.length > 0 && (
+        <CardPicker addLabel={t("gamesHub.addGame")} emptyText={t("gamesHub.allAdded")} items={order ? pickerItems : null} onAdd={add} />
+      )}
+
+      {rulesFor && <GameRules title={t(rulesFor.titleKey)} rules={(["rule1", "rule2", "rule3"] as const).map((rule) => text(rulesFor, rule))} onClose={() => setRulesFor(null)} />}
     </div>
   );
 }
 
-// Uitgezet (zie /adminbackend) betekent: verborgen voor gewone gebruikers,
-// maar een admin blijft alles zien — dan met deze roodgerande "uitgeschakeld
-// voor gebruikers"-badge in plaats van dat de kaart gewoon verdwijnt. Deze
-// render-functie krijgt de sleepgreep via het "handle"-argument van
-// SortableList (zie renderItem hierboven) doorgegeven.
-function GameCardBody({ game, enabled, handle }: { game: GameEntry; enabled: boolean; handle: DragHandleProps }) {
-  const [showRules, setShowRules] = useState(false);
+/** Speluitleg: de unieke informatie achter de ⓘ op een spelkaart. */
+function GameRules({ title, rules, onClose }: { title: string; rules: string[]; onClose: () => void }) {
   const t = useT();
-  const title = t(game.titleKey);
-  const text = (part: "description" | "linkLabel" | "rule1" | "rule2" | "rule3") => t(`gamesHub.${game.textKey}.${part}`);
-
+  useEffect(() => {
+    function onKey(event: KeyboardEvent) {
+      if (event.key === "Escape") onClose();
+    }
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [onClose]);
   return (
-    <div className={`card flex flex-col gap-2 !p-3 sm:gap-3 sm:!p-5 ${enabled ? "dark:!border-slate-800" : "!border-2 !border-red-300 dark:!border-red-800"}`}>
-      {/* Cover over de volle breedte van de kaart (tegen de padding van .card
-          in). Op een telefoon lager (21:9), vanaf twee kolommen 2:1. */}
-      <MediaArtwork
-        kind="game"
-        artworkKey={gameArtworkKeys(game.id)}
-        ratio="21/9"
-        sizes="(min-width: 1024px) 500px, (min-width: 640px) 50vw, 100vw"
-        className="-mx-3 -mt-3 rounded-t-[calc(1.5rem-1px)] sm:-mx-5 sm:-mt-5 sm:aspect-[2/1]"
-      />
-      <div className="flex items-start gap-2.5">
-        <div className="pt-0.5 shrink-0">
-          <DragHandle {...handle} className="!ml-[-0.5rem] !rounded-lg !px-2 !py-1 !text-slate-400 hover:!bg-slate-100 dark:!text-slate-500 dark:hover:!bg-slate-700" />
-        </div>
-        <div className="min-w-0 flex-1">
-          {!enabled && (
-            <span className="mb-1.5 inline-flex rounded-full bg-red-50 px-2 py-0.5 text-xs font-bold uppercase text-red-500 dark:bg-red-950 dark:text-red-400">
-              {t("gamesHub.disabledForUsers")}
-            </span>
-          )}
-          {game.id === "word-game" && <span className="mb-0.5 inline-flex text-xs font-extrabold uppercase tracking-wide text-brand-600 dark:text-brand-300">{t("gamesHub.featured")}</span>}
-          <div className="flex min-w-0 items-start gap-2">
-            <Link href={game.href} className="min-w-0 flex-1 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500">
-              <h2 className="truncate font-extrabold leading-tight dark:text-slate-100">{title}</h2>
-            </Link>
-            <button
-              type="button"
-              onClick={() => setShowRules(true)}
-              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-slate-200 text-sm font-extrabold text-slate-500 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
-              aria-label={t("gamesHub.rulesFor", { title })}
-              title={t("gamesHub.rules")}
-            >
-              i
-            </button>
-          </div>
-          <Link href={game.href} className="mt-0.5 block rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500">
-            <p className="line-clamp-2 text-sm text-slate-500 dark:text-slate-400">{text("description")}</p>
-          </Link>
-        </div>
-        <Link href={game.href} className="mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-100/70 text-slate-500 transition hover:bg-brand-100 hover:text-brand-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 dark:bg-slate-700/70 dark:text-slate-300 dark:hover:bg-slate-600 dark:hover:text-brand-200" aria-label={text("linkLabel")}>
-          <ArrowRight className="h-4 w-4" aria-hidden />
-        </Link>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" role="presentation" onClick={onClose}>
+      <div
+        className="relative max-h-[85vh] w-full max-w-lg overflow-y-auto rounded-2xl border border-vs-line bg-vs-elevated p-5 shadow-xl"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="game-rules-title"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <button
+          type="button"
+          autoFocus
+          onClick={onClose}
+          className="absolute right-3 top-3 flex h-10 w-10 items-center justify-center rounded-full text-vs-fg-3 transition hover:bg-vs-subtle hover:text-vs-fg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-vs-accent"
+          aria-label={t("gamesHub.rulesClose")}
+        >
+          <X className="h-5 w-5" aria-hidden />
+        </button>
+        <p className="pr-10 text-xs font-extrabold uppercase tracking-wider text-vs-fg-3">{t("gamesHub.rules")}</p>
+        <h3 id="game-rules-title" className="pr-10 text-xl font-extrabold text-vs-fg">{title}</h3>
+        <h4 className="mt-4 font-extrabold text-vs-fg">{t("gamesHub.howToPlay")}</h4>
+        <ul className="mt-2 list-disc space-y-2 pl-5 text-sm text-vs-fg-2">
+          {rules.map((rule) => (
+            <li key={rule}>{rule}</li>
+          ))}
+        </ul>
       </div>
-      {showRules && (
-          <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4" role="presentation" onClick={() => setShowRules(false)}>
-            <div className="card max-w-lg w-full max-h-[85vh] overflow-y-auto relative" role="dialog" aria-modal="true" aria-labelledby={`game-rules-${game.id}`} onClick={(event) => event.stopPropagation()}>
-              <button type="button" onClick={() => setShowRules(false)} className="absolute top-3 right-3 w-9 h-9 rounded-full text-slate-500 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 text-xl" aria-label={t("gamesHub.rulesClose")}>×</button>
-              <h3 id={`game-rules-${game.id}`} className="text-xl font-extrabold text-brand-800 dark:text-brand-300 pr-10">{t("gamesHub.rules")}</h3>
-              <h4 className="mt-4 font-extrabold dark:text-slate-100">{t("gamesHub.howToPlay")}</h4>
-              <ul className="mt-2 list-disc pl-5 space-y-2 text-sm text-slate-700 dark:text-slate-200">
-                {(["rule1", "rule2", "rule3"] as const).map((rule) => <li key={rule}>{text(rule)}</li>)}
-              </ul>
-            </div>
-          </div>
-        )}
     </div>
   );
 }

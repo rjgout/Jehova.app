@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/session";
 import { prisma } from "@/lib/db";
+import { markCourseStarted } from "@/lib/courses";
 import { isEmailConfigured } from "@/lib/email";
 import KidsLessonFlow from "@/components/KidsLessonFlow";
 import type { Exercise } from "@/components/LessonFlow";
@@ -54,6 +55,7 @@ export default async function KidsStoryPage({ params }: { params: Promise<{ stor
       select: { id: true },
     }),
   ]);
+  if (course) await markCourseStarted(prisma, user.id, course.id);
 
   return (
     <>

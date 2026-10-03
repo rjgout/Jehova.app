@@ -148,6 +148,10 @@ Controleer bij twijfel: `grep -rn "next/headers" src/lib src/server server.ts`
   `window.scrollTo(0, 0)` per pagina, en geen `overflow` op `html` (dan
   scrolt het venster niet meer, zie `globals.css`). Zie
   `docs/VERSADO-DESIGN.md`.
+- Leren en Spelen: cursus- en spelkaarten gebruiken `ContentCard` en
+  `SortableList` (greep links, afbeelding en titel openen, ⋯ om te verbergen,
+  "toevoegen" onderaan). Verbergen verwijdert nooit gegevens, personaliseren
+  omzeilt nooit wat beheer uitzet; zie `docs/KAARTEN.md`.
 - Profiel: elke profielpagina en instelling gebruikt de shell en bouwstenen
   uit `src/components/profile/` (`ProfilePage`, `SettingsSection`,
   `SettingsToggleRow`, ...). Geen eigen kaart-, rij- of formulierstijl en

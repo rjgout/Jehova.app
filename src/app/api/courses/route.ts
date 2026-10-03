@@ -65,6 +65,15 @@ export async function GET() {
         completedCount,
         xpAvailable,
         isActive: user.activeCourseId === course.id,
+        // "Ga verder": meteen naar de volgende stap of het volgende
+        // hoofdstuk, anders naar het cursusoverzicht (dat zelf de volgende
+        // les aanwijst, bv. bij kinderverhalen of podcasts).
+        resumeHref:
+          course.type === "READING_LESSONS" && progress?.currentLesson
+            ? `/reading-lesson/${progress.currentLesson.id}`
+            : progress?.currentChapter
+              ? `/lesson/${progress.currentChapter.id}?cursus=${course.id}`
+              : `/courses/${course.id}`,
         // Het beeld volgt het boek waar je nu bent, net als op Vandaag.
         artwork: courseArtworkKeys({
           slug: course.slug,

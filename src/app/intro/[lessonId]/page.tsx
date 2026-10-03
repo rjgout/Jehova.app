@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/session";
 import { getT } from "@/lib/i18n";
 import { prisma } from "@/lib/db";
+import { markCourseStarted } from "@/lib/courses";
 import { isEmailConfigured } from "@/lib/email";
 import IntroLessonFlow, { type ResolvedIntroBlock } from "@/components/IntroLessonFlow";
 import type { Exercise } from "@/components/LessonFlow";
@@ -130,6 +131,7 @@ export default async function IntroLessonPage({ params }: { params: Promise<{ le
     prisma.introLesson.findFirst({ where: { number: lesson.number + 1 }, select: { id: true } }),
     prisma.course.findFirst({ where: { type: "INTRO" }, select: { id: true, name: true } }),
   ]);
+  if (introCourse) await markCourseStarted(prisma, user.id, introCourse.id);
 
   return (
     <>

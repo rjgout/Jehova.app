@@ -9,7 +9,10 @@ import { apiError } from "@/lib/apiError";
 // UserListOrder in schema.prisma) i.p.v. twee losse ad-hoc kolommen. Geen
 // opgeslagen rijen voor een lijst = val terug op de standaardvolgorde; dat
 // bepaalt de aanroepende pagina zelf, deze route levert alleen de rauwe
-// itemKey-volgorde.
+// itemKey-volgorde. Daarnaast welke items de gebruiker uit het eigen
+// overzicht verborg (`hidden`, nu alleen bij spellen): verbergen is een
+// persoonlijke weergavekeuze en geeft of ontneemt nooit toegang, dat blijft
+// bij de spelinstellingen en de content.
 
 const listKeySchema = z.enum(["courses", "games"]);
 
@@ -23,14 +26,22 @@ export async function GET(req: NextRequest) {
   const rows = await prisma.userListOrder.findMany({
     where: { userId: user.id, listKey: parsed.data },
     orderBy: { order: "asc" },
-    select: { itemKey: true },
+    select: { itemKey: true, hidden: true },
   });
-  return NextResponse.json({ order: rows.map((r) => r.itemKey) });
+  return NextResponse.json({
+    order: rows.filter((r) => !r.hidden).map((r) => r.itemKey),
+    hidden: rows.filter((r) => r.hidden).map((r) => r.itemKey),
+  });
 }
 
 const putSchema = z.object({
   listKey: listKeySchema,
-  itemKeys: z.array(z.string()).min(1),
+  // Zichtbare items in hun volgorde; leeg mag (alles verborgen).
+  itemKeys: z.array(z.string().max(100)).max(200),
+  // Verborgen items. Zonder dit veld blijven de eerder verborgen items
+  // verborgen (behalve wat nu in itemKeys staat): alleen herordenen raakt
+  // de zichtbaarheid dan niet.
+  hiddenKeys: z.array(z.string().max(100)).max(200).optional(),
 });
 
 export async function PUT(req: NextRequest) {
@@ -40,11 +51,20 @@ export async function PUT(req: NextRequest) {
   const parsed = putSchema.safeParse(await req.json().catch(() => null));
   if (!parsed.success) return await apiError("apiErrors.invalidInput", 400);
 
-  const { listKey, itemKeys } = parsed.data;
+  const { listKey } = parsed.data;
+  const itemKeys = [...new Set(parsed.data.itemKeys)];
+  const visible = new Set(itemKeys);
+  const previouslyHidden = parsed.data.hiddenKeys
+    ? []
+    : (await prisma.userListOrder.findMany({ where: { userId: user.id, listKey, hidden: true }, select: { itemKey: true } })).map((r) => r.itemKey);
+  const hiddenKeys = [...new Set(parsed.data.hiddenKeys ?? previouslyHidden)].filter((key) => !visible.has(key));
   await prisma.$transaction([
     prisma.userListOrder.deleteMany({ where: { userId: user.id, listKey } }),
     prisma.userListOrder.createMany({
-      data: itemKeys.map((itemKey, order) => ({ userId: user.id, listKey, itemKey, order })),
+      data: [
+        ...itemKeys.map((itemKey, order) => ({ userId: user.id, listKey, itemKey, order })),
+        ...hiddenKeys.map((itemKey, i) => ({ userId: user.id, listKey, itemKey, order: itemKeys.length + i, hidden: true })),
+      ],
     }),
   ]);
 

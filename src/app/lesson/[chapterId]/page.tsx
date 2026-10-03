@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/session";
 import { prisma } from "@/lib/db";
+import { markCourseStarted } from "@/lib/courses";
 import { playableAudioUrl } from "@/lib/audioMirror";
 import LessonFlow from "@/components/LessonFlow";
 import { chapterTerm, localizeTerm } from "@/lib/chapterTerm";
@@ -71,6 +72,9 @@ export default async function LessonPage({
       })
     : null;
   const route = course && isReadingRoute(course.type) ? course.type : null;
+  // Een les openen vanuit een cursus is ermee beginnen: die wordt dan je
+  // huidige leerreis (niet bij een losse link zonder ?cursus=).
+  if (cursus && course) await markCourseStarted(prisma, user.id, course.id);
 
   // Een lang hoofdstuk: Stap voor stap aanraden (geen blokkade), alleen bij
   // het eerste openen en alleen als die route er voor deze inhoud is.

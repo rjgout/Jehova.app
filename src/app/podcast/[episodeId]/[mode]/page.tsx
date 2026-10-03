@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/session";
 import { getT } from "@/lib/i18n";
 import { prisma } from "@/lib/db";
+import { markCourseStarted } from "@/lib/courses";
 import { isEmailConfigured } from "@/lib/email";
 import PodcastLessonFlow from "@/components/PodcastLessonFlow";
 import type { Exercise } from "@/components/LessonFlow";
@@ -58,6 +59,7 @@ export default async function PodcastLessonPage({
       select: { completed: true },
     }),
   ]);
+  if (course) await markCourseStarted(prisma, user.id, course.id);
   const courseHref = course ? `/courses/${course.id}` : "/courses";
   const t = getT(user.uiLanguage);
   const nextRound =

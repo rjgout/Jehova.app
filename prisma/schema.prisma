@@ -1015,6 +1015,10 @@ model UserListOrder {
   listKey String // "courses" | "games"
   itemKey String // Course.id, resp. een vaste spelletjes-slug
   order   Int
+  // Door de gebruiker verborgen uit het eigen overzicht (alleen spellen;
+  // bij cursussen is dat UserCourseProgress.subscribed). Zegt niets over
+  // of iets beschikbaar is: dat blijft bij GameSettings/de content.
+  hidden  Boolean @default(false)
 
   @@unique([userId, listKey, itemKey])
 }

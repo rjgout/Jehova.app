@@ -6,6 +6,7 @@ import { chapterTerm, localizeTerm } from "@/lib/chapterTerm";
 import { localizedCourse } from "@/lib/courseText";
 import { getT } from "@/lib/i18n";
 import { apiError } from "@/lib/apiError";
+import { courseArtworkKeys } from "@/lib/artwork";
 
 // Cursussen die nog NIET in de persoonlijke lijst staan — voor de "Voeg
 // nieuwe cursus toe"-catalogus op /courses (en /courses/per-boek, dat dit
@@ -45,6 +46,7 @@ export async function GET() {
       ...localizedCourse({ ...c, work: c.contentCollection.work }, user.uiLanguage),
       totalChapters: c._count.chapters,
       unitPlural: localizeTerm(chapterTerm(c.book?.slug, c.contentCollectionId), t).plural,
+      artwork: courseArtworkKeys({ slug: c.slug, type: c.type, work: c.contentCollection.work }),
     })),
   });
 }

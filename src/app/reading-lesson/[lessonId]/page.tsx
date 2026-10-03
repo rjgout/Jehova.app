@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/session";
 import { prisma } from "@/lib/db";
+import { markCourseStarted } from "@/lib/courses";
 import { playableAudioUrl } from "@/lib/audioMirror";
 import { getStepOverview } from "@/lib/readingLessons";
 import { issueExerciseSession } from "@/lib/learning/contentProgress";
@@ -37,6 +38,7 @@ export default async function ReadingLessonPage({
   if (!step?.available) {
     redirect(`/courses/${lesson.courseId}/chapter/${lesson.chapterId}`);
   }
+  await markCourseStarted(prisma, user.id, lesson.courseId);
 
   const verses = await prisma.verse.findMany({
     where: {

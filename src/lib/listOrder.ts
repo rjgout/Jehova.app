@@ -21,18 +21,33 @@ export function applyPersonalOrder<T extends { id: string }>(items: T[], order: 
   return [...ordered, ...byId.values()];
 }
 
-export async function fetchListOrder(listKey: ListKey): Promise<string[]> {
-  const res = await fetch(`/api/list-order?listKey=${listKey}`);
-  if (!res.ok) return [];
-  const data = await res.json().catch(() => null);
-  return data?.order ?? [];
+export interface ListState {
+  /** Zichtbare items, in de gekozen volgorde. */
+  order: string[];
+  /** Door de gebruiker verborgen items (alleen bij spellen). */
+  hidden: string[];
 }
 
-/** Fire-and-forget opslaan — de UI is al direct bijgewerkt (optimistisch), dit hoeft niets terug te geven. */
-export function saveListOrder(listKey: ListKey, itemKeys: string[]): void {
+export async function fetchListState(listKey: ListKey): Promise<ListState> {
+  const res = await fetch(`/api/list-order?listKey=${listKey}`).catch(() => null);
+  if (!res?.ok) return { order: [], hidden: [] };
+  const data = await res.json().catch(() => null);
+  return { order: data?.order ?? [], hidden: data?.hidden ?? [] };
+}
+
+export async function fetchListOrder(listKey: ListKey): Promise<string[]> {
+  return (await fetchListState(listKey)).order;
+}
+
+/**
+ * Fire-and-forget opslaan — de UI is al direct bijgewerkt (optimistisch),
+ * dit hoeft niets terug te geven. Zonder `hiddenKeys` blijft wat verborgen
+ * was verborgen; met `hiddenKeys` is dat de nieuwe verborgen set.
+ */
+export function saveListOrder(listKey: ListKey, itemKeys: string[], hiddenKeys?: string[]): void {
   fetch("/api/list-order", {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ listKey, itemKeys }),
+    body: JSON.stringify({ listKey, itemKeys, hiddenKeys }),
   }).catch(() => {});
 }

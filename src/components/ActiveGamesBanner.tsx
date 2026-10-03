@@ -121,7 +121,7 @@ export default function ActiveGamesBanner() {
     setCancelling(null);
   }
 
-  const heading = <h2 className="text-sm font-extrabold text-slate-700 dark:text-slate-200">{t("activeGames.title")}</h2>;
+  const heading = <h2 className="text-sm font-extrabold text-vs-fg">{t("activeGames.title")}</h2>;
 
   function statusLabel(item: ActivityItem, invitation = false) {
     if (invitation) return t("activeGames.invitedLabel");
@@ -157,7 +157,7 @@ export default function ActiveGamesBanner() {
 
   if (!status) {
     return (
-      <div className="card flex flex-col gap-2 !py-3">
+      <div className="flex flex-col gap-2 rounded-2xl border border-vs-line bg-vs-surface px-4 py-3 shadow-sm">
         {heading}
         {error ? (
           <p className="text-sm text-red-600 dark:text-red-400">
@@ -181,15 +181,15 @@ export default function ActiveGamesBanner() {
     activeGames.length === 0
   ) {
     return (
-      <div className="card flex flex-col gap-1 !py-3">
+      <div className="flex flex-col gap-1 rounded-2xl border border-vs-line bg-vs-surface px-4 py-3 shadow-sm">
         {heading}
-        <p className="text-sm text-slate-500 dark:text-slate-400">{t("activeGames.empty")}</p>
+        <p className="text-sm text-vs-fg-2">{t("activeGames.empty")}</p>
       </div>
     );
   }
 
   return (
-    <div className="card flex flex-col gap-2 !py-3">
+    <div className="flex flex-col gap-2 rounded-2xl border border-vs-line bg-vs-surface px-4 py-3 shadow-sm">
       {heading}
       {liveInvitesReceived.length > 0 && (
         <div className="flex flex-col gap-1">

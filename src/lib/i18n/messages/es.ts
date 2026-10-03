@@ -198,27 +198,21 @@ export const es: PartialMessages = {
     "fsyDesc": "Las lecciones semanales con texto e imágenes de la fuente oficial."
   },
   "courses": {
+    "addCourse": "Añadir curso",
+    "allHidden": "No hay cursos en tu resumen. Añade uno abajo.",
     "intro": "Aquí están tus cursos. Tu progreso se conserva para que puedas continuar o elegir otro curso.",
     "error": "Algo ha salido mal.",
     "errorStatus": "Algo ha salido mal ({status}).",
     "retry": "Inténtalo de nuevo",
     "loading": "Cargando...",
-    "removeConfirm": "¿Quieres eliminar este curso de tu lista? Tu progreso se mantiene; puedes volver a añadirlo más tarde.",
-    "noneTitle": "Aún no ha añadido ningún curso",
-    "noneHint": "Haz clic en \"Añadir un nuevo curso\" a continuación para comenzar.",
     "active": "Activo",
-    "removeAria": "Eliminar curso {name}",
-    "removeTitle": "Eliminar curso",
     "progress": "{done} / {total} {unit} completado",
     "next": "— siguiente: {chapter}",
     "continue": "Continuar →",
     "busy": "Trabajando...",
-    "choose": "Elige este curso",
-    "addNew": "Añadir un nuevo curso",
     "currentJourney": "Tu recorrido de aprendizaje actual",
     "discoverMore": "Descubre más",
-    "noActive": "Elige un curso para definir tu recorrido actual.",
-    "progressLabel": "Progreso",
+    "noActive": "Abre un curso y empieza una lección: ese curso será tu recorrido actual.",
     "completed": "Completado",
     "allAdded": "Ya has añadido todo lo que hay, no queda nada por elegir.",
     "add": "Añadir",
@@ -532,7 +526,22 @@ export const es: PartialMessages = {
       "comingSoon": "{label} — ejercicios próximamente"
     }
   },
+  "cards": {
+    "dragHandle": "Mover {title}",
+    "dragInstructions": "Pulsa espacio o intro para coger. Mueve con las flechas, suelta con espacio o intro, o cancela con escape.",
+    "dragStart": "{title} cogido, posición {position} de {total}.",
+    "dragOver": "{title} va a la posición {position} de {total}.",
+    "dragEnd": "{title} soltado en la posición {position} de {total}.",
+    "dragCancel": "Movimiento de {title} cancelado.",
+    "menu": "Gestionar {title}",
+    "moveUp": "Antes en la lista",
+    "moveDown": "Después en la lista",
+    "hide": "Ocultar del resumen"
+  },
   "gamesHub": {
+    "addGame": "Añadir juego",
+    "allAdded": "Todos los juegos ya están en tu resumen.",
+    "allHidden": "Has ocultado todos los juegos. Vuelve a añadirlos abajo.",
     "jigsaw": {
       "description": "Haga un rompecabezas con ilustraciones de las historias del Libro de Mormón para niños. Elige cuántas piezas usar.",
       "linkLabel": "Rompecabezas abierto",
@@ -2359,7 +2368,6 @@ export const es: PartialMessages = {
     "read": "Entendido",
     "searchText": "🔍 Busca en el texto...",
     "nothingFound": "No se encontró nada.",
-    "dragToReorder": "Arrastra a reordenar",
     "storyN": "Historia {n}"
   },
   "feedback": {

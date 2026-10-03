@@ -389,3 +389,23 @@ export async function subscribeUserToCourse(db: PrismaClient, userId: string, co
     await advanceCourseProgress(db, userId, courseId);
   }
 }
+
+/**
+ * Maakt een cursus de actieve ("Jouw huidige leerreis") zodra je er
+ * daadwerkelijk mee bezig gaat: bij het openen van een les of stap eruit.
+ * Alleen een cursus uit je eigen overzicht (subscribed); een cursus bekijken
+ * of toevoegen maakt hem niet actief, en een les via een losse link (zoeken,
+ * bladwijzer) zonder cursus verandert niets.
+ */
+export async function markCourseStarted(db: PrismaClient, userId: string, courseId: string): Promise<void> {
+  const progress = await db.userCourseProgress.findUnique({
+    where: { userId_courseId: { userId, courseId } },
+    select: { subscribed: true },
+  });
+  if (!progress?.subscribed) return;
+  // OR met null: "activeCourseId <> x" is in SQL onwaar voor een lege waarde.
+  await db.user.updateMany({
+    where: { id: userId, OR: [{ activeCourseId: null }, { activeCourseId: { not: courseId } }] },
+    data: { activeCourseId: courseId },
+  });
+}

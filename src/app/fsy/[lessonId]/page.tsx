@@ -1,6 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/session";
 import { prisma } from "@/lib/db";
+import { FSY_SLUG, markCourseStarted } from "@/lib/courses";
 import FsyLessonView from "@/components/FsyLessonView";
 import type { FsyContentBlock } from "@/lib/fsyContent";
 import { isContentCollectionSelectable } from "@/lib/contentCollections";
@@ -28,6 +29,8 @@ export default async function FsyLessonPage({ params }: { params: Promise<{ less
 
   if (!lesson || !lesson.publishedContent) notFound();
   if (!(await isContentCollectionSelectable(lesson.contentCollectionId, user.isAdmin))) notFound();
+  const fsyCourse = await prisma.course.findUnique({ where: { slug: FSY_SLUG }, select: { id: true } });
+  if (fsyCourse) await markCourseStarted(prisma, user.id, fsyCourse.id);
 
   return (
     <FsyLessonView

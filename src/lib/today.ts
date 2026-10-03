@@ -246,7 +246,7 @@ export async function getTodayData(user: User): Promise<TodayData> {
       take: 4,
       include: { _count: { select: { chapters: true } }, book: { select: { slug: true } }, contentCollection: { select: { work: true } } },
     }),
-    prisma.userListOrder.findMany({ where: { userId: user.id, listKey: "games" }, orderBy: { order: "asc" }, select: { itemKey: true } }),
+    prisma.userListOrder.findMany({ where: { userId: user.id, listKey: "games" }, orderBy: { order: "asc" }, select: { itemKey: true, hidden: true } }),
   ]);
 
   const visibleGame = (id: string) => {
@@ -321,9 +321,11 @@ export async function getTodayData(user: User): Promise<TodayData> {
 
   // Voor jou: nog niet toegevoegde cursussen bij de actieve content en de
   // spellen in je eigen volgorde. De dagelijkse spellen staan al bij Vandaag.
+  // Een spel dat je op Spelen verborg, raden we hier ook niet aan.
+  const hiddenGames = new Set(gameOrder.filter((o) => o.hidden).map((o) => o.itemKey));
   const games = applyPersonalOrder(
-    GAME_CATALOG.filter((g) => !["word-game", "alleskenner"].includes(g.id) && visibleGame(g.id)),
-    gameOrder.map((o) => o.itemKey)
+    GAME_CATALOG.filter((g) => !["word-game", "alleskenner"].includes(g.id) && visibleGame(g.id) && !hiddenGames.has(g.id)),
+    gameOrder.filter((o) => !o.hidden).map((o) => o.itemKey)
   ).slice(0, MAX_DISCOVER);
   const courseCards: DiscoverItem[] = catalog.map((course) => {
       const text = localizedCourse({ ...course, work: course.contentCollection.work }, user.uiLanguage);

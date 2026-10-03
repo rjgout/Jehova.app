@@ -2,12 +2,19 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { ArrowRight, EyeOff } from "lucide-react";
 import { useT } from "@/components/I18nProvider";
 import type { MessageKey } from "@/lib/i18n/core";
-import { SortableList, DragHandle, type DragHandleProps } from "@/components/SortableList";
+import { SortableList } from "@/components/SortableList";
 import { applyPersonalOrder, fetchListOrder, saveListOrder } from "@/lib/listOrder";
-import { useConfirm } from "@/components/ConfirmProvider";
-import MediaArtwork from "@/components/versado/MediaArtwork";
+import { CardPicker, CardProgress, ContentCard, StatusChip, cardActions, type PickerItem } from "@/components/versado/ContentCard";
+
+// Leren: je eigen cursussen als kaarten (zie docs/KAARTEN.md). De huidige
+// cursus staat los bovenaan; de rest kun je verslepen, verbergen en via
+// "Cursus toevoegen" weer terugzetten. Verbergen = UserCourseProgress
+// .subscribed uit, de voortgang blijft; de volgorde staat in UserListOrder
+// ("courses"). Actief wordt een cursus pas als je er een les van opent
+// (markCourseStarted), niet door hem te bekijken of toe te voegen.
 
 interface CourseView {
   id: string;
@@ -21,6 +28,7 @@ interface CourseView {
   xpAvailable: number;
   isActive: boolean;
   currentChapter: { id: string; bookName: string; number: number } | null;
+  resumeHref: string;
   artwork: string[];
 }
 
@@ -31,6 +39,7 @@ interface CatalogCourseView {
   name: string;
   description: string | null;
   totalChapters: number;
+  artwork: string[];
 }
 
 const TYPE_LABELS: Record<CourseView["type"], MessageKey> = {
@@ -44,95 +53,35 @@ const TYPE_LABELS: Record<CourseView["type"], MessageKey> = {
   FSY: "courses.types.fsy",
 };
 
-// Beeld per cursus komt uit het register (src/lib/artwork.ts); de server
-// geeft de sleutels mee, zodat het beeld het boek volgt waar je nu bent.
-function CourseArtwork({ course, large = false }: { course: CourseView; large?: boolean }) {
-  return (
-    <MediaArtwork
-      kind="course"
-      artworkKey={course.artwork}
-      sizes={large ? "(min-width: 1024px) 420px, 100vw" : "(min-width: 1024px) 320px, (min-width: 768px) 50vw, 100vw"}
-      className={`w-full !aspect-[3/1] sm:!aspect-[16/9] ${large ? "lg:!aspect-auto lg:h-full lg:min-h-64" : ""}`}
-    />
-  );
-}
+const CARD_SIZES = "(min-width: 1024px) 320px, (min-width: 768px) 50vw, 100vw";
 
 export default function CoursesClient() {
   const t = useT();
-  const confirm = useConfirm();
   const [courses, setCourses] = useState<CourseView[] | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
-  const [activatingId, setActivatingId] = useState<string | null>(null);
-  const [removingId, setRemovingId] = useState<string | null>(null);
-  const [showCatalog, setShowCatalog] = useState(false);
   const [catalog, setCatalog] = useState<CatalogCourseView[] | null>(null);
+  const [addingId, setAddingId] = useState<string | null>(null);
 
-  function loadCourses() {
+  /** `order`: een volgorde die net lokaal is gekozen (na toevoegen), anders de opgeslagen. */
+  function loadCourses(order?: string[]) {
     Promise.all([
       fetch("/api/courses").then(async (r) => {
         const data = await r.json().catch(() => null);
         if (!r.ok) throw new Error(data?.error ?? t("courses.errorStatus", { status: r.status }));
         return data;
       }),
-      fetchListOrder("courses"),
+      order ? Promise.resolve(order) : fetchListOrder("courses"),
     ])
-      .then(([d, order]) => setCourses(applyPersonalOrder(d.courses ?? [], order)))
+      .then(([d, savedOrder]) => setCourses(applyPersonalOrder(d.courses ?? [], savedOrder)))
       .catch((e) => setLoadError(e instanceof Error ? e.message : t("courses.error")));
   }
 
-  useEffect(loadCourses, []);
-
-  function reorder(newCourses: CourseView[]) {
-    setCourses(newCourses);
-    saveListOrder(
-      "courses",
-      newCourses.map((c) => c.id)
-    );
-  }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => loadCourses(), []);
 
   async function loadCatalog() {
     const res = await fetch("/api/courses/catalog");
     if (res.ok) setCatalog((await res.json()).courses);
-  }
-
-  function openCatalog() {
-    setShowCatalog(true);
-    if (!catalog) loadCatalog();
-  }
-
-  async function activate(courseId: string) {
-    setActivatingId(courseId);
-    const res = await fetch(`/api/courses/${courseId}/activate`, { method: "POST" });
-    if (res.ok) {
-      // Bewust een volledige paginanavigatie i.p.v. router.push+refresh: die
-      // combinatie liet de vorige pagina soms nog de vorige actieve cursus
-      // tonen totdat je nog een keer heen-en-weer navigeerde (client-side
-      // router-cache). Een harde navigatie haalt de server-data altijd vers op.
-      window.location.href = `/courses/${courseId}`;
-      return;
-    }
-    setActivatingId(null);
-  }
-
-  async function remove(courseId: string) {
-    if (
-      !(await confirm(
-        t("courses.removeConfirm")
-      ))
-    ) {
-      return;
-    }
-    setRemovingId(courseId);
-    const res = await fetch(`/api/courses/${courseId}/unsubscribe`, { method: "POST" });
-    if (res.ok) {
-      setCourses((cur) => cur?.filter((c) => c.id !== courseId) ?? null);
-      // De net verwijderde cursus hoort nu weer in de catalogus — als die al
-      // openstond, meteen verversen i.p.v. wachten tot een volgende keer
-      // openklappen.
-      setCatalog(null);
-      if (showCatalog) loadCatalog();
-    }
-    setRemovingId(null);
   }
 
   if (loadError) {
@@ -147,192 +96,158 @@ export default function CoursesClient() {
   }
 
   if (!courses) {
-    return <p className="text-center text-slate-400 dark:text-slate-500">{t("courses.loading")}</p>;
+    return <p className="text-center text-vs-fg-3">{t("courses.loading")}</p>;
   }
 
-  const otherCatalogCourses = catalog ?? [];
   const activeCourse = courses.find((course) => course.isActive) ?? null;
+  const others = courses.filter((course) => !course.isActive);
 
-  function progressPercent(course: CourseView): number {
-    return course.totalChapters > 0 ? Math.min(100, Math.round((course.completedCount / course.totalChapters) * 100)) : 0;
-  }
-
-  function CourseCard({ course, handle }: { course: CourseView; handle: DragHandleProps }) {
-    const pct = progressPercent(course);
-    const complete = course.totalChapters > 0 && course.completedCount >= course.totalChapters;
-    return course.isActive ? (
-      <article className="card !p-0 overflow-hidden !border !border-brand-200 dark:!border-slate-700">
-        <div className="grid lg:grid-cols-[minmax(260px,0.85fr)_1.15fr]">
-          <CourseArtwork course={course} large />
-          <div className="flex min-w-0 flex-col gap-3 p-4 sm:p-5">
-            <div className="flex items-start justify-end gap-2">
-              <div className="flex items-center gap-2 shrink-0 opacity-70 hover:opacity-100 transition-opacity motion-reduce:transition-none">
-                <DragHandle {...handle} />
-                <button
-                  type="button"
-                  className="w-8 h-8 rounded-full border border-slate-200 dark:border-slate-700 text-slate-400 dark:text-slate-500 hover:text-red-500 hover:border-red-200 dark:hover:border-red-900 flex items-center justify-center text-lg leading-none transition-colors"
-                  disabled={removingId === course.id}
-                  onClick={() => remove(course.id)}
-                  aria-label={t("courses.removeAria", { name: course.name })}
-                  title={t("courses.removeTitle")}
-                >
-                  ×
-                </button>
-              </div>
-            </div>
-            <div>
-              <h3 className="text-xl sm:text-2xl font-extrabold leading-tight text-brand-900 dark:text-slate-100">{course.name}</h3>
-              {course.description && <p className="mt-1.5 text-sm text-slate-500 dark:text-slate-400">{course.description}</p>}
-            </div>
-            {course.currentChapter && (
-              <p className="text-sm font-bold text-slate-700 dark:text-slate-200">
-                {t("courses.next", { chapter: `${course.currentChapter.bookName} ${course.currentChapter.number}` }).replace(/^ — /, "")}
-              </p>
-            )}
-            {course.totalChapters > 0 && (
-              <div className="flex flex-col gap-1.5" aria-label={t("courses.progress", { done: course.completedCount, total: course.totalChapters, unit: course.unitPlural ?? t("terms.chapter.plural") })}>
-                <div className="flex items-center justify-between gap-3 text-sm font-bold dark:text-slate-100">
-                  <span>{t("courses.progressLabel")}</span>
-                  <span className="text-slate-500 dark:text-slate-400">{pct}%</span>
-                </div>
-                <div className="h-2.5 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">
-                  <div className="h-full rounded-full bg-gold-400 transition-[width] duration-500 motion-reduce:transition-none" style={{ width: `${pct}%` }} />
-                </div>
-                <p className="text-xs text-slate-400 dark:text-slate-500">
-                  {t("courses.progress", { done: course.completedCount, total: course.totalChapters, unit: course.unitPlural ?? t("terms.chapter.plural") })}
-                </p>
-              </div>
-            )}
-            <Link href={`/courses/${course.id}`} className="btn-primary self-start">
-              {t("courses.continue")}
-            </Link>
-          </div>
-        </div>
-      </article>
-    ) : (
-      <article className="card !p-0 overflow-hidden flex h-full flex-col transition hover:-translate-y-0.5 hover:shadow-md motion-reduce:transition-none">
-        <CourseArtwork course={course} />
-        <div className="flex flex-1 flex-col gap-2.5 p-3.5">
-          <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0">
-              <p className="text-xs font-extrabold uppercase tracking-wide text-slate-400 dark:text-slate-500">{t(TYPE_LABELS[course.type])}</p>
-              <h3 className="mt-1 font-extrabold leading-tight dark:text-slate-100">{course.name}</h3>
-            </div>
-            <div className="flex items-center gap-1 shrink-0 opacity-70 hover:opacity-100 transition-opacity motion-reduce:transition-none">
-              <DragHandle {...handle} />
-              <button
-                type="button"
-                className="w-8 h-8 rounded-full border border-slate-200 dark:border-slate-700 text-slate-400 dark:text-slate-500 hover:text-red-500 hover:border-red-200 dark:hover:border-red-900 flex items-center justify-center text-lg leading-none transition-colors"
-                disabled={removingId === course.id}
-                onClick={() => remove(course.id)}
-                aria-label={t("courses.removeAria", { name: course.name })}
-                title={t("courses.removeTitle")}
-              >
-                ×
-              </button>
-            </div>
-          </div>
-          {course.description && <p className="text-sm text-slate-500 dark:text-slate-400">{course.description}</p>}
-          {course.totalChapters > 0 && (
-            <div className="mt-auto flex flex-col gap-1 pt-2">
-              <div className="h-2 rounded-full bg-slate-200 dark:bg-slate-600 overflow-hidden">
-                <div className="h-full rounded-full bg-gold-400" style={{ width: `${pct}%` }} />
-              </div>
-              <p className="text-xs text-slate-400 dark:text-slate-500">
-                {complete ? t("courses.completed") : t("courses.progress", { done: course.completedCount, total: course.totalChapters, unit: course.unitPlural ?? t("terms.chapter.plural") })}
-              </p>
-            </div>
-          )}
-          <button className="btn-secondary self-start mt-0" disabled={activatingId === course.id} onClick={() => activate(course.id)}>
-            {activatingId === course.id ? t("courses.busy") : t("courses.choose")}
-          </button>
-        </div>
-      </article>
+  // De huidige cursus staat altijd bovenaan, dus vooraan in de opgeslagen
+  // volgorde; de rest in de volgorde van de lijst.
+  function saveOrder(nextOthers: CourseView[]) {
+    const next = activeCourse ? [activeCourse, ...nextOthers] : nextOthers;
+    setCourses(next);
+    saveListOrder(
+      "courses",
+      next.map((c) => c.id)
     );
   }
 
+  function move(from: number, to: number) {
+    if (to < 0 || to >= others.length) return;
+    const next = [...others];
+    const [item] = next.splice(from, 1);
+    next.splice(to, 0, item);
+    saveOrder(next);
+  }
+
+  // Verbergen uit het overzicht: de voortgang blijft (unsubscribe zet alleen
+  // subscribed uit), dus geen bevestiging nodig; terugzetten kan altijd.
+  async function hide(courseId: string) {
+    const res = await fetch(`/api/courses/${courseId}/unsubscribe`, { method: "POST" });
+    if (!res.ok) return;
+    setCourses((cur) => cur?.filter((c) => c.id !== courseId) ?? null);
+    setCatalog(null);
+  }
+
+  async function add(courseId: string) {
+    setAddingId(courseId);
+    const res = await fetch(`/api/courses/${courseId}/subscribe`, { method: "POST" });
+    setAddingId(null);
+    if (!res.ok) return;
+    // Achteraan, ook als de cursus eerder al eens ergens anders stond.
+    const order = [...courses!.map((c) => c.id), courseId];
+    saveListOrder("courses", order);
+    setCatalog((cur) => cur?.filter((c) => c.id !== courseId) ?? null);
+    loadCourses(order);
+  }
+
+  const progressText = (course: CourseView) =>
+    t("courses.progress", { done: course.completedCount, total: course.totalChapters, unit: course.unitPlural ?? t("terms.chapter.plural") });
+
+  function progressOf(course: CourseView) {
+    return course.totalChapters > 0 ? <CardProgress done={course.completedCount} total={course.totalChapters} text={progressText(course)} /> : null;
+  }
+
+  function chipsOf(course: CourseView) {
+    const complete = course.totalChapters > 0 && course.completedCount >= course.totalChapters;
+    return complete ? <StatusChip tone="success">{t("courses.completed")}</StatusChip> : null;
+  }
+
+  const pickerItems: PickerItem[] | null =
+    catalog?.map((course) => ({
+      id: course.id,
+      title: course.name,
+      label: t(TYPE_LABELS[course.type]),
+      description: course.description,
+      artwork: { kind: "course", keys: course.artwork },
+    })) ?? null;
+
   return (
-    <div className="max-w-5xl mx-auto flex flex-col gap-4 sm:gap-5">
+    <div className="max-w-5xl mx-auto flex flex-col gap-5 sm:gap-6">
       <div>
         <h1 className="text-2xl font-extrabold text-brand-800 dark:text-brand-300">{t("pages.courses")}</h1>
-        <p className="text-slate-500 dark:text-slate-400 text-sm">{t("courses.intro")}</p>
+        <p className="text-sm text-vs-fg-2">{t("courses.intro")}</p>
       </div>
 
-      {courses.length === 0 && (
-        <div className="card text-center flex flex-col gap-2">
-          <p className="font-bold dark:text-slate-100">{t("courses.noneTitle")}</p>
-          <p className="text-sm text-slate-500 dark:text-slate-400">{t("courses.noneHint")}</p>
-        </div>
+      {activeCourse && (
+        <section className="flex flex-col gap-3" aria-labelledby="current-journey">
+          <h2 id="current-journey" className="text-lg font-extrabold text-brand-800 dark:text-brand-300 sm:text-xl">
+            {t("courses.currentJourney")}
+          </h2>
+          <ContentCard
+            wide
+            priority
+            title={activeCourse.name}
+            href={`/courses/${activeCourse.id}`}
+            artwork={{ kind: "course", keys: activeCourse.artwork, sizes: "(min-width: 1024px) 480px, 100vw" }}
+            label={t(TYPE_LABELS[activeCourse.type])}
+            chips={chipsOf(activeCourse)}
+            description={activeCourse.description}
+            actions={[{ label: t("cards.hide"), icon: EyeOff, onSelect: () => hide(activeCourse.id) }]}
+          >
+            {activeCourse.currentChapter && (
+              <p className="text-sm font-bold text-vs-fg">
+                {t("courses.next", { chapter: `${activeCourse.currentChapter.bookName} ${activeCourse.currentChapter.number}` }).replace(/^ — /, "")}
+              </p>
+            )}
+            {progressOf(activeCourse)}
+            {/* Hervatten bij de volgende stap; de afbeelding en titel openen
+                het cursusoverzicht. */}
+            <Link
+              href={activeCourse.resumeHref}
+              className="inline-flex min-h-11 items-center gap-2 self-start rounded-xl bg-vs-accent px-4 text-sm font-extrabold text-vs-on-accent transition hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-vs-accent focus-visible:ring-offset-2 focus-visible:ring-offset-vs-surface"
+            >
+              {t("courses.continue").replace(/\s*→\s*$/, "")}
+              <ArrowRight className="h-4 w-4" aria-hidden />
+            </Link>
+          </ContentCard>
+        </section>
       )}
 
-      {!activeCourse && courses.length > 0 && <p className="text-sm text-slate-500 dark:text-slate-400">{t("courses.noActive")}</p>}
-      <SortableList
-        dndId="courses-list"
-        items={courses}
-        onReorder={reorder}
-        className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3"
-        getItemClassName={(course) => (course.isActive ? "col-span-full order-first" : undefined)}
-        renderBeforeItem={(course, index) => {
-          const firstOtherIndex = courses.findIndex((item) => !item.isActive);
-          if (course.isActive) {
-            return <h2 key={`${course.id}-heading`} className="col-span-full order-first text-lg sm:text-xl font-extrabold text-brand-800 dark:text-brand-300">{t("courses.currentJourney")}</h2>;
-          }
-          if (index === (activeCourse ? firstOtherIndex : 0)) {
-            return <h2 key="discover-courses-heading" className="col-span-full text-lg sm:text-xl font-extrabold text-brand-800 dark:text-brand-300">{t("courses.discoverMore")}</h2>;
-          }
-          return null;
+      {courses.length === 0 && <p className="text-sm text-vs-fg-2">{t("courses.allHidden")}</p>}
+      {!activeCourse && courses.length > 0 && <p className="text-sm text-vs-fg-2">{t("courses.noActive")}</p>}
+
+      {others.length > 0 && (
+        <section className="flex flex-col gap-3" aria-labelledby="discover-courses">
+          <h2 id="discover-courses" className="text-lg font-extrabold text-brand-800 dark:text-brand-300 sm:text-xl">
+            {t("courses.discoverMore")}
+          </h2>
+          <SortableList
+            dndId="courses-list"
+            items={others}
+            onReorder={saveOrder}
+            getItemLabel={(course) => course.name}
+            className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3"
+            renderItem={(course, handle) => (
+              <ContentCard
+                title={course.name}
+                href={`/courses/${course.id}`}
+                artwork={{ kind: "course", keys: course.artwork, sizes: CARD_SIZES }}
+                label={t(TYPE_LABELS[course.type])}
+                chips={chipsOf(course)}
+                description={course.description}
+                handle={handle}
+                priority={!activeCourse && others.indexOf(course) === 0}
+                actions={cardActions({ t, index: others.indexOf(course), count: others.length, onMove: move, onHide: () => hide(course.id) })}
+              >
+                {progressOf(course)}
+              </ContentCard>
+            )}
+          />
+        </section>
+      )}
+
+      <CardPicker
+        addLabel={t("courses.addCourse")}
+        emptyText={t("courses.allAdded")}
+        items={pickerItems}
+        busyId={addingId}
+        onOpen={() => {
+          if (!catalog) loadCatalog();
         }}
-        renderItem={(course, handle) => <CourseCard course={course} handle={handle} />}
+        onAdd={add}
       />
-
-      {!showCatalog ? (
-        <button
-          className="rounded-2xl border-2 border-dashed border-slate-300 dark:border-slate-600 text-slate-500 dark:text-slate-400 font-extrabold text-sm py-2.5 hover:border-brand-400 hover:text-brand-600 dark:hover:text-brand-300 transition-colors"
-          onClick={openCatalog}
-        >
-          ➕ {t("courses.addNew")}
-        </button>
-      ) : (
-        <div className="card flex flex-col gap-2.5">
-          <h2 className="font-extrabold dark:text-slate-100">{t("courses.addNew")}</h2>
-          {!catalog ? (
-            <p className="text-slate-400 dark:text-slate-500">{t("courses.loading")}</p>
-          ) : catalog.length === 0 ? (
-            <p className="text-sm text-slate-500 dark:text-slate-400">
-              {t("courses.allAdded")}
-            </p>
-          ) : (
-            <div className="flex flex-col gap-2">
-              {otherCatalogCourses.map((course) => (
-                <div
-                  key={course.id}
-                  className="flex items-center justify-between gap-3 border border-slate-100 dark:border-slate-700 rounded-xl p-3"
-                >
-                  <div>
-                    <p className="text-xs font-bold uppercase text-slate-400 dark:text-slate-500">
-                      {t(TYPE_LABELS[course.type])}
-                    </p>
-                    <p className="font-bold dark:text-slate-100">{course.name}</p>
-                    {course.description && (
-                      <p className="text-xs text-slate-500 dark:text-slate-400">{course.description}</p>
-                    )}
-                  </div>
-                  <button
-                    className="btn-secondary !px-3 !py-1.5 shrink-0"
-                    disabled={activatingId === course.id}
-                    onClick={() => activate(course.id)}
-                  >
-                    {activatingId === course.id ? t("courses.busy") : t("courses.add")}
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
-          <button className="text-sm text-slate-400 dark:text-slate-500 hover:underline self-start" onClick={() => setShowCatalog(false)}>
-            {t("common.close")}
-          </button>
-        </div>
-      )}
 
       <Link href="/tools" className="card !py-3 flex items-center justify-between gap-3 text-sm font-extrabold text-slate-600 dark:text-slate-300 hover:!border-brand-300 dark:hover:!border-brand-700 transition-colors">
         <span>🧰 {t("pages.tools")}</span>

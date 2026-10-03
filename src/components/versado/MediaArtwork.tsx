@@ -42,6 +42,7 @@ export default function MediaArtwork({
   ratio = "16/9",
   sizes,
   className = "",
+  priority = false,
   children,
 }: {
   kind: ArtworkKind;
@@ -53,6 +54,8 @@ export default function MediaArtwork({
   /** Hoe breed het kader op het scherm is (zoals bij <img sizes>), zodat de browser een passende maat laadt. */
   sizes: string;
   className?: string;
+  /** Het eerste grote beeld bovenaan een pagina: direct laden in plaats van lui. */
+  priority?: boolean;
   /** Laag over het kader, bv. een label. */
   children?: React.ReactNode;
 }) {
@@ -80,6 +83,7 @@ export default function MediaArtwork({
           alt={image.alt ?? ""}
           fill
           sizes={sizes}
+          priority={priority}
           onLoad={() => setState("loaded")}
           onError={() => setState("error")}
           className={`vs-motion transition-opacity duration-300 ${image.fit === "contain" ? "object-contain" : "object-cover"} ${
