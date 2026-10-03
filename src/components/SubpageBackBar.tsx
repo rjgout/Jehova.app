@@ -93,7 +93,7 @@ function detailPageFor(pathname: string, profileView: string | null): DetailPage
  * onder de header en boven eventuele miniplayers. Telt vanzelf mee in
  * --header-height.
  *
- * De pijl werkt als de terugknop van de browser (useBackNavigation): je
+ * De pijl en paginatitel vormen samen één terugknop (useBackNavigation): je
  * komt terug waar je vandaan kwam, ook als dat Vandaag of een melding was.
  * Alleen bij een rechtstreeks geopende link gaat hij naar de logische
  * bovenliggende pagina (`fallback`).
@@ -116,14 +116,16 @@ export default function SubpageBackBar() {
           type="button"
           onClick={goBack}
           aria-label={t("common.back")}
-          className="-ml-3 flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-vs-fg-2 transition hover:text-vs-fg active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-vs-accent"
+          className="group -ml-3 flex min-h-11 min-w-0 max-w-full items-center gap-1 rounded-xl pr-2 text-left transition active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-vs-accent"
         >
-          <ArrowLeft className="h-5 w-5" strokeWidth={2.25} aria-hidden />
+          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-vs-fg-2 transition group-hover:text-vs-fg" aria-hidden>
+            <ArrowLeft className="h-5 w-5" strokeWidth={2.25} />
+          </span>
+          <span className="min-w-0 leading-tight">
+            <span className="block truncate font-extrabold text-vs-fg">{t(page.title)}</span>
+            {subtitle && <span className="block truncate text-xs font-semibold text-vs-fg-2">{subtitle}</span>}
+          </span>
         </button>
-        <div className="min-w-0 leading-tight">
-          <p className="truncate font-extrabold text-vs-fg">{t(page.title)}</p>
-          {subtitle && <p className="truncate text-xs font-semibold text-vs-fg-2">{subtitle}</p>}
-        </div>
       </div>
     </div>
   );
