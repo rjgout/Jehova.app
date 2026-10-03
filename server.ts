@@ -1,5 +1,4 @@
 import { createServer } from "http";
-import { parse } from "url";
 import next from "next";
 import { initGameServer } from "./src/server/gameServer";
 import { startNotificationSchedulers } from "./src/lib/scheduler";
@@ -13,9 +12,10 @@ const app = next({ dev, hostname, port });
 const handle = app.getRequestHandler();
 
 app.prepare().then(() => {
+  // Zonder eigen geparste URL: Next leest req.url zelf. Het oude
+  // url.parse() is onveilig en geeft vanaf Node 24 een waarschuwing.
   const httpServer = createServer((req, res) => {
-    const parsedUrl = parse(req.url ?? "/", true);
-    handle(req, res, parsedUrl);
+    handle(req, res);
   });
 
   initGameServer(httpServer);

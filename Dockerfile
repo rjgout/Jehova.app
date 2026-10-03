@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 
-FROM node:22-alpine AS base
+FROM node:24-alpine AS base
 # openssl/libc6-compat: benodigd door de Prisma query engine op Alpine (musl)
 RUN apk add --no-cache openssl libc6-compat
 WORKDIR /app
@@ -48,7 +48,7 @@ EXPOSE 3000
 
 # Kritiek voor Docker Compose depends_on/orchestratie: geeft aan of de app
 # (en de databaseverbinding) daadwerkelijk gezond is, niet alleen of het
-# proces draait. Node 22 heeft een ingebouwde fetch(), dus geen curl/wget nodig.
+# proces draait. Node heeft een ingebouwde fetch(), dus geen curl/wget nodig.
 HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
   CMD node -e "fetch('http://localhost:'+(process.env.PORT||3000)+'/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
 

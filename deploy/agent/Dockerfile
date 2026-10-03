@@ -2,7 +2,7 @@
 # deploy-pijplijn uitvoert — zie server.js voor waarom dit een apart proces
 # moet zijn (jehova-app kan zichzelf niet vervangen) en welke maatregelen
 # de scope van deze verhoogde rechten beperken.
-FROM node:22-alpine
+FROM node:24-alpine
 RUN apk add --no-cache docker-cli
 WORKDIR /app
 COPY server.js ./
