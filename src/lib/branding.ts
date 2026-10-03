@@ -33,9 +33,11 @@ export async function updateBranding(patch: Partial<BrandingView>): Promise<void
 }
 
 /** Haalt content-type + ruwe bytes uit een branding-data-URL (favicon/logo). Gedeeld door de serve-routes hieronder in /api/branding/*. */
-export function decodeBrandingDataUrl(dataUrl: string | null): { contentType: string; buffer: Buffer } | null {
+export function decodeBrandingDataUrl(dataUrl: string | null): { contentType: string; buffer: Uint8Array<ArrayBuffer> } | null {
   const match = dataUrl ? /^data:([^;]+);base64,(.+)$/.exec(dataUrl) : null;
   if (!match) return null;
   const [, contentType, base64] = match;
-  return { contentType, buffer: Buffer.from(base64, "base64") };
+  // Een Buffer kan op een gedeeld geheugenblok staan; een Response-body moet
+  // een eigen ArrayBuffer hebben, dus een losse kopie (het icoon is klein).
+  return { contentType, buffer: new Uint8Array(Buffer.from(base64, "base64")) };
 }
