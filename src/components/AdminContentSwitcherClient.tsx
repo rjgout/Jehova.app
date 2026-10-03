@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useT } from "@/components/I18nProvider";
+import ToggleSwitch from "@/components/versado/ToggleSwitch";
 
 interface Collection {
   id: string;
@@ -70,20 +71,14 @@ export default function AdminContentSwitcherClient() {
         <p className="text-slate-400 dark:text-slate-500">{t("common.loading")}</p>
       ) : (
         <>
-          <label className="flex items-center gap-3 cursor-pointer">
-            <input
-              type="checkbox"
-              className="h-5 w-5 accent-brand-500"
-              checked={data.enabled}
-              onChange={() => save({ enabled: !data.enabled })}
-              disabled={saving}
-            />
-            <span className="text-sm dark:text-slate-200">{t("adminContent.available")}</span>
+          <label className="flex min-h-11 cursor-pointer items-center gap-3">
+            <span className="min-w-0 flex-1 text-sm dark:text-slate-200">{t("adminContent.available")}</span>
             {!data.enabled && (
               <span className="text-xs font-bold uppercase text-slate-500 bg-slate-100 dark:bg-slate-700 dark:text-slate-300 rounded-full px-2 py-0.5">
                 {t("adminContent.disabled")}
               </span>
             )}
+            <ToggleSwitch checked={data.enabled} onChange={(enabled) => save({ enabled })} disabled={saving} compact />
           </label>
 
           <div className="mt-2 flex flex-col gap-2">
@@ -96,15 +91,6 @@ export default function AdminContentSwitcherClient() {
                     key={collection.id}
                     className={`flex items-center gap-3 px-3 py-2.5 ${lastVisible ? "cursor-not-allowed" : "cursor-pointer"}`}
                   >
-                    <input
-                      type="checkbox"
-                      className="h-5 w-5 accent-brand-500"
-                      checked={collection.visibleToUsers}
-                      onChange={() =>
-                        save({ contentCollectionId: collection.id, visibleToUsers: !collection.visibleToUsers })
-                      }
-                      disabled={saving || lastVisible}
-                    />
                     <span className="text-xl shrink-0" aria-hidden>{collection.icon}</span>
                     <span className="min-w-0 flex-1 text-sm font-semibold dark:text-slate-200">{collection.name}</span>
                     {!collection.visibleToUsers && (
@@ -112,6 +98,7 @@ export default function AdminContentSwitcherClient() {
                         {t("adminContent.hidden")}
                       </span>
                     )}
+                    <ToggleSwitch checked={collection.visibleToUsers} onChange={(visibleToUsers) => save({ contentCollectionId: collection.id, visibleToUsers })} disabled={saving || lastVisible} compact />
                   </label>
                 );
               })}

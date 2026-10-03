@@ -450,11 +450,20 @@ export default function ProfileClient() {
       <section className="overflow-hidden rounded-3xl border border-vs-line bg-gradient-to-br from-brand-500 to-brand-700 p-4 text-white shadow-sm dark:from-brand-600 dark:to-brand-900 sm:p-6">
         <div className="flex items-start justify-between gap-4">
           <div className="flex min-w-0 items-center gap-3">
-            <button type="button" onClick={() => { setAvatarError(null); setAvatarInput(""); setAvatarPickerOpen(true); }} className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-black/15 text-2xl font-extrabold text-gold-400 hover:opacity-80" title={t("profile.changeAvatar")} aria-label={t("profile.changeAvatar")}>{data.avatarEmoji || initial}</button>
+            <button type="button" onClick={() => { setAvatarError(null); setAvatarInput(""); setAvatarPickerOpen(true); }} className="group relative flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-black/15 text-2xl font-extrabold text-gold-400 transition hover:bg-black/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white" title={t("profile.changeAvatar")} aria-label={t("profile.changeAvatar")}>
+              {data.avatarEmoji || initial}
+              <span className="absolute -bottom-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full border-2 border-brand-600 bg-white text-brand-600 shadow-sm transition group-hover:scale-105 dark:border-brand-700 dark:bg-slate-900 dark:text-brand-300" aria-hidden>
+                <Pencil className="h-3 w-3" strokeWidth={2.5} />
+              </span>
+            </button>
             <div className="min-w-0">
               {!editingHandle ? <>
                 <h1 className="flex min-w-0 items-center gap-1.5 text-xl font-extrabold"><span className="truncate">{data.displayName}</span><button type="button" onClick={startEditingHandle} className="shrink-0 opacity-80 hover:opacity-100" title={t("profile.changeHandle")} aria-label={t("profile.changeHandle")}><Pencil className="h-4 w-4" aria-hidden /></button></h1>
                 <p className="truncate text-sm text-brand-100">{formatTag(data.handle, data.discriminator)}</p>
+                <button type="button" onClick={() => { setAvatarError(null); setAvatarInput(""); setAvatarPickerOpen(true); }} className="mt-0.5 inline-flex min-h-7 items-center gap-1 text-xs font-bold text-brand-100 transition hover:text-white focus-visible:outline-none focus-visible:underline">
+                  <Pencil className="h-3 w-3" aria-hidden />
+                  {t("profile.changeAvatar")}
+                </button>
               </> : <div className="flex flex-col gap-2">
                 <label className="flex items-center gap-2"><input className="input !w-auto !py-1 !text-sm" value={handleInput} onChange={(event) => setHandleInput(event.target.value)} maxLength={24} autoFocus aria-label={t("profile.changeHandle")} /><span className="text-sm text-brand-100">#{data.discriminator}</span></label>
                 {handleError && <p className="text-xs text-red-100">{handleError}</p>}

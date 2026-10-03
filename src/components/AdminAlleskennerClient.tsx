@@ -5,6 +5,7 @@ import { useT } from "@/components/I18nProvider";
 import AppSelect from "@/components/AppSelect";
 import { useConfirm } from "@/components/ConfirmProvider";
 import type { TFunction } from "@/lib/i18n/core";
+import ToggleSwitch from "@/components/versado/ToggleSwitch";
 
 type Kind = "QUESTION" | "TOPIC" | "PUZZLE" | "GALLERY" | "MEMORY";
 
@@ -164,13 +165,13 @@ export default function AdminAlleskennerClient() {
                   </span>
                 </button>
                 <label className="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400 shrink-0">
-                  <input
-                    type="checkbox"
+                  {t("adminAk.on")}
+                  <ToggleSwitch
                     checked={item.enabled}
                     disabled={busy}
-                    onChange={(e) => send(item.id, { enabled: e.target.checked }, e.target.checked ? t("adminAk.enabled") : t("adminAk.disabled"))}
+                    compact
+                    onChange={(enabled) => send(item.id, { enabled }, enabled ? t("adminAk.enabled") : t("adminAk.disabled"))}
                   />
-                  {t("adminAk.on")}
                 </label>
               </div>
 

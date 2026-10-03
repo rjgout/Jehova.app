@@ -2,6 +2,7 @@
 
 import { useState, FormEvent } from "react";
 import { useT } from "@/components/I18nProvider";
+import ToggleSwitch from "@/components/versado/ToggleSwitch";
 
 interface EmailSettingsView {
   enabled: boolean;
@@ -76,14 +77,9 @@ export default function EmailSettingsClient({ initial }: { initial: EmailSetting
       </p>
 
       <form onSubmit={onSubmit} className="flex flex-col gap-3">
-        <label className="flex items-center gap-2 text-sm font-bold dark:text-slate-200">
-          <input
-            type="checkbox"
-            className="h-4 w-4 accent-brand-500"
-            checked={form.enabled}
-            onChange={(e) => setForm({ ...form, enabled: e.target.checked })}
-          />
-          {t("adminEmail.enable")}
+        <label className="flex min-h-11 items-center gap-2 text-sm font-bold dark:text-slate-200">
+          <span className="min-w-0 flex-1">{t("adminEmail.enable")}</span>
+          <ToggleSwitch checked={form.enabled} onChange={(enabled) => setForm({ ...form, enabled })} compact />
         </label>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -127,14 +123,9 @@ export default function EmailSettingsClient({ initial }: { initial: EmailSetting
           />
         </div>
 
-        <label className="flex items-center gap-2 text-sm dark:text-slate-200">
-          <input
-            type="checkbox"
-            className="h-4 w-4 accent-brand-500"
-            checked={form.smtpSecure}
-            onChange={(e) => setForm({ ...form, smtpSecure: e.target.checked })}
-          />
-          {t("adminEmail.implicitTls")}
+        <label className="flex min-h-11 items-center gap-2 text-sm dark:text-slate-200">
+          <span className="min-w-0 flex-1">{t("adminEmail.implicitTls")}</span>
+          <ToggleSwitch checked={form.smtpSecure} onChange={(smtpSecure) => setForm({ ...form, smtpSecure })} compact />
         </label>
 
         {message && (

@@ -3,6 +3,7 @@
 import { useId, type ButtonHTMLAttributes, type ReactNode } from "react";
 import Link from "next/link";
 import { AlertCircle, AlertTriangle, CheckCircle2, ChevronRight, Info } from "lucide-react";
+import ToggleSwitch from "@/components/versado/ToggleSwitch";
 
 // Gedeelde bouwstenen voor profielpagina's en instellingen (zie
 // docs/PROFIEL.md). Alles met de vs-tokens, dus licht en donker vanzelf
@@ -169,21 +170,12 @@ export function SettingsToggleRow({
       <span className={`min-w-0 flex-auto ${disabled ? "opacity-60" : ""}`}>
         <RowText label={label} description={description} descriptionId={description ? descriptionId : undefined} />
       </span>
-      <input
-        type="checkbox"
-        role="switch"
-        className="peer sr-only"
+      <ToggleSwitch
         checked={checked}
         disabled={disabled}
-        onChange={() => {
-          if (!busy) onChange();
-        }}
-        aria-busy={busy || undefined}
-        aria-describedby={description ? descriptionId : undefined}
-      />
-      <span
-        aria-hidden
-        className="relative h-6 w-11 shrink-0 rounded-full bg-vs-line-strong transition-colors after:absolute after:left-0.5 after:top-0.5 after:h-5 after:w-5 after:rounded-full after:bg-white after:shadow-sm after:transition-transform peer-checked:bg-vs-accent peer-checked:after:translate-x-5 peer-focus-visible:ring-2 peer-focus-visible:ring-vs-accent peer-focus-visible:ring-offset-2 peer-focus-visible:ring-offset-vs-surface peer-disabled:opacity-50 motion-reduce:after:transition-none"
+        busy={busy}
+        onChange={onChange}
+        ariaDescribedBy={description ? descriptionId : undefined}
       />
     </label>
   );

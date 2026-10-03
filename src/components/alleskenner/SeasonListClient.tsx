@@ -4,6 +4,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useT } from "@/components/I18nProvider";
+import ToggleSwitch from "@/components/versado/ToggleSwitch";
 
 interface SeasonSummary {
   id: string;
@@ -98,9 +99,9 @@ export default function SeasonListClient() {
             maxLength={60}
             onChange={(e) => setName(e.target.value)}
           />
-          <label className="flex items-center gap-2 text-sm dark:text-slate-200">
-            <input type="checkbox" checked={joinAsPlayer} onChange={(e) => setJoinAsPlayer(e.target.checked)} />
-            {t("season.joinAsPlayer")}
+          <label className="flex min-h-11 items-center gap-2 text-sm dark:text-slate-200">
+            <span className="min-w-0 flex-1">{t("season.joinAsPlayer")}</span>
+            <ToggleSwitch checked={joinAsPlayer} onChange={setJoinAsPlayer} compact />
           </label>
           <button className="btn-primary" disabled={busy || !name.trim()}>
             {busy ? t("courses.busy") : t("season.create")}

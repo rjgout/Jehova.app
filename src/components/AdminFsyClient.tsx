@@ -6,6 +6,7 @@ import type { FsyContentBlock } from "@/lib/fsyContent";
 import { useT, useUiLanguage } from "@/components/I18nProvider";
 import { getLanguage } from "@/lib/languages";
 import { FSY_CATEGORY_KEYS } from "@/components/FsyLessonView";
+import ToggleSwitch from "@/components/versado/ToggleSwitch";
 
 interface Lesson {
   id: string;
@@ -111,13 +112,7 @@ export default function AdminFsyClient() {
             {t("adminFsy.autoPublishText")}
           </span>
         </span>
-        <input
-          type="checkbox"
-          checked={data.settings.autoPublish}
-          disabled={savingSetting}
-          onChange={(event) => setAutoPublish(event.target.checked)}
-          className="h-5 w-5"
-        />
+        <ToggleSwitch checked={data.settings.autoPublish} disabled={savingSetting} onChange={setAutoPublish} />
       </label>
 
       <div className="flex flex-wrap gap-3 text-sm">

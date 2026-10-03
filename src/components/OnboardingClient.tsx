@@ -12,6 +12,7 @@ import SystemIcon from "@/components/versado/SystemIcon";
 import CompanionPicker, { companionName } from "@/components/versado/CompanionPicker";
 import MascotSlot from "@/components/versado/MascotSlot";
 import { useCompanion } from "@/components/versado/PersonalMascot";
+import ToggleSwitch from "@/components/versado/ToggleSwitch";
 import type { PersonalMascotCharacter } from "@/lib/mascots";
 
 interface OnboardingClientProps {
@@ -366,21 +367,15 @@ function VriendenStep({ email, initialSearchable, onNext }: { email: string; ini
         {message && <p className="text-sm font-semibold text-brand-600 dark:text-brand-300">{message}</p>}
       </div>
 
-      <label className="card flex items-start gap-3 cursor-pointer">
-        <input
-          type="checkbox"
-          className="mt-1 h-5 w-5 accent-brand-500"
-          checked={searchable}
-          onChange={toggleSearchable}
-          disabled={savingSearchable}
-        />
-        <span className="text-sm dark:text-slate-200">
+      <label className="card flex cursor-pointer items-center gap-3">
+        <span className="min-w-0 flex-1 text-sm dark:text-slate-200">
           {t("profile.searchableByEmail", { email })}
           <br />
           <span className="text-slate-400 dark:text-slate-500">
             {t("onboarding.searchableHint")}
           </span>
         </span>
+        <ToggleSwitch checked={searchable} onChange={toggleSearchable} disabled={savingSearchable} />
       </label>
 
       <button className="btn-primary self-center" onClick={onNext}>
@@ -547,26 +542,26 @@ function NotificatiesStep({
       </div>
 
       {emailConfigured && (
-        <label className="card text-left flex items-start gap-3 cursor-pointer">
-          <input type="checkbox" className="mt-1 h-5 w-5 accent-brand-500" checked={email} onChange={toggleEmail} />
-          <span className="text-sm dark:text-slate-200">
+        <label className="card flex cursor-pointer items-center gap-3 text-left">
+          <span className="min-w-0 flex-1 text-sm dark:text-slate-200">
             {t("onboarding.emailTitle")}
             <br />
             <span className="text-slate-400 dark:text-slate-500">{t("onboarding.emailHint")}</span>
           </span>
+          <ToggleSwitch checked={email} onChange={toggleEmail} />
         </label>
       )}
 
       <div className="card text-left flex flex-col gap-3">
-        <label className="flex items-start gap-3 cursor-pointer">
-          <input type="checkbox" className="mt-1 h-5 w-5 accent-brand-500" checked={dailyText} onChange={toggleDailyText} />
-          <span className="text-sm dark:text-slate-200">
+        <label className="flex cursor-pointer items-center gap-3">
+          <span className="min-w-0 flex-1 text-sm dark:text-slate-200">
             {t("onboarding.dailyTextTitle")}
             <br />
             <span className="text-slate-400 dark:text-slate-500">
               {emailConfigured ? t("onboarding.dailyTextHintEmail") : t("onboarding.dailyTextHint")}
             </span>
           </span>
+          <ToggleSwitch checked={dailyText} onChange={toggleDailyText} />
         </label>
         {dailyText && (
           <label className="flex items-center gap-2 text-sm dark:text-slate-200 pl-8">

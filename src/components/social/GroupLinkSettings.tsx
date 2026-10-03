@@ -7,6 +7,7 @@ import { useT } from "@/components/I18nProvider";
 import { useConfirm } from "@/components/ConfirmProvider";
 import { iconButton, primaryButton, secondaryButton, surfaceCard } from "@/components/versado/styles";
 import { socialRequest } from "@/components/social/shared";
+import ToggleSwitch from "@/components/versado/ToggleSwitch";
 
 /** De groepslink zoals hij gedeeld wordt; de QR-code bevat precies deze tekst. */
 export function groupLinkUrl(token: string): string {
@@ -116,12 +117,12 @@ export default function GroupLinkSettings({ groupId, groupName, token, onChanged
         {t("together.link.title")}
       </h2>
       <p className="text-sm text-vs-fg-2">{t("together.link.intro")}</p>
-      <label className="flex cursor-pointer items-start gap-3">
-        <input type="checkbox" className="mt-1 h-5 w-5 shrink-0 accent-brand-500" checked={optimistic ?? !!token} disabled={busy} onChange={(e) => setActive(e.target.checked)} />
-        <span className="min-w-0">
+      <label className="flex min-h-11 cursor-pointer items-center gap-3">
+        <span className="min-w-0 flex-1">
           <span className="block text-sm font-bold text-vs-fg">{t("together.link.active")}</span>
           <span className="block text-xs text-vs-fg-2">{t("together.link.activeHint")}</span>
         </span>
+        <ToggleSwitch checked={optimistic ?? !!token} disabled={busy} onChange={setActive} />
       </label>
       {error && (
         <p role="alert" className="text-sm font-semibold text-vs-danger">

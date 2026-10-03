@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useT } from "@/components/I18nProvider";
 import type { MessageKey } from "@/lib/i18n/core";
+import ToggleSwitch from "@/components/versado/ToggleSwitch";
 
 interface SettingsView {
   wordGameEnabled: boolean;
@@ -93,20 +94,14 @@ export default function AdminGameSettingsClient() {
       ) : (
         <div className="flex flex-col gap-2">
           {GAMES.map((g) => (
-            <label key={g.key} className="flex items-center gap-3 cursor-pointer">
-              <input
-                type="checkbox"
-                className="h-5 w-5 accent-brand-500"
-                checked={settings[g.key]}
-                onChange={() => toggle(g.key)}
-                disabled={saving}
-              />
-              <span className="text-sm dark:text-slate-200">{g.icon ? `${g.icon} ${t(g.labelKey)}` : t(g.labelKey)}</span>
+            <label key={g.key} className="flex min-h-11 cursor-pointer items-center gap-3">
+              <span className="min-w-0 flex-1 text-sm dark:text-slate-200">{g.icon ? `${g.icon} ${t(g.labelKey)}` : t(g.labelKey)}</span>
               {!settings[g.key] && (
                 <span className="text-xs font-bold uppercase text-red-500 dark:text-red-400 bg-red-50 dark:bg-red-950 rounded-full px-2 py-0.5">
                   {t("adminContent.disabled")}
                 </span>
               )}
+              <ToggleSwitch checked={settings[g.key]} onChange={() => toggle(g.key)} disabled={saving} compact />
             </label>
           ))}
         </div>
@@ -131,13 +126,7 @@ export default function AdminGameSettingsClient() {
                           : "border-slate-200 text-slate-500 dark:border-slate-700 dark:text-slate-400"
                       }`}
                     >
-                      <input
-                        type="checkbox"
-                        className="h-3.5 w-3.5 accent-brand-500"
-                        checked={on}
-                        disabled={saving}
-                        onChange={() => toggleScope(g.gameKey, collection.id, !on)}
-                      />
+                      <ToggleSwitch checked={on} disabled={saving} onChange={(enabled) => toggleScope(g.gameKey, collection.id, enabled)} compact />
                       <span aria-hidden>{collection.icon}</span>
                       {collection.name}
                       {collection.language && <span className="font-bold uppercase">{collection.language}</span>}

@@ -9,6 +9,7 @@ import UserTag from "@/components/UserTag";
 import { primaryButton, secondaryButton, surfaceCard } from "@/components/versado/styles";
 import { SocialHeading, socialRequest, type Person } from "@/components/social/shared";
 import GroupLinkSettings from "@/components/social/GroupLinkSettings";
+import ToggleSwitch from "@/components/versado/ToggleSwitch";
 import { GROUP_NAME_MAX_LENGTH } from "@/lib/social/rules";
 
 interface SettingsData {
@@ -154,12 +155,12 @@ export default function GroupSettingsClient({ groupId }: { groupId: string }) {
 
 function Toggle({ label, hint, checked, onChange }: { label: string; hint: string; checked: boolean; onChange: (value: boolean) => void }) {
   return (
-    <label className="flex cursor-pointer items-start gap-3">
-      <input type="checkbox" className="mt-1 h-5 w-5 shrink-0 accent-brand-500" checked={checked} onChange={(e) => onChange(e.target.checked)} />
-      <span className="min-w-0">
+    <label className="flex min-h-11 cursor-pointer items-center gap-3">
+      <span className="min-w-0 flex-1">
         <span className="block text-sm font-bold text-vs-fg">{label}</span>
         <span className="block text-xs text-vs-fg-2">{hint}</span>
       </span>
+      <ToggleSwitch checked={checked} onChange={onChange} />
     </label>
   );
 }

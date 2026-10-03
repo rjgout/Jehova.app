@@ -3,6 +3,7 @@
 import { useEffect, useId, useRef, useState, type PointerEvent } from "react";
 import { useT } from "@/components/I18nProvider";
 import { useConfirm } from "@/components/ConfirmProvider";
+import ToggleSwitch from "@/components/versado/ToggleSwitch";
 import { JIGSAW_LEVELS, jigsawGrid, jigsawPiecePath, type JigsawLevel, type JigsawState } from "@/lib/jigsaw";
 
 async function requestGame(body: object, fallback: string): Promise<JigsawState & { accepted?: boolean }> {
@@ -224,7 +225,7 @@ function Puzzle({ initial, image, onExit }: { initial: JigsawState; image: strin
       <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
         <strong>{t("jigsaw.progress", { n: game.placed.length, total: game.pieces })}</strong>
         <button type="button" className="btn-secondary min-h-11" aria-expanded={preview} onClick={() => setPreview(!preview)}>{t(preview ? "jigsaw.hidePreview" : "jigsaw.preview")}</button>
-        <label className="flex items-center gap-2 min-h-11"><input type="checkbox" className="h-5 w-5 accent-brand-500" checked={ghost} onChange={(event) => setGhost(event.target.checked)} />{t("jigsaw.ghost")}</label>
+        <label className="flex min-h-11 items-center gap-2">{t("jigsaw.ghost")}<ToggleSwitch checked={ghost} onChange={setGhost} compact /></label>
       </div>
       {preview && <div className="flex justify-center rounded-2xl bg-slate-100 dark:bg-slate-800 p-2">
         {/* eslint-disable-next-line @next/next/no-img-element */}

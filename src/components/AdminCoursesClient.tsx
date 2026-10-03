@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useT } from "@/components/I18nProvider";
+import ToggleSwitch from "@/components/versado/ToggleSwitch";
 
 interface CourseView {
   id: string;
@@ -24,7 +25,6 @@ function CourseRow({ course, onToggle, saving }: { course: CourseView; onToggle:
           : "border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-950/40"
       }`}
     >
-      <input type="checkbox" className="h-5 w-5 accent-brand-500" checked={course.enabled} onChange={onToggle} disabled={saving} />
       <div className="flex-1">
         <p className="text-xs font-bold uppercase text-slate-400 dark:text-slate-500">{(COURSE_TYPES as readonly string[]).includes(course.type) ? t(`adminCourses.types.${course.type as (typeof COURSE_TYPES)[number]}`) : course.type}</p>
         <p className="font-bold dark:text-slate-100">{course.name}</p>
@@ -32,6 +32,7 @@ function CourseRow({ course, onToggle, saving }: { course: CourseView; onToggle:
       {!course.enabled && (
         <span className="text-xs font-bold uppercase text-red-500 dark:text-red-400 shrink-0">{t("adminContent.disabled")}</span>
       )}
+      <ToggleSwitch checked={course.enabled} onChange={onToggle} disabled={saving} compact />
     </label>
   );
 }
