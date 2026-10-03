@@ -1,12 +1,15 @@
 "use client";
 
-import { useState, FormEvent } from "react";
+import { useId, useState, FormEvent } from "react";
 import { useT } from "@/components/I18nProvider";
 import { useRouter } from "next/navigation";
+import ProfilePage from "@/components/profile/ProfilePage";
+import { ProfileCard, SettingsActions, SettingsButton, SettingsField, SettingsStatus, settingsFieldClass } from "@/components/profile/settings";
 
 export default function ChangePasswordClient({ forced }: { forced: boolean }) {
   const router = useRouter();
   const t = useT();
+  const id = useId();
   const [form, setForm] = useState({ currentPassword: "", newPassword: "", confirmPassword: "" });
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -34,46 +37,49 @@ export default function ChangePasswordClient({ forced }: { forced: boolean }) {
     router.refresh();
   }
 
+  // Echte labels en autocomplete: een wachtwoordmanager vult dan het huidige
+  // wachtwoord in en stelt bij het nieuwe een sterk wachtwoord voor.
+  const fields = [
+    { key: "currentPassword", label: forced ? t("password.temporary") : t("password.current"), autoComplete: "current-password", minLength: undefined },
+    { key: "newPassword", label: t("password.new"), autoComplete: "new-password", minLength: 8 },
+    { key: "confirmPassword", label: t("password.confirmNew"), autoComplete: "new-password", minLength: 8 },
+  ] as const;
+
   return (
-    <div className="max-w-md mx-auto card">
-      <h1 className="text-2xl font-extrabold mb-2 text-brand-800 dark:text-brand-300">{t("profile.changePassword")}</h1>
+    <ProfilePage title={t("profile.changePassword")}>
       {forced && (
-        <p className="text-sm bg-gold-50 dark:bg-slate-700 text-gold-700 dark:text-gold-400 rounded-xl px-3 py-2 mb-4">
+        <SettingsStatus kind="warning" boxed>
           {t("password.forcedReset")}
-        </p>
+        </SettingsStatus>
       )}
-      <form onSubmit={onSubmit} className="flex flex-col gap-4">
-        <input
-          className="input"
-          placeholder={forced ? t("password.temporary") : t("password.current")}
-          type="password"
-          required
-          value={form.currentPassword}
-          onChange={(e) => setForm({ ...form, currentPassword: e.target.value })}
-        />
-        <input
-          className="input"
-          placeholder={t("password.new")}
-          type="password"
-          required
-          minLength={8}
-          value={form.newPassword}
-          onChange={(e) => setForm({ ...form, newPassword: e.target.value })}
-        />
-        <input
-          className="input"
-          placeholder={t("password.confirmNew")}
-          type="password"
-          required
-          minLength={8}
-          value={form.confirmPassword}
-          onChange={(e) => setForm({ ...form, confirmPassword: e.target.value })}
-        />
-        {error && <p className="text-red-600 dark:text-red-400 text-sm font-semibold">{error}</p>}
-        <button type="submit" disabled={loading} className="btn-primary mt-2">
-          {loading ? t("courses.busy") : t("password.save")}
-        </button>
-      </form>
-    </div>
+      <ProfileCard>
+        <form onSubmit={onSubmit} className="flex flex-col">
+          {fields.map((field) => (
+            <SettingsField key={field.key} label={field.label} htmlFor={`${id}-${field.key}`}>
+              <input
+                id={`${id}-${field.key}`}
+                className={settingsFieldClass}
+                type="password"
+                autoComplete={field.autoComplete}
+                required
+                minLength={field.minLength}
+                value={form[field.key]}
+                onChange={(e) => setForm({ ...form, [field.key]: e.target.value })}
+              />
+            </SettingsField>
+          ))}
+          {error && (
+            <div className="px-2 pt-1">
+              <SettingsStatus kind="error">{error}</SettingsStatus>
+            </div>
+          )}
+          <SettingsActions>
+            <SettingsButton type="submit" variant="primary" disabled={loading}>
+              {loading ? t("courses.busy") : t("password.save")}
+            </SettingsButton>
+          </SettingsActions>
+        </form>
+      </ProfileCard>
+    </ProfilePage>
   );
 }

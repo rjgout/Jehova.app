@@ -14,7 +14,7 @@ export const PROFILE_VIEWS = {
   notifications: { title: "profile.notifications" },
   privacy: { title: "profile.privacy" },
   presence: { title: "profile.onlineActivity" },
-  about: { title: "profile.aboutSection" },
+  about: { title: "profile.whatsNew" },
   twoFactor: { title: "profile.twoFactor" },
 } satisfies Record<string, { title: MessageKey; subtitle?: MessageKey }>;
 

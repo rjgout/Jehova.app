@@ -3,13 +3,16 @@
 import { useEffect, useRef, useState } from "react";
 import { useT, useUiLanguage } from "@/components/I18nProvider";
 import { getLanguage } from "@/lib/languages";
+import { X } from "lucide-react";
+import ProfilePage from "@/components/profile/ProfilePage";
+import { ProfileCard, SettingsButton, SettingsStatus, settingsFieldClass } from "@/components/profile/settings";
 
 const STATUSES = ["NEW", "IN_PROGRESS", "DONE", "WONT_DO"] as const;
 const STATUS_CLASSES: Record<string, string> = {
-  NEW: "bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300",
-  IN_PROGRESS: "bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-200",
-  DONE: "bg-brand-100 text-brand-700 dark:bg-brand-900 dark:text-brand-200",
-  WONT_DO: "bg-red-100 text-red-600 dark:bg-red-900 dark:text-red-300",
+  NEW: "bg-vs-subtle text-vs-fg-2",
+  IN_PROGRESS: "bg-vs-warning-soft text-vs-warning",
+  DONE: "bg-vs-accent-soft text-vs-accent",
+  WONT_DO: "bg-vs-danger-soft text-vs-danger",
 };
 
 interface ReportView {
@@ -102,82 +105,74 @@ export default function FeedbackClient() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto flex flex-col gap-8">
-      <div>
-        <h1 className="text-2xl font-extrabold text-brand-800 dark:text-brand-300">{t("pages.feedback")}</h1>
-        <p className="text-slate-500 dark:text-slate-400 text-sm">
-          {t("feedback.intro")}
-        </p>
-      </div>
-
-      <div className="card flex flex-col gap-3" onPaste={onPaste}>
-        <textarea
-          className="input min-h-[120px]"
-          placeholder={t("feedback.placeholder")}
-          value={message}
-          onChange={(e) => setMessage(e.target.value)}
-        />
-        <div className="flex items-center gap-3 flex-wrap">
-          <button type="button" className="btn-secondary !px-3 !py-1.5" onClick={() => fileInputRef.current?.click()}>
-            {t("feedback.addScreenshot")}
-          </button>
-          <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={onFileChange} />
-          <span className="text-xs text-slate-400 dark:text-slate-500">{t("feedback.orPaste")}</span>
-        </div>
-        {screenshot && (
-          <div className="relative self-start">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={screenshot} alt={t("feedback.screenshot")} className="max-h-40 rounded-lg border border-slate-200 dark:border-slate-700" />
-            <button
-              type="button"
-              className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold"
-              onClick={() => setScreenshot(null)}
-            >
-              ✕
-            </button>
+    <ProfilePage title={t("pages.feedback")}>
+      <ProfileCard
+        description={t("feedback.intro")}
+        actions={
+          <SettingsButton variant="primary" disabled={submitting || !message.trim()} onClick={submit}>
+            {submitting ? t("feedback.busy") : t("feedback.send")}
+          </SettingsButton>
+        }
+      >
+        <div className="flex flex-col gap-3" onPaste={onPaste}>
+          <textarea
+            className={`${settingsFieldClass} min-h-[7.5rem] resize-y`}
+            aria-label={t("pages.feedback")}
+            placeholder={t("feedback.placeholder")}
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+          />
+          <div className="flex flex-wrap items-center gap-3">
+            <SettingsButton onClick={() => fileInputRef.current?.click()}>{t("feedback.addScreenshot")}</SettingsButton>
+            <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={onFileChange} />
+            <span className="text-xs text-vs-fg-3">{t("feedback.orPaste")}</span>
           </div>
-        )}
-        {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
-        {successMsg && <p className="text-sm font-semibold text-brand-600 dark:text-brand-300">{successMsg}</p>}
-        <button className="btn-primary self-start" disabled={submitting || !message.trim()} onClick={submit}>
-          {submitting ? t("feedback.busy") : t("feedback.send")}
-        </button>
-      </div>
+          {screenshot && (
+            <div className="relative self-start">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={screenshot} alt={t("feedback.screenshot")} className="max-h-40 rounded-lg border border-vs-line" />
+              <button
+                type="button"
+                aria-label={t("season.remove")}
+                className="absolute -right-2 -top-2 flex h-7 w-7 items-center justify-center rounded-full bg-vs-danger text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-vs-accent"
+                onClick={() => setScreenshot(null)}
+              >
+                <X className="h-4 w-4" aria-hidden />
+              </button>
+            </div>
+          )}
+          {error && <SettingsStatus kind="error">{error}</SettingsStatus>}
+          {successMsg && <SettingsStatus kind="success">{successMsg}</SettingsStatus>}
+        </div>
+      </ProfileCard>
 
-      <section>
-        <h2 className="font-extrabold mb-2 text-slate-700 dark:text-slate-200">{t("feedback.yourReports")}</h2>
+      <ProfileCard title={t("feedback.yourReports")}>
         {!reports ? (
-          <p className="text-slate-400 dark:text-slate-500">{t("common.loading")}</p>
+          <p className="text-sm text-vs-fg-3">{t("common.loading")}</p>
         ) : reports.length === 0 ? (
-          <p className="text-slate-400 dark:text-slate-500">{t("feedback.none")}</p>
+          <p className="text-sm text-vs-fg-3">{t("feedback.none")}</p>
         ) : (
-          <div className="flex flex-col gap-2">
+          <ul className="divide-y divide-vs-line">
             {reports.map((r) => (
-              <div key={r.id} className="card flex flex-col gap-2">
+              <li key={r.id} className="flex flex-col gap-2 py-3">
                 <div className="flex items-start justify-between gap-2">
-                  <p className="text-sm whitespace-pre-wrap dark:text-slate-200">{r.message}</p>
-                  <span
-                    className={`text-xs font-bold uppercase rounded-full px-2 py-1 shrink-0 ${STATUS_CLASSES[r.status] ?? STATUS_CLASSES.NEW}`}
-                  >
+                  <p className="whitespace-pre-wrap text-sm text-vs-fg">{r.message}</p>
+                  <span className={`shrink-0 rounded-full px-2 py-1 text-xs font-bold uppercase ${STATUS_CLASSES[r.status] ?? STATUS_CLASSES.NEW}`}>
                     {(STATUSES as readonly string[]).includes(r.status) ? t(`feedback.status.${r.status as (typeof STATUSES)[number]}`) : r.status}
                   </span>
                 </div>
                 {r.screenshot && (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={r.screenshot}
-                    alt={t("feedback.screenshot")}
-                    className="max-h-32 rounded-lg border border-slate-200 dark:border-slate-700 self-start"
-                  />
+                  <img src={r.screenshot} alt={t("feedback.screenshot")} className="max-h-32 self-start rounded-lg border border-vs-line" />
                 )}
-                <p className="text-xs text-slate-400 dark:text-slate-500">
+                <p className="text-xs text-vs-fg-3">
                   {new Date(r.createdAt).toLocaleDateString(intlLocale, { day: "numeric", month: "long", year: "numeric" })}
                 </p>
-              </div>
+              </li>
             ))}
-          </div>
+          </ul>
         )}
-      </section>
-    </div>
+      </ProfileCard>
+    </ProfilePage>
   );
 }

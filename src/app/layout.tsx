@@ -227,7 +227,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         {user && <TimeZoneSync known={user.timeZone} />}
         </StickyHeader>
         <Suspense fallback={null}><NavigationScroll /></Suspense>
-        <main className="mx-auto max-w-5xl px-4 pb-[calc(6rem+env(safe-area-inset-bottom))] pt-[calc(var(--header-height,4.5rem)+2rem)] lg:pb-16">
+        <main className="mx-auto max-w-5xl px-4 pb-[var(--main-pad-bottom)] pt-[var(--main-pad-top)]">
           {user && <SocialTabs />}
           {children}
         </main>

@@ -1,29 +1,31 @@
 "use client";
 
-import { useEffect, useState, type ReactNode, type SyntheticEvent } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import Link from "next/link";
 import LanguageSettings from "@/components/LanguageSettings";
 import { useRouter, useSearchParams } from "next/navigation";
 import type { LeagueTier } from "@prisma/client";
-import RankMedal from "@/components/versado/RankMedal";
 import DivisionEmblem from "@/components/versado/DivisionEmblem";
 import { formatTag, firstGrapheme, isSingleEmoji } from "@/lib/handle";
-import { enableBrowserPush, disableBrowserPush, isPushSupported } from "@/lib/pushClient";
+import { enableBrowserPush, disableBrowserPush } from "@/lib/pushClient";
 import { getSocket } from "@/lib/socketClient";
 import ThemePreference from "@/components/ThemePreference";
 import { DEFAULT_TIME_ZONE, isValidTimeZone } from "@/lib/timeZone";
 import TwoFactorSettings from "@/components/TwoFactorSettings";
 import { getDutchVoices, saveSelectedDutchVoice } from "@/lib/readAloud";
-import { useT, useUiLanguage } from "@/components/I18nProvider";
+import { useT } from "@/components/I18nProvider";
 import { useConfirm } from "@/components/ConfirmProvider";
 import { getLanguage } from "@/lib/languages";
-import { translateOr } from "@/lib/i18n/core";
-import AppSelect from "@/components/AppSelect";
 import SystemIcon from "@/components/versado/SystemIcon";
 import CompanionPicker, { companionName } from "@/components/versado/CompanionPicker";
 import { useCompanion } from "@/components/versado/PersonalMascot";
 import type { PersonalMascotCharacter } from "@/lib/mascots";
 import { parseProfileView, profileViewHref, PROFILE_VIEWS, type ProfileView } from "@/lib/profileViews";
+import ProfilePage from "@/components/profile/ProfilePage";
+import { ProfileCard, SettingsButton, SettingsInfoRow, SettingsRow, SettingsSection, SettingsToggleRow } from "@/components/profile/settings";
+import { AchievementsView, CompetitionView } from "@/components/profile/ProfileContentViews";
+import { NotificationsView, PresenceView, PrivacyView, ReadAloudView, ReadingView, WhatsNewView } from "@/components/profile/ProfileSettingsViews";
+import type { ProfileData, ProfileToggleField } from "@/components/profile/profileData";
 import {
   Bell,
   BookOpen,
@@ -47,62 +49,10 @@ import {
   Volume2,
 } from "lucide-react";
 
-interface AchievementView {
-  slug: string;
-  name: string;
-  description: string;
-  icon: string;
-  earnedAt: string | null;
-}
-
-interface ProfileData {
-  displayName: string;
-  isAdmin: boolean;
-  handle: string;
-  discriminator: string;
-  avatarEmoji: string | null;
-  email: string;
-  searchableByEmail: boolean;
-  shareOnlineStatus: boolean;
-  shareCurrentActivity: boolean;
-  incognitoActive: boolean;
-  emailNotificationsEnabled: boolean;
-  pushNotificationsEnabled: boolean;
-  dailyReminderTime: string;
-  dailyTextTime: string;
-  notifyDailyText: boolean;
-  notifyDailyReminder: boolean;
-  notifySocial: boolean;
-  notifyAchievements: boolean;
-  notifyWordGame: boolean;
-  notifyFriendOnline: boolean;
-  changelogEnabled: boolean;
-  conferenceCountdownEnabled: boolean;
-  nudgesEnabled: boolean;
-  timeZone: string | null;
-  uiLanguage: string;
-  companion: PersonalMascotCharacter;
-  totpEnabled: boolean;
-  xpTotal: number;
-  currentStreak: number;
-  longestStreak: number;
-  freezeCount: number;
-  chaptersCompleted: number;
-  chaptersStarted: number;
-  duelsPlayed: number;
-  duelsWon: number;
-  tier: LeagueTier | null;
-  groupPosition: number | null;
-  medals: { gold: number; silver: number; bronze: number };
-  bestTierEver: LeagueTier | null;
-  lifetimePromotions: number;
-  lifetimeDemotions: number;
-  competitionsWon: number;
-  seasonCount: number;
-  bestNationalRank: number | null;
-  seasons: { seasonIndex: number; highestTier: LeagueTier; finalTier: LeagueTier; finalGroupPosition: number | null }[];
-  achievements: AchievementView[];
-}
+// Het profiel: overzicht op /profile en elk onderdeel op /profile?view=...
+// (src/lib/profileViews.ts). Gegevens en opslaan staan hier, de weergave
+// van de onderdelen in src/components/profile/. Alles binnen ProfilePage en
+// met de gedeelde componenten uit profile/settings.tsx: zie docs/PROFIEL.md.
 
 // Kleine, willekeurige greep uit veelgebruikte emoji — puur een handig
 // startpunt, geen uitputtende lijst; het invoerveld ernaast accepteert
@@ -118,11 +68,10 @@ export default function ProfileClient() {
   const confirm = useConfirm();
   const tier = (value: LeagueTier) => t(`tiers.${value}`);
   const [data, setData] = useState<ProfileData | null>(null);
-  const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [resettingReadingProgress, setResettingReadingProgress] = useState(false);
   const [resetReadingMessage, setResetReadingMessage] = useState<string | null>(null);
-  const [confirmingLogout, setConfirmingLogout] = useState(false);
+  const [resetReadingError, setResetReadingError] = useState<string | null>(null);
   const [savingPrivacy, setSavingPrivacy] = useState(false);
   const [savingNotifications, setSavingNotifications] = useState(false);
   const [pushError, setPushError] = useState<string | null>(null);
@@ -300,24 +249,27 @@ export default function ProfileClient() {
     }, 1000);
   }
 
+  async function resetReadingProgress() {
+    if (!(await confirm(t("profile.readingResetConfirm"), { title: t("profile.readingReset"), confirmLabel: t("profile.readingReset"), destructive: true }))) return;
+    setResettingReadingProgress(true);
+    setResetReadingError(null);
+    const response = await fetch("/api/progress/reset-reading", { method: "POST" }).catch(() => null);
+    setResettingReadingProgress(false);
+    if (response?.ok) {
+      setResetReadingMessage(t("profile.readingResetDone"));
+      router.refresh();
+    } else {
+      setResetReadingError(t("wordOfTheDay.somethingWrong"));
+    }
+  }
+
   async function changeReminderTime(time: string) {
     if (!data) return;
     setData({ ...data, dailyReminderTime: time });
     await saveAccountPatch({ dailyReminderTime: time });
   }
 
-  async function toggleCategory(
-    field:
-      | "notifyDailyReminder"
-      | "notifyDailyText"
-      | "notifySocial"
-      | "notifyAchievements"
-      | "notifyWordGame"
-      | "notifyFriendOnline"
-      | "changelogEnabled"
-      | "conferenceCountdownEnabled"
-      | "nudgesEnabled"
-  ) {
+  async function toggleCategory(field: ProfileToggleField) {
     if (!data) return;
     const next = !data[field];
     setData({ ...data, [field]: next });
@@ -413,13 +365,17 @@ export default function ProfileClient() {
     synth.speak(utterance);
   }
 
+  // Bevestigen via de gedeelde dialoog (ConfirmProvider), niet met een blok
+  // dat in de pagina openklapt.
   async function logout() {
+    if (!(await confirm(t("profile.logoutConfirm"), { title: t("profile.logout"), confirmLabel: t("profile.logoutYes") }))) return;
     await fetch("/api/auth/logout", { method: "POST" });
     router.push("/");
     router.refresh();
   }
 
   async function deleteAccount() {
+    if (!(await confirm(t("profile.deleteWarning"), { title: t("profile.deleteAccount"), confirmLabel: t("profile.deleteConfirm"), destructive: true }))) return;
     setDeleting(true);
     const res = await fetch("/api/account", { method: "DELETE" });
     if (res.ok) {
@@ -430,7 +386,13 @@ export default function ProfileClient() {
     }
   }
 
-  if (!data) return <p className="text-slate-400">{t("common.loading")}</p>;
+  if (!data) {
+    return (
+      <ProfilePage>
+        <p className="text-sm text-vs-fg-3">{t("common.loading")}</p>
+      </ProfilePage>
+    );
+  }
 
   const earnedCount = data.achievements.filter((a) => a.earnedAt).length;
   const initial = firstGrapheme(data.displayName).toUpperCase() || "?";
@@ -466,42 +428,35 @@ export default function ProfileClient() {
 
   if (view) {
     return (
-      <div className="mx-auto flex max-w-5xl flex-col gap-5">
-        <h1 className="sr-only">{t(PROFILE_VIEWS[view].title)}</h1>
-        {view === "competition" && <CompetitionDetail data={data} tier={tier} t={t} />}
-        {view === "achievements" && <AchievementDetail data={data} earnedCount={earnedCount} t={t} />}
-        {view === "reading" && <ReadingDetail t={t} resetting={resettingReadingProgress} message={resetReadingMessage} onReset={async () => {
-          if (!(await confirm(t("profile.readingResetConfirm")))) return;
-          setResettingReadingProgress(true);
-          const response = await fetch("/api/progress/reset-reading", { method: "POST" });
-          setResettingReadingProgress(false);
-          if (response.ok) { setResetReadingMessage(t("profile.readingResetDone")); router.refresh(); }
-        }} />}
+      <ProfilePage title={t(PROFILE_VIEWS[view].title)}>
+        {view === "competition" && <CompetitionView data={data} />}
+        {view === "achievements" && <AchievementsView data={data} />}
+        {view === "reading" && <ReadingView resetting={resettingReadingProgress} message={resetReadingMessage} error={resetReadingError} onReset={resetReadingProgress} />}
         {view === "language" && <LanguageSettings uiLanguage={data.uiLanguage} isAdmin={data.isAdmin} />}
-        {view === "readAloud" && <ReadAloudDetail t={t} voices={readAloudVoices} selectedVoice={selectedReadAloudVoice} speed={readAloudSpeed} testing={testingReadAloudVoice} onVoice={changeReadAloudVoice} onSpeed={changeReadAloudSpeed} onTest={testReadAloudVoice} />}
-        {view === "notifications" && <NotificationDetail data={data} t={t} saving={savingNotifications} pushError={pushError} testingPush={testingPush} pushCountdown={pushCountdown} pushTestMessage={pushTestMessage} onEmail={toggleEmailNotifications} onPush={togglePushNotifications} onTest={sendTestPush} onCategory={toggleCategory} onReminder={changeReminderTime} onDailyText={(time) => saveAccountPatch({ dailyTextTime: time }).then(() => setData((current) => current ? { ...current, dailyTextTime: time } : current))} />}
-        {view === "privacy" && <PrivacyDetail data={data} t={t} saving={savingPrivacy} onToggle={toggleSearchableByEmail} />}
-        {view === "presence" && <PresenceDetail data={data} t={t} saving={savingPresence} onOnline={toggleShareOnlineStatus} onActivity={toggleShareCurrentActivity} onIncognito={activateIncognito} onIncognitoOff={deactivateIncognito} />}
-        {view === "about" && <AboutDetail data={data} t={t} saving={savingNotifications} onToggle={() => toggleCategory("changelogEnabled")} />}
-        {view === "twoFactor" && <section className="bg-vs-surface rounded-2xl border border-vs-line p-4 sm:p-6"><TwoFactorSettings isAdmin={data.isAdmin} /></section>}
-      </div>
+        {view === "readAloud" && <ReadAloudView voices={readAloudVoices} selectedVoice={selectedReadAloudVoice} speed={readAloudSpeed} testing={testingReadAloudVoice} onVoice={changeReadAloudVoice} onSpeed={changeReadAloudSpeed} onTest={testReadAloudVoice} />}
+        {view === "notifications" && <NotificationsView data={data} saving={savingNotifications} pushError={pushError} testingPush={testingPush} pushCountdown={pushCountdown} pushTestMessage={pushTestMessage} onEmail={toggleEmailNotifications} onPush={togglePushNotifications} onTest={sendTestPush} onCategory={toggleCategory} onReminder={changeReminderTime} onDailyText={(time) => saveAccountPatch({ dailyTextTime: time }).then(() => setData((current) => current ? { ...current, dailyTextTime: time } : current))} />}
+        {view === "privacy" && <PrivacyView data={data} saving={savingPrivacy} onToggle={toggleSearchableByEmail} />}
+        {view === "presence" && <PresenceView data={data} saving={savingPresence} onOnline={toggleShareOnlineStatus} onActivity={toggleShareCurrentActivity} onIncognito={activateIncognito} onIncognitoOff={deactivateIncognito} />}
+        {view === "about" && <WhatsNewView enabled={data.changelogEnabled} saving={savingNotifications} onToggle={() => toggleCategory("changelogEnabled")} />}
+        {view === "twoFactor" && <TwoFactorSettings isAdmin={data.isAdmin} />}
+      </ProfilePage>
     );
   }
 
   return (
-    <div className="mx-auto flex max-w-5xl flex-col gap-5">
+    <ProfilePage>
       {data.isAdmin && <Link href="/adminbackend" className="flex items-center gap-2 rounded-xl border border-vs-line bg-vs-surface px-4 py-3 text-sm font-bold text-vs-accent transition hover:bg-vs-subtle"><ShieldCheck className="h-5 w-5" aria-hidden />{t("profile.toAdmin")}</Link>}
 
       <section className="overflow-hidden rounded-3xl border border-vs-line bg-gradient-to-br from-brand-500 to-brand-700 p-4 text-white shadow-sm dark:from-brand-600 dark:to-brand-900 sm:p-6">
         <div className="flex items-start justify-between gap-4">
           <div className="flex min-w-0 items-center gap-3">
-            <button type="button" onClick={() => { setAvatarError(null); setAvatarInput(""); setAvatarPickerOpen(true); }} className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-black/15 text-2xl font-extrabold text-gold-400 hover:opacity-80" title={t("profile.changeAvatar")}>{data.avatarEmoji || initial}</button>
+            <button type="button" onClick={() => { setAvatarError(null); setAvatarInput(""); setAvatarPickerOpen(true); }} className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-black/15 text-2xl font-extrabold text-gold-400 hover:opacity-80" title={t("profile.changeAvatar")} aria-label={t("profile.changeAvatar")}>{data.avatarEmoji || initial}</button>
             <div className="min-w-0">
               {!editingHandle ? <>
                 <h1 className="flex min-w-0 items-center gap-1.5 text-xl font-extrabold"><span className="truncate">{data.displayName}</span><button type="button" onClick={startEditingHandle} className="shrink-0 opacity-80 hover:opacity-100" title={t("profile.changeHandle")} aria-label={t("profile.changeHandle")}><Pencil className="h-4 w-4" aria-hidden /></button></h1>
                 <p className="truncate text-sm text-brand-100">{formatTag(data.handle, data.discriminator)}</p>
               </> : <div className="flex flex-col gap-2">
-                <label className="flex items-center gap-2"><input className="input !w-auto !py-1 !text-sm" value={handleInput} onChange={(event) => setHandleInput(event.target.value)} maxLength={24} autoFocus /><span className="text-sm text-brand-100">#{data.discriminator}</span></label>
+                <label className="flex items-center gap-2"><input className="input !w-auto !py-1 !text-sm" value={handleInput} onChange={(event) => setHandleInput(event.target.value)} maxLength={24} autoFocus aria-label={t("profile.changeHandle")} /><span className="text-sm text-brand-100">#{data.discriminator}</span></label>
                 {handleError && <p className="text-xs text-red-100">{handleError}</p>}
                 <div className="flex gap-2"><button className="btn-primary !px-3 !py-1 !text-xs" disabled={savingHandle} onClick={saveHandle}>{savingHandle ? t("courses.busy") : t("profile.save")}</button><button className="btn-secondary !px-3 !py-1 !text-xs" onClick={() => setEditingHandle(false)}>{t("activeGames.cancel")}</button></div>
               </div>}
@@ -530,77 +485,57 @@ export default function ProfileClient() {
         onChanged={(companion) => setData((current) => (current ? { ...current, companion } : current))}
       />
 
-      <section className="bg-vs-surface rounded-2xl border border-vs-line p-4 sm:p-5">
-        <SectionHeading icon={<Trophy className="h-5 w-5 text-vs-xp" aria-hidden />} title={t("nav.competition")} />
+      <ProfileCard title={<><Trophy className="h-5 w-5 text-vs-xp" aria-hidden />{t("nav.competition")}</>}>
         {/* Smal scherm: beste divisie onder de huidige, anders breekt de
             huidige divisie af in losse woorden. */}
-        <button type="button" onClick={() => openView("competition")} className="mt-3 flex min-h-12 w-full items-center gap-3 rounded-xl px-2 py-2 text-left hover:bg-vs-subtle">
+        <button type="button" onClick={() => openView("competition")} className="flex min-h-12 w-full items-center gap-3 rounded-xl px-2 py-2 text-left transition hover:bg-vs-subtle focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-vs-accent">
           <span className="flex min-w-0 flex-1 flex-col gap-1 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
             <span className="flex min-w-0 items-center gap-3">{data.tier && <DivisionEmblem tier={data.tier} className="h-12 w-12" />}<span className="min-w-0"><span className="block font-bold text-vs-fg">{data.tier ? tier(data.tier) : "—"}</span><span className="block text-sm text-vs-fg-2">{data.groupPosition ? `#${data.groupPosition} · ` : ""}{t("profile.thisWeek")}</span></span></span>
             <span className="text-sm font-bold text-vs-fg-2">{data.bestTierEver ? `${t("profile.bestTier")}: ${tier(data.bestTierEver)}` : "—"}</span>
           </span>
-          <ChevronRight className="h-5 w-5 shrink-0 text-vs-fg-2" aria-hidden />
+          <ChevronRight className="h-5 w-5 shrink-0 text-vs-fg-3" aria-hidden />
         </button>
-      </section>
+      </ProfileCard>
 
-      <ProfileSection title={t("profile.progressSection")}>
-        <ProfileRow icon={<Trophy className="h-5 w-5 text-vs-xp" aria-hidden />} label={t("profile.achievements")} value={`${earnedCount}/${data.achievements.length}`} onClick={() => openView("achievements")} />
-        <ProfileRow icon={<BookOpen className="h-5 w-5 text-vs-accent" aria-hidden />} label={t("profile.readingProgress")} value={`${data.chaptersCompleted} ${t("profile.chapters").toLowerCase()}`} onClick={() => openView("reading")} />
-      </ProfileSection>
+      <SettingsSection title={t("profile.progressSection")}>
+        <SettingsRow icon={<Trophy className="h-5 w-5 text-vs-xp" aria-hidden />} label={t("profile.achievements")} value={`${earnedCount}/${data.achievements.length}`} onClick={() => openView("achievements")} />
+        <SettingsRow icon={<BookOpen className="h-5 w-5 text-vs-accent" aria-hidden />} label={t("profile.readingProgress")} value={`${data.chaptersCompleted} ${t("profile.chapters").toLowerCase()}`} onClick={() => openView("reading")} />
+      </SettingsSection>
 
-      <ProfileSection title={t("profile.preferencesSection")}>
+      <SettingsSection title={t("profile.preferencesSection")}>
         {/* Weergave direct hier te kiezen: één tik, en je ziet meteen wat aan staat. */}
         <div className="flex flex-col gap-2 px-2 py-3 sm:flex-row sm:items-center sm:gap-3">
           <span className="flex min-w-0 flex-1 items-center gap-3"><SunMoon className="h-5 w-5 shrink-0 text-vs-accent" aria-hidden /><span className="truncate font-bold text-vs-fg">{t("theme.appearance")}</span></span>
           <div className="sm:w-80"><ThemePreference /></div>
         </div>
-        <ProfileRow icon={<Globe2 className="h-5 w-5 text-vs-accent" aria-hidden />} label={t("languageSettings.title")} value={getLanguage(data.uiLanguage).nativeName} onClick={() => openView("language")} />
-        <ProfileRow icon={<Volume2 className="h-5 w-5 text-vs-accent" aria-hidden />} label={t("profile.readAloud")} onClick={() => openView("readAloud")} />
-        <ProfileRow icon={<Bell className="h-5 w-5 text-vs-accent" aria-hidden />} label={t("profile.notifications")} onClick={() => openView("notifications")} />
-        <ProfileRow icon={<Users className="h-5 w-5 text-vs-accent" aria-hidden />} label={t("profile.onlineActivity")} value={data.shareOnlineStatus ? t("twoFactor.on") : t("twoFactor.off")} onClick={() => openView("presence")} />
-        <ProfileRow icon={<LockKeyhole className="h-5 w-5 text-vs-accent" aria-hidden />} label={t("profile.privacy")} onClick={() => openView("privacy")} />
+        <SettingsRow icon={<Globe2 className="h-5 w-5 text-vs-accent" aria-hidden />} label={t("languageSettings.title")} value={getLanguage(data.uiLanguage).nativeName} onClick={() => openView("language")} />
+        <SettingsRow icon={<Volume2 className="h-5 w-5 text-vs-accent" aria-hidden />} label={t("profile.readAloud")} onClick={() => openView("readAloud")} />
+        <SettingsRow icon={<Bell className="h-5 w-5 text-vs-accent" aria-hidden />} label={t("profile.notifications")} onClick={() => openView("notifications")} />
+        <SettingsRow icon={<Users className="h-5 w-5 text-vs-accent" aria-hidden />} label={t("profile.onlineActivity")} value={data.shareOnlineStatus ? t("twoFactor.on") : t("twoFactor.off")} onClick={() => openView("presence")} />
+        <SettingsRow icon={<LockKeyhole className="h-5 w-5 text-vs-accent" aria-hidden />} label={t("profile.privacy")} onClick={() => openView("privacy")} />
         <TimeZoneRow known={data.timeZone} label={t("profile.timeZone")} format={(zone) => t("profile.timeZoneAuto", { zone })} locale={getLanguage(data.uiLanguage).intlLocale} />
-        <ProfileToggle icon={<CalendarDays className="h-5 w-5 text-vs-accent" aria-hidden />} label={t("profile.conferenceCountdown")} hint={t("profile.conferenceCountdownHint")} checked={data.conferenceCountdownEnabled} disabled={savingNotifications} onChange={() => toggleCategory("conferenceCountdownEnabled")} />
-      </ProfileSection>
+        <SettingsToggleRow icon={<CalendarDays className="h-5 w-5 text-vs-accent" aria-hidden />} label={t("profile.conferenceCountdown")} description={t("profile.conferenceCountdownHint")} checked={data.conferenceCountdownEnabled} busy={savingNotifications} onChange={() => toggleCategory("conferenceCountdownEnabled")} />
+      </SettingsSection>
 
-      <ProfileSection title={t("profile.aboutSection")}>
-        <ProfileRow icon={<Sparkles className="h-5 w-5 text-vs-xp" aria-hidden />} label={t("profile.whatsNew")} onClick={() => openView("about")} />
-        <ProfileRow icon={<MoreHorizontal className="h-5 w-5 text-vs-fg-2" aria-hidden />} label={t("profile.tour")} href="/onboarding" />
-      </ProfileSection>
+      <SettingsSection title={t("profile.aboutSection")}>
+        <SettingsRow icon={<Sparkles className="h-5 w-5 text-vs-xp" aria-hidden />} label={t("profile.whatsNew")} onClick={() => openView("about")} />
+        <SettingsRow icon={<MoreHorizontal className="h-5 w-5 text-vs-fg-2" aria-hidden />} label={t("profile.tour")} href="/onboarding" />
+      </SettingsSection>
 
-      <ProfileSection title={t("profile.accountSecuritySection")}>
-        <ProfileRow icon={<ShieldCheck className="h-5 w-5 text-vs-accent" aria-hidden />} label={t("profile.twoFactor")} value={data.totpEnabled ? t("twoFactor.on") : t("twoFactor.off")} onClick={() => openView("twoFactor")} />
-        <ProfileRow icon={<KeyRound className="h-5 w-5 text-vs-fg-2" aria-hidden />} label={t("profile.changePassword")} href="/change-password" />
-        {!confirmingLogout ? <ProfileRow icon={<LogOut className="h-5 w-5 text-vs-fg-2" aria-hidden />} label={t("profile.logout")} onClick={() => setConfirmingLogout(true)} /> : <div className="rounded-xl bg-vs-subtle p-3"><p className="text-sm text-vs-fg">{t("profile.logoutConfirm")}</p><div className="mt-2 flex gap-2"><button className="btn-primary !py-2 !text-sm" onClick={logout}>{t("profile.logoutYes")}</button><button className="btn-secondary !py-2 !text-sm" onClick={() => setConfirmingLogout(false)}>{t("activeGames.cancel")}</button></div></div>}
-      </ProfileSection>
+      <SettingsSection title={t("profile.accountSecuritySection")}>
+        <SettingsRow icon={<ShieldCheck className="h-5 w-5 text-vs-accent" aria-hidden />} label={t("profile.twoFactor")} value={data.totpEnabled ? t("twoFactor.on") : t("twoFactor.off")} onClick={() => openView("twoFactor")} />
+        <SettingsRow icon={<KeyRound className="h-5 w-5 text-vs-fg-2" aria-hidden />} label={t("profile.changePassword")} href="/change-password" />
+        <SettingsRow icon={<LogOut className="h-5 w-5 text-vs-fg-2" aria-hidden />} label={t("profile.logout")} onClick={logout} />
+      </SettingsSection>
 
       {/* Bewust geen gewone rij: verwijderen hoort niet tussen de dagelijkse
-          instellingen te concurreren. */}
-      {!confirmingDelete ? (
-        <button type="button" onClick={() => setConfirmingDelete(true)} className="inline-flex min-h-11 items-center gap-2 self-center rounded-xl px-3 text-sm font-bold text-red-600 transition hover:bg-red-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400 dark:text-red-400 dark:hover:bg-red-950/30"><Trash2 className="h-4 w-4" aria-hidden />{t("profile.deleteAccount")}</button>
-      ) : (
-        <div className="rounded-2xl border border-red-300/50 bg-red-50 p-4 dark:bg-red-950/30"><p className="text-sm text-red-700 dark:text-red-300">{t("profile.deleteWarning")}</p><div className="mt-3 flex gap-2"><button className="btn-primary !bg-red-500 !shadow-[0_4px_0_0_theme(colors.red.700)] !py-2 !text-sm" disabled={deleting} onClick={deleteAccount}>{deleting ? t("courses.busy") : t("profile.deleteConfirm")}</button><button className="btn-secondary !py-2 !text-sm" onClick={() => setConfirmingDelete(false)}>{t("activeGames.cancel")}</button></div></div>
-      )}
-    </div>
+          instellingen te concurreren. Bevestigen gaat via de dialoog. */}
+      <SettingsButton variant="quietDanger" className="self-center" disabled={deleting} onClick={deleteAccount}>
+        <Trash2 className="h-4 w-4" aria-hidden />
+        {deleting ? t("courses.busy") : t("profile.deleteAccount")}
+      </SettingsButton>
+    </ProfilePage>
   );
-}
-
-
-type Translate = ReturnType<typeof useT>;
-
-function SectionHeading({ icon, title }: { icon: ReactNode; title: string }) {
-  return <h2 className="flex items-center gap-2 text-xs font-extrabold uppercase tracking-wider text-vs-fg-2">{icon}{title}</h2>;
-}
-
-function ProfileSection({ title, children }: { title: string; children: ReactNode }) {
-  return <section className="bg-vs-surface rounded-2xl border border-vs-line p-4 sm:p-5"><h2 className="mb-2 text-xs font-extrabold uppercase tracking-wider text-vs-fg-2">{title}</h2><div className="divide-y divide-vs-line">{children}</div></section>;
-}
-
-function ProfileRow({ icon, label, value, href, onClick, destructive = false }: { icon: ReactNode; label: string; value?: string; href?: string; onClick?: () => void; destructive?: boolean }) {
-  const className = `flex min-h-14 w-full items-center gap-3 rounded-xl px-2 py-2 text-left transition hover:bg-vs-subtle focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-vs-accent ${destructive ? "text-red-600 dark:text-red-400" : "text-vs-fg"}`;
-  const content = <><span className="shrink-0">{icon}</span><span className="min-w-0 flex-1 truncate font-bold">{label}</span>{value && <span className="max-w-[45%] truncate text-sm text-vs-fg-2">{value}</span>}<ChevronRight className="h-5 w-5 shrink-0 text-vs-fg-3" aria-hidden /></>;
-  if (href) return <Link href={href} className={className}>{content}</Link>;
-  return <button type="button" onClick={onClick} className={className}>{content}</button>;
 }
 
 // Ter informatie, geen instelling: de tijdzone volgt automatisch het toestel
@@ -622,12 +557,13 @@ function TimeZoneRow({ known, label, format, locale }: { known: string | null; l
   } catch {
     // oudere browser zonder longGeneric: de IANA-naam
   }
-  return <div className="flex min-h-14 w-full items-center gap-3 rounded-xl px-2 py-2"><span className="shrink-0"><Clock className="h-5 w-5 text-vs-accent" aria-hidden /></span><span className="min-w-0 flex-1"><span className="block font-bold text-vs-fg">{label}</span><span className="block text-sm text-vs-fg-2">{format(name)}</span><span className="block text-xs text-vs-fg-3">{zone.replace(/_/g, " ")}</span></span></div>;
-}
-
-// Een aan/uit-instelling direct in de lijst, zonder eigen detailscherm.
-function ProfileToggle({ icon, label, hint, checked, disabled, onChange }: { icon: ReactNode; label: string; hint: string; checked: boolean; disabled: boolean; onChange: () => void }) {
-  return <label className="flex min-h-14 w-full cursor-pointer items-center gap-3 rounded-xl px-2 py-2 transition hover:bg-vs-subtle"><span className="shrink-0">{icon}</span><span className="min-w-0 flex-1"><span className="block font-bold text-vs-fg">{label}</span><span className="block text-sm text-vs-fg-2">{hint}</span></span><input type="checkbox" role="switch" className="h-5 w-5 shrink-0 accent-brand-500" checked={checked} disabled={disabled} onChange={onChange} /></label>;
+  return (
+    <SettingsInfoRow
+      icon={<Clock className="h-5 w-5 text-vs-accent" aria-hidden />}
+      label={label}
+      description={<>{format(name)}<span className="block text-xs text-vs-fg-3">{zone.replace(/_/g, " ")}</span></>}
+    />
+  );
 }
 
 function ProfileAction({ icon, label, href }: { icon: ReactNode; label: string; href: string }) {
@@ -636,155 +572,7 @@ function ProfileAction({ icon, label, href }: { icon: ReactNode; label: string; 
 
 function CompactHeroStat({ value, label, href }: { value: ReactNode; label: string; href?: string }) {
   const content = <div className="flex flex-col items-center gap-0.5 px-1 text-center"><div className="flex items-center gap-1 text-sm font-extrabold text-white">{value}</div><div className="text-[10px] font-bold uppercase text-brand-100">{label}</div></div>;
-  return href ? <Link href={href}>{content}</Link> : content;
-}
-
-function CompetitionDetail({ data, tier, t }: { data: ProfileData; tier: (value: LeagueTier) => string; t: Translate }) {
-  return <div className="flex flex-col gap-4">
-    <section className="rounded-2xl border border-gold-400/30 bg-gold-50 p-4 dark:bg-slate-800"><div className="grid grid-cols-2 gap-3"><div className="flex flex-col items-start gap-1">{data.tier && <DivisionEmblem tier={data.tier} className="h-20 w-20" />}<p className="text-2xl font-extrabold text-gold-700 dark:text-gold-300">{data.tier ? tier(data.tier) : "—"}</p><p className="text-xs font-bold uppercase text-vs-fg-2">{data.groupPosition ? `#${data.groupPosition} · ` : ""}{t("profile.thisWeek")}</p></div><div className="flex flex-col items-end gap-1 text-right">{data.bestTierEver && <DivisionEmblem tier={data.bestTierEver} className="h-16 w-16" />}<p className="text-lg font-extrabold text-gold-700 dark:text-gold-300">{data.bestTierEver ? tier(data.bestTierEver) : "—"}</p><p className="text-xs font-bold uppercase text-vs-fg-2">{t("profile.bestTier")}</p></div></div></section>
-    <section className="bg-vs-surface rounded-2xl border border-vs-line p-4">
-      <h2 className="font-extrabold text-vs-fg">{t("profile.medals")}</h2>
-      <p className="mt-0.5 text-sm text-vs-fg-2">{t("profile.medalsHint")}</p>
-      <div className="mt-3 grid grid-cols-3 gap-2 text-center">
-        {([[1, data.medals.gold, "profile.medalGold"], [2, data.medals.silver, "profile.medalSilver"], [3, data.medals.bronze, "profile.medalBronze"]] as const).map(([rank, count, label]) => (
-          <div key={rank} className="flex flex-col items-center gap-1">
-            <RankMedal rank={rank} className="h-10 w-10 text-lg" />
-            <span className="text-xl font-extrabold text-vs-fg">{count}</span>
-            <span className="text-xs font-bold uppercase text-vs-fg-2">{t(label)}</span>
-          </div>
-        ))}
-      </div>
-    </section>
-    <section className="bg-vs-surface rounded-2xl border border-vs-line p-4"><div className="grid grid-cols-4 gap-2 text-center"><Stat value={data.lifetimePromotions.toString()} label={t("profile.promotions")} small /><Stat value={data.lifetimeDemotions.toString()} label={t("profile.demotions")} small /><Stat value={data.competitionsWon.toString()} label={t("profile.competitions")} small /><Stat value={data.bestNationalRank ? `#${data.bestNationalRank}` : "—"} label={t("profile.nationalRank")} small /></div></section>
-    {data.seasons.length > 0 && <section className="bg-vs-surface rounded-2xl border border-vs-line p-4"><h2 className="mb-2 font-extrabold text-vs-fg">{t("pages.seasons")}</h2><div className="divide-y divide-vs-line">{data.seasons.map((season) => <div key={season.seasonIndex} className="flex items-center justify-between gap-3 py-2.5 text-sm"><span className="font-bold text-vs-fg">{t("profile.seasonN", { n: season.seasonIndex })}</span><span className="inline-flex items-center gap-2 text-right text-vs-fg-2"><DivisionEmblem tier={season.finalTier} className="h-8 w-8" />{tier(season.finalTier)}{season.finalGroupPosition ? ` — #${season.finalGroupPosition}` : ""}</span></div>)}</div></section>}
-  </div>;
-}
-
-function AchievementDetail({ data, earnedCount, t }: { data: ProfileData; earnedCount: number; t: Translate }) {
-  return <section className="bg-vs-surface rounded-2xl border border-vs-line p-4 sm:p-6"><p className="mb-4 text-sm text-vs-fg-2">{earnedCount}/{data.achievements.length}</p><div className="grid grid-cols-2 gap-3 sm:grid-cols-4">{data.achievements.map((achievement) => <div key={achievement.slug} title={translateOr(t, `achievements.${achievement.slug}.description`, achievement.description)} className={`flex flex-col items-center gap-1 rounded-2xl border p-4 text-center ${achievement.earnedAt ? "border-gold-400/30 bg-gold-50 dark:bg-slate-700" : "border-vs-line opacity-40 grayscale"}`}><span className="text-3xl">{achievement.icon}</span><span className="text-xs font-bold text-vs-fg">{translateOr(t, `achievements.${achievement.slug}.name`, achievement.name)}</span></div>)}</div></section>;
-}
-
-function ReadingDetail({ t, resetting, message, onReset }: { t: Translate; resetting: boolean; message: string | null; onReset: () => Promise<void> }) {
-  return <section className="bg-vs-surface rounded-2xl border border-vs-line p-4 sm:p-6"><p className="text-sm text-vs-fg-2">{t("profile.readingResetText")}</p>{!message ? <button className="btn-secondary mt-4 self-start !border-red-300 !text-red-600 dark:!border-red-700 dark:!text-red-400" disabled={resetting} onClick={onReset}>{resetting ? t("courses.busy") : t("profile.readingReset")}</button> : <p className="mt-4 text-sm font-bold text-vs-accent">{message}</p>}</section>;
-}
-
-function ReadAloudDetail({ t, voices, selectedVoice, speed, testing, onVoice, onSpeed, onTest }: { t: Translate; voices: SpeechSynthesisVoice[]; selectedVoice: string; speed: number; testing: boolean; onVoice: (value: string) => void; onSpeed: (value: number) => void; onTest: () => void }) {
-  return <section className="bg-vs-surface flex flex-col gap-5 rounded-2xl border border-vs-line p-4 sm:p-6"><p className="text-sm text-vs-fg-2">{t("profile.readAloudText")}</p>{voices.length > 0 ? <><label className="flex flex-col gap-1.5"><span className="text-sm font-semibold text-vs-fg">{t("profile.dutchVoice")}</span><AppSelect className="input" value={selectedVoice} onChange={onVoice} ariaLabel={t("profile.dutchVoice")} options={[{ value: "", label: t("profile.automatic") }, ...voices.map((voice) => ({ value: voice.voiceURI, label: voice.name }))]} /></label><div className="flex flex-col gap-3"><label className="flex items-center gap-3"><span className="text-sm font-semibold text-vs-fg">{t("profile.readAloudSpeed")}</span><AppSelect className="input !w-auto" value={String(speed)} onChange={(value) => onSpeed(Number(value))} ariaLabel={t("profile.readAloudSpeed")} options={[0.75, 1, 1.25, 1.5, 2].map((value) => ({ value: String(value), label: `${value}×` }))} /></label><div className="flex flex-wrap items-center gap-3"><button className="btn-secondary !px-3 !py-1.5" disabled={testing} onClick={onTest}>{testing ? t("profile.samplePlaying") : t("profile.listenVoice")}</button><span className="text-xs text-vs-fg-3">{t("profile.savedOnDevice")}</span></div></div></> : <p className="text-sm text-vs-fg-3">{t("profile.noVoices")}</p>}</section>;
-}
-
-type NotificationCategory = "notifyDailyReminder" | "notifyDailyText" | "notifySocial" | "notifyAchievements" | "notifyWordGame" | "notifyFriendOnline" | "nudgesEnabled" | "changelogEnabled";
-function NotificationDetail({ data, t, saving, pushError, testingPush, pushCountdown, pushTestMessage, onEmail, onPush, onTest, onCategory, onReminder, onDailyText }: { data: ProfileData; t: Translate; saving: boolean; pushError: string | null; testingPush: boolean; pushCountdown: number | null; pushTestMessage: string | null; onEmail: () => void; onPush: () => void; onTest: () => void; onCategory: (field: NotificationCategory) => void; onReminder: (value: string) => void; onDailyText: (value: string) => void }) {
-  const check = (field: NotificationCategory, label: string, checked: boolean) => <label className="flex items-start gap-3"><input type="checkbox" className="mt-1 h-5 w-5 accent-brand-500" checked={checked} onChange={() => onCategory(field)} disabled={saving} /><span className="text-sm text-vs-fg">{label}</span></label>;
-  return <section className="bg-vs-surface flex flex-col gap-4 rounded-2xl border border-vs-line p-4 sm:p-6"><p className="text-sm text-vs-fg-2">{t("profile.notificationsText")}</p><label className="flex items-start gap-3"><input type="checkbox" className="mt-1 h-5 w-5 accent-brand-500" checked={data.emailNotificationsEnabled} onChange={onEmail} disabled={saving} /><span className="text-sm text-vs-fg">{t("profile.emailNotifications", { email: data.email })}</span></label><label className="flex items-start gap-3"><input type="checkbox" className="mt-1 h-5 w-5 accent-brand-500" checked={data.pushNotificationsEnabled} onChange={onPush} disabled={saving || !isPushSupported()} /><span className="text-sm text-vs-fg">{t("profile.pushNotifications")}{!isPushSupported() && <><br /><span className="text-vs-fg-3">{t("profile.pushUnsupported")}</span></>}</span></label>{pushError && <p className="text-sm text-red-600 dark:text-red-400">{pushError}</p>}{data.pushNotificationsEnabled && <div className="flex flex-col items-start gap-1"><button className="btn-secondary !px-3 !py-1.5" disabled={testingPush} onClick={onTest}>{pushCountdown !== null ? t("profile.pushIn", { n: pushCountdown }) : testingPush ? t("courses.busy") : t("profile.sendTestPush")}</button>{pushTestMessage && <p className="text-xs text-vs-fg-2">{pushTestMessage}</p>}</div>}<div className="mt-1 flex flex-col gap-3 border-t border-vs-line pt-4"><p className="font-semibold text-vs-fg">{t("profile.dailyText")}</p>{check("notifyDailyText", t("profile.sendDailyText"), data.notifyDailyText)}<label className="flex items-center gap-3 text-sm text-vs-fg">{t("profile.sendAround")}<input type="time" className="input !w-auto" value={data.dailyTextTime} onChange={(event) => onDailyText(event.target.value)} /></label><p className="text-xs text-vs-fg-3">{t("profile.dailyTextHint")}</p></div><label className="flex items-center gap-3 text-sm text-vs-fg">{t("profile.reminderAround")}<input type="time" className="input !w-auto" value={data.dailyReminderTime} onChange={(event) => onReminder(event.target.value)} /></label><div className="mt-1 flex flex-col gap-3 border-t border-vs-line pt-4"><p className="font-semibold text-vs-fg">{t("profile.whichNotifications")}</p>{check("notifyDailyReminder", t("profile.notifyReminder"), data.notifyDailyReminder)}{check("notifySocial", t("profile.notifySocial"), data.notifySocial)}{check("notifyAchievements", t("profile.notifyAchievements"), data.notifyAchievements)}{check("notifyWordGame", t("profile.notifyWordGame"), data.notifyWordGame)}{check("notifyFriendOnline", t("profile.notifyFriendOnline"), data.notifyFriendOnline)}{check("nudgesEnabled", t("together.profile.nudges"), data.nudgesEnabled)}</div></section>;
-}
-
-function PrivacyDetail({ data, t, saving, onToggle }: { data: ProfileData; t: Translate; saving: boolean; onToggle: () => void }) {
-  return <section className="bg-vs-surface rounded-2xl border border-vs-line p-4 sm:p-6"><label className="flex items-start gap-3"><input type="checkbox" className="mt-1 h-5 w-5 accent-brand-500" checked={data.searchableByEmail} onChange={onToggle} disabled={saving} /><span className="text-sm text-vs-fg">{t("profile.searchableByEmail", { email: data.email })}<br /><span className="text-vs-fg-2">{t("profile.searchableHint", { tag: formatTag(data.handle, data.discriminator) })}</span></span></label></section>;
-}
-
-function PresenceDetail({ data, t, saving, onOnline, onActivity, onIncognito, onIncognitoOff }: { data: ProfileData; t: Translate; saving: boolean; onOnline: () => void; onActivity: () => void; onIncognito: (hours: 1 | 4 | 12 | 24) => void; onIncognitoOff: () => void }) {
-  return <section className="bg-vs-surface flex flex-col gap-4 rounded-2xl border border-vs-line p-4 sm:p-6"><label className="flex items-start gap-3"><input type="checkbox" className="mt-1 h-5 w-5 accent-brand-500" checked={data.shareOnlineStatus} onChange={onOnline} disabled={saving} /><span className="text-sm text-vs-fg">{t("profile.shareOnline")}<br /><span className="text-vs-fg-2">{t("profile.shareOnlineHint")}</span></span></label>{data.shareOnlineStatus && <label className="flex items-start gap-3 pl-8"><input type="checkbox" className="mt-1 h-5 w-5 accent-brand-500" checked={data.shareCurrentActivity} onChange={onActivity} disabled={saving} /><span className="text-sm text-vs-fg">{t("profile.shareActivity")}</span></label>}<div className="flex flex-col gap-2 border-t border-vs-line pt-4"><p className="text-sm text-vs-fg">{t("profile.incognito")}</p><p className="text-xs text-vs-fg-2">{t("profile.incognitoHint")}</p>{data.incognitoActive ? <button className="btn-secondary self-start !px-4 !py-2" onClick={onIncognitoOff} disabled={saving}>{t("profile.incognitoOff")}</button> : <div className="flex flex-wrap gap-2">{([1, 4, 12, 24] as const).map((hours) => <button key={hours} className="btn-secondary !px-3 !py-1.5 !text-xs" onClick={() => onIncognito(hours)} disabled={saving}>{t("profile.hoursN", { n: hours })}</button>)}</div>}</div></section>;
-}
-
-function AboutDetail({ data, t, saving, onToggle }: { data: ProfileData; t: Translate; saving: boolean; onToggle: () => void }) {
-  return <div className="flex flex-col gap-4"><section className="bg-vs-surface rounded-2xl border border-vs-line p-4"><ProfileRow icon={<Sparkles className="h-5 w-5 text-vs-xp" aria-hidden />} label={t("profile.whatsNew")} value={data.changelogEnabled ? t("twoFactor.on") : t("twoFactor.off")} onClick={onToggle} /></section><section className="bg-vs-surface rounded-2xl border border-vs-line p-4"><ChangelogSection enabled={data.changelogEnabled} saving={saving} onToggle={onToggle} /></section></div>;
-}
-
-interface ChangelogEntryView {
-  id: string;
-  title: string;
-  body: string;
-  createdAt: string;
-}
-
-// Inklapbaar (kan een lange geschiedenis worden) en dubbel doel: de aan/uit-
-// schakelaar staat er samen met de volledige lijst in, zodat je 'm ook kan
-// terugvinden als je 'm hebt uitgezet. De lijst wordt pas opgehaald zodra dit
-// echt wordt opengeklapt (geen extra verzoek bij elk profielbezoek); dat
-// openklappen markeert de changelog meteen als gezien, net als de "Gelezen"-
-// knop in de pop-up (ChangelogPopup.tsx) dat doet.
-function ChangelogSection({ enabled, saving, onToggle }: { enabled: boolean; saving: boolean; onToggle: () => void }) {
-  const [entries, setEntries] = useState<ChangelogEntryView[] | null>(null);
-  const t = useT();
-  const intlLocale = getLanguage(useUiLanguage()).intlLocale;
-
-  async function handleToggleOpen(e: SyntheticEvent<HTMLDetailsElement>) {
-    if (!e.currentTarget.open || entries) return;
-    const res = await fetch("/api/changelog");
-    if (res.ok) setEntries((await res.json()).entries);
-    fetch("/api/changelog/seen", { method: "POST" }).catch(() => {});
-  }
-
-  return (
-    <details className="group card flex flex-col gap-3" onToggle={handleToggleOpen}>
-      <summary className="font-extrabold text-lg dark:text-slate-100 cursor-pointer select-none list-none [&::-webkit-details-marker]:hidden flex items-center justify-between">
-        {t("profile.whatsNew")}
-        <span className="text-slate-400 transition-transform group-open:rotate-180" aria-hidden>
-          ▾
-        </span>
-      </summary>
-
-      <label className="flex items-start gap-3 cursor-pointer">
-        <input type="checkbox" className="mt-1 h-5 w-5 accent-brand-500" checked={enabled} onChange={onToggle} disabled={saving} />
-        <span className="text-sm dark:text-slate-200">
-          {t("profile.changelogToggle")}
-          <br />
-          <span className="text-slate-400 dark:text-slate-500">
-            {t("profile.changelogHint")}
-          </span>
-        </span>
-      </label>
-
-      <div className="border-t border-slate-100 dark:border-slate-700 pt-3 flex flex-col gap-3">
-        {!entries ? (
-          <p className="text-slate-400 dark:text-slate-500 text-sm">{t("common.loading")}</p>
-        ) : entries.length === 0 ? (
-          <p className="text-slate-400 dark:text-slate-500 text-sm">{t("profile.noChangelog")}</p>
-        ) : (
-          entries.map((entry) => (
-            <div key={entry.id}>
-              <p className="font-bold text-sm dark:text-slate-100">{entry.title}</p>
-              <p className="text-xs text-slate-400 dark:text-slate-500 mb-1">
-                {new Date(entry.createdAt).toLocaleDateString(intlLocale)}
-              </p>
-              <p className="text-sm whitespace-pre-wrap dark:text-slate-200">{entry.body}</p>
-            </div>
-          ))
-        )}
-      </div>
-    </details>
-  );
-}
-
-function Stat({
-  value,
-  label,
-  small,
-  href,
-}: {
-  value: string;
-  label: string;
-  small?: boolean;
-  href?: string;
-}) {
-  const content = (
-    <>
-      <div className={`${small ? "font-extrabold" : "text-xl font-extrabold"} text-vs-fg`}>
-        {value}
-      </div>
-      <div className="text-xs font-bold uppercase text-vs-fg-3">
-        {label}
-      </div>
-    </>
-  );
-  if (href) {
-    return (
-      <Link href={href} className="block hover:opacity-75">
-        {content}
-      </Link>
-    );
-  }
-  return <div>{content}</div>;
+  return href ? <Link href={href} className="rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70">{content}</Link> : content;
 }
 
 /**
@@ -818,13 +606,13 @@ function CompanionSection({ current, onChanged }: { current: PersonalMascotChara
   }
 
   return (
-    <section aria-labelledby="profile-companion" className="bg-vs-surface rounded-2xl border border-vs-line p-4 sm:p-5">
-      <h2 id="profile-companion" className="text-xs font-extrabold uppercase tracking-wider text-vs-fg-2">{t("companion.profileTitle")}</h2>
-      <p className="mb-3 mt-1 text-sm text-vs-fg-2">{t("companion.profileIntro")}</p>
-      <CompanionPicker name="profile-companion" legend={t("companion.profileTitle")} value={current} onSelect={choose} disabled={saving} size="compact" />
-      <p role="status" className={`mt-3 min-h-5 text-sm font-semibold ${status?.kind === "error" ? "text-red-600 dark:text-red-400" : "text-vs-success"}`}>
+    <ProfileCard title={t("companion.profileTitle")} description={t("companion.profileIntro")}>
+      <div className="mt-1">
+        <CompanionPicker name="profile-companion" legend={t("companion.profileTitle")} value={current} onSelect={choose} disabled={saving} size="compact" />
+      </div>
+      <p role="status" className={`mt-3 min-h-5 text-sm font-semibold ${status?.kind === "error" ? "text-vs-danger" : "text-vs-success"}`}>
         {status?.text}
       </p>
-    </section>
+    </ProfileCard>
   );
 }

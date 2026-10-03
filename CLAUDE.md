@@ -148,6 +148,10 @@ Controleer bij twijfel: `grep -rn "next/headers" src/lib src/server server.ts`
   `window.scrollTo(0, 0)` per pagina, en geen `overflow` op `html` (dan
   scrolt het venster niet meer, zie `globals.css`). Zie
   `docs/VERSADO-DESIGN.md`.
+- Profiel: elke profielpagina en instelling gebruikt de shell en bouwstenen
+  uit `src/components/profile/` (`ProfilePage`, `SettingsSection`,
+  `SettingsToggleRow`, ...). Geen eigen kaart-, rij- of formulierstijl en
+  geen dubbele titel; zie `docs/PROFIEL.md`.
 - `src/lib/learning/` — leervoortgang per inhoud (lezen, oefenplan, XP-
   begrenzing, reeksregel, leestijd); zie `docs/LEERVOORTGANG.md` en de harde
   regel hieronder. Getest met `npm run test:learning`

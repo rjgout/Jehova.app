@@ -4,6 +4,13 @@ Alle belangrijke gebruikersgerichte wijzigingen en releases worden hieronder bij
 
 ## Nog niet uitgebracht
 
+- Profiel en alle onderdelen ervan (taal, voorlezen, notificaties, privacy,
+  online en activiteit, wat is er nieuw, tweestapsverificatie,
+  leesvoortgang, prestaties, competitie, wachtwoord en feedback) zien er nu
+  hetzelfde uit: compacte rijen met schakelaars, geen dubbele titels, en de
+  footer onderaan het scherm. Notificaties zijn ingedeeld in kanalen,
+  dagelijkse meldingen en soorten. Uitloggen en account verwijderen vraag je
+  via een bevestigingsvenster.
 - Competitie: vanaf de nieuwe week promoveert driekwart van je groep (de
   onderste 10% degradeert nog steeds). Bij je divisie zie je hoe lang de
   week nog loopt, en in het klassement lijnen voor de promotie- en

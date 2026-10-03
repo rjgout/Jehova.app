@@ -40,6 +40,28 @@ body {
   --reader-font-scale: 1;
 }
 
+/* Ruimte boven en onder <main> (layout.tsx): onder de vaste bovenbalk, en
+ * onderaan vrij van de onderbalk op telefoon en tablet (inclusief de
+ * homeindicator van een geïnstalleerde iOS-PWA). Als variabelen, zodat een
+ * pagina die het scherm moet vullen (.page-fill) met precies dezelfde maten
+ * rekent in plaats van met eigen getallen. */
+:root {
+  --main-pad-top: calc(var(--header-height, 4.5rem) + 2rem);
+  --main-pad-bottom: calc(6rem + env(safe-area-inset-bottom));
+}
+@media (min-width: 1024px) {
+  :root {
+    --main-pad-bottom: 4rem;
+  }
+}
+
+/* Minstens de zichtbare hoogte tussen bovenbalk en onderbalk, zodat een
+ * footer met mt-auto op een korte pagina onderaan staat en op een lange
+ * pagina gewoon na de inhoud komt (zie profile/ProfilePage.tsx). */
+.page-fill {
+  min-height: calc(100dvh - var(--main-pad-top) - var(--main-pad-bottom));
+}
+
 /* --- Versado-designtokens ---------------------------------------------------
  *
  * Semantische kleuren voor de nieuwe app-shell en Vandaag (zie

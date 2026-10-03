@@ -528,6 +528,10 @@ Gecontroleerd in de code; bestandsnamen om snel terug te vinden.
   privacy), Over (wat is nieuw, rondleiding) en Account en beveiliging
   (2FA, wachtwoord, uitloggen). Account verwijderen staat los en klein
   onderaan. Onderdelen openen op een eigen adres (`src/lib/profileViews.ts`).
+- Eén standaard voor alle profielpagina's, ook wachtwoord en feedback:
+  `ProfilePage` als shell en de bouwstenen in `src/components/profile/`
+  (zie `docs/PROFIEL.md`). Uitloggen, resetten en account verwijderen
+  bevestigen via `useConfirm` (met `destructive` voor onomkeerbaar).
 
 **PWA en meldingen**
 - Dynamisch manifest `/api/branding/manifest` (ook op `/manifest.webmanifest`),

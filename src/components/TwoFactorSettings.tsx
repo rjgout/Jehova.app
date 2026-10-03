@@ -2,7 +2,17 @@
 
 import { useEffect, useState } from "react";
 import qrcode from "qrcode-generator";
+import { ShieldCheck, Smartphone } from "lucide-react";
 import { useT } from "@/components/I18nProvider";
+import {
+  ProfileCard,
+  SettingsActions,
+  SettingsButton,
+  SettingsInfoRow,
+  SettingsSection,
+  SettingsStatus,
+  settingsInlineFieldClass,
+} from "@/components/profile/settings";
 
 type Mode = "idle" | "setup" | "reset-code" | "disable-code";
 type Message = { kind: "error" | "success"; text: string } | null;
@@ -25,9 +35,10 @@ function qrDataUrl(uri: string) {
 }
 
 /**
- * Inhoud van het 2FA-blok op de profielpagina. Rendert bewust geen eigen
- * kaart of kop: ProfileClient zet dit binnen de Account-kaart onder een
- * eigen tussenkop.
+ * Het profielonderdeel Tweestapsverificatie (/profile?view=twoFactor): status,
+ * instellen, nieuwe telefoon koppelen en (niet voor beheerders) uitschakelen.
+ * De regels staan in de API-routes onder /api/account/totp; hier alleen de
+ * weergave, met de gedeelde profielcomponenten.
  */
 export default function TwoFactorSettings({ isAdmin }: { isAdmin: boolean }) {
   const t = useT();
@@ -104,152 +115,146 @@ export default function TwoFactorSettings({ isAdmin }: { isAdmin: boolean }) {
   }
 
   if (enabled === null) {
-    return <p className="text-sm text-slate-400 dark:text-slate-500">{t("common.loading")}</p>;
-  }
-
-  if (recoveryCodes) {
     return (
-      <div className="flex flex-col gap-3 rounded-2xl border border-gold-400/40 bg-gold-50 dark:bg-slate-900/50 p-4">
-        <p className="font-extrabold text-gold-700 dark:text-gold-300">{t("twoFactor.saveCodes")}</p>
-        <p className="text-sm text-slate-600 dark:text-slate-300">
-          {t("twoFactor.saveCodesText")}
-        </p>
-        <div className="grid grid-cols-2 gap-2 font-mono text-sm">
-          {recoveryCodes.map((item) => (
-            <div key={item} className="rounded-lg bg-white dark:bg-slate-800 px-3 py-2 text-center dark:text-slate-100">
-              {item}
-            </div>
-          ))}
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <button className="btn-secondary !py-2 !text-sm" onClick={copyRecoveryCodes}>
-            {copied ? t("twoFactor.copied") : t("twoFactor.copy")}
-          </button>
-          <button className="btn-primary !py-2 !text-sm" onClick={() => setRecoveryCodes(null)}>
-            {t("twoFactor.savedSafely")}
-          </button>
-        </div>
-      </div>
+      <ProfileCard>
+        <p className="text-sm text-vs-fg-3">{t("common.loading")}</p>
+      </ProfileCard>
     );
   }
 
-  const statusBadge = enabled ? (
-    <span className="rounded-full bg-green-100 dark:bg-green-900/40 px-2.5 py-0.5 text-xs font-bold text-green-700 dark:text-green-300">
-      {t("twoFactor.on")}
-    </span>
-  ) : (
-    <span className="rounded-full bg-slate-100 dark:bg-slate-700 px-2.5 py-0.5 text-xs font-bold text-slate-500 dark:text-slate-300">
-      {t("twoFactor.off")}
+  // Alleen nu te zien: de herstelcodes na het instellen.
+  if (recoveryCodes) {
+    return (
+      <ProfileCard
+        title={t("twoFactor.saveCodes")}
+        description={t("twoFactor.saveCodesText")}
+        actions={
+          <>
+            <SettingsButton onClick={copyRecoveryCodes}>{copied ? t("twoFactor.copied") : t("twoFactor.copy")}</SettingsButton>
+            <SettingsButton variant="primary" onClick={() => setRecoveryCodes(null)}>
+              {t("twoFactor.savedSafely")}
+            </SettingsButton>
+          </>
+        }
+      >
+        <ul className="mt-1 grid grid-cols-2 gap-2 font-mono text-sm">
+          {recoveryCodes.map((item) => (
+            <li key={item} className="rounded-lg border border-vs-line bg-vs-subtle px-3 py-2 text-center text-vs-fg">
+              {item}
+            </li>
+          ))}
+        </ul>
+      </ProfileCard>
+    );
+  }
+
+  const statusBadge = (
+    <span className={`rounded-full px-2.5 py-0.5 text-xs font-bold ${enabled ? "bg-vs-success-soft text-vs-success" : "bg-vs-subtle text-vs-fg-2"}`}>
+      {enabled ? t("twoFactor.on") : t("twoFactor.off")}
     </span>
   );
 
   return (
-    <div className="flex flex-col gap-3">
-      <div className="flex items-start justify-between gap-3">
-        <p className="text-sm text-slate-500 dark:text-slate-400">
-          {enabled
-            ? t("twoFactor.enabledText")
-            : isAdmin
-              ? t("twoFactor.adminRequired")
-              : t("twoFactor.disabledText")}
-        </p>
-        {statusBadge}
-      </div>
+    <>
+      <SettingsSection>
+        <SettingsInfoRow
+          icon={<ShieldCheck className="h-5 w-5 text-vs-accent" aria-hidden />}
+          label={t("profile.twoFactor")}
+          description={enabled ? t("twoFactor.enabledText") : isAdmin ? t("twoFactor.adminRequired") : t("twoFactor.disabledText")}
+          value={statusBadge}
+        />
+        {mode === "idle" && (
+          <SettingsActions>
+            {enabled ? (
+              <>
+                <SettingsButton onClick={() => switchMode("reset-code")} disabled={busy}>
+                  <Smartphone className="h-4 w-4" aria-hidden />
+                  {t("twoFactor.newPhone")}
+                </SettingsButton>
+                {!isAdmin && (
+                  <SettingsButton variant="danger" onClick={() => switchMode("disable-code")} disabled={busy}>
+                    {t("twoFactor.disable")}
+                  </SettingsButton>
+                )}
+              </>
+            ) : (
+              <SettingsButton variant="primary" onClick={startSetup} disabled={busy}>
+                {busy ? t("courses.busy") : t("twoFactor.setup")}
+              </SettingsButton>
+            )}
+          </SettingsActions>
+        )}
+        {enabled && isAdmin && mode === "idle" && (
+          <div className="px-2 py-3">
+            <SettingsStatus>{t("twoFactor.adminCantDisable")}</SettingsStatus>
+          </div>
+        )}
+      </SettingsSection>
 
       {mode === "setup" && setup && (
-        <div className="flex flex-col gap-4 rounded-2xl bg-slate-50 dark:bg-slate-900/50 p-4">
-          <div className="flex flex-col sm:flex-row gap-4 items-center sm:items-start">
-            <div className="bg-white rounded-xl p-2 shrink-0 shadow-sm">
-              <img src={qrDataUrl(setup.otpauthUri)} alt={t("twoFactor.qrAlt")} className="w-40 h-40" />
+        <ProfileCard
+          actions={
+            <>
+              <input
+                className={`${settingsInlineFieldClass} w-36 text-center text-lg tracking-widest`}
+                inputMode="numeric"
+                autoComplete="one-time-code"
+                aria-label={t("twoFactor.step3")}
+                placeholder="123456"
+                value={code}
+                onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+              />
+              <SettingsButton variant="primary" onClick={verifySetup} disabled={busy || code.length !== 6}>
+                {busy ? t("courses.busy") : t("twoFactor.confirm")}
+              </SettingsButton>
+              {!enabled && <SettingsButton onClick={() => switchMode("idle")}>{t("activeGames.cancel")}</SettingsButton>}
+            </>
+          }
+        >
+          <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-start">
+            {/* Altijd wit: een QR-code moet donker op licht staan om te scannen. */}
+            <div className="shrink-0 rounded-xl bg-white p-2 shadow-sm">
+              <img src={qrDataUrl(setup.otpauthUri)} alt={t("twoFactor.qrAlt")} className="h-40 w-40" />
             </div>
-            <ol className="flex flex-col gap-2 text-sm dark:text-slate-200 list-decimal pl-5">
+            <ol className="flex list-decimal flex-col gap-2 pl-5 text-sm text-vs-fg">
               <li>{t("twoFactor.step1")}</li>
-              <li>{t("twoFactor.step2")}
-                <span className="mt-1 block font-mono text-xs break-all text-slate-500 dark:text-slate-400">{setup.secret}</span>
+              <li>
+                {t("twoFactor.step2")}
+                <span className="mt-1 block break-all font-mono text-xs text-vs-fg-2">{setup.secret}</span>
               </li>
               <li>{t("twoFactor.step3")}</li>
             </ol>
           </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <input
-              className="input !w-36 text-center tracking-widest text-lg"
-              inputMode="numeric"
-              autoComplete="one-time-code"
-              placeholder="123456"
-              value={code}
-              onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
-            />
-            <button className="btn-primary !py-2.5" onClick={verifySetup} disabled={busy || code.length !== 6}>
-              {busy ? t("courses.busy") : t("twoFactor.confirm")}
-            </button>
-            {!enabled && (
-              <button className="text-sm text-slate-400 hover:underline" onClick={() => switchMode("idle")}>
-                {t("activeGames.cancel")}
-              </button>
-            )}
-          </div>
-        </div>
+        </ProfileCard>
       )}
 
       {(mode === "reset-code" || mode === "disable-code") && (
-        <div className="flex flex-col gap-3 rounded-2xl bg-slate-50 dark:bg-slate-900/50 p-4">
-          <p className="text-sm dark:text-slate-200">
-            {mode === "reset-code"
-              ? t("twoFactor.enterRecovery")
-              : t("twoFactor.enterCode")}
-          </p>
-          <div className="flex flex-wrap items-center gap-2">
-            <input
-              className="input !w-44 text-center tracking-wider uppercase placeholder:normal-case"
-              placeholder={mode === "reset-code" ? "ABCDE-12345" : t("twoFactor.codePlaceholder")}
-              value={code}
-              onChange={(e) => setCode(e.target.value.slice(0, 16))}
-              {...CODE_INPUT_PROPS}
-            />
-            <button
-              className={mode === "disable-code" ? "btn-primary !py-2.5 !bg-red-500 !shadow-[0_4px_0_0_theme(colors.red.700)]" : "btn-primary !py-2.5"}
-              onClick={mode === "reset-code" ? resetWithRecoveryCode : disable}
-              disabled={busy || code.trim().length === 0}
-            >
-              {busy ? t("courses.busy") : mode === "reset-code" ? t("twoFactor.continueStep") : t("twoFactor.disable")}
-            </button>
-            <button className="text-sm text-slate-400 hover:underline" onClick={() => switchMode("idle")}>
-              {t("activeGames.cancel")}
-            </button>
-          </div>
-        </div>
-      )}
-
-      {mode === "idle" && (
-        <div className="flex flex-wrap gap-2">
-          {enabled ? (
+        <ProfileCard
+          description={mode === "reset-code" ? t("twoFactor.enterRecovery") : t("twoFactor.enterCode")}
+          actions={
             <>
-              <button className="btn-secondary !py-2 !text-sm" onClick={() => switchMode("reset-code")} disabled={busy}>
-                {t("twoFactor.newPhone")}
-              </button>
-              {!isAdmin && (
-                <button className="btn-secondary !py-2 !text-sm !text-red-500" onClick={() => switchMode("disable-code")} disabled={busy}>
-                  {t("twoFactor.disable")}
-                </button>
-              )}
+              <input
+                className={`${settingsInlineFieldClass} w-48 text-center uppercase tracking-wider placeholder:normal-case`}
+                aria-label={mode === "reset-code" ? t("twoFactor.enterRecovery") : t("twoFactor.enterCode")}
+                placeholder={mode === "reset-code" ? "ABCDE-12345" : t("twoFactor.codePlaceholder")}
+                value={code}
+                onChange={(e) => setCode(e.target.value.slice(0, 16))}
+                {...CODE_INPUT_PROPS}
+              />
+              <SettingsButton
+                variant={mode === "disable-code" ? "danger" : "primary"}
+                onClick={mode === "reset-code" ? resetWithRecoveryCode : disable}
+                disabled={busy || code.trim().length === 0}
+              >
+                {busy ? t("courses.busy") : mode === "reset-code" ? t("twoFactor.continueStep") : t("twoFactor.disable")}
+              </SettingsButton>
+              <SettingsButton onClick={() => switchMode("idle")}>{t("activeGames.cancel")}</SettingsButton>
             </>
-          ) : (
-            <button className="btn-primary !py-2 !text-sm" onClick={startSetup} disabled={busy}>
-              {busy ? t("courses.busy") : t("twoFactor.setup")}
-            </button>
-          )}
-        </div>
+          }
+        />
       )}
 
-      {enabled && isAdmin && mode === "idle" && (
-        <p className="text-xs text-slate-400 dark:text-slate-500">{t("twoFactor.adminCantDisable")}</p>
-      )}
-
-      {message && (
-        <p className={`text-sm font-semibold ${message.kind === "error" ? "text-red-600 dark:text-red-400" : "text-green-600 dark:text-green-400"}`}>
-          {message.text}
-        </p>
-      )}
-    </div>
+      {message && <SettingsStatus kind={message.kind === "error" ? "error" : "success"}>{message.text}</SettingsStatus>}
+    </>
   );
 }
