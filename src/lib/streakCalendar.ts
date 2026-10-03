@@ -20,6 +20,11 @@ export interface StreakMonthView {
   freezesUsed: number;
 }
 
+export interface YearMonth {
+  year: number;
+  month: number;
+}
+
 function pad(n: number): string {
   return String(n).padStart(2, "0");
 }
@@ -69,24 +74,39 @@ export interface StreakOverview {
   currentStreak: number;
   longestStreak: number;
   freezeCount: number;
+  firstMonth: YearMonth;
   month: StreakMonthView;
+}
+
+function monthIndex(value: YearMonth): number {
+  return value.year * 12 + value.month - 1;
+}
+
+/** Een kalenderverzoek mag nooit vóór de maand waarin het account begon. */
+export function clampToStreakStartMonth(requested: YearMonth, firstMonth: YearMonth): YearMonth {
+  return monthIndex(requested) < monthIndex(firstMonth) ? firstMonth : requested;
 }
 
 export async function getStreakOverview(userId: string, year?: number, month?: number): Promise<StreakOverview> {
   const user = await prisma.user.findUniqueOrThrow({
     where: { id: userId },
-    select: { currentStreak: true, longestStreak: true, freezeCount: true, timeZone: true },
+    select: { currentStreak: true, longestStreak: true, freezeCount: true, timeZone: true, createdAt: true },
   });
 
   // Standaard de maand van vandaag, in de tijdzone van de gebruiker.
   const today = userDayKey(user);
-  const y = year ?? Number(today.slice(0, 4));
-  const m = month ?? Number(today.slice(5, 7));
+  const firstDay = userDayKey(user, user.createdAt);
+  const firstMonth = { year: Number(firstDay.slice(0, 4)), month: Number(firstDay.slice(5, 7)) };
+  const requested = clampToStreakStartMonth(
+    { year: year ?? Number(today.slice(0, 4)), month: month ?? Number(today.slice(5, 7)) },
+    firstMonth
+  );
 
   return {
     currentStreak: user.currentStreak,
     longestStreak: user.longestStreak,
     freezeCount: user.freezeCount,
-    month: await getStreakMonth(userId, y, m, today),
+    firstMonth,
+    month: await getStreakMonth(userId, requested.year, requested.month, today),
   };
 }

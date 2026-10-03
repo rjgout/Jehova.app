@@ -31,6 +31,7 @@ interface StreakOverview {
   currentStreak: number;
   longestStreak: number;
   freezeCount: number;
+  firstMonth: { year: number; month: number };
   month: StreakMonthView;
 }
 
@@ -85,8 +86,10 @@ export default function StreakClient() {
   }
 
   const { month } = overview;
-  const now = new Date();
-  const isCurrentMonth = month.year === now.getUTCFullYear() && month.month === now.getUTCMonth() + 1;
+  const currentYear = Number(month.today.slice(0, 4));
+  const currentMonth = Number(month.today.slice(5, 7));
+  const isCurrentMonth = month.year === currentYear && month.month === currentMonth;
+  const isFirstMonth = month.year === overview.firstMonth.year && month.month === overview.firstMonth.month;
 
   function goToMonth(delta: number) {
     let y = month.year;
@@ -156,7 +159,12 @@ export default function StreakClient() {
 
       <div className="card flex flex-col gap-3 !p-4 sm:!p-5">
         <div className="flex items-center justify-between">
-          <button className="btn-secondary !min-h-9 !px-3 !py-1" onClick={() => goToMonth(-1)} aria-label={t("streakPage.prevMonth")}>
+          <button
+            className="btn-secondary !min-h-9 !px-3 !py-1 disabled:opacity-30"
+            onClick={() => goToMonth(-1)}
+            disabled={isFirstMonth}
+            aria-label={t("streakPage.prevMonth")}
+          >
             ‹
           </button>
           <div className="text-center">
