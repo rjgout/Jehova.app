@@ -36,16 +36,20 @@ export interface WordGamePeriod {
   releasedAt: Date;
   /** Absoluut moment waarop het volgende woord beschikbaar komt. */
   nextReleaseAt: Date;
+  /** Lokale kalenderrelatie van het volgende woord, bepaald met de servertijd. */
+  nextReleaseDay: "today" | "tomorrow";
 }
 
 export function wordGamePeriod(date: Date, timeZone: string): WordGamePeriod {
   const zone = resolveTimeZone(timeZone);
   const localDay = dayKeyInZone(date, zone);
-  const dayKey = zonedParts(date, zone).hour < RELEASE_HOUR ? addDays(localDay, -1) : localDay;
+  const beforeRelease = zonedParts(date, zone).hour < RELEASE_HOUR;
+  const dayKey = beforeRelease ? addDays(localDay, -1) : localDay;
   return {
     dayKey,
     releasedAt: zonedTimeToUtc(dayKey, RELEASE_HOUR, 0, zone),
     nextReleaseAt: zonedTimeToUtc(addDays(dayKey, 1), RELEASE_HOUR, 0, zone),
+    nextReleaseDay: beforeRelease ? "today" : "tomorrow",
   };
 }
 
@@ -188,6 +192,7 @@ export interface WordGameView {
   dayKey: string;
   /** Wanneer het volgende woord beschikbaar komt (absoluut), en de servertijd: de client ververst daarop zonder eigen tijdzonerekensom. */
   nextReleaseAt: string;
+  nextReleaseDay: "today" | "tomorrow";
   /** Wanneer de wereldwijde rang definitief is en de rangbonus kan worden uitgedeeld. */
   bonusSettlesAt: string;
   serverNow: number;
@@ -310,6 +315,7 @@ async function buildView(period: WordGamePeriod, now: Date, game: {
   return {
     dayKey: game.dayKey,
     nextReleaseAt: period.nextReleaseAt.toISOString(),
+    nextReleaseDay: period.nextReleaseDay,
     bonusSettlesAt: wordDayClosesAt(game.dayKey).toISOString(),
     serverNow: now.getTime(),
     wordLength: WORD_LENGTH,

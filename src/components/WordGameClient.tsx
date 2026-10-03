@@ -36,6 +36,7 @@ interface LeaderboardEntry {
 interface GameView {
   dayKey: string;
   nextReleaseAt: string;
+  nextReleaseDay: "today" | "tomorrow";
   bonusSettlesAt: string;
   serverNow: number;
   wordLength: number;
@@ -298,7 +299,9 @@ export default function WordGameClient() {
               ) : null}
             </div>
           )}
-          <p className="text-sm text-slate-400 dark:text-slate-500">{t("wordOfTheDay.comeBack")}</p>
+          <p className="text-sm text-slate-400 dark:text-slate-500">
+            {t(game.nextReleaseDay === "today" ? "wordOfTheDay.comeBackToday" : "wordOfTheDay.comeBackTomorrow")}
+          </p>
         </div>
       )}
 

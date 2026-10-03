@@ -41,9 +41,11 @@ after(async () => {
 test("17:59 / 18:00 / 18:01 lokaal en hetzelfde woord in elke tijdzone", { skip }, async () => {
   const before = await L.game.getOrCreateTodayGame(users.nl, "Europe/Amsterdam", new Date("2031-03-04T16:59:00Z")); // NL 17:59
   assert.equal(before.dayKey, "2031-03-03");
+  assert.equal(before.nextReleaseDay, "today");
   const nl = await L.game.getOrCreateTodayGame(users.nl, "Europe/Amsterdam", new Date("2031-03-04T17:00:00Z")); // NL 18:00
   assert.equal(nl.dayKey, DAY);
   assert.equal(nl.nextReleaseAt, "2031-03-05T17:00:00.000Z");
+  assert.equal(nl.nextReleaseDay, "tomorrow");
   assert.equal(nl.bonusSettlesAt, "2031-03-06T06:00:00.000Z");
   const tokyo = await L.game.getOrCreateTodayGame(users.tokio, "Asia/Tokyo", new Date("2031-03-04T09:01:00Z")); // Tokio 18:01
   assert.equal(tokyo.dayKey, DAY);

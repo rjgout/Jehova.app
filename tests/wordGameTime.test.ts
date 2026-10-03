@@ -47,9 +47,11 @@ test("17:59 oud woord, 18:00 en 18:01 nieuw woord, in vijf tijdzones", () => {
     assert.equal(wordGameDayKey(new Date(six - 60_000), zone), "2026-10-01", `${zone} 17:59`);
     assert.equal(wordGameDayKey(new Date(six), zone), "2026-10-02", `${zone} 18:00`);
     assert.equal(wordGameDayKey(new Date(six + 60_000), zone), "2026-10-02", `${zone} 18:01`);
+    assert.equal(wordGamePeriod(new Date(six - 60_000), zone).nextReleaseDay, "today", `${zone} 17:59 volgende woord`);
     const period = wordGamePeriod(new Date(six + 60_000), zone);
     assert.equal(period.releasedAt.toISOString(), new Date(six).toISOString(), `${zone} releasedAt`);
     assert.equal(period.nextReleaseAt.getTime() - six, 24 * 3_600_000, `${zone} nextReleaseAt`);
+    assert.equal(period.nextReleaseDay, "tomorrow", `${zone} 18:01 volgende woord`);
   }
 });
 
