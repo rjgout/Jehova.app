@@ -1,4 +1,4 @@
-import type { ChapterGuessLevel, XPReason, Prisma } from "@prisma/client";
+import type { ChapterGuessLevel, XPReason, Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/db";
 import { addDays } from "@/lib/dates";
 import { userTimeZone } from "@/lib/timeZone";

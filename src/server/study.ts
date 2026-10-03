@@ -1,5 +1,5 @@
 import type { Server as SocketIOServer, Socket } from "socket.io";
-import type { CourseType } from "@prisma/client";
+import type { CourseType } from "@/generated/prisma/client";
 import { prisma } from "@/lib/db";
 import { isExerciseCorrect } from "@/lib/exerciseGen";
 import { completeStudyRound } from "@/lib/streak";

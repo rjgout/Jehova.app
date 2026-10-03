@@ -4,6 +4,8 @@ Alle belangrijke gebruikersgerichte wijzigingen en releases worden hieronder bij
 
 ## Nog niet uitgebracht
 
+- Beveiliging: de onderliggende software is bijgewerkt, waaronder een
+  kritiek lek in het webframework. Voor gebruikers verandert er niets.
 - Leren en Spelen hebben dezelfde kaarten: tik op de afbeelding of titel om
   een cursus of spel te openen, versleep een kaart aan de greep links, en
   verberg of verplaats hem via ⋯. Tijdens het slepen zie je waar de kaart

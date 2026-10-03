@@ -2,7 +2,7 @@
 // persoonlijke reeksdagen: één query voor één of veel groepen, hoe groot
 // ook (geen query per lid).
 
-import { Prisma } from "@prisma/client";
+import { Prisma } from "@/generated/prisma/client";
 import type { Db } from "@/lib/social/common";
 
 export interface GroupDayCounts {

@@ -3,7 +3,7 @@ import path from "node:path";
 import { randomBytes } from "node:crypto";
 import { Readable } from "node:stream";
 import { pipeline } from "node:stream/promises";
-import type { PrismaClient } from "@prisma/client";
+import type { PrismaClient } from "@/generated/prisma/client";
 
 // Eigen kopie van de voorgelezen hoofdstukken van de kerk, zodat afspelen
 // niet afhangt van hun server of van links die daar verhuizen.

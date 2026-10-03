@@ -1,4 +1,4 @@
-import type { PrismaClient } from "@prisma/client";
+import type { PrismaClient } from "../src/generated/prisma/client";
 
 // Voorgelezen hoofdstukken: per hoofdstuk het audiobestand van de kerk in de
 // taal van de uitgave, met de begintijd van elk vers en van de hoofdstukkop.

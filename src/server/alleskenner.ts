@@ -37,7 +37,7 @@ import {
   localizeText,
   type AkDictionary,
 } from "@/lib/alleskenner/localize";
-import type { AlleskennerItemKind } from "@prisma/client";
+import type { AlleskennerItemKind } from "@/generated/prisma/client";
 import { DEFAULT_LANGUAGE } from "@/lib/languages";
 import {
   AK_369_POINTS,

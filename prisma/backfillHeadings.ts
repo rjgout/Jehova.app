@@ -1,11 +1,11 @@
-import { PrismaClient } from "@prisma/client";
+import { createPrismaClient } from "../src/lib/db";
 import { seedBooks } from "./content";
 
 // Eenmalig script om Chapter.heading te vullen op een database die al
 // geseed was vóórdat dat veld bestond, zonder de volledige (zwaardere,
 // verzen/oefeningen verwijderende) importBooks opnieuw te draaien.
 async function main() {
-  const prisma = new PrismaClient();
+  const prisma = createPrismaClient();
   let updated = 0;
   for (const book of seedBooks) {
     const dbBook = await prisma.book.findUnique({ where: { slug: book.slug } });

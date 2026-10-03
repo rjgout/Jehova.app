@@ -1,4 +1,4 @@
-import type { CourseType } from "@prisma/client";
+import type { CourseType } from "@/generated/prisma/client";
 import { prisma } from "@/lib/db";
 import { shuffleForDisplay } from "@/lib/exerciseGen";
 import type { TFunction } from "@/lib/i18n/core";

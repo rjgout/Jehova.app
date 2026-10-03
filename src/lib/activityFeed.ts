@@ -1,4 +1,4 @@
-import type { Prisma, XPReason } from "@prisma/client";
+import type { Prisma, XPReason } from "@/generated/prisma/client";
 
 const XP_GROUP_WINDOW_MS = 15 * 60 * 1000;
 

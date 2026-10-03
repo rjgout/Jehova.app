@@ -1,4 +1,4 @@
-import type { PrismaClient } from "@prisma/client";
+import type { PrismaClient } from "@/generated/prisma/client";
 import { capitalize, chapterTerm } from "./chapterTerm";
 import { ensurePodcasts, PODCASTS, PODCASTS_COLLECTION_ID } from "./podcasts";
 import { splitVerseRange } from "./learning/exercisePlan";

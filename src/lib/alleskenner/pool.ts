@@ -1,4 +1,4 @@
-import type { AlleskennerItemKind } from "@prisma/client";
+import type { AlleskennerItemKind } from "@/generated/prisma/client";
 import { prisma } from "@/lib/db";
 import { alleskennerItems } from "../../../prisma/alleskennerContent";
 import { generatedAlleskennerItems } from "../../../prisma/alleskennerGenerated";

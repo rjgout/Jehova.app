@@ -3,7 +3,7 @@
 // Buitenstaanders zien nooit leden; alleen van een openbare groep de naam,
 // het aantal leden, de reeks en de prestaties.
 
-import { Prisma } from "@prisma/client";
+import { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/db";
 import { dayKeyInZone, resolveTimeZone } from "@/lib/timeZone";
 import { GROUP_LIMIT_PER_USER, GROUP_MAX_MEMBERS, GROUP_MIN_MEMBERS, requiredContributors } from "@/lib/social/rules";

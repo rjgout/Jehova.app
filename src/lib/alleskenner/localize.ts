@@ -1,4 +1,4 @@
-import type { AlleskennerItemKind } from "@prisma/client";
+import type { AlleskennerItemKind } from "@/generated/prisma/client";
 import type { MemoryData, PuzzleData, QuestionData, TopicData } from "@/lib/alleskenner/content";
 
 // Een spel De Slimste Heilige rekent intern met de Nederlandse teksten van de

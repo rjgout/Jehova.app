@@ -14,11 +14,11 @@
 //   }
 // ]
 import { readFileSync } from "fs";
-import { PrismaClient } from "@prisma/client";
+import { createPrismaClient } from "../src/lib/db";
 import { importBooks } from "./importContent";
 import type { SeedBook } from "./content";
 
-const prisma = new PrismaClient();
+const prisma = createPrismaClient();
 
 async function main() {
   const filePath = process.argv[2];

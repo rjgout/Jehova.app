@@ -1,7 +1,7 @@
-import { PrismaClient } from "@prisma/client";
+import { createPrismaClient } from "../src/lib/db";
 import { generateExerciseHint } from "../src/lib/exerciseHints";
 
-const prisma = new PrismaClient();
+const prisma = createPrismaClient();
 
 async function main() {
   const exercises = await prisma.exercise.findMany({

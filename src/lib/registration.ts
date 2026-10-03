@@ -1,5 +1,5 @@
 import { createHash, randomBytes } from "crypto";
-import { Prisma, type PendingRegistration, type User } from "@prisma/client";
+import { Prisma, type PendingRegistration, type User } from "@/generated/prisma/client";
 import { prisma } from "@/lib/db";
 import { generateDiscriminator } from "@/lib/handle";
 import { FRONT_TO_BACK_SLUG, subscribeUserToCourse } from "@/lib/courses";

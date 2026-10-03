@@ -1,7 +1,7 @@
 import bomWords from "../../prisma/bomWords.json";
 import { addDays } from "@/lib/dates";
 import { DEFAULT_TIME_ZONE, dayKeyInZone, resolveTimeZone, zonedParts, zonedTimeToUtc } from "@/lib/timeZone";
-import type { Prisma } from "@prisma/client";
+import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/db";
 import { completeWordGame } from "@/lib/streak";
 import { awardXp } from "@/lib/xp";

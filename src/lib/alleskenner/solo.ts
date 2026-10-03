@@ -1,4 +1,4 @@
-import type { AlleskennerItemKind, AlleskennerSoloMode } from "@prisma/client";
+import type { AlleskennerItemKind, AlleskennerSoloMode } from "@/generated/prisma/client";
 import { prisma } from "@/lib/db";
 import { dayKey, weekStartKey } from "@/lib/dates";
 import { getAcceptedFriendIds } from "@/lib/presence";

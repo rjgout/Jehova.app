@@ -1,5 +1,5 @@
 import { createHash, randomBytes } from "crypto";
-import type { AuthTokenType } from "@prisma/client";
+import type { AuthTokenType } from "@/generated/prisma/client";
 import { prisma } from "@/lib/db";
 
 const EMAIL_VERIFY_TTL_MS = 24 * 60 * 60 * 1000; // 24 uur

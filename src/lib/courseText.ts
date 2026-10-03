@@ -1,4 +1,4 @@
-import type { CourseType } from "@prisma/client";
+import type { CourseType } from "@/generated/prisma/client";
 import { getT } from "@/lib/i18n";
 import { toLanguageCode } from "@/lib/languages";
 

@@ -1,10 +1,13 @@
+// De client wordt gegenereerd in src/generated/prisma (niet in git): na
+// `npm install` of een schemawijziging eerst `npx prisma generate`.
 generator client {
-  provider = "prisma-client-js"
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
 }
 
+// De verbindings-URL staat in prisma.config.ts (CLI) en src/lib/db.ts (app).
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
 
 // --- Accounts ---------------------------------------------------------

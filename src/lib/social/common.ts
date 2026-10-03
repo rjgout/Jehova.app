@@ -2,7 +2,7 @@
 // van personen uit hun persoonlijke reeks, en de geschiedenis. Geen
 // Next-API's: dit hoort ook in de eager-keten van server.ts (scheduler).
 
-import { Prisma, type PrismaClient } from "@prisma/client";
+import { Prisma, type PrismaClient } from "@/generated/prisma/client";
 import type { MessageKey, Vars } from "@/lib/i18n/core";
 import { memberDayOutcome, type MemberDayOutcome } from "@/lib/social/rules";
 

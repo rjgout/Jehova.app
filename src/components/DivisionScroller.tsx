@@ -1,8 +1,8 @@
 "use client";
 
 import { useLayoutEffect, useRef } from "react";
-import type { LeagueTier } from "@prisma/client";
-import { TIER_ORDER } from "@/lib/leagues";
+import type { LeagueTier } from "@/generated/prisma/client";
+import { TIER_ORDER } from "@/lib/leagueTiers";
 import DivisionEmblem from "@/components/versado/DivisionEmblem";
 import { useT } from "@/components/I18nProvider";
 

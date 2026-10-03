@@ -2,7 +2,7 @@ import { prisma } from "@/lib/db";
 import { getContentContext } from "@/lib/contentCollections";
 import { getT } from "@/lib/i18n";
 import { localizedCourse } from "@/lib/courseText";
-import type { CourseType } from "@prisma/client";
+import type { CourseType } from "@/generated/prisma/client";
 
 // Alles wat een gebruiker "open" heeft staan over de asynchrone spellen
 // heen (Uitdagingen, Woordspel), het realtime Live spel, en een eigen

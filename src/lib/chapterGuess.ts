@@ -3,7 +3,7 @@ import { playableAudioUrl } from "@/lib/audioMirror";
 import { BOFM_WORK, resolveEditionId } from "@/lib/contentCollections";
 import { shuffle } from "@/lib/scrabble/tiles";
 import { completeChapterGuess } from "@/lib/streak";
-import type { ChapterGuessLevel } from "@prisma/client";
+import type { ChapterGuessLevel } from "@/generated/prisma/client";
 
 export const QUESTION_COUNT_OPTIONS = [5, 10, 15] as const;
 export const BEGINNER_OPTION_COUNT = 4;

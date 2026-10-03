@@ -3,7 +3,7 @@
 // spellen en andere onderdelen het later ook kunnen gebruiken. Alleen
 // tussen vrienden, hooguit één per 6 uur per richting, geen XP, geen teller.
 
-import { Prisma } from "@prisma/client";
+import { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/db";
 import { dayKeyInZone, resolveTimeZone } from "@/lib/timeZone";
 import { notifyNudge } from "@/lib/notify";

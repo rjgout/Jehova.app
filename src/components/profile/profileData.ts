@@ -1,4 +1,4 @@
-import type { LeagueTier } from "@prisma/client";
+import type { LeagueTier } from "@/generated/prisma/client";
 import type { PersonalMascotCharacter } from "@/lib/mascots";
 
 // Wat /api/profile teruggeeft (src/app/api/profile/route.ts), gedeeld door

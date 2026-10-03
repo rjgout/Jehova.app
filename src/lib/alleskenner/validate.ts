@@ -1,4 +1,4 @@
-import type { AlleskennerItemKind } from "@prisma/client";
+import type { AlleskennerItemKind } from "@/generated/prisma/client";
 import { z } from "zod";
 import { normalizeAnswer, parsePassage, type AlleskennerSeedItem, type Evidence } from "@/lib/alleskenner/content";
 

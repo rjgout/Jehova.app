@@ -26,14 +26,18 @@ ENV NODE_ENV=production
 ENV AUDIO_DIR=/data/audio
 ENV NEXT_PUBLIC_BUILD_SHA=$NEXT_PUBLIC_BUILD_SHA
 COPY --from=deps /app/node_modules ./node_modules
-COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=builder /app/.next ./.next
 COPY package.json package-lock.json ./
 COPY next.config.js ./
 COPY tsconfig.json ./
 COPY server.ts ./
 COPY src ./src
+# De Prisma-client wordt in de builder gegenereerd (src/generated staat niet
+# in git) en is nodig voor server.ts, dat via tsx draait.
+COPY --from=builder /app/src/generated ./src/generated
 COPY prisma ./prisma
+# Verbindings-URL en migratiemap voor `prisma migrate deploy` hieronder.
+COPY prisma.config.ts ./
 # Statische bestanden (bv. de kindercursus-afbeeldingen in public/kids/images)
 # worden niet in .next meegebundeld — zonder deze COPY draait de app prima,
 # maar 404en al zulke bestanden in productie.

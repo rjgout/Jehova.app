@@ -1,4 +1,4 @@
-import { PrismaClient, Prisma } from "@prisma/client";
+import { PrismaClient, Prisma } from "../src/generated/prisma/client";
 import { randomUUID } from "crypto";
 import { shuffleWithSeed } from "../src/lib/exerciseGen";
 import type { PodcastEpisodeSeed, PodcastComprehensionExercise } from "./podcastContent";

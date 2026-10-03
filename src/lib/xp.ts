@@ -1,4 +1,4 @@
-import type { Prisma, XPReason } from "@prisma/client";
+import type { Prisma, XPReason } from "@/generated/prisma/client";
 import { recordXpActivity } from "@/lib/activityFeed";
 
 /**

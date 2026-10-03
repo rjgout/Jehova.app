@@ -13,7 +13,7 @@
 // Staat in de eager-keten van server.ts? Nee, maar houd het zo: geen
 // next/headers of andere request-API's hier.
 
-import type { Prisma, PrismaClient } from "@prisma/client";
+import type { Prisma, PrismaClient } from "@/generated/prisma/client";
 import { prisma } from "@/lib/db";
 import { isExerciseCorrect } from "@/lib/exerciseGen";
 import { awardXp } from "@/lib/xp";

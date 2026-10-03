@@ -1,5 +1,5 @@
 import { randomBytes } from "crypto";
-import type { FeedbackStatus } from "@prisma/client";
+import type { FeedbackStatus } from "@/generated/prisma/client";
 import { prisma } from "@/lib/db";
 import { sendMail } from "@/lib/email";
 import { APP_NAME } from "@/lib/brand";

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { Prisma } from "@prisma/client";
+import { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/db";
 import { getCurrentUser } from "@/lib/session";
 import { SESSION_COOKIE, createSessionToken, hashPassword, sessionCookieOptions, verifyPassword } from "@/lib/auth";

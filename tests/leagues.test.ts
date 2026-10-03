@@ -6,7 +6,7 @@
 //   LEARNING_TEST_DATABASE_URL=postgresql://... npm run test:leagues
 import test, { after, before } from "node:test";
 import assert from "node:assert/strict";
-import type { LeagueTier } from "@prisma/client";
+import type { LeagueTier } from "../src/generated/prisma/client";
 import { movementCounts, weekEndsAt, type LeagueSettingsView } from "../src/lib/leagues";
 
 const settings = { groupSize: 30, promoteCount: 3, demoteCount: 3, promotePercent: 75 } as LeagueSettingsView;

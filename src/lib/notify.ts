@@ -5,7 +5,7 @@ import { getAppUrl } from "@/lib/baseUrl";
 import { APP_NAME } from "@/lib/brand";
 import { emitToUser } from "@/lib/realtime";
 import type { NotificationKind } from "@/lib/notificationGroups";
-import type { LeagueTier } from "@prisma/client";
+import type { LeagueTier } from "@/generated/prisma/client";
 import { getT } from "@/lib/i18n";
 import { translateOr, type TFunction } from "@/lib/i18n/core";
 

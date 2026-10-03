@@ -1,4 +1,4 @@
-import type { PrismaClient } from "@prisma/client";
+import type { PrismaClient } from "../src/generated/prisma/client";
 import type { AlleskennerSeedItem } from "../src/lib/alleskenner/content";
 
 // Zet onderdelen uit alleskennerContent.ts (en de automatisch samengestelde

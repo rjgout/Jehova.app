@@ -2,7 +2,7 @@
 
 import { Fragment, useEffect, useState } from "react";
 import { ArrowDown, ArrowUp, Clock } from "lucide-react";
-import type { LeagueTier } from "@prisma/client";
+import type { LeagueTier } from "@/generated/prisma/client";
 import DivisionEmblem from "@/components/versado/DivisionEmblem";
 import { useT } from "@/components/I18nProvider";
 import type { TFunction } from "@/lib/i18n/core";

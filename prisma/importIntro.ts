@@ -1,4 +1,4 @@
-import { PrismaClient, Prisma } from "@prisma/client";
+import { PrismaClient, Prisma } from "../src/generated/prisma/client";
 import { randomUUID } from "crypto";
 import type { IntroLessonSeed } from "./introContent";
 import type { IntroPersonSeed } from "./introPersons";

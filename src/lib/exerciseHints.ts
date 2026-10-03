@@ -1,4 +1,4 @@
-import type { ExerciseType } from "@prisma/client";
+import type { ExerciseType } from "@/generated/prisma/client";
 import type { LanguageCode } from "./languages";
 import { stopwordsFor } from "./exerciseGen";
 

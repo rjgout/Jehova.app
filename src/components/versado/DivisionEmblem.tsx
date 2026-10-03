@@ -1,5 +1,5 @@
-import type { LeagueTier } from "@prisma/client";
-import { TIER_EMBLEMS } from "@/lib/leagues";
+import type { LeagueTier } from "@/generated/prisma/client";
+import { TIER_EMBLEMS } from "@/lib/leagueTiers";
 
 // Het officiële embleem van een divisie. De paden staan alleen in
 // TIER_EMBLEMS (src/lib/leagues.ts); de maat komt uit className, de

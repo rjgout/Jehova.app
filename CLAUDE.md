@@ -209,7 +209,15 @@ UTC-offsets, en geen eigen tijdzonerekensom in componenten.
 
 ## Database & migraties
 
-- Eén `PrismaClient`-singleton in `src/lib/db.ts` (standaard Next-hot-reload-guard).
+- Prisma 7 met de pg-driver: de client wordt gegenereerd in
+  `src/generated/prisma` (niet in git; `npm run db:generate` na
+  `npm install` of een schemawijziging) en geïmporteerd uit
+  `@/generated/prisma/client`. Eén singleton `prisma` in `src/lib/db.ts`;
+  scripts maken hun eigen client met `createPrismaClient()` daaruit, nooit
+  met `new PrismaClient()`. De CLI leest de database-URL uit
+  `prisma.config.ts`. Client components importeren nooit een waarde uit de
+  Prisma-client (die is alleen voor de server): alleen `import type`, of
+  enums uit `@/generated/prisma/enums` (zie `src/lib/leagueTiers.ts`).
 - **Migratiebeleid (hard, consistent toegepast)**: een nieuwe migratie mag
   bestaand gedrag/data van bestaande gebruikers nooit met terugwerkende
   kracht veranderen. Nieuwe verplichte/gedrag-bepalende kolommen krijgen in
@@ -336,7 +344,7 @@ verwerken". Fundamenteel anders dan de rest van de API:
 - Commitmessages zijn in het Nederlands en beschrijven duidelijk wat er is
   gewijzigd en waarom wanneer dat relevant is.
 - Geen ORM-modelduplicatie in aparte typebestanden: types komen uit
-  `@prisma/client` of worden lokaal in het bestand zelf gedefinieerd.
+  `@/generated/prisma/client` of worden lokaal in het bestand zelf gedefinieerd.
 - **Geen merknamen in zichtbare/leesbare tekst.** Een feature mag intern
   geïnspireerd zijn op een bekend concept (bv. een woordraadspel, een
   asynchroon bordspel), maar de naam van dat bekende merk/product hoort
@@ -546,6 +554,7 @@ leeroefeningen:
 
 ```bash
 npm install
+npm run db:generate         # Prisma-client in src/generated/prisma
 npm run db:migrate:deploy   # of db:push tijdens actieve schema-iteratie
 npm run db:seed
 npm run dev                 # tsx server.ts, vereist een lokale/bereikbare Postgres + Redis

@@ -4,7 +4,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import Link from "next/link";
 import LanguageSettings from "@/components/LanguageSettings";
 import { useRouter, useSearchParams } from "next/navigation";
-import type { LeagueTier } from "@prisma/client";
+import type { LeagueTier } from "@/generated/prisma/client";
 import DivisionEmblem from "@/components/versado/DivisionEmblem";
 import { formatTag, firstGrapheme, isSingleEmoji } from "@/lib/handle";
 import { enableBrowserPush, disableBrowserPush } from "@/lib/pushClient";

@@ -1,5 +1,5 @@
 import Parser from "rss-parser";
-import type { PrismaClient } from "@prisma/client";
+import type { PrismaClient } from "@/generated/prisma/client";
 import { ensurePodcasts, PODCASTS, type PodcastDefinition } from "./podcasts";
 import { parseChaptersFile } from "./podcastChapters";
 

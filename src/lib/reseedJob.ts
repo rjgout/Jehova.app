@@ -1,4 +1,4 @@
-import type { PrismaClient } from "@prisma/client";
+import type { PrismaClient } from "@/generated/prisma/client";
 import { runSeed } from "@/lib/seed";
 
 export type ReseedJobStatus = "idle" | "running" | "done" | "error";

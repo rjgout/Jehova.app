@@ -1,6 +1,6 @@
 "use client";
 
-import type { LeagueTier } from "@prisma/client";
+import type { LeagueTier } from "@/generated/prisma/client";
 import { Lock } from "lucide-react";
 import DivisionEmblem from "@/components/versado/DivisionEmblem";
 import RankMedal from "@/components/versado/RankMedal";

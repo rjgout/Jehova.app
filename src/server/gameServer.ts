@@ -3,7 +3,7 @@ import { Server as SocketIOServer, Socket } from "socket.io";
 import { createAdapter } from "@socket.io/redis-adapter";
 import Redis from "ioredis";
 import { randomUUID } from "crypto";
-import type { ChapterGuessLevel, FamilyGameDiceMode } from "@prisma/client";
+import type { ChapterGuessLevel, FamilyGameDiceMode } from "@/generated/prisma/client";
 import { prisma } from "@/lib/db";
 import { verifySessionToken, SESSION_COOKIE } from "@/lib/auth";
 import { parseCookieHeader } from "@/lib/parseCookieHeader";

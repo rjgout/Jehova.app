@@ -1,4 +1,4 @@
-import type { Prisma, PrismaClient } from "@prisma/client";
+import type { Prisma, PrismaClient } from "@/generated/prisma/client";
 import { getChapterStates } from "@/lib/learning/contentProgress";
 import { isReadingRoute } from "@/lib/learning/routes";
 

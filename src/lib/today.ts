@@ -1,4 +1,4 @@
-import type { User } from "@prisma/client";
+import type { User } from "@/generated/prisma/client";
 import { prisma } from "@/lib/db";
 import { dayKey } from "@/lib/dates";
 import { userTimeZone, zonedParts } from "@/lib/timeZone";

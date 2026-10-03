@@ -1,4 +1,4 @@
-import type { Prisma } from "@prisma/client";
+import type { Prisma } from "@/generated/prisma/client";
 import { dayKey, weekStartKey } from "@/lib/dates";
 import { getLeagueSettings, activityRuleFor, applyWeeklyXp } from "@/lib/leagues";
 

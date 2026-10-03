@@ -1,4 +1,4 @@
-import type { PrismaClient } from "@prisma/client";
+import type { PrismaClient } from "@/generated/prisma/client";
 
 // De podcasts in de app. syncCourses zet ze in de Podcast-tabel en maakt per
 // podcast een PODCAST-cursus aan; syncPodcastFeed haalt per podcast de

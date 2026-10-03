@@ -1,4 +1,4 @@
-import type { Companion } from "@prisma/client";
+import type { Companion } from "@/generated/prisma/client";
 import { prisma } from "@/lib/db";
 import { DEFAULT_PERSONAL_MASCOT, isPersonalMascot, type PersonalMascotCharacter } from "@/lib/mascots";
 

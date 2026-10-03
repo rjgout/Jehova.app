@@ -1,4 +1,4 @@
-import type { AlleskennerSeason, AlleskennerSeasonMember } from "@prisma/client";
+import type { AlleskennerSeason, AlleskennerSeasonMember } from "@/generated/prisma/client";
 import { prisma } from "@/lib/db";
 
 // Seizoenslogica van De Slimste Heilige (zie docs/ALLESKENNER.md, "Seizoen").

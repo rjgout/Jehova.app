@@ -18,3 +18,6 @@ backups/
 
 # Python-cache van de scripts
 __pycache__/
+
+# Gegenereerde Prisma-client (npx prisma generate)
+/src/generated

@@ -1,4 +1,4 @@
-import type { AlleskennerItemKind } from "@prisma/client";
+import type { AlleskennerItemKind } from "@/generated/prisma/client";
 
 // Vorm van AlleskennerItem.data per soort. Elk handgeschreven feit heeft een
 // bronvers met een letterlijk citaat; prisma/checkAlleskenner.ts controleert

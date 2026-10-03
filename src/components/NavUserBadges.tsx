@@ -7,7 +7,7 @@ import { onXpChanged } from "@/lib/xpBroadcast";
 import { useT, useUiLanguage } from "@/components/I18nProvider";
 import { getLanguage } from "@/lib/languages";
 import DivisionEmblem from "@/components/versado/DivisionEmblem";
-import type { LeagueTier } from "@prisma/client";
+import type { LeagueTier } from "@/generated/prisma/client";
 import type { MessageKey } from "@/lib/i18n/core";
 
 // Beloningsstatus in de header: reeks, XP en divisie. Bewust prominent (dit

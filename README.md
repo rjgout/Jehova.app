@@ -182,6 +182,7 @@ tegelijk te draaien.
 
 ```bash
 npm install
+npm run db:generate   # Prisma-client in src/generated/prisma (staat niet in git)
 # start zelf een lokale PostgreSQL en Redis, en zet DATABASE_URL/REDIS_URL
 # in .env (zie de voorbeelden onderaan .env.example)
 npm run db:migrate:deploy

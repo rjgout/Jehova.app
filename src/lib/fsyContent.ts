@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import type { PrismaClient } from "@prisma/client";
+import type { PrismaClient } from "@/generated/prisma/client";
 
 export const FSY_COLLECTION_ID = "content_fsy";
 export const FSY_COURSE_SLUG = "voor-de-kracht-van-de-jeugd";

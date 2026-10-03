@@ -1,43 +1,8 @@
-import { Prisma, type LeagueTier } from "@prisma/client";
+import { Prisma, type LeagueTier } from "@/generated/prisma/client";
 import { weekStartKey } from "@/lib/dates";
+import { TIER_ORDER } from "@/lib/leagueTiers";
 
-export const TIER_ORDER: LeagueTier[] = [
-  "BRONZE",
-  "SILVER",
-  "GOLD",
-  "PLATINUM",
-  "DIAMOND",
-  "MASTER",
-  "GRANDMASTER",
-  "LEGEND",
-];
-
-export const TIER_LABELS: Record<LeagueTier, string> = {
-  BRONZE: "Zaad",
-  SILVER: "Licht",
-  GOLD: "Strijder",
-  PLATINUM: "Rots",
-  DIAMOND: "Erfgenaam",
-  MASTER: "Overvloed",
-  GRANDMASTER: "Zion",
-  LEGEND: "Eeuwigheid",
-};
-
-/**
- * De officiële divisie-emblemen (public/icons/divisions/, 384x384 WebP),
- * één per divisie. De enige plek die deze paden kent; tonen gaat via
- * <DivisionEmblem tier /> (src/components/versado/DivisionEmblem.tsx).
- */
-export const TIER_EMBLEMS: Record<LeagueTier, string> = {
-  BRONZE: "/icons/divisions/bronze.webp",
-  SILVER: "/icons/divisions/silver.webp",
-  GOLD: "/icons/divisions/gold.webp",
-  PLATINUM: "/icons/divisions/platinum.webp",
-  DIAMOND: "/icons/divisions/diamond.webp",
-  MASTER: "/icons/divisions/master.webp",
-  GRANDMASTER: "/icons/divisions/grandmaster.webp",
-  LEGEND: "/icons/divisions/legend.webp",
-};
+export { TIER_EMBLEMS, TIER_LABELS, TIER_ORDER } from "@/lib/leagueTiers";
 
 type Tx = Prisma.TransactionClient;
 
