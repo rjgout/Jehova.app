@@ -3,14 +3,15 @@ import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { getCurrentUser } from "@/lib/session";
 import { apiError } from "@/lib/apiError";
+import { formatTag } from "@/lib/handle";
+import { notifyActivityReaction } from "@/lib/notify";
 
 const REACTIONS = ["🫶🏻", "❤️", "🎉", "🔥", "🙌"] as const;
 const schema = z.object({ emoji: z.enum(REACTIONS) });
 
-async function canSeeItem(itemId: string, userId: string): Promise<boolean> {
+async function visibleItem(itemId: string, userId: string): Promise<{ userId: string } | null> {
   const item = await prisma.activityFeedItem.findUnique({ where: { id: itemId }, select: { userId: true } });
-  if (!item) return false;
-  if (item.userId === userId) return false;
+  if (!item || item.userId === userId) return null;
   const friendship = await prisma.friendship.findFirst({
     where: {
       status: "ACCEPTED",
@@ -21,7 +22,7 @@ async function canSeeItem(itemId: string, userId: string): Promise<boolean> {
     },
     select: { id: true },
   });
-  return Boolean(friendship);
+  return friendship ? item : null;
 }
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ itemId: string }> }) {
@@ -30,7 +31,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ ite
   const parsed = schema.safeParse(await req.json().catch(() => null));
   if (!parsed.success) return await apiError("apiErrors.invalidInput", 400);
   const { itemId } = await params;
-  if (!(await canSeeItem(itemId, user.id))) return await apiError("apiErrors.forbidden", 403);
+  const item = await visibleItem(itemId, user.id);
+  if (!item) return await apiError("apiErrors.forbidden", 403);
 
   const existing = await prisma.activityFeedReaction.findUnique({
     where: { itemId_userId: { itemId, userId: user.id } },
@@ -46,5 +48,12 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ ite
     create: { itemId, userId: user.id, emoji: parsed.data.emoji },
     select: { emoji: true },
   });
+  if (!existing) {
+    await notifyActivityReaction(
+      item.userId,
+      formatTag(user.handle, user.discriminator),
+      reaction.emoji
+    ).catch(() => {});
+  }
   return NextResponse.json({ emoji: reaction.emoji });
 }

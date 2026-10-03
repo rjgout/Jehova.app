@@ -7,6 +7,11 @@ import UserAvatar from "@/components/UserAvatar";
 import { useT } from "@/components/I18nProvider";
 import { translateServerText } from "@/lib/i18n/serverTexts";
 import type { TFunction } from "@/lib/i18n/core";
+import { Bell } from "lucide-react";
+import {
+  IN_APP_NOTIFICATION_EVENT,
+  type InAppNotification,
+} from "@/lib/notificationEvents";
 
 interface Invite {
   code: string;
@@ -24,6 +29,7 @@ function inviteHref(invite: Invite): string {
 
 type Notice =
   | ({ kind: "invite" } & Invite)
+  | { kind: "notification"; item: InAppNotification }
   // Vrienden die (vrijwel) tegelijk online kwamen, in één melding.
   | { kind: "online"; friends: { userId: string; name: string }[] };
 
@@ -43,9 +49,9 @@ const TAP_TOLERANCE_PX = 6;
  * (tikken = meedoen; negeren is niet weigeren: de uitnodiging blijft bij
  * Spelen staan tot de host start of annuleert, en is de app dicht dan komt
  * hij als pushmelding binnen) en voor een vriend die online komt (zie
- * announceCameOnline in src/lib/presence.ts; bewust zonder pushmelding). Een
- * uitnodiging gaat altijd voor: die wordt nooit door een onlinemelding
- * vervangen.
+ * announceCameOnline in src/lib/presence.ts; bewust zonder pushmelding), en
+ * voor nieuwe meldingen uit het centrale meldingencentrum. Een uitnodiging
+ * gaat altijd voor: die wordt nooit door een andere banner vervangen.
  */
 export default function InviteListener() {
   const t = useT();
@@ -89,20 +95,29 @@ export default function InviteListener() {
     }
     function onFriendOnline(friend: { userId: string; name: string }) {
       setNotice((current) => {
-        if (current?.kind === "invite") return current;
+        if (current?.kind === "invite" || current?.kind === "notification") return current;
         const others = current?.kind === "online" ? current.friends.filter((f) => f.userId !== friend.userId) : [];
         return { kind: "online", friends: [...others, friend] };
       });
       setLeaving(false);
       setOffsetY(0);
     }
+    function onNotification(event: Event) {
+      const item = (event as CustomEvent<InAppNotification>).detail;
+      if (!item) return;
+      setNotice((current) => (current?.kind === "invite" ? current : { kind: "notification", item }));
+      setLeaving(false);
+      setOffsetY(0);
+    }
     socket.on("game_invite", onInvite);
     socket.on("game_invite_revoked", onRevoked);
     socket.on("friend_online", onFriendOnline);
+    window.addEventListener(IN_APP_NOTIFICATION_EVENT, onNotification);
     return () => {
       socket.off("game_invite", onInvite);
       socket.off("game_invite_revoked", onRevoked);
       socket.off("friend_online", onFriendOnline);
+      window.removeEventListener(IN_APP_NOTIFICATION_EVENT, onNotification);
     };
   }, []);
 
@@ -127,8 +142,22 @@ export default function InviteListener() {
       })
         .then(() => window.dispatchEvent(new Event("jehova:notifications-changed")))
         .catch(() => {});
+    } else if (notice.kind === "notification") {
+      fetch("/api/notifications", {
+        method: "DELETE",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ ids: [notice.item.id] }),
+      })
+        .then(() => window.dispatchEvent(new Event("jehova:notifications-changed")))
+        .catch(() => {});
     }
-    router.push(notice.kind === "invite" ? inviteHref(notice) : "/friends");
+    router.push(
+      notice.kind === "invite"
+        ? inviteHref(notice)
+        : notice.kind === "notification"
+          ? notice.item.url
+          : "/friends"
+    );
   }
 
   const names = notice.kind === "online" ? joinNames(notice.friends.map((f) => f.name), t) : "";
@@ -154,15 +183,27 @@ export default function InviteListener() {
           text: `${inviteText}${t("inviteBanner.tapToJoin")}`,
           label: `${inviteText}${t("inviteBanner.tapToJoinOrSwipe")}`,
         }
-      : {
-          // Bij meerdere vrienden tegelijk: de avatar van wie het laatst online kwam.
-          person: { id: notice.friends[notice.friends.length - 1].userId, name: notice.friends[notice.friends.length - 1].name },
-          icon: "👋",
-          iconClass: "from-green-500 to-green-700",
-          title: notice.friends.length > 1 ? t("inviteBanner.friendsOnline") : t("inviteBanner.friendOnline"),
-          text: `${onlineText}${t("inviteBanner.tapToFriends")}`,
-          label: `${onlineText}${t("inviteBanner.tapToFriendsOrSwipe")}`,
-        };
+      : notice.kind === "notification"
+        ? {
+            person: null,
+            icon: <Bell className="h-5 w-5" aria-hidden />,
+            iconClass: "from-brand-500 to-brand-700 text-white",
+            title: notice.item.title,
+            text: `${notice.item.body}${t("inviteBanner.tapToOpen")}`,
+            label: `${notice.item.title}. ${notice.item.body}${t("inviteBanner.tapToOpenOrSwipe")}`,
+          }
+        : {
+            // Bij meerdere vrienden tegelijk: de avatar van wie het laatst online kwam.
+            person: {
+              id: notice.friends[notice.friends.length - 1].userId,
+              name: notice.friends[notice.friends.length - 1].name,
+            },
+            icon: "👋",
+            iconClass: "from-green-500 to-green-700",
+            title: notice.friends.length > 1 ? t("inviteBanner.friendsOnline") : t("inviteBanner.friendOnline"),
+            text: `${onlineText}${t("inviteBanner.tapToFriends")}`,
+            label: `${onlineText}${t("inviteBanner.tapToFriendsOrSwipe")}`,
+          };
 
   function onPointerDown(e: React.PointerEvent<HTMLDivElement>) {
     e.currentTarget.setPointerCapture(e.pointerId);

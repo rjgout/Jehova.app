@@ -8,15 +8,10 @@ import { notificationGroup } from "@/lib/notificationGroups";
 import { useT, useUiLanguage } from "@/components/I18nProvider";
 import { getLanguage } from "@/lib/languages";
 import type { TFunction } from "@/lib/i18n/core";
-
-interface NotificationItem {
-  id: string;
-  kind: string;
-  title: string;
-  body: string;
-  url: string;
-  createdAt: string;
-}
+import {
+  IN_APP_NOTIFICATION_EVENT,
+  type InAppNotification as NotificationItem,
+} from "@/lib/notificationEvents";
 
 const POLL_MS = 30_000;
 const DISMISS_DISTANCE_PX = 90;
@@ -46,10 +41,9 @@ function syncAppBadge(count: number) {
  * ingeklapt als stapel; tikken klapt hem uit. Tikken op een melding opent
  * hem en haalt hem weg; opzij vegen of ✕ wist hem zonder iets te doen.
  *
- * Nieuwe meldingen komen live binnen via de socket als de server ze zelf
- * verstuurt, en anders bij het openen, terugkeren naar de app, andere
- * spelseintjes, of uiterlijk elke 30 seconden (meldingen die een API-route
- * aanmaakt, kan de socketserver niet zien).
+ * Nieuwe meldingen komen live binnen via de socket. Bij openen, terugkeren
+ * naar de app en uiterlijk elke 30 seconden synchroniseren we ook, zodat een
+ * tijdelijk gemist realtime-event vanzelf wordt hersteld.
  */
 export default function NotificationCenter() {
   const t = useT();
@@ -60,12 +54,25 @@ export default function NotificationCenter() {
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [mounted, setMounted] = useState(false);
   const [now, setNow] = useState(() => Date.now());
+  const seenNotificationIds = useRef<Set<string> | null>(null);
 
   const load = useCallback(async () => {
     try {
       const res = await fetch("/api/notifications", { cache: "no-store" });
       if (!res.ok) return;
       const data = (await res.json()) as { notifications: NotificationItem[]; count: number };
+      if (seenNotificationIds.current === null) {
+        // Bestaande meldingen bij het openen van de app zijn geen nieuwe
+        // banners; alleen wat daarna binnenkomt krijgt de live presentatie.
+        seenNotificationIds.current = new Set(data.notifications.map((item) => item.id));
+      } else {
+        const seen = seenNotificationIds.current;
+        const newestUnseen = data.notifications.find((item) => !seen.has(item.id));
+        for (const item of data.notifications) seen.add(item.id);
+        if (newestUnseen) {
+          window.dispatchEvent(new CustomEvent(IN_APP_NOTIFICATION_EVENT, { detail: newestUnseen }));
+        }
+      }
       setItems(data.notifications);
       setCount(data.count);
       setNow(Date.now());

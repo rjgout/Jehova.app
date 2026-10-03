@@ -835,6 +835,8 @@ export const es: PartialMessages = {
     "isOnline": "{names} está en línea ahora",
     "tapToFriends": ". Toca para ir con tus amigos.",
     "tapToFriendsOrSwipe": ". Toca para ir a tus amigos, desliza hacia arriba para ignorar.",
+    "tapToOpen": ". Toca para abrir.",
+    "tapToOpenOrSwipe": ". Toca para abrir, desliza hacia arriba para ignorar.",
     "now": "ahora"
   },
   "familyGame": {
@@ -1282,7 +1284,7 @@ export const es: PartialMessages = {
     "reminderLabel": "Recordatorio diario",
     "reminderHint": "Un aviso para practicar.",
     "socialLabel": "Social",
-    "socialHint": "Solicitudes de amistad, retos e invitaciones al juego de palabras.",
+    "socialHint": "Reacciones a tus actividades, solicitudes de amistad, retos e invitaciones al juego de palabras.",
     "achievementsLabel": "Logros y competición",
     "achievementsHint": "Nuevos logros y el resultado semanal.",
     "wordGameLabel": "Palabra del día",
@@ -1890,6 +1892,9 @@ export const es: PartialMessages = {
     "ctaScrabbles": "Ver juegos de palabras",
     "ctaResult": "Ver el resultado",
     "ctaGuessWord": "Adivina la palabra",
+    "ctaActivity": "Ver la actividad",
+    "activityReactionTitle": "Nueva reacción a tu actividad",
+    "activityReactionText": "{name} reaccionó con {emoji} a tu actividad.",
     "freezeTitle": "¡Tienes una racha congelada! 🧊",
     "freezeText": "¡{name} te congeló la racha! 🧊",
     "freezePush": "{name} te congeló la racha.",

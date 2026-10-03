@@ -111,8 +111,8 @@ async function notifyUser(input: NotifyInput): Promise<void> {
 
   if (input.kind) {
     await storeNotification(input.userId, input.kind, content.pushTitle, content.pushBody, input.url).catch(() => {});
-    // Werkt alleen vanuit de socketserver zelf; vanuit een API-route haalt de
-    // client het meldingencentrum zelf op (zie NotificationCenter.tsx).
+    // De socketserver deelt deze emitter met API-routes via globalThis; de
+    // periodieke client-sync blijft de terugval wanneer realtime ontbreekt.
     emitToUser(input.userId, "notifications_changed");
   }
   if (user.onlineSocketCount > 0) return;
@@ -213,6 +213,26 @@ export async function notifyInviteAccepted(
       const text = t(isNewAccount ? "notify.inviteAcceptedNew" : "notify.inviteAccepted", { name: friendDisplayName });
       return simple(t("notify.inviteAcceptedSubject", { name: friendDisplayName }), t("notify.inviteAcceptedTitle"), text, t("notify.ctaFriends"));
     },
+  });
+}
+
+export async function notifyActivityReaction(
+  ownerUserId: string,
+  reactorDisplayName: string,
+  emoji: string
+): Promise<void> {
+  await notifyUser({
+    userId: ownerUserId,
+    category: "social",
+    kind: "friends",
+    url: "/activity",
+    content: (t) =>
+      simple(
+        t("notify.activityReactionTitle"),
+        t("notify.activityReactionTitle"),
+        t("notify.activityReactionText", { name: reactorDisplayName, emoji }),
+        t("notify.ctaActivity")
+      ),
   });
 }
 
